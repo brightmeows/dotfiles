@@ -49,50 +49,181 @@ hooks:
 
 ## 工作流程
 
-1. 分析需求：明确所有权流转、借用关系、生命周期和错误处理策略。
-2. 优先所有权转移，避免不必要 clone。
-3. trait 界定使用 where 子句提升可读性。
-4. 错误处理使用 thiserror 定义，`?` 操作符传播。
-5. 异步函数正确 .await，pin 投影谨慎。
-6. 公共 API 完整文档注释，私有实现隐藏。
-7. 输出完整代码 + Cargo.toml + tests + benches + doc tests。
+1. **分析需求**：明确所有权流转、借用关系、生命周期和错误处理策略。
+   - 识别数据流向和所有权转移点
+   - 确定错误处理边界和传播策略
+
+2. **优先所有权转移**：避免不必要 clone。
+   - 正例：`fn process(s: String) -> String { s }`（直接转移所有权）
+   - 反例：`fn process(s: &String) -> String { s.clone() }`（不必要的克隆）
+
+3. **trait 界定使用 where 子句**：提升可读性。
+   - 正例：
+     ```rust
+     fn process<T, U>(t: T, u: U) -> impl Trait
+     where
+         T: Bound1 + Bound2,
+         U: Bound3,
+     ```
+   - 反例：
+     ```rust
+     fn process<T: Bound1 + Bound2, U: Bound3>(t: T, u: U) -> impl Trait
+     ```
+
+4. **错误处理使用 thiserror 定义，`?` 操作符传播**。
+   - 正例：`fn read_file(path: &str) -> Result<String, io::Error> { File::open(path)?.read_to_string() }`
+   - 反例：`fn read_file(path: &str) -> Result<String, io::Error> { match File::open(path) { Ok(f) => f.read_to_string(), Err(e) => return Err(e) } }`
+
+5. **异步函数正确 .await，pin 投影谨慎**。
+   - 正例：`async fn fetch() -> Result<Data> { reqwest::get(url).await?.json().await }`
+   - 反例：`async fn fetch() -> Data { reqwest::get(url).await.unwrap().json().await.unwrap() }`
+
+6. **公共 API 完整文档注释，私有实现隐藏**。
+   - 正例：
+     ```rust
+     /// Processes the input data and returns the result.
+     /// # Errors
+     /// Returns an error if processing fails.
+     pub fn process(input: Input) -> Result<Output> { /* implementation */ }
+     ```
+   - 反例：`pub fn process(input: Input) -> Result<Output> { /* no docs */ }`
+
+7. **输出完整代码 + Cargo.toml + tests + benches + doc tests**。
+   - 包含所有必要的文件和测试
+   - 确保代码可编译和测试通过
 
 ## 最佳实践
 
 ### 项目配置
 
-- 使用`cargo add`管理依赖。
-- Clippy pedantic 全开。
-- `src`目录下禁止使用`mod.rs`。
+- **使用 `cargo add` 管理依赖**
+  - 正例：`cargo add serde --features json`（显式添加依赖和特性）
+  - 反例：手动编辑 Cargo.toml（容易出错）
+
+- **Clippy pedantic 全开**
+  - 正例：Cargo.toml 中设置 `[lints.clippy] pedantic = "warn"`（启用所有 clippy 检查）
+  - 反例：忽略 clippy 警告（可能隐藏代码质量问题）
+
+- **`src` 目录下禁止使用 `mod.rs`**
+  - 正例：`src/lib.rs` 和 `src/main.rs`（现代 Rust 项目结构）
+  - 反例：`src/mod.rs`（旧式模块声明，已弃用）
 
 ### 代码编辑
 
-- 避免 unsafe，如必须则模块隔离。
-- 测试使用 #[should_panic] 和 doc test。
-- 将文件开头的use语句拆分成三个部分：标准库 -> 三方crate -> 本地引用，每部分用空行隔开。
-- 使用迭代器、`Option::or`、`Result::map`等链式语法。
-- 使用`let-else`或`match-return`等语法，提前返回负面条件，避免代码嵌套过深。
+- **避免 unsafe，如必须则模块隔离**
+  - 正例：
+    ```rust
+    #[cfg(feature = "unsafe")]
+    mod unsafe_module {
+        unsafe fn dangerous() { /* FFI 调用 */ }
+    }
+    ```
+  - 反例：散布 unsafe 块在代码中（难以审查）
+
+- **测试使用 #[should_panic] 和 doc test**
+  - 正例：
+    ```rust
+    #[test]
+    #[should_panic(expected = "divide by zero")]
+    fn test_divide_by_zero() { divide(1.0, 0.0); }
+
+    /// ```rust
+    /// assert_eq!(add(2, 3), 5);
+    /// ```
+    fn add(a: i32, b: i32) -> i32 { a + b }
+    ```
+  - 反例：只用 assert! 而不测试错误情况
+
+- **将文件开头的 use 语句拆分成三个部分**
+  - 正例：
+    ```rust
+    use std::collections::HashMap;
+    use std::io;
+
+    use serde::{Deserialize, Serialize};
+
+    use crate::models::User;
+    ```
+  - 反例：
+    ```rust
+    use std::collections::HashMap;
+    use serde::{Deserialize, Serialize};
+    use crate::models::User;
+    use std::io;
+    ```（混合顺序）
+
+- **使用迭代器、`Option::or`、`Result::map` 等链式语法**
+  - 正例：`let result = vec.iter().filter(|&x| x > &5).map(|x| x * 2).collect();`
+  - 反例：
+    ```rust
+    let mut result = Vec::new();
+    for x in &vec {
+        if x > &5 {
+            result.push(x * 2);
+        }
+    }
+    ```（命令式风格）
+
+- **使用 `let-else` 或 `match-return` 等语法，提前返回负面条件**
+  - 正例：
+    ```rust
+    fn process(option: Option<i32>) -> i32 {
+        let Some(value) = option else { return 0; };
+        value * 2
+    }
+    ```
+  - 反例：
+    ```rust
+    fn process(option: Option<i32>) -> i32 {
+        if let Some(value) = option {
+            value * 2
+        } else {
+            0
+        }
+    }
+    ```（嵌套 if-let）
 
 ### 代码文档
 
-- 所有公共项必须有 /// 文档。
-- 所有模块必须使用 //! 文档。
+- **所有公共项必须有 /// 文档**
+  - 正例：
+    ```rust
+    /// Calculates the sum of two numbers.
+    /// # Arguments
+    /// * `a` - First number
+    /// * `b` - Second number
+    /// # Returns
+    /// The sum of `a` and `b`
+    pub fn add(a: i32, b: i32) -> i32 { a + b }
+    ```
+  - 反例：`pub fn add(a: i32, b: i32) -> i32 { a + b }`（无文档）
+
+- **所有模块必须使用 //! 文档**
+  - 正例：
+    ```rust
+    //! This module provides mathematical utilities.
+    mod math {
+        // ...
+    }
+    ```
+  - 反例：`mod math { /* no docs */ }`（无模块文档）
 
 ### 完成后测试验证
 
-- 将以下命令合为一行，并运行：
+- **运行完整验证命令**
+  - 正例：
+    ```bash
+    cargo clippy --fix --allow-dirty --all-targets --all-features --message-format=short -- -D warnings && cargo test --quiet --all-targets --all-features --message-format=short && cargo test --quiet --doc --all-features --message-format=short && cargo fmt
+    ```
+  - 反例：只运行 `cargo build`（不检查代码质量和测试）
 
-```bash
-cargo clippy --fix --allow-dirty --all-targets --all-features --message-format=short -- -D warnings 
-cargo test --quiet --all-targets --all-features --message-format=short 
-cargo test --quiet --doc --all-features --message-format=short
-cargo fmt
-```
+- **补全文档注释缺失警告**
+  - 正例：看到 clippy 警告后立即添加文档
+  - 反例：忽略文档警告，提交无文档代码
 
-- `--all-targets`和`--all-features`参数，可在需要测试特定feature/target时移除。`--message-format=short`参数，可在需要详细警告/错误信息时移除。
-
-- 对于文档注释缺失警告，必须补全文档注释。
-- 尽可能避免使用`#[allow(xxx)]`等linter。
+- **尽可能避免使用 `#[allow(xxx)]` 等 linter**
+  - 正例：修复 linter 警告而不是忽略
+  - 反例：`#[allow(clippy::pedantic)]`（掩盖代码质量问题）
 
 ## 所有权最佳实践
 
