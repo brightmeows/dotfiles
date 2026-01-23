@@ -1,0 +1,48 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": "notify",
+  "experimental": {
+    "chatMaxRetries": 3
+  },
+  "compaction": {
+    "auto": true,
+    "prune": true,
+  },
+  "permission": {
+    "bash": {
+      "ls *": "allow",
+      "tree *": "allow",
+      "fd *": "allow",
+      "rg *": "allow",
+      "sed *": "ask",
+      "sd *": "ask",
+      "wc *": "allow",
+      "cat *": "deny",
+    },
+    "edit": {
+      "findings.md": "allow",
+      "progress.md": "allow",
+      "task_plan.md": "allow",
+    },
+  },
+  "lsp": {
+    "rust": {
+      "disabled": true
+    }
+  },
+  "mcp": {
+    "package-registry": {
+      "type": "local",
+      "enabled": false,
+      "command": [
+        "deno",
+        "run",
+        "--no-lock",
+        "--allow-net",
+        "--allow-env",
+        "--allow-sys",
+        "npm:package-registry-mcp"
+      ]
+    },
+  }
+}
