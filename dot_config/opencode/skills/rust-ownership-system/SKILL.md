@@ -6,18 +6,17 @@ allowed-tools:
   - Read
 ---
 
-# Rust Ownership System
+# Rust 所有权系统
 
-Master Rust's unique ownership system that provides memory safety without
-garbage collection through compile-time checks.
+掌握 Rust 独特的通过编译时检查提供内存安全而无需垃圾回收的所有权系统。
 
-## Ownership Rules
+## 所有权规则
 
-**Three fundamental ownership rules:**
+**三个基本的所有权规则：**
 
-1. Each value in Rust has a variable that's its owner
-2. There can only be one owner at a time
-3. When the owner goes out of scope, the value is dropped
+1. Rust 中的每个值都有一个变量作为其所有者
+2. 一次只能有一个所有者
+3. 当所有者超出作用域时，该值被丢弃
 
 ```rust
 fn ownership_basics() {
@@ -34,26 +33,26 @@ fn ownership_basics() {
 } // s2 dropped here, memory freed
 ```
 
-## Move Semantics
+## 移动语义
 
-**Ownership transfer (move):**
+**所有权转移（移动）：**
 
 ```rust
 fn move_semantics() {
     let s1 = String::from("hello");
 
-    // Ownership moved to function
+    // 所有权移动到函数
     takes_ownership(s1);
 
-    // Error: s1 no longer valid
+    // 错误：s1 不再有效
     // println!("{}", s1);
 }
 
 fn takes_ownership(s: String) {
     println!("{}", s);
-} // s dropped here
+} // s 在此处被丢弃
 
-// Return ownership from function
+// 从函数返回所有权
 fn gives_ownership() -> String {
     String::from("hello")
 }
@@ -64,42 +63,42 @@ fn main() {
 }
 ```
 
-**Copy trait for stack types:**
+**栈类型的 Copy trait：**
 
 ```rust
 fn copy_types() {
-    // Types implementing Copy are duplicated, not moved
+    // 实现 Copy 的类型被复制，而不是移动
     let x = 5;
-    let y = x; // x copied to y
+    let y = x; // x 复制到 y
 
-    println!("x: {}, y: {}", x, y); // Both valid
+    println!("x: {}, y: {}", x, y); // 两者都有效
 
-    // Copy types: integers, floats, bool, char, tuples of Copy types
+    // Copy 类型：整数、浮点、bool、char、Copy 类型的元组
     let tuple = (1, 2.5, true);
     let tuple2 = tuple;
-    println!("{:?} {:?}", tuple, tuple2); // Both valid
+    println!("{:?} {:?}", tuple, tuple2); // 两者都有效
 }
 ```
 
-## Borrowing
+## 借用
 
-**Immutable borrowing (references):**
+**不可变借用（引用）：**
 
 ```rust
 fn immutable_borrow() {
     let s1 = String::from("hello");
 
-    // Borrow s1 (immutable reference)
+    // 借用 s1（不可变引用）
     let len = calculate_length(&s1);
 
-    println!("Length of '{}' is {}", s1, len); // s1 still valid
+    println!("Length of '{}' is {}", s1, len); // s1 仍然有效
 }
 
 fn calculate_length(s: &String) -> usize {
     s.len()
-} // s goes out of scope, but doesn't drop the value
+} // s 超出作用域，但不丢弃值
 
-// Multiple immutable borrows allowed
+// 允许多个不可变借用
 fn multiple_immutable_borrows() {
     let s = String::from("hello");
 
@@ -111,13 +110,13 @@ fn multiple_immutable_borrows() {
 }
 ```
 
-**Mutable borrowing:**
+**可变借用：**
 
 ```rust
 fn mutable_borrow() {
     let mut s = String::from("hello");
 
-    // Mutable borrow
+    // 可变借用
     change(&mut s);
 
     println!("{}", s); // "hello, world"
@@ -127,29 +126,29 @@ fn change(s: &mut String) {
     s.push_str(", world");
 }
 
-// Only ONE mutable borrow allowed at a time
+// 一次只允许一个可变借用
 fn mutable_borrow_rules() {
     let mut s = String::from("hello");
 
     let r1 = &mut s;
-    // let r2 = &mut s; // Error: cannot borrow mutably twice
+    // let r2 = &mut s; // 错误：不能两次可变借用
 
     println!("{}", r1);
 }
 
-// Cannot mix mutable and immutable borrows
+// 不能混合可变和不可变借用
 fn no_mix_borrows() {
     let mut s = String::from("hello");
 
-    let r1 = &s;     // Immutable borrow
-    let r2 = &s;     // Another immutable borrow
-    // let r3 = &mut s; // Error: cannot borrow mutably while immutably borrowed
+    let r1 = &s;     // 不可变借用
+    let r2 = &s;     // 另一个不可变借用
+    // let r3 = &mut s; // 错误：在不可变借用时不能可变借用
 
     println!("{} {}", r1, r2);
 }
 ```
 
-**Non-lexical lifetimes (NLL):**
+**非词法生命周期（NLL）：**
 
 ```rust
 fn non_lexical_lifetimes() {
@@ -158,20 +157,20 @@ fn non_lexical_lifetimes() {
     let r1 = &s;
     let r2 = &s;
     println!("{} {}", r1, r2);
-    // r1 and r2 no longer used after this point
+    // r1 和 r2 在此点之后不再使用
 
-    // OK: immutable borrows ended
+    // OK：不可变借用结束
     let r3 = &mut s;
     println!("{}", r3);
 }
 ```
 
-## Lifetimes
+## 生命周期
 
-**Lifetime annotations:**
+**生命周期注解：**
 
 ```rust
-// Lifetime 'a ensures returned reference lives as long as both inputs
+// 生命周期 'a 确保返回的引用与两个输入一样长寿
 fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
     if x.len() > y.len() {
         x
@@ -189,10 +188,10 @@ fn main() {
 }
 ```
 
-**Lifetime in structs:**
+**结构体中的生命周期：**
 
 ```rust
-// Struct holds a reference, needs lifetime annotation
+// 结构体持有引用，需要生命周期注解
 struct ImportantExcerpt<'a> {
     part: &'a str,
 }
@@ -565,31 +564,31 @@ Use rust-ownership-system when you need to:
 - Implement custom Drop behavior
 - Work with slices and references safely
 
-## Best Practices
+## 最佳实践
 
-- Prefer borrowing over ownership transfer when possible
-- Use immutable borrows by default, mutable only when needed
-- Keep borrow scopes as small as possible
-- Use lifetime elision when compiler can infer lifetimes
-- Choose appropriate smart pointer for use case
-- Avoid RefCell in performance-critical code
-- Use slices instead of owned types in function signatures
-- Clone only when necessary (it's explicit and visible)
-- Implement Drop for custom cleanup logic
-- Let compiler guide you with borrow checker errors
+- 尽可能优先借用而不是所有权转移
+- 默认使用不可变借用，只在需要时使用可变借用
+- 保持借用作用域尽可能小
+- 当编译器可以推断生命周期时使用生命周期省略
+- 为用例选择合适的智能指针
+- 在性能关键代码中避免 RefCell
+- 在函数签名中使用切片而不是拥有类型
+- 只在必要时克隆（它是显式的和可见的）
+- 为自定义清理逻辑实现 Drop
+- 让编译器通过借用检查器错误引导你
 
-## Common Pitfalls
+## 常见陷阱
 
-- Moving value and trying to use it afterward
-- Creating multiple mutable borrows simultaneously
-- Mixing mutable and immutable borrows
-- Returning references to local variables
-- Fighting the borrow checker instead of understanding it
-- Overusing clone() to avoid ownership issues
-- Not understanding lifetime relationships
-- Circular references with Rc (use Weak)
-- Panicking with RefCell borrow violations at runtime
-- Using 'static lifetime incorrectly
+- 移动值并尝试随后使用它
+- 同时创建多个可变借用
+- 混合可变和不可变借用
+- 返回对局部变量的引用
+- 与借用检查器斗争而不是理解它
+- 过度使用 clone() 来避免所有权问题
+- 不理解生命周期关系
+- 使用 Rc 的循环引用（使用 Weak）
+- 在运行时因 RefCell 借用违规而 panic
+- 错误使用 'static 生命周期
 
 ## Resources
 

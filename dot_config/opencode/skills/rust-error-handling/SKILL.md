@@ -6,17 +6,16 @@ allowed-tools:
   - Read
 ---
 
-# Rust Error Handling
+# Rust 错误处理
 
-Master Rust's error handling mechanisms using Result, Option, custom error
-types, and popular error handling libraries for robust applications.
+掌握使用 Result、Option、自定义错误类型和流行错误处理库的 Rust 错误处理机制，以构建健壮的应用程序。
 
-## Result and Option
+## Result 和 Option
 
-**Result type for recoverable errors:**
+**用于可恢复错误的 Result 类型：**
 
 ```rust
-// Result<T, E> for operations that can fail
+// Result<T, E> 用于可能失败的操作
 fn divide(a: f64, b: f64) -> Result<f64, String> {
     if b == 0.0 {
         Err(String::from("Division by zero"))
@@ -33,7 +32,7 @@ fn main() {
 }
 ```
 
-**Option type for optional values:**
+**用于可选值的 Option 类型：**
 
 ```rust
 fn find_user(id: u32) -> Option<String> {
@@ -52,22 +51,22 @@ fn main() {
 }
 ```
 
-## Error Propagation with ?
+## 使用 ? 操作符的错误传播
 
-**Using ? operator:**
+**使用 ? 操作符：**
 
 ```rust
 use std::fs::File;
 use std::io::{self, Read};
 
 fn read_file(path: &str) -> Result<String, io::Error> {
-    let mut file = File::open(path)?;  // Propagate error
+    let mut file = File::open(path)?;  // 传播错误
     let mut contents = String::new();
-    file.read_to_string(&mut contents)?;  // Propagate error
+    file.read_to_string(&mut contents)?;  // 传播错误
     Ok(contents)
 }
 
-// Equivalent without ? operator
+// 不使用 ? 操作符的等价写法
 fn read_file_explicit(path: &str) -> Result<String, io::Error> {
     let mut file = match File::open(path) {
         Ok(f) => f,
@@ -82,7 +81,7 @@ fn read_file_explicit(path: &str) -> Result<String, io::Error> {
 }
 ```
 
-**? with Option:**
+**? 与 Option：**
 
 ```rust
 fn get_first_char(text: &str) -> Option<char> {
@@ -90,14 +89,14 @@ fn get_first_char(text: &str) -> Option<char> {
 }
 
 fn process_text(text: Option<&str>) -> Option<char> {
-    let t = text?;  // Return None if text is None
+    let t = text?;  // 如果 text 为 None 则返回 None
     get_first_char(t)
 }
 ```
 
-## Custom Error Types
+## 自定义错误类型
 
-**Simple custom error:**
+**简单的自定义错误：**
 
 ```rust
 use std::fmt;
@@ -122,7 +121,7 @@ fn parse_number(s: &str) -> Result<i32, ParseError> {
 }
 ```
 
-**Enum-based error type:**
+**基于枚举的错误类型：**
 
 ```rust
 use std::fmt;
@@ -154,7 +153,7 @@ impl From<io::Error> for AppError {
 }
 
 fn process_file(path: &str) -> Result<String, AppError> {
-    let content = std::fs::read_to_string(path)?;  // io::Error auto-converted
+    let content = std::fs::read_to_string(path)?;  // io::Error 自动转换
 
     if content.is_empty() {
         Err(AppError::NotFound(path.to_string()))
@@ -164,15 +163,15 @@ fn process_file(path: &str) -> Result<String, AppError> {
 }
 ```
 
-## thiserror Library
+## thiserror 库
 
-**Install thiserror:**
+**安装 thiserror：**
 
 ```bash
 cargo add thiserror
 ```
 
-**Using thiserror for custom errors:**
+**使用 thiserror 处理自定义错误：**
 
 ```rust
 use thiserror::Error;
@@ -202,7 +201,7 @@ fn validate_user(name: &str) -> Result<(), DataError> {
 }
 
 fn load_data(path: &str) -> Result<String, DataError> {
-    let data = std::fs::read_to_string(path)?;  // Auto-converts io::Error
+    let data = std::fs::read_to_string(path)?;  // 自动转换 io::Error
 
     if data.is_empty() {
         return Err(DataError::NotFound(path.to_string()));
@@ -212,7 +211,7 @@ fn load_data(path: &str) -> Result<String, DataError> {
 }
 ```
 
-**thiserror with source errors:**
+**带有源错误的 thiserror：**
 
 ```rust
 use thiserror::Error;
@@ -234,15 +233,15 @@ enum ConfigError {
 }
 ```
 
-## anyhow Library
+## anyhow 库
 
-**Install anyhow:**
+**安装 anyhow：**
 
 ```bash
 cargo add anyhow
 ```
 
-**Using anyhow for application errors:**
+**使用 anyhow 处理应用程序错误：**
 
 ```rust
 use anyhow::{Result, Context, anyhow, bail};
@@ -553,31 +552,31 @@ Use rust-error-handling when you need to:
 - Implement comprehensive error handling
 - Write robust error messages for debugging
 
-## Best Practices
+## 最佳实践
 
-- Use Result for recoverable errors, panic for unrecoverable ones
-- Provide context with anyhow::Context in applications
-- Use thiserror for library error types
-- Implement Display and Error trait for custom errors
-- Use ? operator for error propagation
-- Avoid unwrap/expect in production code
-- Return errors instead of logging and continuing
-- Make error messages actionable and descriptive
-- Use type system to prevent errors at compile time
-- Document expected errors in function documentation
+- 对可恢复错误使用 Result，对不可恢复错误使用 panic
+- 在应用程序中使用 anyhow::Context 提供上下文
+- 对库错误类型使用 thiserror
+- 为自定义错误实现 Display 和 Error trait
+- 使用 ? 操作符进行错误传播
+- 在生产代码中避免 unwrap/expect
+- 返回错误而不是记录日志并继续
+- 使错误消息可操作且描述性
+- 使用类型系统在编译时防止错误
+- 在函数文档中记录预期错误
 
-## Common Pitfalls
+## 常见陷阱
 
-- Overusing unwrap() leading to panics in production
-- Not providing enough context in error messages
-- Mixing panic and Result inconsistently
-- Creating overly generic error types (String)
-- Not implementing From for error conversions
-- Ignoring errors with let _ = result
-- Using Result when Option is more appropriate
-- Not handling all error variants in match
-- Creating error types that are hard to use
-- Forgetting to propagate errors up the call stack
+- 在生产中过度使用 unwrap() 导致 panic
+- 错误消息中没有提供足够上下文
+- 不一致地混合使用 panic 和 Result
+- 创建过于通用的错误类型（String）
+- 未实现 From 用于错误转换
+- 使用 let _ = result 忽略错误
+- 当 Option 更合适时使用 Result
+- 在 match 中未处理所有错误变体
+- 创建难以使用的错误类型
+- 忘记将错误传播到调用栈上方
 
 ## Resources
 

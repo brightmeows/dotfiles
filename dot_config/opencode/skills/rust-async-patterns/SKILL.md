@@ -3,22 +3,22 @@ name: rust-async-patterns
 description: Master Rust async programming with Tokio, async traits, error handling, and concurrent patterns. Use when building async Rust applications, implementing concurrent systems, or debugging async code.
 ---
 
-# Rust Async Patterns
+# Rust 异步模式
 
-Production patterns for async Rust programming with Tokio runtime, including tasks, channels, streams, and error handling.
+使用 Tokio 运行时生产级异步 Rust 编程模式，包括任务、通道、流和错误处理。
 
-## When to Use This Skill
+## 何时使用此技能
 
-- Building async Rust applications
-- Implementing concurrent network services
-- Using Tokio for async I/O
-- Handling async errors properly
-- Debugging async code issues
-- Optimizing async performance
+- 构建异步 Rust 应用程序
+- 实现并发网络服务
+- 使用 Tokio 进行异步 I/O
+- 正确处理异步错误
+- 调试异步代码问题
+- 优化异步性能
 
-## Core Concepts
+## 核心概念
 
-### 1. Async Execution Model
+### 1. 异步执行模型
 
 ```
 Future (lazy) → poll() → Ready(value) | Pending
@@ -26,17 +26,17 @@ Future (lazy) → poll() → Ready(value) | Pending
               Waker ← Runtime schedules
 ```
 
-### 2. Key Abstractions
+### 2. 关键抽象
 
-| Concept | Purpose |
-|---------|---------|
-| `Future` | Lazy computation that may complete later |
-| `async fn` | Function returning impl Future |
-| `await` | Suspend until future completes |
-| `Task` | Spawned future running concurrently |
-| `Runtime` | Executor that polls futures |
+| 概念 | 目的 |
+|------|------|
+| `Future` | 可能稍后完成的延迟计算 |
+| `async fn` | 返回 impl Future 的函数 |
+| `await` | 暂停直到 future 完成 |
+| `Task` | 并发运行的 spawned future |
+| `Runtime` | 轮询 futures 的执行器 |
 
-## Quick Start
+## 快速开始
 
 ```toml
 # Cargo.toml
@@ -55,10 +55,10 @@ use anyhow::Result;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Initialize tracing
+    // 初始化 tracing
     tracing_subscriber::fmt::init();
 
-    // Async operations
+    // 异步操作
     let result = fetch_data("https://api.example.com").await?;
     println!("Got: {}", result);
 
@@ -66,21 +66,21 @@ async fn main() -> Result<()> {
 }
 
 async fn fetch_data(url: &str) -> Result<String> {
-    // Simulated async operation
+    // 模拟异步操作
     sleep(Duration::from_millis(100)).await;
     Ok(format!("Data from {}", url))
 }
 ```
 
-## Patterns
+## 模式
 
-### Pattern 1: Concurrent Task Execution
+### 模式 1: 并发任务执行
 
 ```rust
 use tokio::task::JoinSet;
 use anyhow::Result;
 
-// Spawn multiple concurrent tasks
+// 并发生成多个任务
 async fn fetch_all_concurrent(urls: Vec<String>) -> Result<Vec<String>> {
     let mut set = JoinSet::new();
 
@@ -102,18 +102,18 @@ async fn fetch_all_concurrent(urls: Vec<String>) -> Result<Vec<String>> {
     Ok(results)
 }
 
-// With concurrency limit
+// 带并发限制
 use futures::stream::{self, StreamExt};
 
 async fn fetch_with_limit(urls: Vec<String>, limit: usize) -> Vec<Result<String>> {
     stream::iter(urls)
         .map(|url| async move { fetch_data(&url).await })
-        .buffer_unordered(limit) // Max concurrent tasks
+        .buffer_unordered(limit) // 最大并发任务数
         .collect()
         .await
 }
 
-// Select first to complete
+// 选择首先完成的
 use tokio::select;
 
 async fn race_requests(url1: &str, url2: &str) -> Result<String> {
@@ -124,28 +124,28 @@ async fn race_requests(url1: &str, url2: &str) -> Result<String> {
 }
 ```
 
-### Pattern 2: Channels for Communication
+### 模式 2: 用于通信的通道
 
 ```rust
 use tokio::sync::{mpsc, broadcast, oneshot, watch};
 
-// Multi-producer, single-consumer
+// 多生产者，单消费者
 async fn mpsc_example() {
     let (tx, mut rx) = mpsc::channel::<String>(100);
 
-    // Spawn producer
+    // 生成生产者
     let tx2 = tx.clone();
     tokio::spawn(async move {
         tx2.send("Hello".to_string()).await.unwrap();
     });
 
-    // Consume
+    // 消费
     while let Some(msg) = rx.recv().await {
         println!("Got: {}", msg);
     }
 }
 
-// Broadcast: multi-producer, multi-consumer
+// 广播：多生产者，多消费者
 async fn broadcast_example() {
     let (tx, _) = broadcast::channel::<String>(100);
 
@@ -154,12 +154,12 @@ async fn broadcast_example() {
 
     tx.send("Event".to_string()).unwrap();
 
-    // Both receivers get the message
+    // 两个接收者都收到消息
     let _ = rx1.recv().await;
     let _ = rx2.recv().await;
 }
 
-// Oneshot: single value, single use
+// Oneshot：单个值，单次使用
 async fn oneshot_example() -> String {
     let (tx, rx) = oneshot::channel::<String>();
 
@@ -170,13 +170,13 @@ async fn oneshot_example() -> String {
     rx.await.unwrap()
 }
 
-// Watch: single producer, multi-consumer, latest value
+// Watch：单生产者，多消费者，最新值
 async fn watch_example() {
     let (tx, mut rx) = watch::channel("initial".to_string());
 
     tokio::spawn(async move {
         loop {
-            // Wait for changes
+            // 等待更改
             rx.changed().await.unwrap();
             println!("New value: {}", *rx.borrow());
         }
@@ -186,7 +186,7 @@ async fn watch_example() {
 }
 ```
 
-### Pattern 3: Async Error Handling
+### 模式 3: 异步错误处理
 
 ```rust
 use anyhow::{Context, Result, bail};
@@ -207,7 +207,7 @@ pub enum ServiceError {
     Timeout(std::time::Duration),
 }
 
-// Using anyhow for application errors
+// 使用 anyhow 处理应用程序错误
 async fn process_request(id: &str) -> Result<Response> {
     let data = fetch_data(id)
         .await
@@ -219,7 +219,7 @@ async fn process_request(id: &str) -> Result<Response> {
     Ok(parsed)
 }
 
-// Using custom errors for library code
+// 为库代码使用自定义错误
 async fn get_user(id: &str) -> Result<User, ServiceError> {
     let result = db.query(id).await?;
 
@@ -229,7 +229,7 @@ async fn get_user(id: &str) -> Result<User, ServiceError> {
     }
 }
 
-// Timeout wrapper
+// 超时包装器
 use tokio::time::timeout;
 
 async fn with_timeout<T, F>(duration: Duration, future: F) -> Result<T, ServiceError>
@@ -242,7 +242,7 @@ where
 }
 ```
 
-### Pattern 4: Graceful Shutdown
+### 模式 4: 优雅关闭
 
 ```rust
 use tokio::signal;
@@ -250,11 +250,11 @@ use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
 
 async fn run_server() -> Result<()> {
-    // Method 1: CancellationToken
+    // 方法 1: CancellationToken
     let token = CancellationToken::new();
     let token_clone = token.clone();
 
-    // Spawn task that respects cancellation
+    // 生成尊重取消的任务
     tokio::spawn(async move {
         loop {
             tokio::select! {
@@ -267,20 +267,20 @@ async fn run_server() -> Result<()> {
         }
     });
 
-    // Wait for shutdown signal
+    // 等待关闭信号
     signal::ctrl_c().await?;
     tracing::info!("Shutdown signal received");
 
-    // Cancel all tasks
+    // 取消所有任务
     token.cancel();
 
-    // Give tasks time to cleanup
+    // 给任务清理时间
     tokio::time::sleep(Duration::from_secs(5)).await;
 
     Ok(())
 }
 
-// Method 2: Broadcast channel for shutdown
+// 方法 2: 用于关闭的广播通道
 async fn run_with_broadcast() -> Result<()> {
     let (shutdown_tx, _) = broadcast::channel::<()>(1);
 
@@ -301,7 +301,7 @@ async fn run_with_broadcast() -> Result<()> {
 }
 ```
 
-### Pattern 5: Async Traits
+### 模式 5: 异步 Traits
 
 ```rust
 use async_trait::async_trait;
@@ -346,7 +346,7 @@ impl Repository for PostgresRepository {
     }
 }
 
-// Trait object usage
+// Trait 对象使用
 async fn process(repo: &dyn Repository, id: &str) -> Result<()> {
     let entity = repo.get(id).await?;
     // Process...
@@ -354,13 +354,13 @@ async fn process(repo: &dyn Repository, id: &str) -> Result<()> {
 }
 ```
 
-### Pattern 6: Streams and Async Iteration
+### 模式 6: 流和异步迭代
 
 ```rust
 use futures::stream::{self, Stream, StreamExt};
 use async_stream::stream;
 
-// Create stream from async iterator
+// 从异步迭代器创建流
 fn numbers_stream() -> impl Stream<Item = i32> {
     stream! {
         for i in 0..10 {
@@ -370,11 +370,11 @@ fn numbers_stream() -> impl Stream<Item = i32> {
     }
 }
 
-// Process stream
+// 处理流
 async fn process_stream() {
     let stream = numbers_stream();
 
-    // Map and filter
+    // 映射和过滤
     let processed: Vec<_> = stream
         .filter(|n| futures::future::ready(*n % 2 == 0))
         .map(|n| n * 2)
@@ -384,7 +384,7 @@ async fn process_stream() {
     println!("{:?}", processed);
 }
 
-// Chunked processing
+// 分块处理
 async fn process_in_chunks() {
     let stream = numbers_stream();
 
@@ -395,7 +395,7 @@ async fn process_in_chunks() {
     }
 }
 
-// Merge multiple streams
+// 合并多个流
 async fn merge_streams() {
     let stream1 = numbers_stream();
     let stream2 = numbers_stream();
@@ -410,13 +410,13 @@ async fn merge_streams() {
 }
 ```
 
-### Pattern 7: Resource Management
+### 模式 7: 资源管理
 
 ```rust
 use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock, Semaphore};
 
-// Shared state with RwLock (prefer for read-heavy)
+// 使用 RwLock 的共享状态（适合读多写少）
 struct Cache {
     data: RwLock<HashMap<String, String>>,
 }
@@ -431,7 +431,7 @@ impl Cache {
     }
 }
 
-// Connection pool with semaphore
+// 使用信号量的连接池
 struct Pool {
     semaphore: Semaphore,
     connections: Mutex<Vec<Connection>>,
@@ -470,15 +470,15 @@ impl Drop for PooledConnection<'_> {
 }
 ```
 
-## Debugging Tips
+## 调试提示
 
 ```rust
-// Enable tokio-console for runtime debugging
+// 启用 tokio-console 进行运行时调试
 // Cargo.toml: tokio = { features = ["tracing"] }
 // Run: RUSTFLAGS="--cfg tokio_unstable" cargo run
 // Then: tokio-console
 
-// Instrument async functions
+// 检测异步函数
 use tracing::instrument;
 
 #[instrument(skip(pool))]
@@ -487,28 +487,28 @@ async fn fetch_user(pool: &PgPool, id: &str) -> Result<User> {
     // ...
 }
 
-// Track task spawning
+// 跟踪任务生成
 let span = tracing::info_span!("worker", id = %worker_id);
 tokio::spawn(async move {
-    // Enters span when polled
+    // 轮询时进入 span
 }.instrument(span));
 ```
 
-## Best Practices
+## 最佳实践
 
-### Do's
-- **Use `tokio::select!`** - For racing futures
-- **Prefer channels** - Over shared state when possible
-- **Use `JoinSet`** - For managing multiple tasks
-- **Instrument with tracing** - For debugging async code
-- **Handle cancellation** - Check `CancellationToken`
+### 推荐做法
+- **使用 `tokio::select!`** - 用于竞争 futures
+- **优先使用通道** - 而不是共享状态（可能时）
+- **使用 `JoinSet`** - 用于管理多个任务
+- **使用 tracing 检测** - 用于调试异步代码
+- **处理取消** - 检查 `CancellationToken`
 
-### Don'ts
-- **Don't block** - Never use `std::thread::sleep` in async
-- **Don't hold locks across awaits** - Causes deadlocks
-- **Don't spawn unboundedly** - Use semaphores for limits
-- **Don't ignore errors** - Propagate with `?` or log
-- **Don't forget Send bounds** - For spawned futures
+### 不推荐做法
+- **不要阻塞** - 在异步中永远不要使用 `std::thread::sleep`
+- **不要跨 await 持有锁** - 会导致死锁
+- **不要无限制生成** - 使用信号量限制
+- **不要忽略错误** - 使用 `?` 或日志传播
+- **不要忘记 Send 界限** - 对于 spawned futures
 
 ## Resources
 
