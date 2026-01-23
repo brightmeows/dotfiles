@@ -94,633 +94,215 @@ cargo fmt
 - 对于文档注释缺失警告，必须补全文档注释。
 - 尽可能避免使用`#[allow(xxx)]`等linter。
 
-## 所有权系统
-
-掌握 Rust 独特的通过编译时检查提供内存安全而无需垃圾回收的所有权系统。
-
-### 所有权规则
-
-**三个基本的所有权规则：**
-
-1. Rust 中的每个值都有一个变量作为其所有者
-2. 一次只能有一个所有者
-3. 当所有者超出作用域时，该值被丢弃
-
-```rust
-fn ownership_basics() {
-    // s owns the String
-    let s = String::from("hello");
-
-    // Ownership moved to s2
-    let s2 = s;
-
-    // Error: s no longer owns the value
-    // println!("{}", s);
-
-    println!("{}", s2); // OK
-} // s2 dropped here, memory freed
-```
-
-### 移动语义
-
-**所有权转移（移动）：**
-
-```rust
-fn move_semantics() {
-    let s1 = String::from("hello");
-
-    // 所有权移动到函数
-    takes_ownership(s1);
-
-    // 错误：s1 不再有效
-    // println!("{}", s1);
-}
-
-fn takes_ownership(s: String) {
-    println!("{}", s);
-} // s 在此处被丢弃
-
-// 从函数返回所有权
-fn gives_ownership() -> String {
-    String::from("hello")
-}
-
-fn main() {
-    let s = gives_ownership();
-    println!("{}", s);
-}
-```
-
-**栈类型的 Copy trait：**
-
-```rust
-fn copy_types() {
-    // 实现 Copy 的类型被复制，而不是移动
-    let x = 5;
-    let y = x; // x 复制到 y
-
-    println!("x: {}, y: {}", x, y); // 两者都有效
-
-    // Copy 类型：整数、浮点、bool、char、Copy 类型的元组
-    let tuple = (1, 2.5, true);
-    let tuple2 = tuple;
-    println!("{:?} {:?}", tuple, tuple2); // 两者都有效
-}
-```
-
-### 借用
-
-**不可变借用（引用）：**
-
-```rust
-fn immutable_borrow() {
-    let s1 = String::from("hello");
-
-    // 借用 s1（不可变引用）
-    let len = calculate_length(&s1);
-
-    println!("Length of '{}' is {}", s1, len); // s1 仍然有效
-}
-
-fn calculate_length(s: &String) -> usize {
-    s.len()
-} // s 超出作用域，但不丢弃值
-
-// 允许多个不可变借用
-fn multiple_immutable_borrows() {
-    let s = String::from("hello");
-
-    let r1 = &s;
-    let r2 = &s;
-    let r3 = &s;
-
-    println!("{}, {}, {}", r1, r2, r3); // OK
-}
-```
-
-**可变借用：**
-
-```rust
-fn mutable_borrow() {
-    let mut s = String::from("hello");
-
-    // 可变借用
-    change(&mut s);
-
-    println!("{}", s); // "hello, world"
-}
-
-fn change(s: &mut String) {
-    s.push_str(", world");
-}
-
-// 一次只允许一个可变借用
-fn mutable_borrow_rules() {
-    let mut s = String::from("hello");
-
-    let r1 = &mut s;
-    // let r2 = &mut s; // 错误：不能两次可变借用
-
-    println!("{}", r1);
-}
-
-// 不能混合可变和不可变借用
-fn no_mix_borrows() {
-    let mut s = String::from("hello");
-
-    let r1 = &s;     // 不可变借用
-    let r2 = &s;     // 另一个不可变借用
-    // let r3 = &mut s; // 错误：在不可变借用时不能可变借用
-
-    println!("{} {}", r1, r2);
-}
-```
-
-**非词法生命周期（NLL）：**
-
-```rust
-fn non_lexical_lifetimes() {
-    let mut s = String::from("hello");
-
-    let r1 = &s;
-    let r2 = &s;
-    println!("{} {}", r1, r2);
-    // r1 和 r2 在此点之后不再使用
-
-    // OK：不可变借用结束
-    let r3 = &mut s;
-    println!("{}", r3);
-}
-```
-
-### 生命周期
-
-**生命周期注解：**
-
-```rust
-// 生命周期 'a 确保返回的引用与两个输入一样长寿
-fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
-    if x.len() > y.len() {
-        x
-    } else {
-        y
-    }
-}
-
-fn main() {
-    let string1 = String::from("long string");
-    let string2 = String::from("short");
-
-    let result = longest(&string1, &string2);
-    println!("Longest: {}", result);
-}
-```
-
-**结构体中的生命周期：**
-
-```rust
-// 结构体持有引用，需要生命周期注解
-struct ImportantExcerpt<'a> {
-    part: &'a str,
-}
-
-impl<'a> ImportantExcerpt<'a> {
-    fn level(&self) -> i32 {
-        3
-    }
-
-    fn announce_and_return_part(&self, announcement: &str) -> &str {
-        println!("Attention: {}", announcement);
-        self.part
-    }
-}
-
-fn main() {
-    let novel = String::from("Call me Ishmael. Some years ago...");
-    let first_sentence = novel.split('.').next().unwrap();
-
-    let excerpt = ImportantExcerpt {
-        part: first_sentence,
-    };
-
-    println!("{}", excerpt.part);
-}
-```
-
-**Lifetime elision rules:**
-
-```rust
-// Compiler infers lifetimes in these cases:
-
-// Rule 1: Each reference parameter gets its own lifetime
-fn first_word(s: &str) -> &str {
-    // Expanded: fn first_word<'a>(s: &'a str) -> &'a str
-    s.split_whitespace().next().unwrap_or("")
-}
-
-// Rule 2: If one input lifetime, assign to all outputs
-fn foo(s: &str) -> &str {
-    s
-}
-
-// Rule 3: If &self or &mut self, its lifetime assigned to outputs
-impl<'a> ImportantExcerpt<'a> {
-    fn get_part(&self) -> &str {
-        // Expanded: fn get_part<'a>(&'a self) -> &'a str
-        self.part
-    }
-}
-```
-
-**Static lifetime:**
-
-```rust
-// 'static means reference lives for entire program duration
-fn static_lifetime() -> &'static str {
-    "This string is stored in binary"
-}
-
-// String literals have 'static lifetime
-let s: &'static str = "hello world";
-```
-
-### Smart Pointers
-
-**Box for heap allocation:**
-
-```rust
-fn box_pointer() {
-    // Allocate value on heap
-    let b = Box::new(5);
-    println!("b = {}", b);
-} // b deallocated when out of scope
-
-// Recursive types require Box
-enum List {
-    Cons(i32, Box<List>),
-    Nil,
-}
-
-use List::{Cons, Nil};
-
-fn recursive_type() {
-    let list = Cons(1, Box::new(Cons(2, Box::new(Cons(3, Box::new(Nil))))));
-}
-```
-
-**Rc for reference counting:**
-
-```rust
-use std::rc::Rc;
-
-fn rc_example() {
-    let a = Rc::new(5);
-
-    // Clone Rc pointer, increment count
-    let b = Rc::clone(&a);
-    let c = Rc::clone(&a);
-
-    println!("Reference count: {}", Rc::strong_count(&a)); // 3
-
-    // All owners must go out of scope before value is dropped
-}
-
-// Sharing data in graph structures
-enum RcList {
-    Cons(i32, Rc<RcList>),
-    Nil,
-}
-
-use RcList::{Cons as RcCons, Nil as RcNil};
-
-fn shared_ownership() {
-    let a = Rc::new(RcCons(5, Rc::new(RcCons(10, Rc::new(RcNil)))));
-
-    // b and c both reference a
-    let b = RcCons(3, Rc::clone(&a));
-    let c = RcCons(4, Rc::clone(&a));
-}
-```
-
-**RefCell for interior mutability:**
-
-```rust
-use std::cell::RefCell;
-
-fn refcell_example() {
-    let value = RefCell::new(5);
-
-    // Borrow mutably
-    *value.borrow_mut() += 1;
-
-    // Borrow immutably
-    println!("Value: {}", value.borrow());
-}
-
-// Combine Rc and RefCell for shared mutable data
-use std::rc::Rc;
-use std::cell::RefCell;
-
-fn rc_refcell() {
-    let value = Rc::new(RefCell::new(5));
-
-    let a = Rc::clone(&value);
-    let b = Rc::clone(&value);
-
-    *a.borrow_mut() += 10;
-    *b.borrow_mut() += 20;
-
-    println!("Value: {}", value.borrow()); // 35
-}
-```
-
-### 所有权最佳实践
-
-- 尽可能优先借用而不是所有权转移
-- 默认使用不可变借用，只在需要时使用可变借用
-- 保持借用作用域尽可能小
-- 当编译器可以推断生命周期时使用生命周期省略
-- 为用例选择合适的智能指针
-- 在性能关键代码中避免 RefCell
-- 在函数签名中使用切片而不是拥有类型
-- 只在必要时克隆（它是显式的和可见的）
-- 为自定义清理逻辑实现 Drop
-- 让编译器通过借用检查器错误引导你
-
-## 错误处理
-
-掌握使用 Result、Option、自定义错误类型和流行错误处理库的 Rust 错误处理机制，以构建健壮的应用程序。
-
-### Result 和 Option
-
-**用于可恢复错误的 Result 类型：**
-
-```rust
-// Result<T, E> 用于可能失败的操作
-fn divide(a: f64, b: f64) -> Result<f64, String> {
-    if b == 0.0 {
-        Err(String::from("Division by zero"))
-    } else {
-        Ok(a / b)
-    }
-}
-
-fn main() {
-    match divide(10.0, 2.0) {
-        Ok(result) => println!("Result: {}", result),
-        Err(e) => println!("Error: {}", e),
-    }
-}
-```
-
-**用于可选值的 Option 类型：**
-
-```rust
-fn find_user(id: u32) -> Option<String> {
-    if id == 1 {
-        Some(String::from("Alice"))
-    } else {
-        None
-    }
-}
-
-fn main() {
-    match find_user(1) {
-        Some(name) => println!("Found: {}", name),
-        None => println!("User not found"),
-    }
-}
-```
-
-### 使用 ? 操作符的错误传播
-
-**使用 ? 操作符：**
-
-```rust
-use std::fs::File;
-use std::io::{self, Read};
-
-fn read_file(path: &str) -> Result<String, io::Error> {
-    let mut file = File::open(path)?;  // 传播错误
-    let mut contents = String::new();
-    file.read_to_string(&mut contents)?;  // 传播错误
-    Ok(contents)
-}
-
-// 不使用 ? 操作符的等价写法
-fn read_file_explicit(path: &str) -> Result<String, io::Error> {
-    let mut file = match File::open(path) {
-        Ok(f) => f,
-        Err(e) => return Err(e),
-    };
-
-    let mut contents = String::new();
-    match file.read_to_string(&mut contents) {
-        Ok(_) => Ok(contents),
-        Err(e) => Err(e),
-    }
-}
-```
-
-**? 与 Option：**
-
-```rust
-fn get_first_char(text: &str) -> Option<char> {
-    text.chars().next()
-}
-
-fn process_text(text: Option<&str>) -> Option<char> {
-    let t = text?;  // 如果 text 为 None 则返回 None
-    get_first_char(t)
-}
-```
-
-### 自定义错误类型
-
-**简单的自定义错误：**
-
-```rust
-use std::fmt;
-
-#[derive(Debug)]
-struct ParseError {
-    message: String,
-}
-
-impl fmt::Display for ParseError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Parse error: {}", self.message)
-    }
-}
-
-impl std::error::Error for ParseError {}
-
-fn parse_number(s: &str) -> Result<i32, ParseError> {
-    s.parse().map_err(|_| ParseError {
-        message: format!("Failed to parse '{}'", s),
-    })
-}
-```
-
-**基于枚举的错误类型：**
-
-```rust
-use std::fmt;
-use std::io;
-
-#[derive(Debug)]
-enum AppError {
-    Io(io::Error),
-    Parse(String),
-    NotFound(String),
-}
-
-impl fmt::Display for AppError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            AppError::Io(e) => write!(f, "IO error: {}", e),
-            AppError::Parse(msg) => write!(f, "Parse error: {}", msg),
-            AppError::NotFound(item) => write!(f, "Not found: {}", item),
+## 所有权最佳实践
+
+### 正例/反例
+
+- **优先借用而不是所有权转移**
+  - 正例：`fn process(data: &str) -> &str { data }`（借用输入，避免所有权转移）
+  - 反例：`fn process(data: String) -> String { data }`（所有权转移，可能导致不必要克隆）
+
+- **默认使用不可变借用，只在需要时使用可变借用**
+  - 正例：`fn calculate_length(s: &String) -> usize { s.len() }`
+  - 反例：`fn calculate_length(s: &mut String) -> usize { s.len() }`（不必要地要求可变借用）
+
+- **保持借用作用域尽可能小**
+  - 正例：
+    ```rust
+    {
+        let r = &s; // 借用开始
+        println!("{}", r);
+    } // 借用结束，可再次借用
+    let w = &mut s; // 现在可以可变借用
+    ```
+  - 反例：
+    ```rust
+    let r = &s; // 借用开始
+    // ... 很多代码 ...
+    let w = &mut s; // 错误：不可变借用仍在作用域内
+    ```
+
+- **当编译器可以推断生命周期时使用生命周期省略**
+  - 正例：`fn first_word(s: &str) -> &str { s.split_whitespace().next().unwrap_or("") }`
+  - 反例：`fn first_word<'a>(s: &'a str) -> &'a str { s.split_whitespace().next().unwrap_or("") }`（不必要的显式生命周期）
+
+- **为用例选择合适的智能指针**
+  - 正例：使用 `Box<T>` 用于递归类型或大型数据
+  - 反例：对简单数据使用 `Box<T>` 而不是直接栈分配
+
+- **在性能关键代码中避免 RefCell**
+  - 正例：使用 `Rc<RefCell<T>>` 仅在必要时
+  - 反例：在热点路径中大量使用 RefCell，导致运行时借用检查开销
+
+- **在函数签名中使用切片而不是拥有类型**
+  - 正例：`fn process_data(data: &[i32]) -> i32`
+  - 反例：`fn process_data(data: Vec<i32>) -> i32`（强制调用者转移所有权）
+
+- **只在必要时克隆（它是显式的和可见的）**
+  - 正例：`let cloned = expensive_data.clone(); // 明确表示克隆成本`
+  - 反例：隐式克隆通过所有权转移而非显式 `.clone()`
+
+- **为自定义清理逻辑实现 Drop**
+  - 正例：
+    ```rust
+    impl Drop for CustomResource {
+        fn drop(&mut self) {
+            // 清理逻辑
         }
     }
-}
+    ```
+  - 反例：手动调用清理函数，忘记清理导致资源泄漏
 
-impl std::error::Error for AppError {}
+- **让编译器通过借用检查器错误引导你**
+  - 正例：遵循编译器建议重构代码以修复所有权问题
+  - 反例：使用 `unsafe` 绕过所有权检查而不了解风险
 
-impl From<io::Error> for AppError {
-    fn from(error: io::Error) -> Self {
-        AppError::Io(error)
+### 常见陷阱
+
+- **移动值后尝试使用它**
+  - 陷阱：`let s1 = String::from("hello"); let s2 = s1; println!("{}", s1);`
+  - 避免：理解所有权转移后不再使用原值
+
+- **同时创建多个可变借用**
+  - 陷阱：`let mut s = String::from("hello"); let r1 = &mut s; let r2 = &mut s;`
+  - 避免：一次只允许一个可变借用
+
+- **混合可变和不可变借用**
+  - 陷阱：`let mut s = String::from("hello"); let r1 = &s; let r2 = &mut s;`
+  - 避免：不可变借用期间不能可变借用
+
+- **返回局部变量的引用**
+  - 陷阱：`fn bad() -> &str { let s = String::from("hello"); &s }`
+  - 避免：返回拥有的值或静态引用
+
+- **与借用检查器斗争而不是理解它**
+  - 陷阱：反复尝试不同方式绕过编译错误
+  - 避免：学习所有权规则，让编译器引导正确设计
+
+- **过度使用 clone() 避免所有权问题**
+  - 陷阱：`data.clone()` 在循环中导致性能问题
+  - 避免：重构为借用或重新设计数据流
+
+- **不理解生命周期关系**
+  - 陷阱：错误生命周期注解导致过度限制或编译错误
+  - 避免：从小示例学习生命周期推理规则
+
+- **使用 Rc 的循环引用**
+  - 陷阱：`Rc` 相互引用导致内存泄漏
+  - 避免：使用 `Weak` 指针打破循环
+
+- **在运行时因 RefCell 借用违规而 panic**
+  - 陷阱：`RefCell` 运行时借用检查失败
+  - 避免：仔细管理借用作用域
+
+- **错误使用 'static 生命周期**
+  - 陷阱：将临时数据标记为 `'static`
+  - 避免：只对真正静态数据使用 `'static`
+
+## 错误处理最佳实践
+
+### 正例/反例
+
+- **对可恢复错误使用 Result，对不可恢复错误使用 panic**
+  - 正例：`fn divide(a: f64, b: f64) -> Result<f64, String> { if b == 0.0 { Err("Division by zero".to_string()) } else { Ok(a / b) } }`
+  - 反例：`fn divide(a: f64, b: f64) -> f64 { if b == 0.0 { panic!("Division by zero") } else { a / b } }`（使用 panic 处理可恢复错误）
+
+- **在应用程序中使用 anyhow::Context 提供上下文**
+  - 正例：`file.read_to_string(&mut contents).context("Failed to read config file")?;`
+  - 反例：`file.read_to_string(&mut contents)?;`（丢失上下文信息）
+
+- **对库错误类型使用 thiserror**
+  - 正例：
+    ```rust
+    use thiserror::Error;
+    #[derive(Error, Debug)]
+    pub enum MyError {
+        #[error("IO error: {0}")]
+        Io(#[from] std::io::Error),
     }
-}
+    ```
+  - 反例：手动实现 Display 和 Error trait，容易出错
 
-fn process_file(path: &str) -> Result<String, AppError> {
-    let content = std::fs::read_to_string(path)?;  // io::Error 自动转换
-
-    if content.is_empty() {
-        Err(AppError::NotFound(path.to_string()))
-    } else {
-        Ok(content)
+- **为自定义错误实现 Display 和 Error trait**
+  - 正例：
+    ```rust
+    impl std::fmt::Display for MyError {
+        fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+            write!(f, "Error: {}", self.message)
+        }
     }
-}
-```
+    impl std::error::Error for MyError {}
+    ```
+  - 反例：没有实现这些 trait，导致错误信息不清晰
 
-### thiserror 库
+- **使用 ? 操作符进行错误传播**
+  - 正例：`fn read_file(path: &str) -> Result<String, io::Error> { let mut file = File::open(path)?; Ok(file.read_to_string()?) }`
+  - 反例：`fn read_file(path: &str) -> Result<String, io::Error> { match File::open(path) { Ok(f) => match f.read_to_string() { Ok(s) => Ok(s), Err(e) => Err(e) }, Err(e) => Err(e) } }`（冗长）
 
-**安装 thiserror：**
+- **在生产代码中避免 unwrap/expect**
+  - 正例：`let value = optional.unwrap_or_default();`
+  - 反例：`let value = optional.expect("This should never be None");`（可能导致生产环境 panic）
 
-```bash
-cargo add thiserror
-```
+- **返回错误而不是记录日志并继续**
+  - 正例：`fn process() -> Result<(), Error> { file_operation().map_err(|e| Error::from(e)) }`
+  - 反例：`fn process() { if let Err(e) = file_operation() { log::error!("Error: {}", e); } }`（吞掉错误）
 
-**使用 thiserror 处理自定义错误：**
+- **使错误消息可操作且描述性**
+  - 正例：`Err("File not found: check if 'config.toml' exists and is readable")`
+  - 反例：`Err("Error")`（无用信息）
 
-```rust
-use thiserror::Error;
+- **使用类型系统在编译时防止错误**
+  - 正例：`struct NonEmptyString(String);`（防止空字符串）
+  - 反例：`fn process(s: String) { assert!(!s.is_empty()); }`（运行时检查）
 
-#[derive(Error, Debug)]
-enum DataError {
-    #[error("IO error: {0}")]
-    Io(#[from] std::io::Error),
+- **在函数文档中记录预期错误**
+  - 正例：
+    ```rust
+    /// Returns the parsed number.
+    /// # Errors
+    /// Returns `ParseError` if the string is not a valid number.
+    fn parse_number(s: &str) -> Result<i32, ParseError>
+    ```
+  - 反例：无文档说明可能返回哪些错误
 
-    #[error("Parse error: {0}")]
-    Parse(String),
+### 常见陷阱
 
-    #[error("Validation failed: {field} is invalid")]
-    Validation { field: String },
+- **在生产中过度使用 unwrap() 导致 panic**
+  - 陷阱：`let value = result.unwrap();`
+  - 避免：使用 `?` 或适当的错误处理
 
-    #[error("Not found: {0}")]
-    NotFound(String),
-}
+- **错误消息中没有提供足够上下文**
+  - 陷阱：`Err("Failed")`
+  - 避免：使用 `anyhow::Context` 或详细错误类型
 
-fn validate_user(name: &str) -> Result<(), DataError> {
-    if name.is_empty() {
-        return Err(DataError::Validation {
-            field: "name".to_string(),
-        });
-    }
-    Ok(())
-}
+- **不一致地混合使用 panic 和 Result**
+  - 陷阱：有些地方用 `panic!`，有些地方返回 `Result`
+  - 避免：为每个错误决定是可恢复还是不可恢复
 
-fn load_data(path: &str) -> Result<String, DataError> {
-    let data = std::fs::read_to_string(path)?;  // 自动转换 io::Error
+- **创建过于通用的错误类型（String）**
+  - 陷阱：`Result<T, String>`
+  - 避免：创建特定的错误枚举
 
-    if data.is_empty() {
-        return Err(DataError::NotFound(path.to_string()));
-    }
+- **未实现 From 用于错误转换**
+  - 陷阱：手动转换错误类型
+  - 避免：实现 `From` trait 进行自动转换
 
-    Ok(data)
-}
-```
+- **使用 let _ = result 忽略错误**
+  - 陷阱：`let _ = file_operation();`
+  - 避免：总是处理错误或显式忽略
 
-### anyhow 库
+- **当 Option 更合适时使用 Result**
+  - 陷阱：`Result<T, ()>` 用于可选值
+  - 避免：使用 `Option<T>` 表示不存在
 
-**安装 anyhow：**
+- **在 match 中未处理所有错误变体**
+  - 陷阱：`match result { Ok(v) => ..., Err(_) => panic!() }`
+  - 避免：处理或传播所有错误情况
 
-```bash
-cargo add anyhow
-```
+- **创建难以使用的错误类型**
+  - 陷阱：深层嵌套的错误类型
+  - 避免：保持错误类型简单且组合性好
 
-**使用 anyhow 处理应用程序错误：**
-
-```rust
-use anyhow::{Result, Context, anyhow, bail};
-
-fn read_config(path: &str) -> Result<String> {
-    let content = std::fs::read_to_string(path)
-        .context("Failed to read config file")?;
-
-    if content.is_empty() {
-        bail!("Config file is empty");
-    }
-
-    Ok(content)
-}
-
-fn process_data(value: i32) -> Result<i32> {
-    if value < 0 {
-        return Err(anyhow!("Value must be positive, got {}", value));
-    }
-    Ok(value * 2)
-}
-
-fn main() -> Result<()> {
-    let config = read_config("config.toml")
-        .context("Failed to load configuration")?;
-
-    let value = process_data(42)?;
-
-    println!("Value: {}", value);
-    Ok(())
-}
-```
-
-**anyhow with context chaining:**
-
-```rust
-use anyhow::{Result, Context};
-
-fn load_user(id: u32) -> Result<String> {
-    fetch_from_database(id)
-        .context("Database query failed")?
-        .parse()
-        .context(format!("Failed to parse user {}", id))
-}
-
-fn fetch_from_database(id: u32) -> Result<String> {
-    // Implementation
-    Ok(format!("user_{}", id))
-}
-```
-
-### 错误处理最佳实践
-
-- 对可恢复错误使用 Result，对不可恢复错误使用 panic
-- 在应用程序中使用 anyhow::Context 提供上下文
-- 对库错误类型使用 thiserror
-- 为自定义错误实现 Display 和 Error trait
-- 使用 ? 操作符进行错误传播
-- 在生产代码中避免 unwrap/expect
-- 返回错误而不是记录日志并继续
-- 使错误消息可操作且描述性
-- 使用类型系统在编译时防止错误
-- 在函数文档中记录预期错误
+- **忘记将错误传播到调用栈上方**
+  - 陷阱：捕获错误但不返回
+  - 避免：使用 `?` 或明确返回错误
