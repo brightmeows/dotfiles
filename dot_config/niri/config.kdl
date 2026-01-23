@@ -637,10 +637,10 @@ binds {
     Mod+Shift+P { power-off-monitors; }
 
     // Clipboard
-    Mod+Shift+C { spawn "alacritty --class clipse -e 'clipse'"; }
+    Mod+Shift+C { spawn "alacritty" "--class" "clipse" "-e" "clipse"; }
 
     // Terminal File Manager
-    Mod+E { spawn "alacritty -e 'yazi'"; }
+    Mod+E { spawn "alacritty" "-e" "yazi"; }
 }
 
 // Clipboard
