@@ -88,7 +88,7 @@ output "DP-2" {
     mode "2560x1440@165"
 
     // You can use integer or fractional scale, for example use 1.5 for 150% scale.
-    //scale 2
+    scale 1
 
     // Transform allows to rotate the output counter-clockwise, valid values are:
     // normal, 90, 180, 270, flipped, flipped-90, flipped-180 and flipped-270.
@@ -285,7 +285,7 @@ hotkey-overlay {
 // Additionally, clients will be informed that they are tiled, removing some client-side rounded corners.
 // This option will also fix border/focus ring drawing behind some semitransparent windows.
 // After enabling or disabling this, you need to restart the apps for this to take effect.
-// prefer-no-csd
+prefer-no-csd
 
 // You can change the path where screenshots are saved.
 // A ~ at the front will be expanded to the home directory.
@@ -481,10 +481,10 @@ binds {
     // Mod+Ctrl+Page_Down { move-window-to-workspace-down; }
     // ...
 
-    Mod+Shift+Page_Down { move-workspace-down; }
-    Mod+Shift+Page_Up   { move-workspace-up; }
-    Mod+Shift+U         { move-workspace-down; }
-    Mod+Shift+I         { move-workspace-up; }
+    // Mod+Shift+Page_Down { move-workspace-down; }
+    // Mod+Shift+Page_Up   { move-workspace-up; }
+    // Mod+Shift+U         { move-workspace-down; }
+    // Mod+Shift+I         { move-workspace-up; }
 
     // You can bind mouse wheel scroll ticks using the following syntax.
     // These binds will change direction based on the natural-scroll setting.
@@ -504,10 +504,10 @@ binds {
 
     // Usually scrolling up and down with Shift in applications results in
     // horizontal scrolling; these binds replicate that.
-    Mod+Shift+WheelScrollDown      { focus-column-right; }
-    Mod+Shift+WheelScrollUp        { focus-column-left; }
-    Mod+Shift+Ctrl+WheelScrollDown { move-column-right; }
-    Mod+Shift+Ctrl+WheelScrollUp   { move-column-left; }
+    // Mod+Shift+WheelScrollDown      { focus-column-right; }
+    // Mod+Shift+WheelScrollUp        { focus-column-left; }
+    // Mod+Shift+Ctrl+WheelScrollDown { move-column-right; }
+    // Mod+Shift+Ctrl+WheelScrollUp   { move-column-left; }
 
     // Similarly, you can bind touchpad scroll "ticks".
     // Touchpad scrolling is continuous, so for these binds it is split into
