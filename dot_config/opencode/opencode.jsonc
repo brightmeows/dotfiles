@@ -31,6 +31,19 @@
     }
   },
   "mcp": {
+    "docs-rs": {
+      "type": "local",
+      "enabled": false,
+      "command": [
+        "deno",
+        "run",
+        "--no-lock",
+        "--allow-net",
+        "--allow-env",
+        "--allow-sys",
+        "npm:@nuskey8/docs-rs-mcp"
+      ]
+    },
     "package-registry": {
       "type": "local",
       "enabled": false,
@@ -42,6 +55,19 @@
         "--allow-env",
         "--allow-sys",
         "npm:package-registry-mcp"
+      ]
+    },
+    "web-reader": {
+      "type": "local",
+      "enabled": true,
+      "command": [
+        "deno",
+        "run",
+        "--no-lock",
+        "--allow-net",
+        "--allow-env",
+        "--allow-sys",
+        "npm:mcp-web-reader"
       ]
     },
   }
