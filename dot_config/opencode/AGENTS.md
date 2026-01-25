@@ -26,9 +26,11 @@ git ls-files | cut -d/ -f1 | sort -u
 
 #### 第二步：启用相关Skill
 
-1. 查看所有现有Skill的介绍，然后自动启用符合当前项目语言/配置/工具链等的所有Skill。
+1. 启用`planning-with-files`等任何时候都启用的Skill。
 
-2. 在此之后，如果发现有未启用的符合项目的Skill，同样自动启用。
+2. 查看所有现有Skill的介绍，然后自动启用符合当前项目语言/配置/工具链等的所有Skill。
+
+3. 在此之后，如果发现有未启用的符合项目的Skill，同样自动启用。
 
 例：发现`Cargo.lock`启用`rust`相关Skill，发现`uv.lock`启用`uv`和`python`相关Skill。
 
