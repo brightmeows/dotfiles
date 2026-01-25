@@ -646,3 +646,5 @@ binds {
 
 // Clipboard
 spawn-at-startup "clipse -listen"
+
+include "dms/cursor.kdl"
