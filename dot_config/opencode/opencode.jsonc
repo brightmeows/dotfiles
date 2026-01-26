@@ -70,4 +70,27 @@
       ],
     },
   },
+  "agent": {
+    "build": {
+      "mode": "primary",
+      "prompt": "{file:./AGENTS-build.md}",
+      "description": "Build agent，用于编码实现和开发工作"
+    },
+    "plan": {
+      "mode": "primary",
+      "prompt": "{file:./AGENTS-plan.md}",
+      "description": "Plan agent，用于规划和分析，不进行实际修改"
+    },
+    "general": {
+      "mode": "subagent",
+      "prompt": "{file:./AGENTS-build.md}",
+      "description": "通用助手，用于复杂任务和多步骤执行"
+    },
+    "explore": {
+      "mode": "subagent",
+      "prompt": "{file:./AGENTS-explore.md}",
+      "description": "Explore agent，用于探索代码库和快速查找信息"
+    }
+  }
 }
+
