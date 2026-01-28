@@ -7,9 +7,11 @@ permission:
   edit: 
     "*": deny
     "meow_agent/plan*": allow
+    "meow_agent\\plan*": allow
   write: 
     "*": deny
     "meow_agent/plan*": allow
+    "meow_agent\\plan*": allow
   bash:
     "*": deny
     "mkdir": allow

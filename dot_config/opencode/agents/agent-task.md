@@ -1,10 +1,11 @@
 ---
 mode: subagent
-description: 用于执行任务的子Agent
+description: 对代码库内容只有
 permission:
   edit: 
     "*": allow
     "meow_agent/findings_*.md": deny
+    "meow_agent\\findings_*.md": deny
   webfetch: deny
   websearch: deny
 ---
