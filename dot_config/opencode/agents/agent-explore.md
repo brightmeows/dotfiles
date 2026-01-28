@@ -14,9 +14,10 @@ permission:
     "meow_agent\\findings_*": allow
   bash:
     "*": deny
-    "mkdir": allow
-    "git diff": allow
-    "git log*": allow
+    "mkdir *": allow
+    "git diff *": allow
+    "git log *": allow
+    "git show *": allow
     "find *": allow
     "grep *": allow
     "fd *": allow

@@ -14,9 +14,9 @@ permission:
     "meow_agent\\plan*": allow
   bash:
     "*": deny
-    "mkdir": allow
-    "git diff": allow
-    "git log*": allow
+    "mkdir *": allow
+    "git diff *": allow
+    "git log *": allow
     "find *": allow
     "grep *": allow
     "fd *": allow
