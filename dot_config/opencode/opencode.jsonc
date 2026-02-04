@@ -1,9 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "autoupdate": "notify",
-  "experimental": {
-    "chatMaxRetries": 3,
-  },
   "compaction": {
     "auto": true,
     "prune": true,

@@ -1,32 +1,27 @@
 ---
 mode: subagent
 description: 探索代码库内容或互联网内容。对项目只有可读权限。仅会记录探索发现至临时目录内。
+model: zhipuai-coding-plan/glm-4.5-air
 permission:
-  "*": deny
-  read: allow
   edit: 
     "*": deny
-    "meow_agent/findings_*": allow
-    "meow_agent\\findings_*": allow
+    ".meow_agent/*/finding*": allow
+    ".meow_agent\\*\\finding*": allow
   write: 
     "*": deny
-    "meow_agent/findings_*": allow
-    "meow_agent\\findings_*": allow
+    ".meow_agent/*/finding*": allow
+    ".meow_agent\\*\\finding*": allow
   bash:
-    "*": deny
-    "mkdir *": allow
-    "git diff *": allow
-    "git log *": allow
-    "git show *": allow
-    "find *": allow
-    "grep *": allow
-    "fd *": allow
-    "rg *": allow
-  webfetch: allow
-  "docs-rs_*": allow
-  "package-registry_*": allow
-  "web-reader_*": allow
-
+    "git add*": deny
+    "git push*": deny
+    "git commit*": deny
+    "rm*": deny
+    "sed": deny
+    "sd": deny
+    "echo": deny
+    "cat": deny
+    "*>*": deny
+    "*>>*": deny
 ---
 
 # MiyakoMeow的探索Agent
@@ -39,4 +34,7 @@ permission:
 
 ## 发现记录
 
-- 将详细的发现内容，记录至当前项目目录下的`meow_agent`目录中，文件名以`findings_`开头的MarkDown文件。
+- 如果在已有内容的基础上有新发现，在任务目录下创建一个文件名以`finding`开头的MarkDown文件。不要与已有文件重名。
+- 将发现内容都记录至这个文件中。记录和回答的内容尽可能不要重复。
+- 每次对话最多创建一个`finding`文件。如果本轮对话已经创建，则在已有文件的基础上修改或追加内容。
+- 在保留关键信息的基础上，记录和回答内容尽可能保持简洁，以节省上下文。
