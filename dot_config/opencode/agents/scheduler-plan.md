@@ -10,13 +10,7 @@ permission:
     ".meow_agent/*/*": allow
     ".meow_agent\\*": allow
     ".meow_agent\\*\\*": allow
-  list:
-    "*": deny  
-    ".meow_agent": allow
-    ".meow_agent/*": allow
-    ".meow_agent/*/*": allow
-    ".meow_agent\\*": allow
-    ".meow_agent\\*\\*": allow
+  list: allow
   task:
     "*": allow
     "agent-task": deny
@@ -34,6 +28,7 @@ permission:
 ## 权限
 
 - `task`: 启动子Agent。
+- `list`: 查看文件列表。
 - `question`: 向用户提问。
 - `todoread`/`todowrite`: 读写TODO列表。
 - 无其它权限。
