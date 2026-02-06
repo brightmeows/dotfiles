@@ -11,6 +11,7 @@ permission:
     ".meow_agent\\*": allow
     ".meow_agent\\*\\*": allow
   list: allow
+  skill: allow
   task:
     "*": allow
   question: allow
@@ -29,6 +30,13 @@ permission:
 - `question`: 向用户提问。
 - `todoread`/`todowrite`: 读写TODO列表。
 - 无其它权限。
+
+## 主Agent通用规则
+
+### 行为准则
+
+1. 固定当前任务名和任务目录，并传递给子Agent。
+2. 所有任务都委托子Agent执行。
 
 ### 应当转交给子Agent的操作
 
