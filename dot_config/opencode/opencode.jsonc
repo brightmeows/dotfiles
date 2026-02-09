@@ -24,10 +24,10 @@
       },
     },
     "general": {
-      "model": "zhipuai-coding-plan/glm-4.7-flashx",
+      "model": "zhipuai-coding-plan/glm-4.5-air",
     },
     "explore": {
-      "model": "zhipuai-coding-plan/glm-4.7-flashx",
+      "model": "zhipuai-coding-plan/glm-4.5-air",
     },
   },
   "mcp": {
