@@ -12,16 +12,22 @@
   },
   "agent": {
     "build": {
-      "disable": true,
+      "permission": {
+        "bash": "deny",
+        "edit": "deny",
+      },
     },
     "plan": {
-      "disable": true,
+      "permission": {
+        "bash": "deny",
+        "edit": "deny",
+      },
     },
     "general": {
-      "disable": true,
+      "model": "zhipuai-coding-plan/glm-4.7-flashx",
     },
     "explore": {
-      "disable": true,
+      "model": "zhipuai-coding-plan/glm-4.7-flashx",
     },
   },
   "mcp": {
