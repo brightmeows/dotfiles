@@ -5,11 +5,7 @@
     "auto": true,
     "prune": true,
   },
-  "lsp": {
-    "rust": {
-      "disabled": true,
-    },
-  },
+  "lsp": false,
   "mcp": {
     "docs-rs": {
       "enabled": true,
