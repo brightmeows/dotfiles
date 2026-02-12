@@ -10,26 +10,6 @@
       "disabled": true,
     },
   },
-  "agent": {
-    "build": {
-      "permission": {
-        "bash": "deny",
-        "edit": "deny",
-      },
-    },
-    "plan": {
-      "permission": {
-        "bash": "deny",
-        "edit": "deny",
-      },
-    },
-    "general": {
-      "model": "zhipuai-coding-plan/glm-4.5-air",
-    },
-    "explore": {
-      "model": "zhipuai-coding-plan/glm-4.5-air",
-    },
-  },
   "mcp": {
     "docs-rs": {
       "enabled": true,
