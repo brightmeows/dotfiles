@@ -16,6 +16,9 @@ $env.config.hooks.env_change.PWD = [
 ]
 
 if (which starship | is-not-empty) {
-    mkdir ($nu.data-dir | path join "vendor/autoload")
-    starship init nu | save -f ($nu.data-dir | path join "vendor/autoload/starship.nu")
+    let starship_file = ($nu.data-dir | path join "vendor/autoload/starship.nu")
+    if not ($starship_file | path exists) {
+        mkdir ($nu.data-dir | path join "vendor/autoload")
+        starship init nu | save -f $starship_file
+    }
 }
