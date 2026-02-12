@@ -2,3 +2,7 @@
 deploy.sh
 README.md
 LICENSE
+
+{{- if eq .chezmoi.os "windows" }}
+dot_config/nushell
+{{- end }}

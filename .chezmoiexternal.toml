@@ -1,0 +1,12 @@
+{{- if eq .chezmoi.os "windows" }}
+
+# nushell configuration for Windows
+["AppData/Roaming/nushell/config.nu"]
+    type = "file"
+    url = "file://{{ .chezmoi.sourceDir }}/dot_config/nushell/config.nu"
+
+["AppData/Roaming/nushell/env.nu"]
+    type = "file"
+    url = "file://{{ .chezmoi.sourceDir }}/dot_config/nushell/env.nu"
+
+{{- end }}
