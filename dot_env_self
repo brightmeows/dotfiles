@@ -1,0 +1,7 @@
+# Self environment variables
+# Format: KEY=VALUE (similar to /etc/environment)
+# Lines starting with # are comments
+
+# Example:
+# MY_VAR=my_value
+# ANOTHER_VAR="another value with spaces"

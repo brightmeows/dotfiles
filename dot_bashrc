@@ -1,5 +1,12 @@
 export PATH="$PATH:$HOME/bin:$HOME/.local/bin:$HOME/go/bin"
 
+# Load custom environment variables
+if [ -f "$HOME/.env_self" ]; then
+    set -a
+    source "$HOME/.env_self"
+    set +a
+fi
+
 alias k="kubectl"
 alias urldecode="python3 -c 'import sys, urllib.parse as ul; print(ul.unquote_plus(sys.stdin.read()))'"
 alias urlencode="python3 -c 'import sys, urllib.parse as ul; print(ul.quote_plus(sys.stdin.read()))'"
