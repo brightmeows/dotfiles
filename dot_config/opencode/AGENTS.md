@@ -2,9 +2,7 @@
 
 ---
 
-## 通用规则
-
-### 开始对话
+## 开始对话
 
 - **先执行以下操作，再进行其它任务**
 - **先执行以下操作，再进行其它任务**
@@ -22,19 +20,25 @@
    - 查看 README、文档和配置文件
    - 了解项目的代码风格和规范
 
-3. **（可选）搜索并安装相关 skills**：
-   - 当相关 skills 数量较少时执行
-   - 根据项目类型，使用 `find-skills` 搜索相关 skills
-   - 搜索示例：
-     - Web 项目：`npx skills find [framework]`（react、nextjs、vue、svelte 等）
-     - Rust 项目：`npx skills find rust`
-     - Python 项目：`npx skills find python [topic]`（testing、async、packaging 等）
-     - 测试相关：`npx skills find testing`
-     - 部署相关：`npx skills find deploy`
-   - 对于找到的相关 skills，使用 `npx skills add <package> -g -y` 安装
-
-4. **激活安装的 skills**：
+3. **激活安装的 skills**：
    - 使用 skill 工具，激活**所有**项目相关 skills
+
+### 提示
+
+1. **搜索并安装相关 skills**：
+  - 当相关 skills 数量较少时执行
+  - 根据项目类型，使用 `find-skills` 搜索相关 skills
+  - 搜索示例：
+    - Web 项目：`npx skills find [framework]`（react、nextjs、vue、svelte 等）
+    - Rust 项目：`npx skills find rust`
+    - Python 项目：`npx skills find python [topic]`（testing、async、packaging 等）
+    - 测试相关：`npx skills find testing`
+    - 部署相关：`npx skills find deploy`
+  - 对于找到的相关 skills，使用 `npx skills add <package> -g -y` 安装
+
+---
+
+## 通用规则
 
 ### 遵循规范
 
