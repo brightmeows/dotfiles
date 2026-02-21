@@ -10,8 +10,26 @@
 - **先执行以下操作，再进行其它任务**
 - **先执行以下操作，再进行其它任务**
 
-1. 读取当前任务目录下的所有文件。
-2. 激活所有与当前项目相关的skill。
+1. **识别项目类型**：
+   - 检查项目根目录的配置文件（package.json、Cargo.toml、pyproject.toml、go.mod、pom.xml 等）
+   - 分析项目结构和主要文件扩展名
+   - 确定项目使用的框架、语言和工具链
+
+2. **搜索并激活相关 skills**：
+   - 使用 `find-skills` skill 根据项目类型搜索相关 skills
+   - 搜索命令示例：
+     - Web 项目：`npx skills find [framework]`（react、nextjs、vue、svelte 等）
+     - Rust 项目：`npx skills find rust`
+     - Python 项目：`npx skills find python [topic]`（testing、async、packaging 等）
+     - 测试相关：`npx skills find testing`
+     - 部署相关：`npx skills find deploy`
+   - 对于找到的相关 skills，使用 `npx skills add <package> -g -y` 安装
+   - 安装后使用 skill 工具激活新安装的 skills
+
+3. **读取项目上下文**：
+   - 快速浏览项目主要目录结构
+   - 查看 README、文档和配置文件
+   - 了解项目的代码风格和规范
 
 ### 遵循规范
 
