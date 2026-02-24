@@ -46,11 +46,28 @@
         "npm:mcp-web-reader",
       ],
     },
+    "open-websearch": {
+      "enabled": true,
+      "type": "local",
+      "command": [
+        "deno",
+        "run",
+        "--no-lock",
+        "--allow-net",
+        "--allow-env",
+        "--allow-sys",
+        "npm:open-websearch@latest",
+      ],
+      "env": {
+        "MODE": "stdio"
+      }
+    },
   },
   "permission": {
     "docs-rs_*": "deny",
     "package-registry_*": "deny",
     "web-reader_*": "deny",
+    "open-websearch_*": "deny",
   },
 }
 
