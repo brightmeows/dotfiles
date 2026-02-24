@@ -8,17 +8,35 @@
 
 ## 开始对话
 
-- **先执行以下操作，再进行其它任务**
-- **先执行以下操作，再进行其它任务**
-- **先执行以下操作，再进行其它任务**
+- **对话开始时，先执行以下操作，再执行用户指令**
+- **对话开始时，先执行以下操作，再执行用户指令**
+- **对话开始时，先执行以下操作，再执行用户指令**
 
-1. **启用Explore Agent，读取项目配置**：
-   - 识别项目类型：检查配置文件（package.json、Cargo.toml、pyproject.toml、go.mod、pom.xml 等）。
-   - 确定项目使用的框架、语言和工具链。
+1. **激活CRITICAL skills（所有项目必须激活）**：
+  - **分类：基础工具**
+    - find-skills
+  - **分类：Rust**
+    - meta-cognition-parallel
+    - rust-router
+    - m01-ownership
+    - m02-resource
+    - m03-mutability
+    - m04-zero-cost
+    - m05-type-driven
+    - m06-error-handling
+    - m07-concurrency
+    - m09-domain
+    - m10-performance
+    - m11-ecosystem
+    - m13-domain-error
+    - m14-mental-model
+    - unsafe-checker
 
-2. **激活 skills**：
-   - 必须激活 find-skills。
-   - 必须激活发现的 所有 与项目相关的 skills。
+2. **启用Explore Agent，读取项目配置，用于确定要激活的 skills**：
+   - 任务：检查配置文件（package.json、Cargo.toml、pyproject.toml、go.mod 等），识别项目类型，确定项目使用的框架、语言和工具链。
+   - 避免：探索具体代码实现。
+
+3. **激活发现的 所有 与项目相关的 skills（所有项目必须激活）**
 
 ### 提示
 
