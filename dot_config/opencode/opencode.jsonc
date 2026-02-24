@@ -64,10 +64,8 @@
     },
   },
   "permission": {
-    "docs-rs_*": "deny",
-    "package-registry_*": "deny",
-    "web-reader_*": "deny",
-    "open-websearch_*": "deny",
+    "webfetch": "deny",
+    "websearch": "deny",
   },
 }
 
