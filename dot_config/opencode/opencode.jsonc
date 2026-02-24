@@ -58,8 +58,8 @@
         "--allow-sys",
         "npm:open-websearch@latest",
       ],
-      "env": {
-        "MODE": "stdio"
+      "environment": {
+        "MODE": "stdio",
       }
     },
   },
