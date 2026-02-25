@@ -75,6 +75,14 @@
       "url": "https://mcp.exa.ai/mcp",
       "enabled": true
     },
+    "web-fetch": {
+      "enabled": true,
+      "type": "local",
+      "command": [
+        "uvx",
+        "mcp-server-fetch",
+      ],
+    },
   },
   "permission": {
     "webfetch": "deny",
