@@ -70,6 +70,11 @@
         "@sylphx/pdf-reader-mcp",
       ],
     },
+    "exa": {
+      "type": "remote",
+      "url": "https://mcp.exa.ai/mcp",
+      "enabled": true
+    },
   },
   "permission": {
     "webfetch": "deny",
