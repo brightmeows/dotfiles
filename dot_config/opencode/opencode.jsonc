@@ -63,7 +63,7 @@
       }
     },
     "pdf-reader": {
-      "enabled": true,
+      "enabled": false,
       "type": "local",
       "command": [
         "pnpx",
