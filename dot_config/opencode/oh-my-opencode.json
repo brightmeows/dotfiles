@@ -2,66 +2,65 @@
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
   "agents": {
     "sisyphus": {
-      "model": "zhipuai-coding-plan/glm-4.7",
-      "fallback_models": ["opencode/minimax-m2.5-free"]
+      "model": "kimi-for-coding/k2p5",
+      "fallback_models": ["zhipuai-coding-plan/glm-4.7", "opencode/minimax-m2.5-free"]
     },
     "oracle": {
-      "model": "zhipuai-coding-plan/glm-4.7",
-      "fallback_models": ["opencode/minimax-m2.5-free"]
+      "model": "kimi-for-coding/k2p5",
+      "fallback_models": ["zhipuai-coding-plan/glm-4.7", "opencode/minimax-m2.5-free"]
     },
     "librarian": {
-      "model": "zhipuai-coding-plan/glm-4.7",
-      "fallback_models": ["opencode/minimax-m2.5-free"]
+      "model": "kimi-for-coding/k2p5",
+      "fallback_models": ["zhipuai-coding-plan/glm-4.7", "opencode/minimax-m2.5-free"]
     },
     "explore": {
-      "model": "zhipuai-coding-plan/glm-4.7",
+      "model": "zhipuai-coding-plan/glm-4.5-air",
       "fallback_models": ["opencode/minimax-m2.5-free"]
     },
     "multimodal-looker": {
-      "model": "zhipuai-coding-plan/glm-4.7",
-      "fallback_models": ["opencode/minimax-m2.5-free"]
+      "model": "zhipuai-coding-plan/glm-4.6v"
     },
     "prometheus": {
-      "model": "zhipuai-coding-plan/glm-4.7",
-      "fallback_models": ["opencode/minimax-m2.5-free"]
+      "model": "kimi-for-coding/k2p5",
+      "fallback_models": ["zhipuai-coding-plan/glm-4.7", "opencode/minimax-m2.5-free"]
     },
     "metis": {
-      "model": "zhipuai-coding-plan/glm-4.7",
-      "fallback_models": ["opencode/minimax-m2.5-free"]
+      "model": "kimi-for-coding/k2p5",
+      "fallback_models": ["zhipuai-coding-plan/glm-4.7", "opencode/minimax-m2.5-free"]
     },
     "momus": {
-      "model": "zhipuai-coding-plan/glm-4.7",
-      "fallback_models": ["opencode/minimax-m2.5-free"]
+      "model": "kimi-for-coding/k2p5",
+      "fallback_models": ["zhipuai-coding-plan/glm-4.7", "opencode/minimax-m2.5-free"]
     },
     "atlas": {
-      "model": "zhipuai-coding-plan/glm-4.7",
-      "fallback_models": ["opencode/minimax-m2.5-free"]
+      "model": "kimi-for-coding/k2p5",
+      "fallback_models": ["zhipuai-coding-plan/glm-4.7", "opencode/minimax-m2.5-free"]
     }
   },
   "categories": {
     "visual-engineering": {
-      "model": "zhipuai-coding-plan/glm-4.7",
-      "fallback_models": ["opencode/minimax-m2.5-free"]
+      "model": "kimi-for-coding/k2p5",
+      "fallback_models": ["zhipuai-coding-plan/glm-4.7", "opencode/minimax-m2.5-free"]
     },
     "ultrabrain": {
-      "model": "zhipuai-coding-plan/glm-4.7",
-      "fallback_models": ["opencode/minimax-m2.5-free"]
+      "model": "kimi-for-coding/k2p5",
+      "fallback_models": ["zhipuai-coding-plan/glm-4.7", "opencode/minimax-m2.5-free"]
     },
     "quick": {
-      "model": "zhipuai-coding-plan/glm-4.7",
-      "fallback_models": ["opencode/minimax-m2.5-free"]
+      "model": "kimi-for-coding/k2p5",
+      "fallback_models": ["zhipuai-coding-plan/glm-4.7", "opencode/minimax-m2.5-free"]
     },
     "unspecified-low": {
-      "model": "zhipuai-coding-plan/glm-4.7",
+      "model": "zhipuai-coding-plan/glm-4.5-air",
       "fallback_models": ["opencode/minimax-m2.5-free"]
     },
     "unspecified-high": {
-      "model": "zhipuai-coding-plan/glm-4.7",
-      "fallback_models": ["opencode/minimax-m2.5-free"]
+      "model": "kimi-for-coding/k2p5",
+      "fallback_models": ["zhipuai-coding-plan/glm-4.7", "opencode/minimax-m2.5-free"]
     },
     "writing": {
-      "model": "zhipuai-coding-plan/glm-4.7",
-      "fallback_models": ["opencode/minimax-m2.5-free"]
+      "model": "kimi-for-coding/k2p5",
+      "fallback_models": ["zhipuai-coding-plan/glm-4.7", "opencode/minimax-m2.5-free"]
     }
   }
 }
