@@ -10,15 +10,16 @@
       "fallback_models": ["zhipuai-coding-plan/glm-4.7", "opencode/minimax-m2.5-free"]
     },
     "librarian": {
-      "model": "kimi-for-coding/k2p5",
-      "fallback_models": ["zhipuai-coding-plan/glm-4.7", "opencode/minimax-m2.5-free"]
+      "model": "zhipuai-coding-plan/glm-4.5-air",
+      "fallback_models": ["opencode/minimax-m2.5-free"]
     },
     "explore": {
       "model": "zhipuai-coding-plan/glm-4.5-air",
       "fallback_models": ["opencode/minimax-m2.5-free"]
     },
     "multimodal-looker": {
-      "model": "zhipuai-coding-plan/glm-4.6v"
+      "model": "kimi-for-coding/k2p5",
+      "fallback_models": ["zhipuai-coding-plan/glm-4.6v"]
     },
     "prometheus": {
       "model": "kimi-for-coding/k2p5",
