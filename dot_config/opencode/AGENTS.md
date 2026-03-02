@@ -10,31 +10,18 @@
 
 ### Skills激活推荐
 
-#### 分类：基础工具
+- 无论任何时候，**必须激活** 发现的 **所有** 与项目相关的 skills
+
+#### 分类：Skills查找工具
 
 - find-skills
 
-#### 分类：Rust
+#### 分类：Rust元认知
 
 - meta-cognition-parallel
 - rust-router
-- m01-ownership
-- m02-resource
-- m03-mutability
-- m04-zero-cost
-- m05-type-driven
-- m06-error-handling
-- m07-concurrency
-- m09-domain
-- m10-performance
-- m11-ecosystem
-- m13-domain-error
-- m14-mental-model
-- unsafe-checker
 
-#### 其它
-
-- 发现的 **所有** 与项目相关的 skills
+- 重要：在激活这两个skills后，利用这两个skills的内容，寻找需要的Rust skills。
 
 ---
 
@@ -49,3 +36,7 @@
 ### 代码引用
 
 - 使用 `文件路径:行号` 格式，便于用户定位源码。
+
+### 临时目录
+
+- 统一使用 `/tmp` 目录作为临时目录。
