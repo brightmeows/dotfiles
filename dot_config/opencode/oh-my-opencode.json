@@ -47,8 +47,8 @@
       "fallback_models": ["zhipuai-coding-plan/glm-4.7", "opencode/minimax-m2.5-free"]
     },
     "quick": {
-      "model": "kimi-for-coding/k2p5",
-      "fallback_models": ["zhipuai-coding-plan/glm-4.7", "opencode/minimax-m2.5-free"]
+      "model": "zhipuai-coding-plan/glm-4.5-air",
+      "fallback_models": ["opencode/minimax-m2.5-free"]
     },
     "unspecified-low": {
       "model": "zhipuai-coding-plan/glm-4.5-air",
