@@ -1,6 +1,5 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
-  "hashline_edit": true,
   "agents": {
     "sisyphus": {
       "model": "kimi-for-coding/k2p5",
