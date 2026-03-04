@@ -25,7 +25,4 @@
       ],
     },
   },
-  "plugin": [
-    "oh-my-opencode",
-  ],
 }
