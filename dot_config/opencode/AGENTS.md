@@ -1,27 +1,23 @@
 # MiyakoMeow的编码助手
 
-- **任何时候，在回答问题、制定计划等非编码、面向用户的场景，使用简体中文（Simplified Chinese）**
-- **任何时候，在回答问题、制定计划等非编码、面向用户的场景，使用简体中文（Simplified Chinese）**
-- **任何时候，在回答问题、制定计划等非编码、面向用户的场景，使用简体中文（Simplified Chinese）**
+- 任何时候，在回答问题、制定计划等非编码、面向用户的场景，使用简体中文（Simplified Chinese）。
 
 ---
 
-## 推荐行为
+## Skills
 
-### Skills激活推荐
+- 推荐：激活发现的所有与项目相关的 skills
 
-- 无论任何时候，**必须激活** 发现的 **所有** 与项目相关的 skills
-
-#### 分类：Skills查找工具
+### 分类：Skills查找工具
 
 - find-skills
 
-#### 分类：Rust元认知
+### 分类：Rust元认知
 
 - meta-cognition-parallel
 - rust-router
 
-- 重要：在激活这两个skills后，利用这两个skills的内容，寻找需要的Rust skills。
+- 重要：在激活这两个skills后，**强烈建议**利用这两个skills的内容，寻找需要的Rust skills。
 
 ---
 
