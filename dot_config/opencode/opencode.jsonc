@@ -25,4 +25,18 @@
       ],
     },
   },
+  "permission": {
+    "read": {
+      "~/tmp": "allow",
+      "/tmp": "allow",
+    },
+    "write": {
+      "~/tmp": "allow",
+      "/tmp": "allow",
+    },
+    "edit": {
+      "~/tmp": "allow",
+      "/tmp": "allow",
+    }
+  }
 }
