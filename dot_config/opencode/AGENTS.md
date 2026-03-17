@@ -12,12 +12,9 @@
 
 - find-skills
 
-### 分类：Rust元认知
+### 分类：Rust
 
-- meta-cognition-parallel
-- rust-router
-
-- 重要：在激活这两个skills后，**强烈建议**利用这两个skills的内容，寻找需要的Rust skills。
+- rust-best-practices
 
 ---
 
