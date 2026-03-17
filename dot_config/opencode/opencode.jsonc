@@ -3,19 +3,6 @@
   "autoupdate": false,
   "lsp": false,
   "mcp": {
-    "docs-rs": {
-      "enabled": true,
-      "type": "local",
-      "command": [
-        "deno",
-        "run",
-        "--no-lock",
-        "--allow-net",
-        "--allow-env",
-        "--allow-sys",
-        "npm:@nuskey8/docs-rs-mcp",
-      ],
-    },
     "pdf-reader": {
       "enabled": false,
       "type": "local",
