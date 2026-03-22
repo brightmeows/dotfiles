@@ -57,31 +57,6 @@ key = "Minus"
 mods = "Control"
 
 [[keyboard.bindings]]
-key = "O"
-mods = "Control|Shift"
-action = "SpawnNewInstance"
-
-[[keyboard.bindings]]
 action = "ToggleViMode"
 key = "Space"
 mods = "Control|Shift"
-
-[[keyboard.bindings]]
-key = "H"
-mods = "Alt"
-chars = "\u001bOH"
-
-[[keyboard.bindings]]
-key = "J"
-mods = "Alt"
-chars = "\u001bOJ"
-
-[[keyboard.bindings]]
-key = "K"
-mods = "Alt"
-chars = "\u001bOK"
-
-[[keyboard.bindings]]
-key = "L"
-mods = "Alt"
-chars = "\u001bOL"
