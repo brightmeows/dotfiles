@@ -3,6 +3,7 @@ $env.PATH = ($env.PATH | split row (char env_sep))
 $env.PATH = ($env.PATH | append ("~" | path expand | path join "bin"))
 $env.PATH = ($env.PATH | append ("~" | path expand | path join ".local/bin"))
 $env.PATH = ($env.PATH | append ("~" | path expand | path join "go/bin"))
+$env.PATH = ($env.PATH | append ("~" | path expand | path join ".cargo/bin"))
 $env.PATH = ($env.PATH | append ("~" | path expand | path join ".opencode/bin"))
 $env.PATH = ($env.PATH | append ("~" | path expand | path join ".bun/bin"))
 
