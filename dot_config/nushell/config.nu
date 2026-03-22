@@ -1,3 +1,11 @@
+# PATH setup
+$env.PATH = ($env.PATH | split row (char env_sep))
+$env.PATH = ($env.PATH | append $"(~)/bin")
+$env.PATH = ($env.PATH | append $"(~)/.local/bin")
+$env.PATH = ($env.PATH | append $"(~)/go/bin")
+$env.PATH = ($env.PATH | append $"(~)/.opencode/bin")
+$env.PATH = ($env.PATH | append $"(~)/.bun/bin")
+
 # The default config record. This is where much of your global configuration is setup.
 $env.config.show_banner = false # true or false to enable or disable the welcome banner at startup
 $env.config.hooks.env_change.PWD = [
