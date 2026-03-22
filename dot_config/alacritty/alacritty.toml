@@ -19,7 +19,7 @@ multiplier = 3
 save_to_clipboard = true
 
 [terminal]
-shell.program = "/run/current-system/sw/bin/nu"
+shell.program = "nu"
 
 [window]
 opacity = 0.6
