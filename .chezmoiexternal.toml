@@ -9,4 +9,9 @@
     type = "file"
     url = "file://{{ .chezmoi.sourceDir }}/dot_config/nushell/env.nu"
 
+# alacritty configuration for Windows
+["AppData/Roaming/alacritty/alacritty.toml"]
+    type = "file"
+    url = "file://{{ .chezmoi.sourceDir }}/dot_config/alacritty/alacritty.toml"
+
 {{- end }}
