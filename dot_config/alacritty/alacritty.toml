@@ -6,7 +6,7 @@ style.shape = "Underline"
 TERM = "xterm-256color"
 
 [font]
-size = 14
+size = 13
 bold.style = "SemiBold"
 normal.family = "ComicShannsMono Nerd Font Mono"
 normal.style = "Regular"
