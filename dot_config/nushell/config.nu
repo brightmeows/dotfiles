@@ -22,3 +22,10 @@ if (which starship | is-not-empty) {
         starship init nu | save -f $starship_file
     }
 }
+
+try {
+    let gh_token = (do -i { gh auth token } | str trim)
+    if not ($gh_token | is-empty) {
+        $env.GITHUB_TOKEN = $gh_token
+    }
+}
