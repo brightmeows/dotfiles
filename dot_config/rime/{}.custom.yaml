@@ -1,0 +1,4 @@
+patch:
+  menu/page_size: 9
+  style/color_scheme: native
+  style/inline_preedit: true
