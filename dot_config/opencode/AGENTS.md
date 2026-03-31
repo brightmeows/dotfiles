@@ -38,4 +38,4 @@
 
 - 使用以下目录作为临时目录。
   - Linux/Mac/Unix: `/tmp`
-  - Windows: `~/tmp`
+  - Windows: 在当前项目下创建`.agents-tmp`临时目录，然后在`.git/info/exclude`中忽略该目录。
