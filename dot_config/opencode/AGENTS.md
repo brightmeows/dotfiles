@@ -7,26 +7,7 @@
 ## Skills
 
 - 注意分析传入的 Skill 列表。
-- 在任何时候，如果发现有 Skill 与项目契合，立刻通过 `skill` 工具启用这些 Skill。
-
-### 分类：Skills查找工具
-
-- find-skills
-
-### 分类：Rust
-
-> 在任何时候，如果发现自己在Rust项目下，或者需要处理Rust相关内容，激活以下Skill。
-
-- rust-best-practices
-
----
-
-## Agent间行为
-
-- 主Agent只负责：
-  1. 启用子Agent。
-  2. 传递信息。
-- 所有具体操作，尽可能使用子Agent。
+- 如果发现有 Skill 契合当前项目或当前任务，立刻通过 `skill` 工具启用这些 Skill。
 
 ---
 
