@@ -2,7 +2,10 @@
 description: SubAgent Scheduler
 mode: primary
 permission:
-  read: deny
+  read:
+    "*": deny
+    "*.md": allow
+    "*.txt": allow
   write: deny
   edit: deny
   bash: deny
@@ -20,19 +23,18 @@ permission:
 
 ## 权限设置
 
-- 以下权限设置适用于主Agent。
-- 如果需要进行以下操作，请创建子Agent。
+- 禁止读取除`.md`、`.txt`以外的文件。
+- 禁止写入文件。
+- 禁止执行命令。
+- 禁止使用`grep`搜索文件内容。但允许使用`glob`、`list`等仅与文件信息相关的工具。
 
-### 禁止操作
+### 适用范围
 
-- 读写文件。
-- 执行命令。
-- 使用`grep`搜索文件内容。
+当前Agent。
 
-### 允许操作
+### 提示
 
-- `glob`
-- `list`
+如果需要进行被限制的操作，请创建子Agent。
 
 ---
 
