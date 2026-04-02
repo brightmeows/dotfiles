@@ -8,7 +8,6 @@ permission:
   bash: deny
   grep: deny
   patch: deny
-  skill: deny
   webfetch: deny
   websearch: deny
 ---
