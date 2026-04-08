@@ -11,6 +11,7 @@ keybinds clear-defaults=true {
         bind "j" { MoveFocus "down"; }
         bind "k" { MoveFocus "up"; }
         bind "l" { MoveFocus "right"; }
+        bind "q" { Quit; }
     }
     pane {
         bind "left" { MoveFocus "left"; }
@@ -157,7 +158,6 @@ keybinds clear-defaults=true {
     }
     shared_except "locked" "renametab" "renamepane" {
         bind "Alt u" { SwitchToMode "locked"; }
-        bind "Ctrl q" { Quit; }
     }
     shared_except "locked" "entersearch" {
         bind "enter" { SwitchToMode "locked"; }
@@ -190,10 +190,8 @@ keybinds clear-defaults=true {
         bind "down" { ScrollDown; }
         bind "up" { ScrollUp; }
         bind "right" { PageScrollDown; }
-        bind "Ctrl b" { PageScrollUp; }
-        bind "Ctrl c" { ScrollToBottom; SwitchToMode "locked"; }
+        bind "esc" { ScrollToBottom; SwitchToMode "locked"; }
         bind "d" { HalfPageScrollDown; }
-        bind "Ctrl f" { PageScrollDown; }
         bind "h" { PageScrollUp; }
         bind "j" { ScrollDown; }
         bind "k" { ScrollUp; }
@@ -201,7 +199,6 @@ keybinds clear-defaults=true {
         bind "u" { HalfPageScrollUp; }
     }
     entersearch {
-        bind "Ctrl c" { SwitchToMode "scroll"; }
         bind "esc" { SwitchToMode "scroll"; }
         bind "enter" { SwitchToMode "search"; }
     }
@@ -209,7 +206,7 @@ keybinds clear-defaults=true {
         bind "esc" { UndoRenameTab; SwitchToMode "tab"; }
     }
     shared_among "renametab" "renamepane" {
-        bind "Ctrl c" { SwitchToMode "locked"; }
+        bind "esc" { SwitchToMode "locked"; }
     }
     renamepane {
         bind "esc" { UndoRenamePane; SwitchToMode "pane"; }
