@@ -17,6 +17,10 @@ alias k="kubectl"
 alias urldecode="python3 -c 'import sys, urllib.parse as ul; print(ul.unquote_plus(sys.stdin.read()))'"
 alias urlencode="python3 -c 'import sys, urllib.parse as ul; print(ul.quote_plus(sys.stdin.read()))'"
 
+if command -v nixvim &> /dev/null; then
+    export EDITOR=nixvim
+fi
+
 # GitHub CLI token
 if command -v gh &> /dev/null; then
     GH_TOKEN=$(gh auth token 2>/dev/null)

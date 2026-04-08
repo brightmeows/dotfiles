@@ -38,3 +38,7 @@ try {
         $env.GITHUB_TOKEN = $gh_token
     }
 }
+
+if (which nixvim | is-not-empty) {
+    $env.EDITOR = nixvim
+}
