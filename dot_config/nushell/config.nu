@@ -40,5 +40,5 @@ try {
 }
 
 if (which nixvim | is-not-empty) {
-    $env.EDITOR = nixvim
+    $env.EDITOR = "nixvim"
 }
