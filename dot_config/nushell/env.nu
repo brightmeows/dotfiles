@@ -41,3 +41,5 @@ if ($env_file | path exists) {
 #
 # You can remove these comments if you want or leave
 # them for future reference.
+
+$env.NIXPKGS_ALLOW_UNFREE = "1"
