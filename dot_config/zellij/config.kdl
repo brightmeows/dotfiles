@@ -26,7 +26,9 @@ keybinds clear-defaults=true {
         bind "Alt u" { SwitchToMode "normal"; }
     }
     normal {
+        bind "a" { SwitchToMode "locked"; }
         bind "h" { MoveFocus "left"; }
+        bind "i" { SwitchToMode "locked"; }
         bind "j" { MoveFocus "down"; }
         bind "k" { MoveFocus "up"; }
         bind "l" { MoveFocus "right"; }
