@@ -6,16 +6,6 @@
   "plugin": [
     "superpowers@git+https://github.com/obra/superpowers.git",
   ],
-  "mcp": {
-    "pdf-reader": {
-      "enabled": false,
-      "type": "local",
-      "command": [
-        "pnpx",
-        "@sylphx/pdf-reader-mcp",
-      ],
-    },
-  },
   "agent": {
     "explore": {
       "disable": true,
