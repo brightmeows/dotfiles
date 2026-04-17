@@ -8,7 +8,7 @@ TERM = "xterm-256color"
 [font]
 size = 13
 bold.style = "SemiBold"
-normal.family = "ComicShannsMono Nerd Font Mono"
+normal.family = "ComicShannsMono Nerd Font"
 normal.style = "Regular"
 
 [scrolling]
@@ -22,7 +22,7 @@ save_to_clipboard = true
 shell.program = "nu"
 
 [window]
-opacity = 0.6
+opacity = 0.9
 padding.x = 24
 padding.y = 16
 
