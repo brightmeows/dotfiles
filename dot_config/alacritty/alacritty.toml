@@ -1,3 +1,6 @@
+[general]
+import = ["themes/catppuccin-macchiato.toml"]
+
 [cursor]
 style.blinking = "Always"
 style.shape = "Underline"
