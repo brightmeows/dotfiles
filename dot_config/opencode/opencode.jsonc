@@ -16,10 +16,6 @@
       "/tmp/**": "allow",
       ".agents_tmp/**": "allow",
     },
-    "write": {
-      "/tmp/**": "allow",
-      ".agents_tmp/**": "allow",
-    },
     "edit": {
       "/tmp/**": "allow",
       ".agents_tmp/**": "allow",
