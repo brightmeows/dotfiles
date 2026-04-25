@@ -14,4 +14,9 @@
     type = "file"
     url = "file://{{ .chezmoi.sourceDir }}/dot_config/alacritty/alacritty.toml"
 
+# zellij configuration for Windows
+["AppData/Roaming/zellij/config.kdl"]
+    type = "file"
+    url = "file://{{ .chezmoi.sourceDir }}/dot_config/zellij/config.kdl"
+
 {{- end }}
