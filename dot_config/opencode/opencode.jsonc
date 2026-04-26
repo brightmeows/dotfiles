@@ -3,9 +3,6 @@
   "autoupdate": false,
   "lsp": false,
   "formatter": false,
-  "plugin": [
-    "superpowers@git+https://github.com/obra/superpowers.git",
-  ],
   "agent": {
     "explore": {
       "disable": true,
