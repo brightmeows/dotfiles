@@ -4,7 +4,10 @@
   "lsp": false,
   "formatter": false,
   "agent": {
-    "explore": {
+    "build": {
+      "disable": true,
+    },
+    "plan": {
       "disable": true,
     },
   },
