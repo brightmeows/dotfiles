@@ -22,11 +22,11 @@ chezmoi update -S .
 ### 安装 superpowers
 
 ```bash
-npx --yes skills add obra/superpowers --yes --global --skill "*" --agent pi,claude-code
+npx --yes skills add obra/superpowers --yes --global --skill "*" --agent pi --agent claude-code
 ```
 
 ### 安装 rust-best-practices
 
 ```bash
-npx --yes skills add apollographql/skills --yes --global --skill rust-best-practices --agent pi,claude-code
+npx --yes skills add apollographql/skills --yes --global --skill rust-best-practices --agent pi --agent claude-code
 ```
