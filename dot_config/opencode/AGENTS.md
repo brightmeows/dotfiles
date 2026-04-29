@@ -1,8 +1,9 @@
 # 通用规则
 
-## 会话开始时，必须完成以下操作
+## 会话开始时，必须同时完成以下操作
 
-1. 激活 Skill：`using-superpowers`
+1. 激活 Skill：`using-superpowers`。
+2. 激活 Skill：`caveman`。使用文言文。
 
 ## 工作哲学
 
