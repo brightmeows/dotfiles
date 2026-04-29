@@ -30,3 +30,9 @@ npx --yes skills add obra/superpowers --yes --global --skill "*" --agent pi --ag
 ```bash
 npx --yes skills add apollographql/skills --yes --global --skill rust-best-practices --agent pi --agent claude-code
 ```
+
+### 安装 caveman
+
+```bash
+npx --yes skills add JuliusBrussee/caveman --yes --global --skill "*" --agent pi --agent claude-code
+```
