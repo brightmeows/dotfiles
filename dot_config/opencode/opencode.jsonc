@@ -11,35 +11,6 @@
       "disable": true,
     },
   },
-  "provider": {
-    "mimo": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "Xiaomi Mimo",
-      "options": {
-        "baseURL": "https://api.xiaomimimo.com/v1",
-        "apiKey": "{env:XIAOMI_API_KEY}",
-        "headers": {
-          "Authorization": "Bearer custom-token",
-        },
-      },
-      "models": {
-        "mimo-v2.5-pro": {
-          "name": "MiMo-V2.5-Pro",
-          "limit": {
-            "context": 1048576,
-            "output": 131072,
-          },
-        },
-        "mimo-v2.5": {
-          "name": "MiMo-V2.5",
-          "limit": {
-            "context": 1048576,
-            "output": 131072,
-          },
-        },
-      }
-    }
-  },
   "permission": {
     "read": {
       "/tmp/*": "allow",
