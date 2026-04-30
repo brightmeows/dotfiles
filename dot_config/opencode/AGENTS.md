@@ -2,8 +2,12 @@
 
 ## 会话开始时，必须同时完成以下操作
 
-1. 激活 Skill：`using-superpowers`。
-2. 激活 Skill：`caveman`。使用文言文。
+### 激活以下 Skill
+
+1. `using-superpowers`。
+2. `caveman`。使用 `caveman` 的 `wenyan-full` 挡位（文言文），但使用简体字。
+
+- 如果提示激活其它 Skill，也需要一起激活以上 Skill。
 
 ## 工作哲学
 
