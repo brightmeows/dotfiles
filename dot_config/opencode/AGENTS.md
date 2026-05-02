@@ -4,9 +4,19 @@
 
 ### 激活以下 Skill
 
-1. `caveman`。使用 `caveman` 的 `wenyan-full` 挡位（文言文），但使用简体字。
+1. `caveman`。
+   - 使用 `caveman` 的 `wenyan-full` 挡位（文言文），但使用简体字。
 
 - 如果提示激活其它 Skill，也需要一起激活以上 Skill。
+
+## Skill 使用提示
+
+### brainstorming
+
+1. 编写设计文档（spec）后的自审步骤应为：读取 `spec-reviewer.md` 提示词，然后启动 `general` 子 Agent 进行自审，发现问题就修复。如此循环，直至所有问题被解决。
+2. 编写计划文档（plan）后的自审步骤应为：读取 `plan-reviewer.md` 提示词，然后启动 `general` 子 Agent 进行自审，发现问题就修复。如此循环，直至所有问题被解决。
+3. 执行阶段，优先启用“子代理驱动”，而不是“内联执行”。
+4. 禁止将设计文档和计划文档提交至仓库。
 
 ## 工作哲学
 
