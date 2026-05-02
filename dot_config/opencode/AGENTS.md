@@ -13,10 +13,22 @@
 
 ### brainstorming
 
-1. 编写设计文档（spec）后的自审步骤应为：读取 `spec-reviewer.md` 提示词，然后启动 `general` 子 Agent 进行自审，发现问题就修复。如此循环，直至所有问题被解决。
-2. 编写计划文档（plan）后的自审步骤应为：读取 `plan-reviewer.md` 提示词，然后启动 `general` 子 Agent 进行自审，发现问题就修复。如此循环，直至所有问题被解决。
+1. 编写设计文档（spec）后的自审步骤应为：
+   - 读取 `brainstorming` Skill 的 `spec-document-reviewer-prompt.md` 提示词。
+   - 使用这个提示词，启动 `general` 子 Agent 进行自审。
+   - 如果发现问题，修复所有发现的问题。修复完成后，再次使用**相同提示词**启动子 Agent。
+   - 如此循环，直至所有问题被解决。
+2. 禁止将设计文档提交至仓库。
+
+### writing-plans
+
+1. 编写计划文档（plan）后的自审步骤应为：
+   - 读取 `writing-plans` Skill 的 `plan-document-reviewer-prompt.md` 提示词。
+   - 使用这个提示词，启动 `general` 子 Agent 进行自审。
+   - 如果发现问题，修复所有发现的问题。修复完成后，再次使用**相同提示词**启动子 Agent。
+   - 如此循环，直至所有问题被解决。
+2. 禁止将计划文档提交至仓库。
 3. 执行阶段，优先启用“子代理驱动”，而不是“内联执行”。
-4. 禁止将设计文档和计划文档提交至仓库。
 
 ## 工作哲学
 
