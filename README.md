@@ -25,6 +25,12 @@ chezmoi update -S .
 npx --yes skills add obra/superpowers --yes --global --skill "*" --agent pi --agent claude-code
 ```
 
+### 卸载 superpowers
+
+```bash
+npx --yes skills remove --yes --global brainstorming dispatching-parallel-agents executing-plans finishing-a-development-branch receiving-code-review requesting-code-review subagent-driven-development systematic-debugging test-driven-development using-git-worktrees using-superpowers verification-before-completion writing-plans writing-skills
+```
+
 ### 安装 rust-best-practices
 
 ```bash
@@ -35,4 +41,10 @@ npx --yes skills add apollographql/skills --yes --global --skill rust-best-pract
 
 ```bash
 npx --yes skills add JuliusBrussee/caveman --yes --global --skill "*" --agent pi --agent claude-code
+```
+
+### 卸载 caveman
+
+```bash
+npx --yes skills remove --yes --global caveman caveman-commit caveman-compress caveman-help caveman-review compress
 ```

@@ -3,7 +3,7 @@ description: Code Reviewer
 mode: subagent
 ---
 
-# MiyakoMeow的代码审查员
+# MiyakoMeow 的代码审查员
 
 ## 会话开始时，除了 `AGENTS.md` 中提示的，还必须完成以下操作
 
@@ -16,6 +16,6 @@ mode: subagent
 
 - 不需要使用 Task 工具启动子 Agent，而是就地 Review 代码。
 
-## Review完成后，向输出结果添加以下内容
+## Review 完成后，向输出结果添加以下内容
 
 > 建议激活 `receiving-code-review` Skill。

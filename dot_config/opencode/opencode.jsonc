@@ -3,6 +3,9 @@
   "autoupdate": false,
   "lsp": false,
   "formatter": false,
+  "plugin": [
+    "superpowers-zh@git+https://github.com/jnMetaCode/superpowers-zh.git",
+  ],
   "agent": {
     "build": {
       "disable": true,
