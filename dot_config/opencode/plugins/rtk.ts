@@ -1,17 +1,17 @@
 import type { Plugin } from "@opencode-ai/plugin"
 
-// RTK OpenCode plugin — rewrites commands to use rtk for token savings.
-// Requires: rtk >= 0.23.0 in PATH.
+// RTK OpenCode 插件——重写命令以使用 rtk 节省 token。
+// 需求：rtk >= 0.23.0 于 PATH 中。
 //
-// This is a thin delegating plugin: all rewrite logic lives in `rtk rewrite`,
-// which is the single source of truth (src/discover/registry.rs).
-// To add or change rewrite rules, edit the Rust registry — not this file.
+// 此为薄委托插件：所有重写逻辑存于 `rtk rewrite`，
+// 为单一真相来源（src/discover/registry.rs）。
+// 欲增或改重写规则，请编辑 Rust 注册表——非此文件。
 
 export const RtkOpenCodePlugin: Plugin = async ({ $ }) => {
   try {
     await $`which rtk`.quiet()
   } catch {
-    console.warn("[rtk] rtk binary not found in PATH — plugin disabled")
+    console.warn("[rtk] 未找到 rtk 二进制于 PATH 中——插件停用")
     return {}
   }
 
@@ -51,7 +51,7 @@ export const RtkOpenCodePlugin: Plugin = async ({ $ }) => {
           ;(args as Record<string, unknown>).command = rewritten
         }
       } catch {
-        // rtk rewrite failed — pass through unchanged
+        // rtk rewrite 失败——原样传递
       }
     },
   }
