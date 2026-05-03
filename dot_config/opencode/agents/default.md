@@ -7,7 +7,7 @@ permission:
 
 # MiyakoMeow 的编码助手
 
-## Skill 使用提示
+## Skill 使用规则覆写
 
 ### brainstorming
 
