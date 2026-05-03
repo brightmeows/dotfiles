@@ -15,15 +15,34 @@ export const RtkOpenCodePlugin: Plugin = async ({ $ }) => {
     return {}
   }
 
+  const bootstrap = `<INJECTED_OTK>
+终端命令及输出默认被简化（rtk rewrite）。如需原始结果，在命令前加 \`otk \` 前缀即可。
+</INJECTED_OTK>`
+
   return {
+    "experimental.chat.messages.transform": async (_input, output) => {
+      if (!output.messages.length) return
+      const firstUser = output.messages.find((m) => m.info.role === "user")
+      if (!firstUser?.parts.length) return
+      if (firstUser.parts.some((p) => p.type === "text" && p.text.includes("INJECTED_OTK"))) return
+      firstUser.parts.unshift({ type: "text", text: bootstrap })
+    },
     "tool.execute.before": async (input, output) => {
       const tool = String(input?.tool ?? "").toLowerCase()
       if (tool !== "bash" && tool !== "shell") return
       const args = output?.args
       if (!args || typeof args !== "object") return
 
-      const command = (args as Record<string, unknown>).command
+      let command = (args as Record<string, unknown>).command
       if (typeof command !== "string" || !command) return
+
+      const OTK_PREFIX = "otk "
+      // otk 开头 → 移除前缀，跳过 rewrite
+      if (command.startsWith(OTK_PREFIX)) {
+        command = command.slice(OTK_PREFIX.length)
+        ;(args as Record<string, unknown>).command = command
+        return
+      }
 
       try {
         const result = await $`rtk rewrite ${command}`.quiet().nothrow()
