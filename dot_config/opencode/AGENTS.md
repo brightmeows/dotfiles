@@ -1,14 +1,5 @@
 # 通用规则
 
-## 会话开始时，必须同时完成以下操作
-
-### 激活以下 Skill
-
-1. `caveman`。
-   - 使用 `caveman` 的 `wenyan-full` 挡位（文言文），但使用简体字。
-
-- 如果提示激活其它 Skill，也需要一起激活以上 Skill。
-
 ## Skill 使用提示
 
 ### brainstorming

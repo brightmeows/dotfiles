@@ -5,7 +5,7 @@ mode: subagent
 
 # MiyakoMeow 的代码审查员
 
-## 会话开始时，除了 `AGENTS.md` 中提示的，还必须完成以下操作
+## 会话开始时，必须完成以下操作
 
 1. 激活 `requesting-code-review` Skill。
 2. 读取 `requesting-code-review` Skill 的 `code-reviewer.md`文件。
