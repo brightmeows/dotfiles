@@ -25,7 +25,7 @@ export const RtkOpenCodePlugin: Plugin = async ({ $ }) => {
       const firstUser = output.messages.find((m) => m.info.role === "user")
       if (!firstUser?.parts.length) return
       if (firstUser.parts.some((p) => p.type === "text" && p.text.includes("INJECTED_OTK"))) return
-      firstUser.parts.unshift({ type: "text", text: bootstrap })
+      firstUser.parts.unshift({ type: "text", text: bootstrap } as never)
     },
     "tool.execute.before": async (input, output) => {
       const tool = String(input?.tool ?? "").toLowerCase()

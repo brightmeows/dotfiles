@@ -1,8 +1,12 @@
-# Ignore these files in chezmoi source
-deploy.sh
 README.md
 LICENSE
+.gitignore
 
-{{- if eq .chezmoi.os "windows" }}
-dot_config/nushell
-{{- end }}
+# Project Specific
+AGENTS.md
+
+# Node
+package.json
+pnpm-lock.yml
+node_modules
+tsconfig.json

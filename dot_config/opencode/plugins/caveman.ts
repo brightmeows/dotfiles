@@ -16,7 +16,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // 解析 skill 内容（去前置元数据）
 const parseSkillContent = (content: string): string => {
   const match = content.match(/^---\n[\s\S]*?\n---\n([\s\S]*)$/);
-  return match ? match[1].trim() : content.trim();
+  return match?.[1]?.trim() ?? content.trim();
 };
 
 // 常见 skills 根目录（按优先级序）
@@ -74,7 +74,7 @@ ${skillContent}
         )
       ) return;
 
-      firstUser.parts.unshift({ type: "text", text: bootstrap });
+      firstUser.parts.unshift({ type: "text", text: bootstrap } as never);
     },
   };
 };
