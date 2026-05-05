@@ -16,12 +16,13 @@ const BRAINSTORMING_OVERRIDE = [
   "## Skill 覆写: brainstorming",
   "",
   "1. 设计文档用中文。caveman 激活则从之。",
-  "2. 自审改为：",
+  "2. 以 question 工具发问。宜一次多问，可多轮至无疑。",
+  "3. 自审改为：",
   "   - 读 brainstorming Skill 之 spec-document-reviewer-prompt.md。",
   "   - 用此提示词启动 general 子 Agent 自审。",
   "   - 发现问题则修复，修复后以相同提示词再启子 Agent。",
   "   - 循环至无问题，不限轮数。",
-  "3. 设计文档禁止提交至仓库。",
+  "4. 设计文档禁止提交至仓库。",
   "",
 ].join("\n");
 
