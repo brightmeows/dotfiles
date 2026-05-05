@@ -15,16 +15,16 @@ export const RtkOpenCodePlugin: Plugin = async ({ $ }) => {
     return {}
   }
 
-  const bootstrap = `<INJECTED_OTK>
-终端输出默认简化（rtk rewrite）。原始结果加 \`otk \` 前缀。
-</INJECTED_OTK>`
+  const bootstrap = `<INJECTED_NORTK>
+终端输出默认自动简化（rtk rewrite）。如需原始输出，运行命令时加 \`nortk \` 前缀。
+</INJECTED_NORTK>`
 
   return {
     "experimental.chat.messages.transform": async (_input, output) => {
       if (!output.messages.length) return
       const firstUser = output.messages.find((m) => m.info.role === "user")
       if (!firstUser?.parts.length) return
-      if (firstUser.parts.some((p) => p.type === "text" && p.text.includes("INJECTED_OTK"))) return
+      if (firstUser.parts.some((p) => p.type === "text" && p.text.includes("INJECTED_NORTK"))) return
       firstUser.parts.unshift({ type: "text", text: bootstrap } as never)
     },
     "tool.execute.before": async (input, output) => {
@@ -36,10 +36,10 @@ export const RtkOpenCodePlugin: Plugin = async ({ $ }) => {
       let command = (args as Record<string, unknown>).command
       if (typeof command !== "string" || !command) return
 
-      const OTK_PREFIX = "otk "
-      // otk 开头 → 移除前缀，跳过 rewrite
-      if (command.startsWith(OTK_PREFIX)) {
-        command = command.slice(OTK_PREFIX.length)
+      const NORTK_PREFIX = "nortk "
+      // nortk 开头 → 移除前缀，跳过 rewrite
+      if (command.startsWith(NORTK_PREFIX)) {
+        command = command.slice(NORTK_PREFIX.length)
         ;(args as Record<string, unknown>).command = command
         return
       }
