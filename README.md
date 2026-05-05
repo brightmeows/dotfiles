@@ -31,6 +31,18 @@ npx --yes skills add obra/superpowers --yes --global --skill "*" --agent pi --ag
 npx --yes skills remove --yes --global brainstorming dispatching-parallel-agents executing-plans finishing-a-development-branch receiving-code-review requesting-code-review subagent-driven-development systematic-debugging test-driven-development using-git-worktrees using-superpowers verification-before-completion writing-plans writing-skills
 ```
 
+### 安装 superpowers-zh
+
+```bash
+npx --yes skills add jnMetaCode/superpowers-zh --yes --global --skill "*" --agent pi --agent claude-code
+```
+
+### 卸载 superpowers-zh
+
+```bash
+npx --yes skills remove --yes --global brainstorming dispatching-parallel-agents executing-plans finishing-a-development-branch receiving-code-review requesting-code-review subagent-driven-development systematic-debugging test-driven-development using-git-worktrees using-superpowers verification-before-completion writing-plans writing-skills chinese-code-review chinese-git-workflow chinese-documentation chinese-commit-conventions mcp-builder workflow-runner
+```
+
 ### 安装 rust-best-practices
 
 ```bash
