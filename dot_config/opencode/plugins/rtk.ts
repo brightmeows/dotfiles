@@ -16,7 +16,7 @@ export const RtkOpenCodePlugin: Plugin = async ({ $ }) => {
   }
 
   const bootstrap = `<INJECTED_OTK>
-终端命令及输出默认被简化（rtk rewrite）。如需原始结果，在命令前加 \`otk \` 前缀即可。
+终端输出默认简化（rtk rewrite）。原始结果加 \`otk \` 前缀。
 </INJECTED_OTK>`
 
   return {

@@ -53,11 +53,10 @@ export const CavemanPlugin: Plugin = async ({}) => {
   const skillContent = parseSkillContent(fs.readFileSync(skillPath, "utf8"));
 
   const bootstrap = `<INJECTED_CAVEMAN>
-Caveman skill 内容如下：
+Caveman skill 内容：
 ${skillContent}
-以上 Caveman skill 之内容也。
 
-今已激活 Caveman skill，并启 wenyan-full 压缩模式。额外要求：使用简体字而非繁体字。
+已激活 Caveman skill，wenyan-full 模式，用简体字。
 </INJECTED_CAVEMAN>`;
 
   return {

@@ -64,19 +64,16 @@ export const SuperpowersPlugin: Plugin = async ({}) => {
 
   const { content } = parseSkillContent(fs.readFileSync(skillPath, "utf8"));
 
-  const toolMapping = `**OpenCode 工具映射：**
-当 skills 引用你不具备的工具时，替换为 OpenCode 等价实现：
+  const toolMapping = `工具映射（OpenCode 等价）：
 - \`TodoWrite\` → \`todowrite\`
-- 带 subagents 的 \`Task\` tool → 使用 OpenCode 的 @mention 子代理系统
-- \`Skill\` tool → OpenCode 原生 \`skill\` 工具
-- \`Read\`, \`Write\`, \`Edit\`, \`Bash\` → 你已有的原生工具
-
-使用 OpenCode 原生 \`skill\` 工具列出和加载 skills。`;
+- \`Task\` + subagents → OpenCode @mention
+- \`Skill\` → OpenCode \`skill\`
+- \`Read\`/\`Write\`/\`Edit\`/\`Bash\` → 原生工具`;
 
   const bootstrap = `<INJECTED_USING_SUPERPOWERS>
-你已拥有 superpowers。
+已获 superpowers。
 
-**重要：using-superpowers skill 的内容已附于下文。它已加载——你此刻正在遵循它。请勿再用 skill 工具重复加载 "using-superpowers"，那是多余的。**
+using-superpowers skill 已加载于下文。勿重复加载。
 
 ${content}
 
