@@ -13,19 +13,18 @@
     },
   },
   "permission": {
+    "skill": {
+      "using-superpowers": "deny",
+      "caveman": "deny",
+    },
     "read": {
       "/tmp/*": "allow",
-      "/tmp/**": "allow",
       ".agents_tmp/*": "allow",
-      ".agents_tmp/**": "allow",
       "/nix/store/*": "allow",
-      "/nix/store/**": "allow",
     },
     "edit": {
       "/tmp/*": "allow",
-      "/tmp/**": "allow",
       ".agents_tmp/*": "allow",
-      ".agents_tmp/**": "allow",
     },
   },
 }
