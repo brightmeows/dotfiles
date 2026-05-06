@@ -4,6 +4,13 @@
   "lsp": false,
   "formatter": false,
   "plugin": [],
+  "mcp": {
+    "exa": {
+      "type": "remote",
+      "url": "https://mcp.exa.ai/mcp",
+      "enabled": false,
+    },
+  },
   "agent": {
     "build": {
       "disable": true,
