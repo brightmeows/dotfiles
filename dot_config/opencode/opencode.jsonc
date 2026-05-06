@@ -21,6 +21,7 @@
       "/tmp/*": "allow",
       ".agents_tmp/*": "allow",
       "/nix/store/*": "allow",
+      "~/.local/share/rtk/tee/*": "allow",
     },
     "edit": {
       "/tmp/*": "allow",
