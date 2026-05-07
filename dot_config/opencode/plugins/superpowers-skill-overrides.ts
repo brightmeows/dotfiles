@@ -13,7 +13,7 @@ import type { Plugin } from "@opencode-ai/plugin";
 
 const BRAINSTORMING_OVERRIDE = [
   "",
-  "## Skill 覆写: brainstorming",
+  "## Skill 覆写：brainstorming",
   "",
   "1. 设计文档用中文。caveman 激活则从之。",
   "2. 以 question 工具发问。宜一次多问，可多轮至无疑。",
@@ -21,27 +21,22 @@ const BRAINSTORMING_OVERRIDE = [
   "   - 读 brainstorming Skill 之 spec-document-reviewer-prompt.md。",
   "   - 用此提示词启动 general 子 Agent 自审。",
   "   - 发现问题则修复，修复后以相同提示词再启子 Agent。",
-  "   - 循环至无问题，不限轮数。",
-  "4. 设计文档禁止提交至仓库。",
-  "",
+   "   - 循环至无问题，不限轮数。",
+   "",
 ].join("\n");
 
 const WRITING_PLANS_OVERRIDE = [
   "",
-  "## Skill 覆写: writing-plans",
+  "## Skill 覆写：writing-plans",
   "",
   "1. 计划文档用中文。caveman 激活则从之。",
-  '2. 单步代码量过大时，以"接口 + 思路"形式呈现。',
+  '2. 单步代码量过大时，以“接口 + 思路”形式呈现。',
   "3. 自审改为：",
   "   - 读 writing-plans Skill 之 plan-document-reviewer-prompt.md。",
   "   - 用此提示词启动 general 子 Agent 自审。",
   "   - 发现问题则修复，修复后以相同提示词再启子 Agent。",
   "   - 循环至无问题，不限轮数。",
-  "4. 计划文档禁止提交至仓库。",
-  "5. 勿问用户执行方式：",
-  "   - 上下文 ≤256K → 子代理驱动",
-  "   - 上下文 ≥1M → 内联执行",
-  "   自主判断，直接执行。",
+   "4. 默认子代理驱动执行。仅当用户明确要求内联时方用内联。",
   "",
 ].join("\n");
 
