@@ -40,9 +40,28 @@ const WRITING_PLANS_OVERRIDE = [
   "",
 ].join("\n");
 
+const SUBAGENT_DRIVEN_DEVELOPMENT_OVERRIDE = [
+  "",
+  "## Skill 覆写：subagent-driven-development",
+  "",
+  "1. 派子Agent时，标注设计/计划文档路径，指明实现部分。勿赘。",
+  "2. 规格审查与代码审查并行。",
+  "",
+].join("\n");
+
+const FINISHING_A_DEVELOPMENT_BRANCH_OVERRIDE = [
+  "",
+  "## Skill 覆写：finishing-a-development-branch",
+  "",
+  "1. 建PR前，必移除设计/计划文档。删或amend对应提交。",
+  "",
+].join("\n");
+
 const SKILL_OVERRIDES: Record<string, string> = {
   brainstorming: BRAINSTORMING_OVERRIDE,
   "writing-plans": WRITING_PLANS_OVERRIDE,
+  "subagent-driven-development": SUBAGENT_DRIVEN_DEVELOPMENT_OVERRIDE,
+  "finishing-a-development-branch": FINISHING_A_DEVELOPMENT_BRANCH_OVERRIDE,
 };
 
 // ----- 插件入口 -----
