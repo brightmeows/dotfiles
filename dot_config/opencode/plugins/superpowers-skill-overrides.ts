@@ -21,8 +21,8 @@ const BRAINSTORMING_OVERRIDE = [
   "   - 读 brainstorming Skill 之 spec-document-reviewer-prompt.md。",
   "   - 用此提示词启动 general 子 Agent 自审。",
   "   - 发现问题则修复，修复后以相同提示词再启子 Agent。",
-   "   - 循环至无问题，不限轮数。",
-   "",
+  "   - 循环至无问题，不限轮数。",
+  "",
 ].join("\n");
 
 const WRITING_PLANS_OVERRIDE = [
@@ -36,7 +36,6 @@ const WRITING_PLANS_OVERRIDE = [
   "   - 用此提示词启动 general 子 Agent 自审。",
   "   - 发现问题则修复，修复后以相同提示词再启子 Agent。",
   "   - 循环至无问题，不限轮数。",
-   "4. 默认子代理驱动执行。仅当用户明确要求内联时方用内联。",
   "",
 ].join("\n");
 
