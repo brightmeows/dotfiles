@@ -51,7 +51,9 @@ const FINISHING_A_DEVELOPMENT_BRANCH_OVERRIDE = [
   "",
   "## Skill 覆写：finishing-a-development-branch",
   "",
-  "1. 建PR前，必移除设计/计划文档。",
+  "1. 建PR前检查清单：",
+  "   - 设计/计划文档已移除",
+  "   - 当前分支干净，无未提交/未推送内容",
   "",
 ].join("\n");
 
