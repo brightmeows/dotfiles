@@ -48,7 +48,7 @@ export const BranchMainWarnPlugin: Plugin = async () => {
       warned = true;
 
       const bootstrap = `<${INJECTED_TAG}>
-当前在 ${branch} 分支。直接修改有风险。建新分支或激活 \`using-git-worktrees\` skill。
+当前在 ${branch} 分支。直接修改有风险。建新分支。
 </${INJECTED_TAG}>`;
 
       firstUser.parts.unshift({ type: "text", text: bootstrap } as never);
