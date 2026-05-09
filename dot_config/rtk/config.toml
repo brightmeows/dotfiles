@@ -1,2 +1,2 @@
 [hooks]
-exclude_commands = ["ruff", "ty"]
+exclude_commands = []
