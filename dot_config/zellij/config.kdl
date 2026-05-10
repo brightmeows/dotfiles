@@ -49,9 +49,9 @@ keybinds clear-defaults=true {
         bind "f" { ToggleFocusFullscreen; SwitchToMode "locked"; }
         bind "g" { TogglePaneInGroup; SwitchToMode "locked"; }
         bind "H" { ToggleGroupMarking; SwitchToMode "locked"; }
-        bind "i" { TogglePanePinned; SwitchToMode "locked"; }
+        bind "p" { TogglePanePinned; SwitchToMode "locked"; }
+        bind "i" { SwitchToMode "locked"; }
         bind "n" { NewPane; SwitchToMode "locked"; }
-        bind "p" { SwitchToMode "normal"; }
         bind "r" { NewPane "right"; SwitchToMode "locked"; }
         bind "s" { NewPane "stacked"; SwitchToMode "locked"; }
         bind "w" { ToggleFloatingPanes; SwitchToMode "locked"; }
@@ -79,6 +79,7 @@ keybinds clear-defaults=true {
         bind "." { MoveTab "right"; }
         bind "b" { BreakPane; SwitchToMode "locked"; }
         bind "h" { GoToPreviousTab; }
+        bind "i" { SwitchToMode "locked"; }
         bind "j" { GoToNextTab; }
         bind "k" { GoToPreviousTab; }
         bind "l" { GoToNextTab; }
@@ -105,6 +106,7 @@ keybinds clear-defaults=true {
         bind "j" { Resize "Increase down"; }
         bind "k" { Resize "Increase up"; }
         bind "l" { Resize "Increase right"; }
+        bind "i" { SwitchToMode "locked"; }
         bind "r" { SwitchToMode "normal"; }
     }
     move {
@@ -116,6 +118,7 @@ keybinds clear-defaults=true {
         bind "j" { MovePane "down"; }
         bind "k" { MovePane "up"; }
         bind "l" { MovePane "right"; }
+        bind "i" { SwitchToMode "locked"; }
         bind "m" { SwitchToMode "normal"; }
         bind "n" { MovePane; }
         bind "p" { MovePaneBackwards; }
@@ -124,10 +127,12 @@ keybinds clear-defaults=true {
     scroll {
         bind "e" { EditScrollback; SwitchToMode "locked"; }
         bind "f" { SwitchToMode "entersearch"; SearchInput 0; }
+        bind "i" { SwitchToMode "locked"; }
         bind "s" { SwitchToMode "normal"; }
     }
     search {
         bind "c" { SearchToggleOption "CaseSensitivity"; }
+        bind "i" { SwitchToMode "locked"; }
         bind "n" { Search "down"; }
         bind "o" { SearchToggleOption "WholeWord"; }
         bind "p" { Search "up"; }
@@ -149,6 +154,7 @@ keybinds clear-defaults=true {
             SwitchToMode "locked"
         }
         bind "d" { Detach; }
+        bind "i" { SwitchToMode "locked"; }
         bind "l" {
             LaunchOrFocusPlugin "zellij:layout-manager" {
                 floating true
