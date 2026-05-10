@@ -32,6 +32,8 @@ keybinds clear-defaults=true {
         bind "j" { MoveFocus "down"; }
         bind "k" { MoveFocus "up"; }
         bind "l" { MoveFocus "right"; }
+        bind "H" { GoToPreviousTab; }
+        bind "L" { GoToNextTab; }
         bind "q" { Quit; }
     }
     pane {
