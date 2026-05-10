@@ -10,9 +10,9 @@
 // tab         标签管理                     入口: t
 // resize      调整窗格大小                 入口: r
 // move        移动窗格                     入口: m
-// scroll      浏览回滚缓冲区               入口: s (normal/resize/search/move)
-// search      搜索回滚缓冲区               入口: Enter (entersearch)
-// entersearch 搜索输入                     入口: f (scroll)
+// scroll      浏览回滚缓冲区               入口: s
+// search      搜索回滚缓冲区               入口: f → entersearch → Enter
+// entersearch 搜索输入                     入口: f (输词后 Enter 进入 search)
 // renametab   重命名标签                   入口: r (tab)
 // renamepane  重命名窗格                   入口: c (pane)
 // session     会话管理                     入口: o
@@ -205,6 +205,7 @@ keybinds clear-defaults=true {
     }
     shared_among "normal" "resize" "search" "move" "prompt" "tmux" {
         bind "s" { SwitchToMode "scroll"; }
+        bind "f" { SwitchToMode "entersearch"; SearchInput 0; }
     }
     shared_except "locked" "resize" "pane" "tab" "entersearch" "renametab" "renamepane" {
         bind "r" { SwitchToMode "resize"; }
