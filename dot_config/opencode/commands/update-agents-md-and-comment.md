@@ -16,7 +16,7 @@ description: Update AGENTS.md and Comment in Parallel
 
 派遣检查子Agent时，禁止携带上一轮修复信息，禁止复用已有会话。
 
-## 第二部：修复
+## 第二步：修复
 
 如果第一步发现问题：
 - 派遣对应的修复子Agent进行修复。
