@@ -22,7 +22,7 @@ chezmoi update -S .
 ### 安装 superpowers
 
 ```bash
-npx --yes skills add obra/superpowers --yes --global --skill "*" --agent pi --agent claude-code
+npx --yes skills add obra/superpowers --yes --global --skill "*" --agent claude-code
 ```
 
 ### 卸载 superpowers
@@ -34,7 +34,7 @@ npx --yes skills remove --yes --global brainstorming dispatching-parallel-agents
 ### 安装 superpowers-zh
 
 ```bash
-npx --yes skills add jnMetaCode/superpowers-zh --yes --global --skill "*" --agent pi --agent claude-code
+npx --yes skills add jnMetaCode/superpowers-zh --yes --global --skill "*" --agent claude-code
 ```
 
 ### 卸载 superpowers-zh
@@ -46,17 +46,23 @@ npx --yes skills remove --yes --global brainstorming dispatching-parallel-agents
 ### 安装 rust-best-practices
 
 ```bash
-npx --yes skills add apollographql/skills --yes --global --skill rust-best-practices --agent pi --agent claude-code
+npx --yes skills add apollographql/skills --yes --global --skill rust-best-practices --agent claude-code
 ```
 
 ### 安装 caveman
 
 ```bash
-npx --yes skills add JuliusBrussee/caveman --yes --global --skill "*" --agent pi --agent claude-code
+npx --yes skills add JuliusBrussee/caveman --yes --global --skill "*" --agent claude-code
 ```
 
 ### 卸载 caveman
 
 ```bash
 npx --yes skills remove --yes --global caveman caveman-commit caveman-compress caveman-help caveman-review compress
+```
+
+### 安装 agents-md
+
+```bash
+npx --yes skills add getsentry/skills --yes --global --skill agents-md --agent claude-code
 ```
