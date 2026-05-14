@@ -4,13 +4,13 @@ description: Update AGENTS.md and Comment in Parallel
 
 # 并行更新 AGENTS.md 和 代码注释
 
-循环以下两个步骤，直至所有 `AGENTS.md` 内容完全对齐。
+循环以下两个步骤，直至所有内容完全对齐。
 
 ## 第一步：检查
 
 以当前项目内的每个 `AGENTS.md` 文件为单位，启动检查子Agent：
-- 检查 `AGENTS.md` 内容、代码注释和代码实际实现是否正确匹配。
-- 以代码实际实现为唯一事实来源。
+- 检查目标：`AGENTS.md` 内容、代码注释。
+- 唯一事实来源：代码实际实现。
 
 ### 注意事项
 
@@ -24,8 +24,5 @@ description: Update AGENTS.md and Comment in Parallel
 
 ## 循环完成后
 
-报告所有修复内容
+报告所有修复内容。
 
-## 提示
-
-如果项目配置了工作区忽略等可以安全使用工作树的环境，使用工作树。
