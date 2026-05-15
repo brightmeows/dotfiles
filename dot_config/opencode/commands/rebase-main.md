@@ -1,10 +1,9 @@
 ---
-description: Rebase to Main Branch
+description: Rebase 至主分支
 ---
 
-# Rebase 至主分支
+# Rebase 至 main
 
-拉取 `main` 分支的最新提交，并 rebase 当前分支至 `main` 分支。
-查看 `main` 分支的最新提交的更改，并分析其是否会对当前分支的实现产生影响。
-然后重新检查当前分支的实现。
-
+拉 `main` 最新提交，rebase 当前分支至 `main`。
+览 `main` 最新提交之更动，析其可影响当前分支否。
+然后重检当前分支之实现。
