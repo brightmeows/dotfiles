@@ -12,7 +12,7 @@
     },
     "paper-search-mcp": {
       "type": "local",
-      "command": ["uvx", "paper-search-mcp"],
+      "command": ["uvx", "uvx git+https://github.com/openags/paper-search-mcp.git"],
       "enabled": false,
     },
   },
