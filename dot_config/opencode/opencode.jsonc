@@ -10,6 +10,11 @@
       "url": "https://mcp.exa.ai/mcp",
       "enabled": true,
     },
+    "paper-search-mcp": {
+      "type": "local",
+      "command": ["uvx", "paper-search-mcp"],
+      "enabled": false,
+    },
   },
   "agent": {
     "build": {
