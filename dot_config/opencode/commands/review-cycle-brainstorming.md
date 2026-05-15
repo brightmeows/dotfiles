@@ -1,14 +1,27 @@
 ---
-description: Start Review Cycle (SuperPowers BrainStorming)
+description: Review Spec & Plan: Brainstorm First
 ---
 
 # Spec Review & Quality Review 循环
 
-启动两个子Agent，分别检查：
-1. 当前是否已经按照设计文档的要求正确实现。
-2. 和计划文档的实现差别（仅供参考）。
-每次启动检查用的子Agent时，不要提示之前的修复内容。
+## 第一步：检查
 
-然后修复所有发现的问题。
+启动两个子Agent，分别检查：
+1. 是否按照设计文档的要求正确实现。
+2. 与计划文档的实现差别（仅供参考）。
+
+### 注意
+
+检查 agent 仅用于分析问题，禁止修改内容。
+
+## 第二步：修复
+
+修复所有发现的问题。
+
+## 第三步：回到第一步
+
+使用相同提示词，再次启动检查子Agent。
+不要提示之前的修复内容，不要复用已有的会话。
+
 如此循环，直至所有问题被处理，且最后一次循环没有新问题。
 
