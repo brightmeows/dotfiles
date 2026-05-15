@@ -15,6 +15,11 @@
       "command": ["uvx", "git+https://github.com/openags/paper-search-mcp.git"],
       "enabled": false,
     },
+    "cnki-mcp": {
+      "type": "local",
+      "command": ["uvx", "git+https://github.com/h-lu/cnki-mcp.git"],
+      "enabled": false,
+    },
   },
   "agent": {
     "build": {
