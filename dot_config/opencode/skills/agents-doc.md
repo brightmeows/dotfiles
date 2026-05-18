@@ -1,6 +1,6 @@
 ---
 name: agents-doc
-description: 在创建或更改 AGENTS.md 或 CLAUDE.md 或 创建模块、维护模块注释时激活。
+description: 在创建或更改 `AGENTS.md` 或 `CLAUDE.md` 或 创建模块、维护模块注释时激活。
 license: Apache-2.0
 ---
 
@@ -8,13 +8,13 @@ license: Apache-2.0
 
 ## `AGENTS.md` 简介
 
-AGENTS.md 者，README for agents 也。README 为人，AGENTS.md 为代理。
+`AGENTS.md` 者，README for agents 也。README 为人，`AGENTS.md` 为代理。
 
 职责分离：
 - README：项目概述、快速开始、贡献指南——面向人
-- AGENTS.md：构建步骤、测试命令、代码约定——面向编码代理
+- `AGENTS.md`：构建步骤、测试命令、代码约定——面向编码代理
 
-故 README 不杂代理指令，AGENTS.md 不重复项目介绍。
+故 README 不杂代理指令，`AGENTS.md` 不重复项目介绍。
 
 创建：仓库根目录下建 `AGENTS.md`。多数代理可代劳。
 
@@ -29,31 +29,31 @@ AGENTS.md 者，README for agents 也。README 为人，AGENTS.md 为代理。
 ## 子目录 `AGENTS.md`
 
 - 负责内容：领域逻辑、局部约定、依赖契约、覆盖规则
-- 单仓嵌套：各子包可放独立 AGENTS.md。代理取其最近者优先，次者回退。
+- 单仓嵌套：各子包可放独立 `AGENTS.md`。代理取其最近者优先，次者回退。
 - 禁入：全局性规则
 - 更新频率：中频（模块迭代时）
 
 ## 模块文档/类型文档/函数文档/代码注释等
 
 - 负责内容：实现意图、API 契约、配置说明、业务背景
-- 禁入：指令性规则（须放 AGENTS.md）
+- 禁入：指令性规则（须放 `AGENTS.md`）
 - 更新频率：高频（代码提交时）
 
 ## 整体规则
 
 原则：
-- 优先序：子目录 AGENTS.md > 根 AGENTS.md > 框架默认
-- 根 AGENTS.md 不重复子模块细节
-- 各 AGENTS.md 内容不重叠
+- 优先序：子目录 `AGENTS.md` > 根 `AGENTS.md` > 框架默认
+- 根 `AGENTS.md` 不重复子模块细节
+- 各 `AGENTS.md` 内容不重叠
 - 写前检查：遍历锁文件/清单、CI 配置、README、现有代码模式与测试布局，再落笔
 
 规则：
-- 代码描述“做什么”，注释释 why，AGENTS.md 规定“必须怎么做”
+- 代码描述“做什么”，注释释 why，`AGENTS.md` 规定“必须怎么做”
 - 行号引用禁用，用类型、函数、模块名
 - 增删类、函数、配置、异常时同步更新
 - 各模块骨架参考：组件表 → 关键接口 → 配置 → 自有异常 → 测试
 - 大幅重构后运行对齐检查
 - 结构图 mermaid，禁 ASCII art
 - 行数约束：目标 < 60 行，勿超 100 行。信息密度优先
-- 路径验证：AGENTS.md 中所有路径与命令须真实存在
+- 路径验证：`AGENTS.md` 中所有路径与命令须真实存在
 
