@@ -11,7 +11,10 @@ pnpm-lock.yml
 node_modules
 tsconfig.json
 
-# Platform-specific: ps1 merge script only runnable on Windows
+# Platform-specific: only run the right script per platform
 {{ if ne .chezmoi.os "windows" -}}
 .pi/agent/merge-pi-settings.ps1*
+{{ end -}}
+{{ if eq .chezmoi.os "windows" -}}
+.pi/agent/merge-pi-settings.sh*
 {{ end -}}
