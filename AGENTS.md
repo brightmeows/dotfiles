@@ -7,6 +7,7 @@
 - `dot_*` — chezmoi 管理的文件，映射至 `~/.`（如 `dot_config/*` → `~/.config/*`，`dot_agents_meow/` → `~/.agents_meow/`）
 - `dot_bashrc` — 映射至 `~/.bashrc`
 - `dot_agents_meow/` — **agent 共享配置**：pi/opencode 公共服务规则，通过 symlink_AGENTS.md 链接至此
+- `dot_agents_meow/AGENTS_MAIN.md` — **agent 主指令**：opencode default.md 与 pi APPEND_SYSTEM.md 的共享主体，通过 symlink 链接至此（opencode 版通过 `.tmpl` 模板含 frontmatter，pi 纯 symlink 无 frontmatter）
 - `.chezmoiexternal.toml` — Windows 跨平台配置映射
 - `.chezmoiignore` — 仅仓库不部署的文件清单
 
