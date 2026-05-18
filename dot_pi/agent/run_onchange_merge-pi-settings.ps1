@@ -1,14 +1,13 @@
-# Merge managed Pi settings into ~/.pi/agent/settings.json
+# Merge managed Pi settings (from settings.meow.json) into settings.json
 # Pi-managed keys (provider, model, lastChangelogVersion) are preserved.
 $ErrorActionPreference = 'Stop'
 
 $SettingsPath = "$HOME\.pi\agent\settings.json"
-$Managed = [PSCustomObject]@{
-    theme               = 'dark'
-    quietStartup        = $true
-    retry               = @{ enabled = $true; maxRetries = 3 }
-    skills              = @("~/.agents_meow/skills/")
-    enableSkillCommands = $true
+$MeowPath = "$HOME\.pi\agent\settings.meow.json"
+
+if (-not (Test-Path $MeowPath)) {
+    Write-Warning "$MeowPath not found, skipping merge"
+    exit 0
 }
 
 $Dir = Split-Path $SettingsPath -Parent
@@ -22,9 +21,10 @@ if (Test-Path $SettingsPath) {
     }
 }
 
+$Managed = Get-Content $MeowPath -Raw | ConvertFrom-Json
+
 if (Test-Path $SettingsPath) {
     $Existing = Get-Content $SettingsPath -Raw | ConvertFrom-Json
-    # Apply managed keys (overwrite)
     foreach ($Prop in $Managed.PSObject.Properties) {
         $Existing.$($Prop.Name) = $Prop.Value
     }

@@ -1,27 +1,25 @@
 #!/bin/bash
-# Merge managed Pi settings into ~/.pi/agent/settings.json
+# Merge managed Pi settings (from settings.meow.json) into settings.json
 # Pi-managed keys (provider, model, lastChangelogVersion) are preserved.
 set -euo pipefail
 
 SETTINGS="${HOME}/.pi/agent/settings.json"
-MANAGED=$(cat <<'JSON'
-{
-  "theme": "dark",
-  "quietStartup": true,
-  "retry": { "enabled": true, "maxRetries": 3 },
-  "skills": ["~/.agents_meow/skills/"],
-  "enableSkillCommands": true
-}
-JSON
-)
+MEOW="${HOME}/.pi/agent/settings.meow.json"
+
+if [ ! -f "$MEOW" ]; then
+  echo "Warning: $MEOW not found, skipping merge" >&2
+  exit 0
+fi
 
 mkdir -p "$(dirname "$SETTINGS")"
 
-# If it's a symlink (e.g., from previous chezmoi management), remove it first
+# If it's a symlink (from previous chezmoi management), remove it first
 # to avoid writing into the dotfiles repo by accident.
 if [ -L "$SETTINGS" ]; then
   rm "$SETTINGS"
 fi
+
+MANAGED=$(cat "$MEOW")
 
 if [ ! -f "$SETTINGS" ]; then
   echo "$MANAGED" > "$SETTINGS"
