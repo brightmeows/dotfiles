@@ -30,6 +30,7 @@
 
 - `AGENTS.md`（本文件）——**此仓库**：项目级上下文——此仓库是什么、如何管理、仓库特有约定。
 - `dot_config/opencode/AGENTS.md`——**OpenCode 全局**：编码助手行为规则——代码风格、提交规范等，适用于一切通过 OpenCode 编辑的项目。
+- `dot_config/pi/AGENTS.md`——**Pi 全局**：行为规则同 OpenCode 版，为 Pi Coding Agent 所用。
 
 ## TypeScript 检查
 
