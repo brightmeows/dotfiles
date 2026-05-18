@@ -12,6 +12,7 @@ description: 对齐 `AGENTS.md` / `CLAUDE.md` 与代码注释
 - 检目标：`AGENTS.md` 内容、`CLAUDE.md` 内容、代码注释是否对齐代码实际实现。
 - 按 skill 中三层职责（根 `AGENTS.md` / 子目录 `AGENTS.md` / 模块注释）逐层检。
 - 检是否满足：三节必含、行数约束、路径验证。
+- 检 `CLAUDE.md` 与 `AGENTS.md` 是否为同一文件（一者符号链接至另一）。
 
 ### 注
 

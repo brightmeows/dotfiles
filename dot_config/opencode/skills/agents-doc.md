@@ -56,4 +56,5 @@ license: Apache-2.0
 - 结构图 mermaid，禁 ASCII art
 - 行数约束：目标 < 60 行，勿超 100 行。信息密度优先
 - 路径验证：`AGENTS.md` 中所有路径与命令须真实存在
+- `CLAUDE.md` 与 `AGENTS.md` 须为同一文件。一者符号链接至另一。
 
