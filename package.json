@@ -11,9 +11,9 @@
   "license": "ISC",
   "packageManager": "pnpm@10.33.2",
   "devDependencies": {
-    "@earendil-works/pi-coding-agent": "^0.74.0",
-    "@opencode-ai/plugin": "^1.14.33",
-    "@types/node": "^25.6.0",
+    "@earendil-works/pi-coding-agent": "^0.74.1",
+    "@opencode-ai/plugin": "^1.15.4",
+    "@types/node": "^25.9.0",
     "typescript": "^6.0.3"
   }
 }
