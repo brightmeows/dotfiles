@@ -1,8 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "autoupdate": false,
-  "lsp": false,
-  "formatter": false,
   "plugin": [],
   "mcp": {
     "exa": {
@@ -30,15 +28,12 @@
     },
   },
   "permission": {
-    "skill": {
-      "using-superpowers": "deny",
-      "caveman": "deny",
-    },
     "read": {
       "/tmp/*": "allow",
       ".agents_tmp/*": "allow",
       "/nix/store/*": "allow",
       "~/.local/share/rtk/tee/*": "allow",
+      "~/.cargo/registry/*": "allow",
     },
     "edit": {
       "/tmp/*": "allow",

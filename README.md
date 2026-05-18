@@ -17,7 +17,15 @@ chezmoi apply -S .
 chezmoi update -S .
 ```
 
-## 其它配置记录
+## Skill 配置记录
+
+### 安装 rust-best-practices
+
+```bash
+npx --yes skills add apollographql/skills --yes --global --skill rust-best-practices --agent claude-code
+```
+
+## 存档：旧 Skill 配置记录
 
 ### 安装 superpowers
 
@@ -41,12 +49,6 @@ npx --yes skills add jnMetaCode/superpowers-zh --yes --global --skill "*" --agen
 
 ```bash
 npx --yes skills remove --yes --global brainstorming dispatching-parallel-agents executing-plans finishing-a-development-branch receiving-code-review requesting-code-review subagent-driven-development systematic-debugging test-driven-development using-git-worktrees using-superpowers verification-before-completion writing-plans writing-skills chinese-code-review chinese-git-workflow chinese-documentation chinese-commit-conventions mcp-builder workflow-runner
-```
-
-### 安装 rust-best-practices
-
-```bash
-npx --yes skills add apollographql/skills --yes --global --skill rust-best-practices --agent claude-code
 ```
 
 ### 安装 caveman
