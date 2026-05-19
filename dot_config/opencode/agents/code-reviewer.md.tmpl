@@ -2,9 +2,12 @@
 description: Code Reviewer
 mode: subagent
 permission:
+  "*": deny
   read: allow
-  command:
-    - git
+  edit: deny
+  bash:
+    "*": deny
+    "git diff *": allow
 ---
 
 {{ include "dot_agents_meow/agents/code-reviewer.md" -}}
