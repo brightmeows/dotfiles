@@ -1,6 +1,6 @@
 ---
 name: agents-doc
-description: 在创建或更改 `AGENTS.md` 或 `CLAUDE.md` 或 创建模块、维护模块注释时激活。
+description: 在创建或更改 `AGENTS.md` 或创建模块、维护模块注释时激活。
 license: Apache-2.0
 ---
 
@@ -55,5 +55,4 @@ license: Apache-2.0
 - 大幅重构后运行对齐检查
 - 结构图 mermaid，禁 ASCII art
 - 路径验证：`AGENTS.md` 中所有路径与命令须真实存在
-- `CLAUDE.md` 与 `AGENTS.md` 须为同一文件。一者符号链接至另一。
 
