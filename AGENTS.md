@@ -8,7 +8,7 @@
 
 | 层级 | 位置 | 职责 |
 |---|---|---|
-| 通用规则 | `dot_agents_meow/AGENTS.md` | 跨项目行为准则、编码规范、工程原则（opencode/pi 均 symlink 至此） |
+| 通用规则 | `dot_agents_meow/AGENTS.main.md` | 跨项目行为准则、编码规范、工程原则（opencode/pi 均 symlink 至此） |
 | 仓库级 | `AGENTS.md`（本文件） | 项目上下文、管理方式、仓库特有约定 |
 | 子目录 | 各子包 `AGENTS.md` | 局部约定、领域逻辑 |
 
@@ -22,7 +22,7 @@
 
 pi 与 opencode 共用。
 
-- `AGENTS.md` — Agent 通用行为准则（pi/opencode 通过 symlink 引用）
+- `AGENTS.main.md` — Agent 通用行为准则（pi/opencode 通过 symlink 引用）
 - `agents/default.md` — agent 主指令（opencode 通过模板含 frontmatter，pi 通过 symlink）
 - `subagents/` — subagent 专用配置
   - `code-reviewer.md` — code review agent 指令
@@ -50,7 +50,7 @@ pi 与 opencode 共用。
 
 | 源（chezmoi 路径） | 目标 | 用途 |
 |---|---|---|
-| `dot_pi/agent/symlink_AGENTS.md` | `~/.agents_meow/AGENTS.md` | agent 通用行为准则 |
+| `dot_pi/agent/symlink_AGENTS.md` | `~/.agents_meow/AGENTS.main.md` | agent 通用行为准则 |
 | `dot_pi/agent/symlink_APPEND_SYSTEM.md` | `~/.agents_meow/agents/default.md` | agent 主指令 |
 
 两文件为 pi 读取入口，实际内容位于 `dot_agents_meow/`。
