@@ -2,7 +2,7 @@
  * Main-worktree-guard extension for pi
  *
  * 检当前分支及工作树目录 .gitignore 状态。
- * 若在 main/master，向首条用户消息前置提示——
+ * 若在 main/master 且 LLM 首次调用工具后，注入提示——
  * 引向用 git worktree 而非直改主干。
  *
  * 以 INJECTED_TAG 标记防重复注入。
@@ -44,26 +44,31 @@ export default function (pi: ExtensionAPI) {
 		return null;
 	}
 
-	pi.on("input", async (event, ctx) => {
+	pi.on("tool_execution_end", async (_event, ctx) => {
 		if (warned) return;
 		warned = true;
 
 		const branch = getBranch(ctx.cwd);
-		if (!branch) return { action: "continue" };
-		if (branch !== "main" && branch !== "master") return { action: "continue" };
+		if (!branch) return;
+		if (branch !== "main" && branch !== "master") return;
 
 		const ignoredDir = findIgnoredWorktreeDir(ctx.cwd);
 		const tip = ignoredDir
 			? `工作树目录 ${ignoredDir} 已在 .gitignore 中。创建 git worktree 后在其上工作。`
 			: `${WORKTREE_DIRS.join("、")} 未在 .gitignore 中。先加入其一，再创建 git worktree。`;
 
-		const prefix = `<${INJECTED_TAG}>
+		const text = `<${INJECTED_TAG}>
 当前在 ${branch} 分支。如需修改，${tip}
 注：非修改任务、已指定工作目录或代码库不适合工作树时可忽略。
-</${INJECTED_TAG}>
+</${INJECTED_TAG}>`;
 
-`;
-
-		return { action: "transform", text: prefix + event.text };
+		pi.sendMessage(
+			{
+				customType: "main-worktree-guard",
+				content: text,
+				display: true,
+			},
+			{ deliverAs: "steer" },
+		);
 	});
 }
