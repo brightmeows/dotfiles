@@ -110,10 +110,9 @@ export default async function (pi: ExtensionAPI) {
 		registered++;
 	}
 
-	if (registered > 0) {
-		console.error(`[models-dev] Imported ${registered} providers`);
-	}
 }
+
+// 静默注册成功。仅出错时提示。
 
 // ── 缓存管理 ──
 
@@ -153,6 +152,7 @@ async function refreshCacheAsync(): Promise<void> {
 		if (!res.ok) return;
 		const data = await res.json() as Record<string, RawProvider>;
 		saveCache(data);
+		console.error("[models-dev] Cache updated");
 	} catch {
 		// 后台刷新失败不报错——stale 数据已用
 	}
@@ -161,11 +161,15 @@ async function refreshCacheAsync(): Promise<void> {
 async function fetchAndSave(): Promise<Record<string, RawProvider> | null> {
 	try {
 		const res = await fetch(MODELS_DEV_URL);
-		if (!res.ok) return null;
+		if (!res.ok) {
+			console.error(`[models-dev] Fetch failed: ${res.status}`);
+			return null;
+		}
 		const data = await res.json() as Record<string, RawProvider>;
 		saveCache(data);
 		return data;
-	} catch {
+	} catch (e) {
+		console.error(`[models-dev] Fetch failed: ${e instanceof Error ? e.message : e}`);
 		return null; // 首次拉取失败，不阻塞启动
 	}
 }
@@ -175,8 +179,8 @@ function saveCache(data: Record<string, RawProvider>): void {
 		mkdirSync(CACHE_DIR, { recursive: true });
 		const entry: CacheEntry = { fetchedAt: Date.now(), data };
 		writeFileSync(CACHE_FILE, JSON.stringify(entry), "utf-8");
-	} catch {
-		// 写缓存失败不阻塞
+	} catch (e) {
+		console.error(`[models-dev] Cache write failed: ${e instanceof Error ? e.message : e}`);
 	}
 }
 
