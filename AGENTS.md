@@ -17,7 +17,8 @@ pi 与 opencode 共用。
 
 - `AGENTS.md` — Agent 通用行为准则（pi/opencode 通过 symlink 引用）
 - `agents/default.md` — agent 主指令（opencode 通过模板含 frontmatter，pi 通过 symlink）
-- `agents/code-reviewer.md` — code review agent 指令
+- `subagents/` — subagent 专用配置
+  - `code-reviewer.md` — code review agent 指令
 - `skills/` — 共享 skills 目录
 
 ### Pi 配置 — `dot_pi/agent/`
