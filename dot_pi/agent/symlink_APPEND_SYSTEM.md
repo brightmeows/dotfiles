@@ -1,1 +1,1 @@
-../../.agents_meow/AGENTS_MAIN.md
+../../.agents_meow/agents/default.md
