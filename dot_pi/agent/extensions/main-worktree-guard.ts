@@ -1,9 +1,8 @@
 /**
  * Main-worktree-guard extension for pi
  *
- * 检当前分支及工作树目录 .gitignore 状态。
- * 若在 main/master 且 LLM 首次调用工具后，注入提示——
- * 引向用 git worktree 而非直改主干。
+ * 若在 main/master 且工作树目录已入 .gitignore，LLM 首次调用工具后
+ * 注入提示——引向用 git worktree 而非直改主干。
  *
  */
 
@@ -51,12 +50,9 @@ export default function (pi: ExtensionAPI) {
 		if (branch !== "main" && branch !== "master") return;
 
 		const ignoredDir = findIgnoredWorktreeDir(ctx.cwd);
-		const tip = ignoredDir
-			? `工作树目录 ${ignoredDir} 已在 .gitignore 中。创建 git worktree 后在其上工作。`
-			: `${WORKTREE_DIRS.join("、")} 未在 .gitignore 中。先加入其一，再创建 git worktree。`;
+		if (!ignoredDir) return;
 
-		const text = `当前在 ${branch} 分支。如需修改，${tip}
-注：非修改任务、已指定工作目录或代码库不适合工作树时可忽略。`;
+		const text = `工作树目录 ${ignoredDir} 已被 Git 忽略。`;
 
 		pi.sendMessage(
 			{
