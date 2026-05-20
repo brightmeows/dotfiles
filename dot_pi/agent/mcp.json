@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "exa": {
+      "url": "https://mcp.exa.ai/mcp",
+      "lifecycle": "keep-alive"
+    },
+    "paper-search-mcp": {
+      "command": "uvx",
+      "args": ["git+https://github.com/openags/paper-search-mcp.git"]
+    },
+    "cnki-mcp": {
+      "command": "uvx",
+      "args": ["git+https://github.com/h-lu/cnki-mcp.git"]
+    }
+  }
+}
