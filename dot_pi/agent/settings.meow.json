@@ -3,5 +3,6 @@
   "quietStartup": true,
   "retry": { "enabled": true, "maxRetries": 3 },
   "skills": ["~/.agents_meow/skills/"],
-  "enableSkillCommands": true
+  "enableSkillCommands": true,
+  "packages": ["npm:pi-mcp-adapter"]
 }
