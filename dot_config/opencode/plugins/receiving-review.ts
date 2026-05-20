@@ -54,20 +54,25 @@ ${skillContent}
 export const ReceivingReviewPlugin: Plugin = async (input) => {
 	const { client } = input;
 	let cachedSkill: string | null = null;
+	let injected = false;
 
 	return {
 		"experimental.chat.messages.transform": async (_input, output) => {
+			if (injected) return;
 			if (!output.messages.length) return;
 
 			const firstUser = output.messages.find((m) => m.info.role === "user");
 			if (!firstUser?.parts.length) return;
 
-			// 防重复注入
+			// 二次防护：消息内容级标记（闭包失效时保底）
 			if (
 				firstUser.parts.some(
 					(p) => p.type === "text" && p.text.includes(INJECTED_TAG),
 				)
-			) return;
+			) {
+				injected = true; // 同步闭包状态
+				return;
+			}
 
 			// 合并首条用户消息文本进行句式匹配
 			const userText = firstUser.parts
@@ -85,6 +90,8 @@ export const ReceivingReviewPlugin: Plugin = async (input) => {
 			if (cachedSkill === null) {
 				cachedSkill = loadSkillContent();
 			}
+
+			injected = true;
 
 			firstUser.parts.unshift({
 				type: "text",
@@ -106,6 +113,10 @@ export const ReceivingReviewPlugin: Plugin = async (input) => {
 			} catch {
 				// 环境无 TUI 时静默忽略（如无头模式）
 			}
+		},
+
+		"experimental.session.compacting": async () => {
+			injected = false; // compact 后允许重新触发
 		},
 	};
 };
