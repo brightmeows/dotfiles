@@ -6,7 +6,8 @@
  *   - "Check if these issues are valid"
  *   - "Verify each finding against current code"
  *
- * 消息格式沿用 main-worktree-guard 风格（customType、display、INJECTED_TAG）。
+ * 注入方式：before_agent_start 中检测句式并预加载 skill，
+ * context 事件中将内容直接添加至消息列表（LLM 首轮即见）。
  */
 
 import { readFileSync } from "node:fs";
@@ -25,21 +26,34 @@ const SKILL_PATH = join(
 );
 
 export default function (pi: ExtensionAPI) {
-	let warned = false;
+	let loaded = false;
 	let skillContent: string | null = null;
+	let pendingInject = false;
+
+	function stripFrontmatter(text: string): string {
+		const match = text.match(/^---\n[\s\S]*?\n---\n?/);
+		return match ? text.slice(match[0].length) : text;
+	}
 
 	function getSkillContent(): string {
 		if (skillContent !== null) return skillContent;
 		try {
-			skillContent = readFileSync(SKILL_PATH, "utf8");
+			const raw = readFileSync(SKILL_PATH, "utf8");
+			skillContent = stripFrontmatter(raw);
 		} catch {
 			skillContent = "（无法读取 receiving-code-review skill 文件）";
 		}
 		return skillContent;
 	}
 
-	pi.on("before_agent_start", async (event, _ctx) => {
-		if (warned) return;
+	function formatMessage(): string {
+		return `检测到审查验证请求。以下为 \`receiving-code-review\` skill 内容，严格遵循：
+
+${getSkillContent()}`;
+	}
+
+	pi.on("before_agent_start", async (event) => {
+		if (loaded) return;
 
 		const userText = event.prompt;
 		if (!userText) return;
@@ -49,18 +63,32 @@ export default function (pi: ExtensionAPI) {
 		);
 
 		if (!triggered) return;
-		warned = true;
+		loaded = true;
+		pendingInject = true;
+		getSkillContent(); // 预加载缓存，供各注入路径使用
 
-		const content = `检测到审查验证请求。以下为 \`receiving-code-review\` skill 内容，严格遵循：
-
-${getSkillContent()}`;
-
-		return {
-			message: {
+		// 用户可见：简要通知，不重复全文
+		pi.sendMessage(
+			{
 				customType: "receiving-review",
-				content,
+				content: "✅ 已加载 `receiving-code-review` skill，内容已注入 LLM 上下文。",
 				display: true,
 			},
-		};
+			{ deliverAs: "steer" },
+		);
+	});
+
+	pi.on("context", async (event) => {
+		if (!pendingInject) return;
+		pendingInject = false;
+
+		// LLM 首轮即见：直接加入消息列表
+		event.messages.push({
+			role: "user",
+			content: [{ type: "text", text: formatMessage() }],
+			timestamp: Date.now(),
+		});
+
+		return { messages: event.messages };
 	});
 }
