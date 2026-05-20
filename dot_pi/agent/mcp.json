@@ -2,15 +2,20 @@
   "mcpServers": {
     "exa": {
       "url": "https://mcp.exa.ai/mcp",
-      "lifecycle": "keep-alive"
+      "lifecycle": "keep-alive",
+      "directTools": true
     },
     "paper-search-mcp": {
       "command": "uvx",
-      "args": ["git+https://github.com/openags/paper-search-mcp.git"]
+      "args": [
+        "git+https://github.com/openags/paper-search-mcp.git"
+      ]
     },
     "cnki-mcp": {
       "command": "uvx",
-      "args": ["git+https://github.com/h-lu/cnki-mcp.git"]
+      "args": [
+        "git+https://github.com/h-lu/cnki-mcp.git"
+      ]
     }
   }
 }
