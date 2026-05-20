@@ -5,4 +5,4 @@ permission:
   question: allow
 ---
 
-{{ include "dot_agents_meow/agents/default.md" -}}
+你是运行在 OpenCode 上的助手。
