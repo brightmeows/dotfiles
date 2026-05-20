@@ -24,6 +24,14 @@ MANAGED=$(cat "$MEOW")
 if [ ! -f "$SETTINGS" ]; then
   echo "$MANAGED" > "$SETTINGS"
 else
-  echo "$MANAGED" | jq -s '.[0] * .[1]' "$SETTINGS" - > "${SETTINGS}.tmp" \
+  # Merge: managed keys overwrite settings.json values.
+  # 'packages' array is union-merged (deduped) instead of overwritten,
+  # so that pi-install additions and managed defaults coexist.
+  jq -s '
+    (.[0].packages // []) as $mp |
+    (.[1].packages // []) as $sp |
+    (.[1] * .[0]) |
+    .packages = ($mp + $sp | unique)
+  ' "$MEOW" "$SETTINGS" > "${SETTINGS}.tmp" \
     && mv "${SETTINGS}.tmp" "$SETTINGS"
 fi

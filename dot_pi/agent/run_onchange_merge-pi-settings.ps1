@@ -26,7 +26,13 @@ $Managed = Get-Content $MeowPath -Raw | ConvertFrom-Json
 if (Test-Path $SettingsPath) {
     $Existing = Get-Content $SettingsPath -Raw | ConvertFrom-Json
     foreach ($Prop in $Managed.PSObject.Properties) {
-        $Existing.$($Prop.Name) = $Prop.Value
+        # Merge packages array with dedup instead of overwrite
+        if ($Prop.Name -eq 'packages' -and $Existing.packages) {
+            $Merged = @($Prop.Value) + @($Existing.packages) | Select-Object -Unique
+            $Existing.packages = @($Merged)
+        } else {
+            $Existing.($Prop.Name) = $Prop.Value
+        }
     }
     $Existing | ConvertTo-Json -Depth 10 | Set-Content $SettingsPath -NoNewline
 } else {
