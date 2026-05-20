@@ -41,6 +41,11 @@ export default function (pi: ExtensionAPI) {
 		return null;
 	}
 
+	// compact 后重置，允许重新发出工作树提示
+	pi.on("session_compact", async () => {
+		warned = false;
+	});
+
 	pi.on("tool_execution_end", async (_event, ctx) => {
 		if (warned) return;
 		warned = true;

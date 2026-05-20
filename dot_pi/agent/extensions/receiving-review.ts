@@ -78,6 +78,12 @@ ${getSkillContent()}`;
 		);
 	});
 
+	// compact 后重置状态，允许重新触发注入
+	pi.on("session_compact", async () => {
+		loaded = false;
+		pendingInject = false;
+	});
+
 	pi.on("context", async (event) => {
 		if (!pendingInject) return;
 		pendingInject = false;
