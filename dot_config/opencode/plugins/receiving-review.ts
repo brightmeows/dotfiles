@@ -7,9 +7,7 @@
  *   - "Verify each finding against current code"
  *
  * 注入方式：experimental.chat.messages.transform 中将内容添加至首条用户消息，
- *           以 INJECTED_TAG 标记防重复注入。
- *
- * 与 pi 版 receiving-review 功能等价。
+ * 以 NOTIFY_TAG 标记。重复防护完全依赖消息历史中的 tag 检测，不维护闭包状态。
  */
 
 import { readFileSync } from "node:fs";
@@ -27,7 +25,7 @@ const SKILL_PATH = join(
 	".agents_meow/skills/receiving-code-review/SKILL.md",
 );
 
-const INJECTED_TAG = "INJECTED_RECEIVING_CODE_REVIEW";
+const NOTIFY_TAG = "NOTIFY_RECEIVING_CODE_REVIEW";
 
 function stripFrontmatter(text: string): string {
 	const match = text.match(/^---\n[\s\S]*?\n---\n?/);
@@ -44,35 +42,33 @@ function loadSkillContent(): string {
 }
 
 function buildInjectionText(skillContent: string): string {
-	return `<${INJECTED_TAG}>
+	return `<${NOTIFY_TAG}>
 检测到审查验证请求。以下为 \`receiving-code-review\` skill 内容，严格遵循：
 
 ${skillContent}
-</${INJECTED_TAG}>`;
+</${NOTIFY_TAG}>`;
 }
 
 export const ReceivingReviewPlugin: Plugin = async (input) => {
 	const { client } = input;
 	let cachedSkill: string | null = null;
-	let injected = false;
 
 	return {
 		"experimental.chat.messages.transform": async (_input, output) => {
-			if (injected) return;
 			if (!output.messages.length) return;
 
-			const firstUser = output.messages.find((m) => m.info.role === "user");
-			if (!firstUser?.parts.length) return;
+			// 完全依靠消息历史中的 tag 判断是否已注入（不依赖闭包状态）
+			const alreadyInjected = output.messages.some((m) =>
+				m.parts.some(
+					(p) => p.type === "text" && p.text.includes(NOTIFY_TAG),
+				),
+			);
+			if (alreadyInjected) return;
 
-			// 二次防护：消息内容级标记（闭包失效时保底）
-			if (
-				firstUser.parts.some(
-					(p) => p.type === "text" && p.text.includes(INJECTED_TAG),
-				)
-			) {
-				injected = true; // 同步闭包状态
-				return;
-			}
+			const firstUser = output.messages.find(
+				(m) => m.info.role === "user",
+			);
+			if (!firstUser?.parts.length) return;
 
 			// 合并首条用户消息文本进行句式匹配
 			const userText = firstUser.parts
@@ -91,8 +87,6 @@ export const ReceivingReviewPlugin: Plugin = async (input) => {
 				cachedSkill = loadSkillContent();
 			}
 
-			injected = true;
-
 			firstUser.parts.unshift({
 				type: "text",
 				text: buildInjectionText(cachedSkill),
@@ -105,7 +99,8 @@ export const ReceivingReviewPlugin: Plugin = async (input) => {
 			try {
 				await client.tui.showToast({
 					body: {
-						message: "已加载 `receiving-code-review` skill，内容已注入 LLM 上下文。",
+						message:
+							"已加载 `receiving-code-review` skill，内容已注入 LLM 上下文。",
 						variant: "info",
 						duration: 3000,
 					},
@@ -113,10 +108,6 @@ export const ReceivingReviewPlugin: Plugin = async (input) => {
 			} catch {
 				// 环境无 TUI 时静默忽略（如无头模式）
 			}
-		},
-
-		"experimental.session.compacting": async () => {
-			injected = false; // compact 后允许重新触发
 		},
 	};
 };
