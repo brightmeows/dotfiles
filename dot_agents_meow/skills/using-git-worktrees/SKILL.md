@@ -5,7 +5,7 @@ description: feature 工作需隔离时，或执行计划前——借 git worktr
 
 # 使用 Git Worktrees
 
-**核心原则：** 先检现有隔离。后退至 git。勿抗框架。
+**核心原则：** 先检查现有隔离。后退到 git。不要对抗框架。
 
 **开始声明：** “我正使 using-git-worktrees skill 设隔离工作区。”
 
