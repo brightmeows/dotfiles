@@ -1,6 +1,6 @@
 ---
-name: subagent-execution
-description: "在蓝图文档批准后，使用 subagent 逐任务分发执行。每任务先经实施 subagent 完成，再经规范审查和质量审查两轮审核。"
+name: exec-subagent
+description: "蓝图执行的 subagent 模式。逐任务分发独立 subagent，每任务经实施→规范审查→质量审查三阶段。"
 ---
 
 # Subagent 驱动执行
@@ -24,19 +24,19 @@ description: "在蓝图文档批准后，使用 subagent 逐任务分发执行�
 对每个任务：
 
 1. **分发实施 subagent**
-   - 使用 `implementer` subagent
+   - 使用 `exec-implementer` subagent
    - 提供任务完整文本 + 上下文
    - Subagent 可先提问，回答后继续
    - 实施完成后返回状态
 
 2. **分发规范审查 subagent**
-   - 使用 `spec-compliance-reviewer` subagent
+   - 使用 `exec-compliance-reviewer` subagent
    - 核验实现是否与需求一致（不多不少）
    - 如有问题 → 实施 subagent 修复 → 重新审查
    - 通过后进入下一步
 
 3. **分发代码质量审查 subagent**
-   - 使用 `code-quality-reviewer` subagent
+   - 使用 `exec-quality-reviewer` subagent
    - 审查代码质量、测试覆盖、文件结构
    - 如有问题 → 实施 subagent 修复 → 重新审查
    - 通过后标记任务完成

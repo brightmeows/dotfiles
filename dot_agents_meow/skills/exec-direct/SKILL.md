@@ -1,6 +1,6 @@
 ---
-name: inline-execution
-description: "在蓝图文档批准后，在当前会话中按任务清单逐项执行。适合任务间耦合度高或无需 subagent 的场景。"
+name: exec-direct
+description: "蓝图执行的直接模式。在当前会话中按任务清单逐项执行，适合任务间耦合度高或无需 subagent 的场景。"
 ---
 
 # 当前会话执行
