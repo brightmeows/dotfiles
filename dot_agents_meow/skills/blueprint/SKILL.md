@@ -140,7 +140,14 @@ Do NOT invoke any implementation action — no coding, no scaffolding, no file c
 
 发现问题直接修复，无需重新审查。
 
-### 7. 用户审查
+### 7. 外部审查（可选）
+
+若 `blueprint-reviewer` subagent 可用，将文档交其审查：
+
+- 提供文档路径
+- 审查返回问题后，逐一评估并修复，然后重新审查
+
+### 8. 用户审查
 
 将文档提交用户审查：
 
@@ -148,7 +155,7 @@ Do NOT invoke any implementation action — no coding, no scaffolding, no file c
 
 等待用户反馈。如有修改，调整后重新自审。用户批准后进入实施。
 
-### 8. 实施
+### 9. 实施
 
 用户批准后，按任务清单逐项执行。有两种执行方式可选：
 
