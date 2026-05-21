@@ -4,6 +4,6 @@ description: Rebase 至主分支
 
 # Rebase 至 main
 
-拉 `main` 最新提交，rebase 当前分支至 `main`。
-览 `main` 最新提交之更动，析其可影响当前分支否。
-然后重检当前分支之实现。
+拉取 `main` 的最新提交，将当前分支 rebase 到 `main` 上。
+检查 `main` 最新提交的变更，分析是否影响当前分支。
+然后重新审视当前分支的实现。
