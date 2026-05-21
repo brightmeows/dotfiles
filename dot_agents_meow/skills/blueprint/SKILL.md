@@ -152,7 +152,7 @@ Do NOT invoke any implementation action — no coding, no scaffolding, no file c
 
 用户批准后，按任务清单逐项执行。有两种执行方式可选：
 
-- **`exec-subagent`（推荐）：** 每个任务分发独立 subagent，每任务经实施→规范审查→质量审查三阶段，适合任务独立的场景
+- **`exec-subagent`（推荐）：** 每个任务分发独立 subagent，实施完成后并行运行规范审查与质量审查，适合任务独立的场景
 - **`exec-direct`：** 在当前会话中按序执行，设置检查点汇报进展，适合任务耦合度高或无需 subagent 的场景
 
 ## 关键原则
