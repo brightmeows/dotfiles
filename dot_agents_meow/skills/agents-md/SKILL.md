@@ -1,6 +1,6 @@
 ---
 name: agents-md
-description: 在创建或更改 `AGENTS.md` 或创建模块、维护模块注释时激活。
+description: 在创建、修改或重构 `AGENTS.md` 文件时激活。包括仓库根、子目录层级 AGENTS.md 及多工具 symlink 映射。
 license: Apache-2.0
 ---
 

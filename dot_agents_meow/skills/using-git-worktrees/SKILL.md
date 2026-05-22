@@ -1,6 +1,6 @@
 ---
 name: using-git-worktrees
-description: feature 工作需隔离时，或执行计划前——借 git worktree 保隔离工作区
+description: 功能开发需要隔离时，或执行实施计划前——借 git worktree 创建隔离工作区。
 ---
 
 # 使用 Git Worktrees
