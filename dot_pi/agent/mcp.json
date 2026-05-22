@@ -16,6 +16,11 @@
       "args": [
         "git+https://github.com/h-lu/cnki-mcp.git"
       ]
+    },
+    "anysearch": {
+      "url": "https://api.anysearch.com/mcp",
+      "lifecycle": "keep-alive",
+      "directTools": true
     }
   }
 }

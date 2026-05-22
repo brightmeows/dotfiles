@@ -18,6 +18,11 @@
       "command": ["uvx", "git+https://github.com/h-lu/cnki-mcp.git"],
       "enabled": false,
     },
+    "anysearch": {
+      "type": "remote",
+      "url": "https://api.anysearch.com/mcp",
+      "enabled": true,
+    },
   },
   "agent": {
     "build": {
