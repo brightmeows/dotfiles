@@ -1,7 +1,5 @@
 # MiyakoMeow 的 Dotfiles 配置文件
 
-由 [chezmoi](https://www.chezmoi.io/) 管理。
-
 ## Identity
 
 Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Rime 输入法、AI 工具链等），涉及 10+ 异构格式（TOML/KDL/JSON/YAML/JSONC/Nu/INI）。精确性与一致性优先于花哨。
@@ -67,10 +65,6 @@ pi 与 opencode 共用。
 - `.chezmoiexternal.toml` — Windows 跨平台映射
 - `.chezmoiignore` — 仓库不部署的文件清单
 
-### 桌面配置 — `dot_config/`
-
-14 子目录：alacritty / chezmoi / fcitx5 / hypr / mako / niri / nushell / opencode / rime / rtk / starship / waybar / wofi / zellij
-
 ## Symlink 策略
 
 | 源（chezmoi 路径） | 目标 | 用途 |
@@ -89,7 +83,6 @@ pi 与 opencode 共用。
 | `chezmoi -S . apply` | 应用至 `$HOME` |
 | `chezmoi -S . add <path>` | 纳新文件入 chezmoi 管理 |
 | `pnpm check` | `tsc --noEmit` 类型检查 |
-| `pnpm install` | 安装依赖 |
 
 ## Testing
 
@@ -119,43 +112,3 @@ pi 与 opencode 共用。
 - **分支策略**：日常修改直推 main（单人仓库）。大幅重构用 `git worktree` 隔离。
 - **提交格式**：Conventional Commits（`feat:` / `fix:` / `docs:` / `refactor:` / `chore:`）
 - **提交粒度**：按逻辑变更拆分提交。
-
-## Pi 配置指南
-
-### settings.json 合并机制
-
-`settings.json` 非直接托管，通过 `run_onchange_` 脚本按策略合并：
-
-```
-输入: settings.json（现有，含 pi install 写入的 packages）+
-     settings.meow.json（managed，托管于 chezmoi）
-输出: settings.meow.json 键覆盖同名字段，
-     packages 等非 managed 键保留
-```
-
-要点：
-- `settings.meow.json` 为 managed 键源（theme / quietStartup / retry / skills / enableSkillCommands）
-- `pi install` / `pi remove` / `pi update` 写入的 `packages` 键不受覆盖
-- merge 脚本自动移除 `settings.json` 的 symlink（防误写入 repo）
-- 新增 managed 键：加至 `settings.meow.json` + 更新 `run_onchange_` 脚本
-
-### 扩展管理
-
-- `dot_pi/agent/extensions/` 下 `.ts` 文件由 chezmoi 管理
-- `pi install` 的包扩展存于 `~/.pi/agent/npm/` / `git/`，无文件重叠
-- 新增扩展：以 `.ts` 文件放 `dot_pi/agent/extensions/`，`pi -e` 快速测试后纳入 chezmoi
-
-## Pi 文档速查
-
-Pi 文档位于 `/opt/pi-coding-agent/docs/`，`index.md` 为入口。常见速查：
-
-| 需求 | 入口 |
-|---|---|
-| 扩展开发 | `extensions.md` |
-| 技能 | `skills.md` |
-| 主题 / 快捷键 | `themes.md` / `keybindings.md` |
-| 设置 / 包管理 | `settings.md` / `packages.md` |
-| Provider / 自定义模型 | `providers.md` / `models.md` / `custom-provider.md` |
-| TUI / SDK / RPC | `tui.md` / `sdk.md` / `rpc.md` |
-| 会话管理 / 压缩策略 | `sessions.md` / `compaction.md` |
-| Prompt 模板 / Session 格式 | `prompt-templates.md` / `session-format.md` |
