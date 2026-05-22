@@ -17,7 +17,7 @@ README 不杂代理指令，AGENTS.md 不重复项目介绍。
 
 AGENTS.md 是跨工具开放标准（OpenAI 发起，2025-12-09 捐赠至 Linux Foundation 下属 Agentic AI Foundation 治理），已被 **60,000+ 开源仓库**采用、被 25+ 工具原生支持（Codex、Copilot、Cursor、Windsurf、Gemini CLI、Devin、Amp 等）。
 
-> **Claude Code**：Claude Code 自 2026 年起已原生支持自动加载 `AGENTS.md`（同时保留 `CLAUDE.md` 读取）。多工具团队仍可通过 symlink 桥接保持一致体验（见 Symlink 策略章节）。
+> **Claude Code**：Claude Code 官方仍以 `CLAUDE.md` 为入口，但社区已通过 symlink 或 `@AGENTS.md` 引用方式稳定桥接。多工具团队建议在 AGENTS.md 中维护唯一真相源，通过 symlink 映射到各工具原生文件（见 Symlink 策略章节）。
 
 ---
 
@@ -107,11 +107,14 @@ ln -s AGENTS.md GEMINI.md        # Gemini CLI
 
 AGENTS.md 只应承载**工具无法强制表达的内容**。如果一个约束可以被 linter、formatter、type checker、git hook 或 CI gate 确定性执行——它**不该**出现在 AGENTS.md 中。
 
+AGENTS.md 的性质是**建议性指令**——告知代理*应该*怎么写，但存在被忽略的可能。Linter/CI 保证*必须*通过。不要让 AGENTS.md 承担本该由工具链强制执行的规则：LLM 不是 linter 的廉价替代品。
+
 | 类型 | 归属 | 示例 |
 |---|---|---|
-| 工具链强制执行 | `biome.json` / `eslintrc` / `tsconfig` | 禁止 `var`、import 顺序、格式化规则 |
-| 架构判断 | AGENTS.md | “组合优先于继承”、“加依赖前先讨论” |
-| 会话角色 | skill 文件 | Critic、Builder 等角色定义 |
+| 代码风格、类型约束（确定性） | `biome.json` / `eslintrc` / `tsconfig` | 禁止 `var`、import 顺序、格式化规则 |
+| 构建、测试、类型检查（确定性） | CI pipeline | `pnpm typecheck && pnpm test` |
+| 架构判断、工作流偏好（建议性） | AGENTS.md | “组合优先于继承”、“加依赖前先讨论” |
+| 会话角色定义（建议性） | skill 文件 | Critic、Builder 等角色定义 |
 | 任务特定风格 | Spec / PBI | “此模块的 API 命名约定” |
 
 ```
@@ -123,18 +126,6 @@ Lint: `pnpm lint`（Biome——见 biome.json）
 ```
 
 **副效应——Pink Elephant Problem**：告诉 LLM「不要做 X」反而让 X 在 attention 中更活跃（Context Anchoring）。每条否定指令都是代码库结构摩擦的信号——最优解是修复摩擦本身（删掉遗留代码、加 linter 规则），再删除 AGENTS.md 中对应的指令。
-
-### 确定性强制（Toolchain First）
-
-AGENTS.md 是建议性指令，存在被忽略的可能。应由确定性工具负责的规则不应写在 AGENTS.md 中：
-
-| 层级 | 性质 | 示例 |
-|---|---|---|
-| AGENTS.md（建议性） | 架构判断、工作流偏好 | “组合优先于继承”、“加依赖前先讨论” |
-| Linter/Formatter（确定性） | 代码风格强制 | ESLint、Prettier、Biome——自动修复 |
-| CI/CD（确定性） | 构建/测试/类型检查 | CI 中执行 `pnpm typecheck && pnpm test` |
-
-**核心原则**：AGENTS.md 告知代理*应该*怎么写，Linter/CI 保证*必须*通过。不要让 AGENTS.md 承担本该由 linter 或 CI 强制执行的规则——LLM 不是 linter 的廉价替代品。
 
 **定期审计**：周期性审查 AGENTS.md，将已可被工具链强制执行的内容迁移出去并删除对应指令。常见迁移目标：lint 规则、tsconfig 限制、CI gate。
 
