@@ -17,7 +17,7 @@ README 不杂代理指令，AGENTS.md 不重复项目介绍。
 
 AGENTS.md 是跨工具开放标准（OpenAI 发起，2025-12-09 捐赠至 Linux Foundation 下属 Agentic AI Foundation 治理），已被 **60,000+ 开源仓库**采用、被 25+ 工具原生支持（Codex、Copilot、Cursor、Windsurf、Gemini CLI、Devin、Amp 等）。
 
-> **Claude Code 特例**：Claude Code 原生读取 `CLAUDE.md`，不支持自动加载 `AGENTS.md`。多工具团队通过 symlink 桥接（见 Symlink 策略章节）。
+> **Claude Code**：Claude Code 自 2026 年起已原生支持自动加载 `AGENTS.md`（同时保留 `CLAUDE.md` 读取）。多工具团队仍可通过 symlink 桥接保持一致体验（见 Symlink 策略章节）。
 
 ---
 
@@ -50,6 +50,8 @@ AGENTS.md 管**项目上下文**，Skill 管**任务知识**，MCP 管**外部�
 **补充**：Tech Stack 显式标注版本有助于防止代理用错误版本的 API——代理无法从 `^18.0.0` 的 loose version range 确定你实际使用的版本。
 
 **实证**：Chatlatanagulchai et al. (2025) 发现测试指令出现在 75% 的高质量 AGENTS.md 中——是出现频率最高的类别。即使其他都不写，测试指令也值得写。
+
+> **Commands 是最高 ROI 类别**：GitHub 2,500+ 仓库分析明确指出 Commands（带精确 flag 的命令）是整份 AGENTS.md 中投入产出比最高的部分。正确标注构建/测试/lint 命令比写任何其他类别都更能减少代理试错。
 
 另可选**按任务组织**结构：将指令按 coding / review / release 等任务领域分组，而非按类别（style / testing）排列。匹配代理的任务推理方式，减少无关指令干扰。
 
@@ -156,7 +158,8 @@ export default function formatDate(date){ var result; ... }
 
 - **推荐大小**：100-150 行。超过 200 行后代理遵循率显著下降。v1.1 spec 给出更宽松上限（500 行），但实证研究仍支持 150 行以内最优
 - **OpenAI Codex 默认截断**：32 KiB，超出部分静默丢弃
-- **ETH Zurich 研究**：冗余 AGENTS.md 内容使推理成本增加 23%，任务成功率下降 2%
+- **ETH Zurich 研究（2025）**：冗余 AGENTS.md 内容使推理成本增加 23%，任务成功率下降 2%
+- **同研究后续发现**：代理**忠实遵循**不必要的指令，导致推理 token 增加 14-22%。每条指令都占用注意力预算——保留它们须有明确理由
 - **渐进式披露**：AGENTS.md 作指南针（~100 行指针），知识放 `docs/` 目录，从 AGENTS.md 中链接引用
 
 #### Context Map 的价值边界
@@ -256,13 +259,13 @@ Gloaguen et al. (2026) 对 138 个真实仓库的实证研究：
 
 **结论**：不要依赖 `/init` 等自动生成命令。将生成结果作为“内容清单”参考，应用 Toolchain First 原则过滤后手工重写。
 
-### AGENTS.md v1.1 新特性（2026 提案）
+### AGENTS.md v1.1 新特性（GitHub issue #135，2026 提案）
 
-AGENTS.md v1.1 正在标准化中，关键变化：
+AGENTS.md v1.1 已进入标准化讨论（[GitHub issue #135](https://github.com/agentsmd/agents.md/issues/135)），关键变化：
 
-#### YAML Frontmatter（渐进式披露）
+#### YAML Frontmatter（渐进式披露，已定稿为可选）
 
-可选的 YAML frontmatter 允许代理在加载全文前建立轻量索引：
+可选的 YAML frontmatter 允许代理在加载全文前建立轻量索引。`description` 和 `tags` 均为可选字段——因为文件路径本身已提供足够上下文，不要求 frontmatter 以保持向后兼容：
 
 ```yaml
 ---
