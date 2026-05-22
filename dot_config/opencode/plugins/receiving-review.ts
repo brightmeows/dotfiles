@@ -7,7 +7,13 @@
  *   - "Verify each finding against current code"
  *
  * 注入方式：experimental.chat.messages.transform 中将内容添加至首条用户消息，
- * 以 NOTIFY_TAG 标记。重复防护完全依赖消息历史中的 tag 检测，不维护闭包状态。
+ * 以 NOTIFY_TAG 标记。
+ *
+ * 重复防护双层设计：
+ * 1. 闭包变量 injected（主防护）—— 与 transform 调用同生命周期，不依赖持久化
+ * 2. 消息历史 NOTIFY_TAG 扫描（次防护）—— 用于热重载后闭包重置等边界场景
+ *
+ * session.compacting 时重置 injected，允许新会话重新触发。
  */
 
 import { readFileSync } from "node:fs";
@@ -52,18 +58,24 @@ ${skillContent}
 export const ReceivingReviewPlugin: Plugin = async (input) => {
 	const { client } = input;
 	let cachedSkill: string | null = null;
+	let injected = false;
 
 	return {
 		"experimental.chat.messages.transform": async (_input, output) => {
+			// 主防护：闭包变量（可靠，不依赖持久化）
+			if (injected) return;
 			if (!output.messages.length) return;
 
-			// 完全依靠消息历史中的 tag 判断是否已注入（不依赖闭包状态）
+			// 次防护：消息历史 tag 扫描（处理热重载等闭包重置的边界场景）
 			const alreadyInjected = output.messages.some((m) =>
 				m.parts.some(
 					(p) => p.type === "text" && p.text.includes(NOTIFY_TAG),
 				),
 			);
-			if (alreadyInjected) return;
+			if (alreadyInjected) {
+				injected = true; // 同步闭包状态
+				return;
+			}
 
 			const firstUser = output.messages.find(
 				(m) => m.info.role === "user",
@@ -87,6 +99,8 @@ export const ReceivingReviewPlugin: Plugin = async (input) => {
 				cachedSkill = loadSkillContent();
 			}
 
+			injected = true;
+
 			firstUser.parts.unshift({
 				type: "text",
 				text: buildInjectionText(cachedSkill),
@@ -108,6 +122,10 @@ export const ReceivingReviewPlugin: Plugin = async (input) => {
 			} catch {
 				// 环境无 TUI 时静默忽略（如无头模式）
 			}
+		},
+
+		"experimental.session.compacting": async () => {
+			injected = false; // compact 后允许新会话重新触发
 		},
 	};
 };
