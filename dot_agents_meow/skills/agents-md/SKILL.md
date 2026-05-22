@@ -29,6 +29,11 @@ AGENTS.md 是跨工具开放标准（OpenAI 发起，Linux Foundation 下属 Age
 | **Code Style** | 命名规范、导入顺序、组件模式（含正反例） | 命名导出优先，`const` 而非 `let` |
 | **Git Workflow** | 分支策略、提交格式、PR 流程 | `feat:` / `fix:` / `chore:` |
 | **Boundaries** | 硬性边界：什么绝对不能碰（见下文三层系统） | 永不提交 `.env`、永不删除失败测试 |
+| **Tech Stack** | 框架/语言/数据库/包管理器及版本 | `Node 20.11`、`pnpm 9.x`、`Next.js 16` |
+
+**补充**：Tech Stack 显式标注版本有助于防止代理用错误版本的 API——代理无法从 `^18.0.0` 的 loose version range 确定你实际使用的版本。
+
+另可选**按任务组织**结构：将指令按 coding / review / release 等任务领域分组，而非按类别（style / testing）排列。匹配代理的任务推理方式，减少无关指令干扰。
 
 **原则**：包含代理无法从代码/package.json/README 自行推导的信息，不重复已有内容。
 
@@ -73,6 +78,24 @@ AGENTS.md 是跨工具开放标准（OpenAI 发起，Linux Foundation 下属 Age
 # 错误做法——全文内联
 <长篇架构说明直接粘贴>
 ```
+
+## `@import` 引用模式（增强渐进式披露）
+
+Claude Code 等工具支持 `@路径/文件名.md` 语法在 AGENTS.md 中内联引用外部文件：
+
+```
+# AGENTS.md（根文件，~50 行指针）
+通用构建/测试/边界规则。
+详细架构约定见 @docs/ARCHITECTURE.md
+数据库操作规范见 @docs/DATABASE.md
+```
+
+被引用文件在会话启动时展开并合并到上下文中。优点：
+- 根文件保持精简（< 100 行）
+- 领域知识按需引用，不污染无关任务
+- 引用文件可独立维护，不混入根文件
+
+**注意**：`@import` 不节省 token——被引用文件内容仍会加载到上下文，和直接粘贴语义等价。真正的 token 节省应来自路径限定的规则文件（如 `.claude/rules/` 的 `paths:` 声明，仅在匹配 glob 时加载）。
 
 ## 代码示例优先于文字描述
 
@@ -136,9 +159,21 @@ AGENTS.md 通过使用进化，非一次性写完：
 |---|---|---|
 | 项目约定、命令、边界 | AGENTS.md | “用 pnpm，命名导出” |
 | 多步骤工作流 | Skill | “部署上 staging → smoke test → 通知 Slack” |
-| 数据库查询、外部工具 | MCP Server | "@postgres 查询用户表" |
+| 数据库查询、外部工具 | MCP Server | “@postgres 查询用户表” |
 
 AGENTS.md 管**项目上下文**，Skill 管**任务知识**，MCP 管**外部工具**——三者互补。
+
+## 确定性强制
+
+AGENTS.md 是建议性指令，存在被忽略的可能。应由确定性工具负责的规则不应写在 AGENTS.md 中：
+
+| 层级 | 性质 | 示例 |
+|---|---|---|
+| AGENTS.md（建议性） | 编码约定、工作流偏好 | "命名导出优先" |
+| Linter/Formatter（确定性） | 代码风格强制 | ESLint、Prettier、Biome——自动修复 |
+| CI/CD（确定性） | 构建/测试/类型检查 | CI 中执行 `pnpm typecheck && pnpm test` |
+
+关系：AGENTS.md 告知代理*应该*怎么写，Linter/CI 保证*必须*通过。不要让 AGENTS.md 承担本该由 linter 或 CI 强制执行的规则——LLM 不是 linter 的廉价替代品。
 
 ## 维护规则
 
@@ -161,5 +196,6 @@ AGENTS.md 管**项目上下文**，Skill 管**任务知识**，MCP 管**外部�
 | 通用助手 persona | 定义 specialist 角色 |
 | 命令不写 flag | `pnpm test --run src/foo.test.ts` |
 | 无边界规则 | 三层 Always/Ask/Never |
+| 仅否定指令：“不要用 npm” | 否定+替代：“不要用 npm → 用 pnpm” |
 | 不同工具各维护一份 | 一份 AGENTS.md + symlink |
 | AGENTS.md 含 README 内容 | 仅含代理所需、代码不可推导的信息 |
