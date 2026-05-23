@@ -58,6 +58,13 @@ pi 与 opencode 共用。
 - `symlink_AGENTS.md` — opencode 通用准则入口
 - `symlink_skills` — skills symlink
 
+### Rust 工具链配置 — `dot_cargo/` / `dot_config/sccache/`
+
+映射至 `~/.cargo/` 与 `~/.config/sccache/`。
+
+- `dot_cargo/config.toml` — Cargo 全局配置（rustc-wrapper = "sccache"）
+- `dot_config/sccache/config` — sccache 磁盘缓存大小配置
+
 ### chezmoi 基础设施
 
 - `dot_*` 命名约定：`dot_` 前缀文件映射至 `~/.`（如 `dot_config/*` → `~/.config/*`）
