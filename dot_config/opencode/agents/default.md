@@ -1,5 +1,5 @@
 ---
-description: Default
+description: 主要编码助手，处理通用编码、问答、文件操作和用户交互
 mode: primary
 permission:
   question: allow
