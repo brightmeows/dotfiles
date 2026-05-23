@@ -77,19 +77,40 @@ AGENTS.md 管**项目上下文**，Skill 管**任务知识**，MCP 管**外部�
 
 ## Part 2：文件架构
 
-### 层级结构
+### 层级结构与作用域规则
+
+AGENTS.md 按文件系统层级组织，遵循 v1.1 规范的四个核心概念：
+
+| 概念 | 含义 |
+|---|---|
+| **管辖范围 (Jurisdiction)** | 每个 AGENTS.md 只影响所在目录及子目录，不影响兄弟目录 |
+| **累积 (Accumulation)** | 子目录继承祖先文件的全部指导，无需重复声明 |
+| **优先级 (Precedence)** | 就近优先，子目录覆盖祖先的冲突规则 |
+| **隐式继承 (Implicit Inheritance)** | 子文件免重复祖先规则——代理视指导为累积的 |
 
 ```
-仓库根 AGENTS.md        ← 全局约束、技术栈、工作流（低频更新）
-  ├── src/AGENTS.md     ← 子包领域逻辑、局部约定（中频更新）
-  └── tests/AGENTS.md   ← 测试专用约定、mock 策略（中频更新）
+project/
+├── AGENTS.md                  # 全仓库公约
+├── frontend/
+│   ├── AGENTS.md              # React 专属（继承根文件）
+│   └── components/            # 受 frontend/AGENTS.md 管辖
+└── backend/
+    └── AGENTS.md              # API 专属（继承根文件）
 ```
 
-规则：
-- 代理取最近 AGENTS.md 优先，逐级回退
-- 根 AGENTS.md 不重复子模块细节
-- 各 AGENTS.md 内容不重叠
-- 子目录 AGENTS.md 不含全局性规则
+#### 根 vs 子目录的内容职责
+
+| 层级 | 内容范围 | 更新频率 | 行数参考 |
+|---|---|---|---|
+| **根 AGENTS.md** | 项目描述、共享工具链、全局边界、代码风格基础 | 低频 | 30-50 行 |
+| **子目录 AGENTS.md** | 该包领域逻辑、局部技术栈、包内特有命令和约定 | 中频 | 10-30 行 |
+| **深层 AGENTS.md** | 极端特化规则，覆盖祖先的不适用约束 | 极低频 | 5-15 行 |
+
+#### 维护策略差异
+
+- **根文件**被所有目录继承，修改影响面是整个仓库。应精简，只放确实全局适用的规则。若根文件超过 50 行，说明有内容应下沉到子目录或提取到共享参考文件。
+- **子文件**只声明该目录**特有**的内容——祖先已声明的无需重复（隐式继承）。重构目录结构时须同步更新对应 AGENTS.md（jurisdiction 随路径变更）。
+- **数据流方向**：根 → 子目录（单向继承）。子文件不反向影响根或其他兄弟目录。
 
 ### Symlink 策略（多工具团队）
 
@@ -105,7 +126,7 @@ ln -s AGENTS.md GEMINI.md        # Gemini CLI
 
 ---
 
-## Part 3：内容原则
+## Part 3：写作原则与流程
 
 ### Toolchain First 原则（来自 v1.1 共识）
 
@@ -151,50 +172,7 @@ export default function formatDate(date){ var result; ... }
 
 ### 大小与渐进式披露
 
-- **起步路径**：先写 20-30 行覆盖最常出错的命令和边界。观察 1-2 天真实任务后按需补充，不要一步到位写 150 行。
-- **推荐大小**：100-150 行。超过 200 行后代理遵循率显著下降。v1.1 spec 给出更宽松上限（500 行），但实证研究仍支持 150 行以内最优
-- **OpenAI Codex 默认截断**：32 KiB，超出部分静默丢弃
-- **ETH Zurich 研究（2025）**：冗余 AGENTS.md 内容使推理成本增加 23%、成功率下降 2%；不必要指令导致推理 token 增加 14-22%。每条指令都占用注意力预算——保留它们须有明确理由
-- **渐进式披露**：AGENTS.md 作指南针（~100 行指针），知识放 `docs/` 目录，从 AGENTS.md 中链接引用
-
-#### Context Map 的价值边界
-
-Gloaguen et al. (2026) 发现：目录映射（directory map）对**实现任务**中的文件发现加速效果不显著——代理已能有效自主导航文件系统。
-
-Context Map 的真实价值在于：**新会话的架构定向**（spec 编写、错误分类、ADR 撰写），而非作为实现代理的导航捷径。不要用 AGENTS.md 做良好目录结构的替代品。
-
-ETH Zurich 研究（2026）进一步确认：移除 Architecture 章节后代理表现不变但 token 下降——架构概述对实现任务是**净开销**。除非目录布局非标准，否则一两行标注入口文件即可，完整架构说明链接到 `docs/`。
-
-```
-# 正确做法——连接不内联
-架构说明见 docs/ARCHITECTURE.md
-部署流程见 docs/DEPLOY.md
-
-# 错误做法——全文内联
-<长篇架构说明直接粘贴>
-```
-
-### `@import` 引用模式（增强渐进式披露）
-
-Claude Code 等工具支持 `@路径/文件名.md` 语法在 AGENTS.md 中内联引用外部文件：
-
-```
-# AGENTS.md（根文件，~50 行指针）
-通用构建/测试/边界规则。
-详细架构约定见 @docs/ARCHITECTURE.md
-数据库操作规范见 @docs/DATABASE.md
-```
-
-被引用文件在会话启动时展开并合并到上下文中。优点：
-- 根文件保持精简（< 100 行）
-- 领域知识按需引用，不污染无关任务
-- 引用文件可独立维护，不混入根文件
-
-**注意**：`@import` 不节省 token——被引用文件内容仍会加载到上下文，和直接粘贴语义等价。真正的 token 节省应来自路径限定的规则文件（如 `.claude/rules/` 的 `paths:` 声明，仅在匹配 glob 时加载）。
-
----
-
-## Part 4：创作流程
+核心原则：AGENTS.md 推荐 **100-150 行**（超过 200 行遵循率下降）。**先写 20-30 行**起步，按需迭代补充。完整数据（大小量化、Context Map 边界、`@import` 模式）见 [reference/context-efficiency.md](reference/context-efficiency.md)。
 
 ### 增量迭代法
 
@@ -212,49 +190,13 @@ AGENTS.md 通过使用进化，非一次性写完：
 
 ### Agent Persona（角色定义）
 
-#### 1. 定义 specialist 角色
+详细的角色定义模式（specialist 角色、Registry 模式、单角色示例）见 [reference/agent-persona.md](reference/agent-persona.md)。
 
-```
-# 正确——定义角色
-你是一个 Rust 后端开发者。对安全性有最高优先级。需要 unsafe 代码时先提方案。
-
-# 错误——模糊描述
-你是一个帮助编码的助手。
-```
-
-角色帮助代理在权衡时做正确决定（安全 > 性能？可读性 > 巧妙？）。
-
-#### 2. Registry 模式（多角色场景）
-
-若项目使用多个 agent 角色，在 AGENTS.md 中**只注册名称和调用方式**，完整定义放在 skill 文件中——避免每次会话加载所有角色的完整定义：
-
-```
-## Personas
-Invoke via skill: @Lead, @Dev, @Critic
-Definitions: `.claude/skills/`
-```
-
-单角色项目保持简单：
-
-```
-## Identity
-Senior Systems Engineer — Go 1.22, gRPC, high-throughput concurrency.
-Favor explicit error handling and composition over inheritance.
-```
-
----
-
-## Part 5：警示与前沿
+**核心原则**：角色帮助代理在权衡时做正确决定（安全 > 性能？可读性 > 巧妙？）。多角色场景只注册名称和调用方式，完整定义放 skill 文件。
 
 ### 警告：LLM 自动生成的 AGENTS.md 有害
 
-Gloaguen et al. (2026) 对 138 个真实仓库的实证研究：
-
-- LLM 自动生成的 AGENTS.md **一致降低代理任务成功率**，同时推理成本增加 20%+
-- 原因：代理**忠实跟随**生成指令，但生成内容含微妙不准确，导致探索范围扩大、推理成本上升
-- 开发者手写的文件也仅带来 +4% 的边际提升——且仅限于极简精确的文件
-
-**结论**：不要依赖 `/init` 等自动生成命令。将生成结果作为“内容清单”参考，应用 Toolchain First 原则过滤后手工重写。
+Gloaguen et al. (2026) 对 138 个真实仓库的实证研究：LLM 自动生成的 AGENTS.md **一致降低代理任务成功率**（推理成本增加 20%+），手写文件也只带来 +4% 边际提升。详见 [reference/auto-gen-warning.md](reference/auto-gen-warning.md)。
 
 ### AGENTS.md v1.1 新特性
 
@@ -263,6 +205,12 @@ Gloaguen et al. (2026) 对 138 个真实仓库的实证研究：
 
 ---
 
-## Part 6：参考
+## Part 4：参考
 
-维护规则与反模式自查表见 [reference/maintenance.md](reference/maintenance.md)。
+| 文件 | 内容 |
+|---|---|
+| [reference/maintenance.md](reference/maintenance.md) | 维护规则与反模式自查表 |
+| [reference/context-efficiency.md](reference/context-efficiency.md) | 大小限制、Context Map 边界、`@import` 引用模式 |
+| [reference/agent-persona.md](reference/agent-persona.md) | Agent Persona 完整模式（specialist / Registry / 单角色） |
+| [reference/auto-gen-warning.md](reference/auto-gen-warning.md) | LLM 自动生成危害与实证数据 |
+| [reference/v1.1-features.md](reference/v1.1-features.md) | AGENTS.md v1.1 新特性 |
