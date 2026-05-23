@@ -250,60 +250,13 @@ Gloaguen et al. (2026) 对 138 个真实仓库的实证研究：
 
 **结论**：不要依赖 `/init` 等自动生成命令。将生成结果作为“内容清单”参考，应用 Toolchain First 原则过滤后手工重写。
 
-### AGENTS.md v1.1 新特性（GitHub issue #135，2026 提案）
+### AGENTS.md v1.1 新特性
 
-AGENTS.md v1.1 已进入标准化讨论（[GitHub issue #135](https://github.com/agentsmd/agents.md/issues/135)），关键变化：
-
-#### YAML Frontmatter（渐进式披露，已定稿为可选）
-
-可选的 YAML frontmatter 允许代理在加载全文前建立轻量索引。`description` 和 `tags` 均为可选字段——因为文件路径本身已提供足够上下文，不要求 frontmatter 以保持向后兼容：
-
-```yaml
----
-description: React frontend conventions and build commands
-tags: [react, frontend, ui]
----
-```
-
-frontmatter 帮助代理判断何时需要加载该文件的完整内容，无需全文扫描。
-
-#### 层级继承（累积语义）
-
-子目录 AGENTS.md **隐式继承**祖先文件的指导。子文件无需重复祖先已声明的规则——代理应将指导视为累积的。子文件中的指导覆盖祖先文件中的冲突指导（就近优先）。
-
-#### File Localization 优先
-
-ContextBench (2025) 发现：**文件定位是代理的 #1 失败模式**。代理编错文件→下游全链失败。因此：
-
-> 关键文件路径（入口点、基类、配置文件）应显式标注。无法定位正确文件的代理在一切事务上都会失败。
+关键变化：YAML Frontmatter（可选）、层级继承（累积语义）、File Localization 优先。
+详见 [reference/v1.1-features.md](reference/v1.1-features.md)。
 
 ---
 
 ## Part 6：参考
 
-### 维护规则
-
-- **像代码一样维护**：架构/工具链变更时同步更新 AGENTS.md。过时指令比没有更糟。
-- **写前检查**：遍历锁文件、CI 配置、README、现有代码模式与测试布局，再落笔
-- **行号引用禁用**：用类型名、函数名、模块名代替行号
-- **增删同步**：增删类、函数、配置、异常时同步更新 AGENTS.md
-- **路径验证**：AGENTS.md 中所有路径与命令须真实存在
-- **结构图用 Mermaid**，禁用 ASCII art
-- **大幅重构后运行对齐检查**：确认 AGENTS.md 与实际代码一致
-- **路径和命令在每个目录级别验证**：嵌套 AGENTS.md 中引用的路径相对该文件所在目录
-
-### 反模式自查
-
-| 错误做法 | 正确做法 |
-|---|---|
-| 全文粘贴架构文档 | 链接到 `docs/` |
-| 写 500 行大而全 | 100-150 行，迭代补充 |
-| 用抽象描述代码风格 | 贴正反代码示例 |
-| 通用助手 persona | 定义 specialist 角色 |
-| 命令不写 flag | `pnpm test --run src/foo.test.ts` |
-| 无边界规则 | 三层 Always/Ask/Never |
-| 不同工具各维护一份 | 一份 AGENTS.md + symlink |
-| AGENTS.md 含 README 内容 | 仅含代理所需、代码不可推导的信息 |
-| 重复工具链已强制内容 | 遵循 Toolchain First——指向工具而非重复规则 |
-| 用 `/init` 自动生成 | 视作内容清单，手工精简后保留 |
-| 写否定指令 | 用肯定指令+替代方案，或直接修复代码库摩擦 |
+维护规则与反模式自查表见 [reference/maintenance.md](reference/maintenance.md)。

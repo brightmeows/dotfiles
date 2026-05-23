@@ -1,6 +1,6 @@
 ---
 name: exec-subagent
-description: "蓝图执行的 subagent 模式。逐任务分发独立 subagent，每任务实施后同时运行规范审查与代码质量审查。"
+description: "在执行包含多个独立任务的实施计划时使用"
 ---
 
 # Subagent 驱动执行
@@ -85,3 +85,13 @@ description: "蓝图执行的 subagent 模式。逐任务分发独立 subagent�
 - **机械实施任务**（1-2 个文件、明确规格）：用快速便宜的模型
 - **集成/判断任务**（多文件协调、调试）：用标准模型
 - **架构/设计/审查任务**：用最强模型
+
+## 快速参考
+
+| 阶段 | 动作 |
+|------|------|
+| 准备 | 读蓝图 → 提取任务 + 架构节 → 创建 Todowrite → 粒度检查 |
+| 实施循环 | 分发 exec-implementer（推导架构定位/依赖/设计/参考）→ 等待状态 |
+| 并行审查 | 同时分发 exec-compliance-reviewer + exec-quality-reviewer |
+| 状态处理 | DONE→审查 / DONE_WITH_CONCERNS→先审疑虑 / NEEDS_CONTEXT→补信息 / BLOCKED→评估原因 |
+| 完成 | 所有任务通过 → 分发 code-reviewer 全面审查 → 报告 |
