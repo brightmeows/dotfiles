@@ -35,7 +35,7 @@ Do NOT invoke any implementation action — no coding, no scaffolding, no file c
 ### 0. 首先判断是否为 Trivial 变更
 
 是否满足 [Trivial Bypass](#trivial-bypass微不足道的变更可跳过) 条件？
-- **满足** → 跳过 blueprint，直接实施（告知用户："此变更简单，跳过设计流程直接实施"）
+- **满足** → 跳过 blueprint，直接实施（告知用户：“此变更简单，跳过设计流程直接实施”）
 - **不满足** → 继续下方流程
 
 ### 1. 探查项目上下文
@@ -178,11 +178,14 @@ Do NOT invoke any implementation action — no coding, no scaffolding, no file c
 
 ### 7. 外部审查
 
-将文档交 `blueprint-reviewer` subagent 审查：
+同时分发两路审查 subagent：
 
-- 提供文档路径
-- 审查返回问题后，逐一评估并修复，然后重新审查
-- 审查通过后方可进入用户审查
+- **蓝图结构审查**（`blueprint-structure-reviewer`）—— 验证架构完整、需求覆盖、单一方案、范围聚焦
+- **蓝图可实施审查**（`blueprint-readiness-reviewer`）—— 验证可执行、任务分解清晰、无占位符
+
+两路审查并行运行，结果合并为统一报告。如有问题 → 修复 → 重新审查。两路均通过后方可进入用户审查。
+
+**复审规则：** 每轮审查启动新的 subagent 实例，不携带上一轮修复内容，不复用上一轮会话。subagent 以全新视角审查当前文档。
 
 ### 8. 用户审查
 
