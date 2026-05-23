@@ -1,6 +1,6 @@
 ---
 name: agents-md
-description: 在创建、修改或重构 `AGENTS.md` 文件时激活。包括仓库根、子目录层级 AGENTS.md 及多工具 symlink 映射。
+description: 在创建、修改或重构 `AGENTS.md` 文件时使用。项目配置不清晰、代理行为不符合预期、或需要管理多工具 symlink 映射时亦适用。
 license: Apache-2.0
 ---
 
@@ -49,7 +49,7 @@ AGENTS.md 管**项目上下文**，Skill 管**任务知识**，MCP 管**外部�
 
 **补充**：Tech Stack 显式标注版本有助于防止代理用错误版本的 API——代理无法从 `^18.0.0` 的 loose version range 确定你实际使用的版本。
 
-**实证**：Chatlatanagulchai et al. (2025) 发现测试指令出现在 75% 的高质量 AGENTS.md 中——是出现频率最高的类别。即使其他都不写，测试指令也值得写。
+**实证**：测试指令在 75% 的高质量 AGENTS.md 中出现——频率最高。即使其他都不写，测试指令也值得写。
 
 > **Commands 是最高 ROI 类别**：GitHub 2,500+ 仓库分析明确指出 Commands（带精确 flag 的命令）是整份 AGENTS.md 中投入产出比最高的部分。正确标注构建/测试/lint 命令比写任何其他类别都更能减少代理试错。
 
@@ -149,8 +149,7 @@ export default function formatDate(date){ var result; ... }
 
 - **推荐大小**：100-150 行。超过 200 行后代理遵循率显著下降。v1.1 spec 给出更宽松上限（500 行），但实证研究仍支持 150 行以内最优
 - **OpenAI Codex 默认截断**：32 KiB，超出部分静默丢弃
-- **ETH Zurich 研究（2025）**：冗余 AGENTS.md 内容使推理成本增加 23%，任务成功率下降 2%
-- **同研究后续发现**：代理**忠实遵循**不必要的指令，导致推理 token 增加 14-22%。每条指令都占用注意力预算——保留它们须有明确理由
+- **ETH Zurich 研究（2025）**：冗余 AGENTS.md 内容使推理成本增加 23%、成功率下降 2%；不必要指令导致推理 token 增加 14-22%。每条指令都占用注意力预算——保留它们须有明确理由
 - **渐进式披露**：AGENTS.md 作指南针（~100 行指针），知识放 `docs/` 目录，从 AGENTS.md 中链接引用
 
 #### Context Map 的价值边界

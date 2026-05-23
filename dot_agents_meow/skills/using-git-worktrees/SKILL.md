@@ -1,6 +1,6 @@
 ---
 name: using-git-worktrees
-description: 功能开发需要隔离时，或执行实施计划前——用 git worktree 创建隔离工作区。
+description: 功能开发需要隔离时，或执行实施计划前使用。当前仓库无隔离工作区时适用。
 ---
 
 # 使用 Git Worktrees
@@ -69,3 +69,13 @@ Worktree 就绪于 <路径>
 - 在已有隔离的情况下重复创建
 - 不检查 `.worktrees` 是否已加入 `.gitignore`
 - 跳过基线验证
+
+## 常见错误
+
+| 错误 | 后果 | 修复 |
+|------|------|------|
+| 直接在 main 分支上开始实施 | 无法创建 worktree，污染主分支 | 先创建 worktree，再开始在隔离区工作 |
+| 分不清主仓库与 worktree 目录 | 误在主仓库做变更 | 始终引用具体路径 `.worktrees/$BRANCH` |
+| 创建 worktree 后忘记 `.gitignore` | `.worktrees/` 出现在 git status 中 | 务必执行 `.gitignore` 检查步骤 |
+| 跳过基线验证直接进入实现 | 后期发现环境不兼容，返工 | 创建 worktree 后先做编译/类型检查 |
+| 分支名含 `/` 导致嵌套目录 | `.worktrees/X/Y` 破坏扁平结构 | 仅用 kebab-case，不含 `/` |
