@@ -4,7 +4,7 @@ description: 对齐 `AGENTS.md` 与代码注释
 
 # 对齐项目文档与代码
 
-先读取 `agents-doc` skill。子 agent 须加载该 skill，遵守其中三节必含、行数约束、路径验证等规则。
+先读取 `agents-md` skill。子 agent 须加载该 skill，遵守其中三节必含、行数约束、路径验证等规则。
 
 ## 第一步：检查
 
