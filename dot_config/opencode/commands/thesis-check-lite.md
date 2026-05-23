@@ -7,9 +7,10 @@ description: 论文总检（轻量）
 ## 第一步：检查
 
 派多个子 Agent 同时检查论文：
-1. 不启用技能，验证是否符合 `AGENTS.md`。
+1. 不启用技能，验证是否符合 `AGENTS.md` 要求。
 2. 启用 `cnki-aigc-rewrite` 检查 AI 痕迹。
-3. 启用 `thesis-writer` 读取参考文献，审查学术严谨性等相关项。
+3. 启用 `thesis-writer` 并读取其中的 AI 痕迹消除部分，分析是否有可优化点。
+4. 启用 `thesis-writer` 读取参考文献，审查学术严谨性等相关项。
 
 ### 注
 
