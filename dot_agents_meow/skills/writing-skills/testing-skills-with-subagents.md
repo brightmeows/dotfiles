@@ -218,7 +218,7 @@ agent 有技能却仍然违反规则？这就像测试回归——你需要重�
 ### 4. 更新 description
 
 ```yaml
-description: Use when you wrote code before tests, when tempted to test after, or when manually testing seems faster.
+description: 在已先写代码后写测试、想过后补测试或觉得手动测试更快时使用
 ```
 
 添加即将违反的症状。

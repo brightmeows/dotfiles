@@ -104,7 +104,7 @@ skills/
 ```markdown
 ---
 name: Skill-Name-With-Hyphens
-description: Use when [具体触发条件和症状]
+description: 在以下情况使用：[具体触发条件和症状]
 ---
 
 # 技能名称
@@ -157,16 +157,16 @@ description: Use when [具体触发条件和症状]
 
 ```yaml
 # ❌ 坏：总结了工作流——Claude 可能跟随它而不是阅读技能
-description: Use when executing plans - dispatches subagent per task with code review between tasks
+description: 在执行计划时使用——按任务分发 subagent，任务间进行代码审查
 
 # ❌ 坏：过程细节过多
-description: Use for TDD - write test first, watch it fail, write minimal code, refactor
+description: 用于 TDD——先写测试，观察失败，编写最简代码，重构
 
 # ✅ 好：仅触发条件，无工作流总结
-description: Use when executing implementation plans with independent tasks in the current session
+description: 在当前会话中执行含独立任务的实施计划时使用
 
 # ✅ 好：仅触发条件
-description: Use when implementing any feature or bugfix, before writing implementation code
+description: 在实现任何功能或修复 bug 时、编写实现代码前使用
 ```
 
 **内容：**
@@ -179,19 +179,19 @@ description: Use when implementing any feature or bugfix, before writing impleme
 
 ```yaml
 # ❌ 坏：过于抽象、模糊、不包含何时使用
-description: For async testing
+description: 用于异步测试
 
 # ❌ 坏：第一人称
-description: I can help you with async tests when they're flaky
+description: 我可以在异步测试不稳定时帮助你
 
 # ❌ 坏：提到了技术但技能并非针对该技术
-description: Use when tests use setTimeout/sleep and are flaky
+description: 在测试使用 setTimeout/sleep 且不稳定时使用
 
-# ✅ 好：以 “Use when” 开头、描述问题、无工作流
-description: Use when tests have race conditions, timing dependencies, or pass/fail inconsistently
+# ✅ 好：以“在……时使用”开头、描述问题、无工作流
+description: 在测试存在竞态条件、时间依赖或通过/失败不一致时使用
 
 # ✅ 好：技术特定技能，含明确触发器
-description: Use when using React Router and handling authentication redirects
+description: 在使用 React Router 处理认证重定向时使用
 ```
 
 ### 2. 关键词覆盖
@@ -524,7 +524,7 @@ pptx/
 在 description 中加入：你即将违反规则时的症状：
 
 ```yaml
-description: Use when implementing any feature or bugfix, before writing implementation code
+description: 在实现任何功能或修复 bug 时、编写实现代码前使用
 ```
 
 ## 技能的 RED-GREEN-REFACTOR
