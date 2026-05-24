@@ -39,6 +39,7 @@ description: "在执行包含多个独立任务的实施计划时使用"
 2. **同时分发两路审查 subagent**
    - 使用 `exec-compliance-reviewer` 核验实现与需求一致（不多不少）
    - 使用 `exec-quality-reviewer` 审查代码结构、测试覆盖、可维护性
+   - 如实施者确认测试通过，构造 quality-reviewer prompt 时注明不需重复运行测试命令，聚焦测试代码质量审核
    - 两路审查并行运行，互不依赖
    - 如有问题 → 实施 subagent 修复 → 重新审查
    - 两路均通过后标记任务完成
