@@ -185,8 +185,8 @@ Do NOT invoke any implementation action — no coding, no scaffolding, no file c
 
 同时分发两路审查 subagent：
 
-- **蓝图结构审查**（`blueprint-structure-reviewer`）—— 验证架构完整、需求覆盖、单一方案、范围聚焦
-- **蓝图可实施审查**（`blueprint-readiness-reviewer`）—— 验证可执行、任务分解清晰、无占位符
+- **蓝图结构审查**（`blueprint-structure-reviewer`）—— 验证架构完整、需求覆盖、单一方案、范围聚焦、无占位符（仅读蓝图文档文本，不查项目文件）
+- **蓝图可实施审查**（`blueprint-readiness-reviewer`）—— 验证可执行、任务分解清晰、文件路径适配、步骤可操作（不关心内部结构设计）
 
 两路审查并行运行，结果合并为统一报告。循环审查至**无阻塞问题**（两路均通过）方可结束：
 
