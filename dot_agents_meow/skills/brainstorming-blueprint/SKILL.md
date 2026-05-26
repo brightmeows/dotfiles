@@ -25,8 +25,8 @@ digraph blueprint {
     sr    [label="结构审查 subagent\n架构完整 + 需求覆盖"];
     rr    [label="可实施审查 subagent\n任务可操作 + 路径准确"];
     merge [label="合并审查报告"];
-    exec  [label="执行\nexec-subagent / exec-direct"];
-    upd   [label="非阻塞建议整理为附录"];
+    apdx  [label="Step 4: 整理附录\n未处理非阻塞建议纳入文档"];
+    exec  [label="Step 5: 执行\nexec-subagent / exec-direct"];
 
     write -> self;
     self  -> fix  [label="有问题"];
@@ -39,8 +39,8 @@ digraph blueprint {
     rr    -> merge;
     merge -> block;
     block -> write [label="是，需修复"];
-    block -> upd   [label="否，无阻塞"];
-    upd   -> user;
+    block -> apdx [label="否，无阻塞"];
+    apdx  -> user;
     user  -> write [label="修改"];
     user  -> exec  [label="批准"];
 }
@@ -174,11 +174,13 @@ digraph blueprint {
 
 每轮审查启动新的 subagent 实例，不携带上一轮修复内容，不复用上一轮会话。subagent 以全新视角审查当前文档。
 
-**循环结束后，** 将本环节审查者提出但**决定不处理**的非阻塞建议整理为附录，合并至蓝图文档末尾，每项附简述理由。已采纳或已在修复中覆盖的建议不列入附录。该附录随蓝图文档进入用户审查。
+### Step 4: 整理附录
 
-### Step 4: 用户审查与执行
+审查循环结束后，将审查者提出但**决定不处理**的非阻塞建议整理为附录，合并至蓝图文档末尾，每项附简述理由。已采纳或已在修复中覆盖的建议不列入附录。该附录随蓝图文档进入用户审查。
 
-将文档提交用户审查，同时请用户选择执行方式：
+### Step 5: 用户审查与执行
+
+将文档（含附录）提交用户审查，同时请用户选择执行方式：
 
 > 文档已写入 `<路径>`，请审阅。如有修改意见请告知，确认后选择执行方式：
 > 1. **`exec-subagent`** —— 每个任务分发独立 subagent，实施完成后并行运行规范审查与质量审查，适合任务独立的场景
@@ -202,4 +204,5 @@ digraph blueprint {
 | 编写文档 | 按模板写入 `docs/blueprint/YYYY-MM-DD-<功能名>.md` |
 | 文档自审 | 检查占位符、一致性、范围、歧义、完整性、单一方案 |
 | 外部审查 | 并行结构审查 + 可实施审查，循环至无阻塞 |
+| 整理附录 | 将未处理的非阻塞建议纳入文档 |
 | 用户审查 | 提交 → 确认 → 按选择执行方式实施 |
