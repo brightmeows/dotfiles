@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-description: "在实施前需要明确需求和方案时使用。适用于：需求模糊、有多个潜在方案、或不确定技术选型时。但 typofix、配置值改动、单行变更等微不足道的变更可直接跳过。"
+description: "实施前必须先明确需求和方案。适用于需求模糊、有多个潜在方案、或不确定技术选型等场景。所有项目无论大小都必须经过方案确认流程。"
 ---
 
 # 方案确认
@@ -12,7 +12,7 @@ description: "在实施前需要明确需求和方案时使用。适用于：需
 在方案与设计确认并获得用户批准之前，**不得**开始编写蓝图文档或执行任何实施步骤。
 
 <HARD-GATE>
-Do NOT proceed to blueprint writing or implementation until the solution AND design have been explicitly confirmed by the user.
+Do NOT proceed to blueprint writing or implementation until the solution AND design have been explicitly confirmed by the user. This applies to EVERY project regardless of perceived simplicity.
 </HARD-GATE>
 
 ## 反模式：“太简单了不需要设计”
@@ -29,6 +29,42 @@ Do NOT proceed to blueprint writing or implementation until the solution AND des
 - 不影响现有行为的正确性
 
 边界模糊时**不准跳过**——走完整流程。
+
+## 流程总览
+
+```dot
+digraph brainstorming {
+    rankdir=TB;
+    node [shape=box, style=rounded];
+
+    trivial [shape=diamond, label="Trivial 变更？"];
+    skip   [label="跳过，直接实施"];
+    ctx    [label="探查项目上下文"];
+    qa     [label="逐条提问澄清需求\n（一次一问，优先选择题）"];
+    decompose [label="范围判断：\n多子系统则拆分，\n先处理第一个子项目"];
+    approaches [label="提出 2-3 方案\n列权衡 + 推荐选项"];
+    design [label="展示设计（分节确认）\n架构→组件→数据流→接口→错误处理→测试"];
+    approve [shape=diamond, label="设计批准？"];
+    revise [label="修订设计"];
+    next   [shape=diamond, label="复杂度判断"];
+    direct [label="直接实施\n在当前会话按设计实现"];
+    blueprint [label="brainstorming-blueprint\n写蓝图文档 → 审查 → 执行"];
+
+    trivial -> skip   [label="满足全部条件"];
+    trivial -> ctx    [label="否，走完整流程"];
+    ctx -> qa;
+    qa -> decompose [style=dashed, label="发现多子系统时"];
+    qa -> approaches [label="单一项目"];
+    decompose -> approaches;
+    approaches -> design;
+    design -> approve;
+    approve -> revise [label="否"];
+    revise -> design;
+    approve -> next  [label="是"];
+    next -> direct   [label="简单明确"];
+    next -> blueprint [label="复杂/多文件/需自动审查"];
+}
+```
 
 ## 工作流程
 
@@ -77,6 +113,18 @@ Do NOT proceed to blueprint writing or implementation until the solution AND des
 - 组件可独立理解和测试
 - 遵循现有代码风格和模式
 - 不做无关重构。如现有代码问题影响当前工作，将针对性改进纳入设计
+
+**Design for isolation** —— 每设计一个组件时，回答三个问题：
+1. **它做什么？** —— 能否用一句话说清职责，不需要读者了解内部实现？
+2. **怎么用它？** —— 外部通过什么接口与之交互，依赖什么？
+3. **它依赖什么？** —— 依赖关系是否清晰且最小化？
+
+判断边界是否合理的检验标准：
+- 能否在不了解组件内部实现的情况下理解其用途？
+- 能否在不影响外部使用者的前提下修改内部实现？
+- 如果答案是否定的，说明组件边界有问题，需要重新拆分。
+
+文件大小也是信号：当一个文件变得臃肿，往往意味着它承担了过多职责，应当拆分。
 
 ## 进入下一步
 
