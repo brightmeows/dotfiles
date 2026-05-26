@@ -41,7 +41,7 @@ digraph blueprint {
     block -> write [label="是，需修复"];
     block -> apdx [label="否，无阻塞"];
     apdx  -> user;
-    user  -> write [label="修改"];
+    user  -> self [label="修改，回 Step 2"];
     user  -> exec  [label="批准"];
 }
 ```
@@ -186,7 +186,7 @@ digraph blueprint {
 > 1. **`exec-subagent`** —— 每个任务分发独立 subagent，实施完成后并行运行规范审查与质量审查，适合任务独立的场景
 > 2. **`exec-direct`** —— 在当前会话中按序执行，设置检查点汇报进展，适合任务耦合度高或无需 subagent 的场景”
 
-等待用户反馈。如有修改，调整后重新自审。用户批准后根据所选执行方式调用对应的执行技能。
+等待用户反馈。如有修改，调整后**跳转至 Step 2（文档自审）** 重新检查，通过后再次分发外部审查。用户批准后根据所选执行方式调用对应的执行技能。
 
 ## 关键原则
 
