@@ -356,7 +356,7 @@ PASS
 
 ## 测试反模式
 
-在添加 mock 或测试工具时，阅读 @testing-anti-patterns.md 避免常见陷阱：
+在添加 mock 或测试工具时，阅读 `testing-anti-patterns.md` 避免常见陷阱：
 - 测试 mock 行为而不是真实行为
 - 给生产类添加仅测试用的方法
 - 不了解依赖就 mock

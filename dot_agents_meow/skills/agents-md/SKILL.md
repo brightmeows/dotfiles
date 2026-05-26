@@ -203,6 +203,17 @@ Gloaguen et al. (2026) 对 138 个真实仓库的实证研究：LLM 自动生成
 关键变化：YAML Frontmatter（可选）、层级继承（累积语义）、File Localization 优先。
 详见 [reference/v1.1-features.md](reference/v1.1-features.md)。
 
+## 常见错误
+
+| 错误 | 后果 | 修复 |
+|------|------|------|
+| 超出 200 行 | 代理遵循率显著下降 | 精简或用子目录层级分解内容 |
+| 重复工具链已强制内容 | 违反 Toolchain First，浪费 token | 指向工具配置（如 `biome.json`），不重复规则 |
+| 自动生成不审校 | 推理成本 +20%，成功率下降 | 将生成结果作内容清单，手工重写 |
+| 行号引用 | 代码变更后引用失效 | 用类型名、函数名、模块名替代 |
+| 否定指令如"不要做 X" | Pink Elephant 效应，X 在 attention 中更活跃 | 改肯定指令，或直接修复代码库摩擦 |
+| 不同工具各维护一份 | 更新不同步，多份腐烂 | 一份 AGENTS.md + symlink 映射 |
+
 ---
 
 ## Part 4：参考
