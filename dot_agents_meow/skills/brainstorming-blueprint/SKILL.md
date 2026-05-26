@@ -15,22 +15,18 @@ description: "将 brainstorming 阶段确认的方案与设计转化为结构化
 
 ```dot
 digraph blueprint {
-    rankdir=TB;
+    ok    [shape=diamond, label="自审通过？"];
+    block [shape=diamond, label="有阻塞问题？"];
+    user  [shape=diamond, label="用户批准？"];
 
-    node [shape=box, style=rounded];                           // 动作节点
-    node [shape=diamond, style=filled, fillcolor="#FFF3CD"];   // 决策节点
-
-    write  [label="Step 1: 编写文档\n按模板填写设计与计划"];
-    self   [label="Step 2: 文档自审\n占位符/一致性/范围/歧义/可操作性"];
-    fix    [label="修复问题"];
-    ok     [label="自审通过？"];
-    sr     [label="结构审查 subagent\n架构完整 + 需求覆盖"];
-    rr     [label="可实施审查 subagent\n任务可操作 + 路径准确"];
-    merge  [label="合并审查报告"];
-    block  [label="有阻塞问题？"];
-    user   [label="Step 4: 用户批准？"];
-    exec   [label="执行\nexec-subagent / exec-direct"];
-    upd    [label="非阻塞建议整理为附录"];
+    write [label="Step 1: 编写文档\n按模板填写设计与计划"];
+    self  [label="Step 2: 文档自审\n占位符/一致性/范围/歧义/可操作性"];
+    fix   [label="修复问题"];
+    sr    [label="结构审查 subagent\n架构完整 + 需求覆盖"];
+    rr    [label="可实施审查 subagent\n任务可操作 + 路径准确"];
+    merge [label="合并审查报告"];
+    exec  [label="执行\nexec-subagent / exec-direct"];
+    upd   [label="非阻塞建议整理为附录"];
 
     write -> self;
     self  -> fix  [label="有问题"];
