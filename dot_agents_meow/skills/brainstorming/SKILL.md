@@ -35,34 +35,39 @@ Do NOT proceed to blueprint writing or implementation until the solution AND des
 ```dot
 digraph brainstorming {
     rankdir=TB;
-    node [shape=box, style=rounded];
 
-    trivial [shape=diamond, label="Trivial 变更？"];
-    skip   [label="跳过，直接实施"];
-    ctx    [label="探查项目上下文"];
-    qa     [label="逐条提问澄清需求\n（一次一问，优先选择题）"];
-    decompose [label="范围判断：\n多子系统则拆分，\n先处理第一个子项目"];
-    approaches [label="提出 2-3 方案\n列权衡 + 推荐选项"];
-    design [label="展示设计（分节确认）\n架构→组件→数据流→接口→错误处理→测试"];
-    approve [shape=diamond, label="设计批准？"];
-    revise [label="修订设计"];
-    next   [shape=diamond, label="复杂度判断"];
-    direct [label="直接实施\n在当前会话按设计实现"];
-    blueprint [label="brainstorming-blueprint\n写蓝图文档 → 审查 → 执行"];
+    node [shape=box, style=rounded];       // 动作节点
+    node [shape=diamond, style=filled, fillcolor="#FFF3CD"];  // 决策节点
+    node [shape=box, style=rounded, dashed];  // 用户选择节点
 
-    trivial -> skip   [label="满足全部条件"];
-    trivial -> ctx    [label="否，走完整流程"];
+    trivial [label="Trivial 变更？"];
+    ctx     [shape=box, style=rounded, label="探查项目上下文"];
+    qa      [shape=box, style=rounded, label="逐条提问澄清需求\n一次一问，优先选择题"];
+    scope   [label="范围评估"];
+    split   [shape=box, style=rounded, label="拆分为子项目\n确定顺序，取第一个进入循环"];
+    approa  [shape=box, style=rounded, label="提出 2-3 方案\n列权衡 + 推荐选项"];
+    design  [shape=box, style=rounded, label="展示设计（分节确认）\n架构→组件→数据流→接口\n→错误处理→测试策略"];
+    approve [label="设计批准？"];
+    revise  [shape=box, style=rounded, label="修订设计"];
+    choice  [shape=box, style="rounded,dashed", label="用户选择执行路径"];
+    direct  [shape=box, style="rounded,bold", label="直接实施\n按设计在当前会话实现"];
+    bp      [shape=box, style="rounded,bold", label="brainstorming-blueprint\n写蓝图 → 审查 → 执行"];
+    skip    [shape=box, style="rounded,bold", label="跳过，直接实施"];
+
+    trivial -> skip  [label="满足全部条件"];
+    trivial -> ctx   [label="否"];
     ctx -> qa;
-    qa -> decompose [style=dashed, label="发现多子系统时"];
-    qa -> approaches [label="单一项目"];
-    decompose -> approaches;
-    approaches -> design;
+    qa -> scope;
+    scope -> approa [label="单一项目"];
+    scope -> split  [label="多子系统"];
+    split -> approa;
+    approa -> design;
     design -> approve;
     approve -> revise [label="否"];
+    approve -> choice [label="是"];
     revise -> design;
-    approve -> next  [label="是"];
-    next -> direct   [label="简单明确"];
-    next -> blueprint [label="复杂/多文件/需自动审查"];
+    choice -> direct [label="简单明确"];
+    choice -> bp     [label="复杂/多文件"];
 }
 ```
 

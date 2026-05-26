@@ -11,6 +11,45 @@ description: "将 brainstorming 阶段确认的方案与设计转化为结构化
 
 **前置条件：** 必须先完成 `brainstorming`（方案确认）。本技能不讨论方案选型或设计细节，且不可跳过 `brainstorming` 直接调用。
 
+## 流程总览
+
+```dot
+digraph blueprint {
+    rankdir=TB;
+
+    node [shape=box, style=rounded];                           // 动作节点
+    node [shape=diamond, style=filled, fillcolor="#FFF3CD"];   // 决策节点
+
+    write  [label="Step 1: 编写文档\n按模板填写设计与计划"];
+    self   [label="Step 2: 文档自审\n占位符/一致性/范围/歧义/可操作性"];
+    fix    [label="修复问题"];
+    ok     [label="自审通过？"];
+    sr     [label="结构审查 subagent\n架构完整 + 需求覆盖"];
+    rr     [label="可实施审查 subagent\n任务可操作 + 路径准确"];
+    merge  [label="合并审查报告"];
+    block  [label="有阻塞问题？"];
+    user   [label="Step 4: 用户批准？"];
+    exec   [label="执行\nexec-subagent / exec-direct"];
+    upd    [label="非阻塞建议整理为附录"];
+
+    write -> self;
+    self  -> fix  [label="有问题"];
+    self  -> ok   [label="无问题"];
+    fix   -> self;
+    ok    -> write [label="否"];
+    ok    -> sr    [label="是"];
+    ok    -> rr    [label="是"];
+    sr    -> merge;
+    rr    -> merge;
+    merge -> block;
+    block -> write [label="是，需修复"];
+    block -> upd   [label="否，无阻塞"];
+    upd   -> user;
+    user  -> write [label="修改"];
+    user  -> exec  [label="批准"];
+}
+```
+
 ## 工作流程
 
 ### Step 1: 编写文档
@@ -51,9 +90,21 @@ description: "将 brainstorming 阶段确认的方案与设计转化为结构化
 
 [组件间接口定义]
 
+### 错误处理
+
+[关键错误场景及处理策略，如：异常降级、重试机制、日志记录]
+
+### 测试策略
+
+[测试覆盖范围：单元测试层级、集成测试重点、端到端场景]
+
 ---
 
 ## 实施计划
+
+### 前提条件
+
+[外部依赖、环境准备、配置项、前置迁移等实施前需完成的事项]
 
 ### 文件结构
 
@@ -71,6 +122,10 @@ description: "将 brainstorming 阶段确认的方案与设计转化为结构化
 - **复杂** — 架构决策、调试、跨模块设计
 
 #### Task 1: [组件名] `中等`
+
+**验收标准：**
+- [所有测试通过]
+- [期望的外部可观察行为]
 
 **文件：**
 - 创建：`路径/文件`
