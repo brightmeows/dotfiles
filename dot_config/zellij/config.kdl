@@ -15,7 +15,7 @@
 // entersearch 搜索输入                     入口: f (输词后 Enter 进入 search)
 // renametab   重命名标签                   入口: r (tab)
 // renamepane  重命名窗格                   入口: c (pane)
-// session     会话管理                     入口: o
+// session     会话管理 (d=分离, q=退出)    入口: o
 //
 
 keybinds clear-defaults=true {
@@ -31,7 +31,6 @@ keybinds clear-defaults=true {
         bind "l" { MoveFocus "right"; }
         bind "H" { GoToPreviousTab; }
         bind "L" { GoToNextTab; }
-        bind "q" { Quit; }
     }
     pane {
         bind "left" { MoveFocus "left"; }
@@ -152,6 +151,7 @@ keybinds clear-defaults=true {
         }
         bind "d" { Detach; }
         bind "i" { SwitchToMode "locked"; }
+        bind "q" { Quit; }
         bind "l" {
             LaunchOrFocusPlugin "zellij:layout-manager" {
                 floating true
