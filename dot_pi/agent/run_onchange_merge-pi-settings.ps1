@@ -25,16 +25,23 @@ $Managed = Get-Content $MeowPath -Raw | ConvertFrom-Json
 
 if (Test-Path $SettingsPath) {
     $Existing = Get-Content $SettingsPath -Raw | ConvertFrom-Json
+
+    # Convert PSCustomObject to ordered hashtable for flexible merge
+    $Merged = [ordered]@{}
+    foreach ($Prop in $Existing.PSObject.Properties) {
+        $Merged[$Prop.Name] = $Prop.Value
+    }
+
     foreach ($Prop in $Managed.PSObject.Properties) {
-        # Merge packages array with dedup instead of overwrite
-        if ($Prop.Name -eq 'packages' -and $Existing.packages) {
-            $Merged = @($Prop.Value) + @($Existing.packages) | Select-Object -Unique
-            $Existing.packages = @($Merged)
+        if ($Prop.Name -eq 'packages' -and $null -ne $Merged['packages']) {
+            # Merge packages array with dedup instead of overwrite
+            $Merged.packages = @($Prop.Value) + @($Merged.packages) | Select-Object -Unique
         } else {
-            $Existing.($Prop.Name) = $Prop.Value
+            $Merged[$Prop.Name] = $Prop.Value
         }
     }
-    $Existing | ConvertTo-Json -Depth 10 | Set-Content $SettingsPath -NoNewline
+
+    [PSCustomObject]$Merged | ConvertTo-Json -Depth 10 | Set-Content $SettingsPath -NoNewline
 } else {
     $Managed | ConvertTo-Json -Depth 10 | Set-Content $SettingsPath -NoNewline
 }
