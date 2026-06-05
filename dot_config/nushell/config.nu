@@ -39,6 +39,11 @@ try {
     }
 }
 
+# Aliases
+alias ze = zellij
+alias oc = opencode
+alias nv = nvim
+
 if (which nixvim | is-not-empty) {
     $env.EDITOR = "nixvim"
 }
