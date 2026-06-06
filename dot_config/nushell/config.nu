@@ -43,6 +43,7 @@ try {
 alias ze = zellij
 alias oc = opencode
 alias nv = nvim
+alias lg = lazygit
 
 if (which nixvim | is-not-empty) {
     $env.EDITOR = "nixvim"
