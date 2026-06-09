@@ -17,6 +17,8 @@ license: Apache-2.0
 
 README 不杂代理指令，AGENTS.md 不重复项目介绍。
 
+AGENTS.md 是跨工具开放标准，被 60,000+ 开源仓库采用、25+ 工具原生支持。
+
 ## 层级与作用域
 
 AGENTS.md 按文件系统层级组织，遵循 4 核心作用域概念：
@@ -58,8 +60,16 @@ AGENTS.md 按文件系统层级组织，遵循 4 核心作用域概念：
 ### 写作原则
 
 - **代码示例优先**——一个正反代码示例胜过三段文字描述。
+  ```
+  // 正确：命名导出，const 优先
+  export const formatDate = (date: Date): string => { ... }
+
+  // 错误：默认导出，var 声明
+  export default function formatDate(date){ var result; ... }
+  ```
 - **Toolchain First**——指向工具配置，不重复规则（见附录 Toolchain First）。
 - **关键文件路径显式标注**——入口点、基类、配置文件应显式标注路径。
+- **@import 引用**——`@路径/文件名.md` 内联引用外部文件，根文件保持精简，知识按需加载。
 - **禁用否定指令**——告诉 LLM“不要做 X”反而强化其 attention，应改肯定指令或修复代码库摩擦。
 - **内容风格**——尽可能简洁。能用一句话说明清楚的绝不用一段话。只写要点，不写推测性信息。
 
@@ -177,6 +187,14 @@ AGENTS.md 按文件系统层级组织，遵循 4 核心作用域概念：
 
 - **不放 AGENTS.md**：确定性约束（代码风格、类型、构建、测试）
 - **推荐行为**：归属工具链配置（biome.json / eslintrc / tsconfig / CI），AGENTS.md 只承载建议性指令（架构判断、工作流偏好）
+
+  ```
+  # 正确——指向工具，不重复规则
+  Lint: `pnpm lint`（Biome——见 biome.json）
+
+  # 错误——代替工具写规则
+  不要用 var，始终用 const/let，import 顺序按标准库/三方/内部排列...
+  ```
 
 ---
 
