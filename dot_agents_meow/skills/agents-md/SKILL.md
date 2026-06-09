@@ -1,6 +1,6 @@
 ---
 name: agents-md
-description: 在创建、修改或重构 AGENTS.md 文件时使用。项目配置不清晰、代理行为不符合预期、或需要管理多工具 symlink 映射时亦适用。
+description: 在创建、修改或重构 AGENTS.md 文件时使用。代理行为不符合预期时亦适用。
 license: Apache-2.0
 ---
 
