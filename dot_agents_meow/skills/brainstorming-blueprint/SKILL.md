@@ -26,7 +26,7 @@ digraph blueprint {
     rr    [label="可实施审查 subagent\n任务可操作 + 路径准确"];
     merge [label="合并审查报告"];
     apdx  [label="Step 4: 整理附录\n未处理非阻塞建议纳入文档"];
-    exec  [label="Step 5: 执行\nexec-subagent / exec-direct"];
+    exec  [label="Step 5: 执行\nexec-direct"];
 
     write -> self;
     self  -> fix  [label="有问题"];
@@ -180,13 +180,11 @@ digraph blueprint {
 
 ### Step 5: 用户审查与执行
 
-将文档（含附录）提交用户审查，同时请用户选择执行方式：
+将文档（含附录）提交用户审查，确认后按 **`exec-direct`** 执行：
 
-> 文档已写入 `<路径>`，请审阅。如有修改意见请告知，确认后选择执行方式：
-> 1. **`exec-subagent`** —— 每个任务分发独立 subagent，实施完成后并行运行规范审查与质量审查，适合任务独立的场景
-> 2. **`exec-direct`** —— 在当前会话中按序执行，设置检查点汇报进展，适合任务耦合度高或无需 subagent 的场景”
+> 文档已写入 `<路径>`，请审阅。如有修改意见请告知，确认后按 **`exec-direct`** 执行。
 
-等待用户反馈。如有修改，调整后**跳转至 Step 2（文档自审）** 重新检查，通过后再次分发外部审查。用户批准后根据所选执行方式调用对应的执行技能。
+等待用户反馈。如有修改，调整后**跳转至 Step 2（文档自审）** 重新检查，通过后再次分发外部审查。用户批准后调用 `exec-direct` 执行。
 
 ## 关键原则
 

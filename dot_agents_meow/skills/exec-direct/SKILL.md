@@ -1,6 +1,6 @@
 ---
 name: exec-direct
-description: "在使用蓝图文档执行实施计划时使用——适合任务间耦合度高或无需 subagent 的场景"
+description: "在使用蓝图文档执行实施计划时使用——适合任务间耦合度高、不宜分发给独立 subagent 的场景"
 ---
 
 # 当前会话执行
