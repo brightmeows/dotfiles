@@ -44,10 +44,8 @@ digraph brainstorming {
     approa  [label="提出 2-3 方案\n列权衡 + 推荐选项"];
     design  [label="展示设计（分节确认）\n架构→组件→数据流→接口→错误处理→测试策略"];
     revise  [label="修订设计"];
-    choice  [label="用户选择执行路径"];
     skip    [label="跳过，直接实施"];
-    direct  [label="直接实施\n按设计在当前会话实现"];
-    bp      [label="brainstorming-blueprint\n写蓝图 → 审查 → 执行"];
+    impl    [label="直接实施\n按设计在当前会话实现"];
 
     trivial -> skip  [label="满足全部条件"];
     trivial -> ctx   [label="否"];
@@ -59,10 +57,8 @@ digraph brainstorming {
     approa -> design;
     design -> approve;
     approve -> revise [label="否"];
-    approve -> choice [label="是"];
+    approve -> impl [label="是"];
     revise -> design;
-    choice -> direct [label="简单明确"];
-    choice -> bp     [label="复杂/多文件"];
 }
 ```
 
@@ -128,13 +124,9 @@ digraph brainstorming {
 
 ## 进入下一步
 
-方案与设计确认后，向用户展示执行路径选择：
+方案与设计确认后，按设计在当前会话实施。
 
-> 方案与设计已确认。此实现 [简单/中等复杂度]，建议：
-> 1. **直接实施** —— 改动明确，步骤机械，在当前会话按设计实现
-> 2. **`brainstorming-blueprint`（写实施计划）** —— 多文件协调、复杂依赖或需自动审查，先文档化再执行
->
-> 你的选择？
+> 方案与设计已确认。按设计在当前会话实施。
 
 ## 关键原则
 
@@ -153,4 +145,4 @@ digraph brainstorming {
 | 需求澄清 | 逐条提问，一次一问，优先选择题而非开放题 |
 | 方案选择 | 出 2-3 方案 → 列权衡 → 推荐 → 用户确认选定 |
 | 设计展示 | 分节确认：架构 → 组件 → 数据流 → 接口 → 错误处理 → 测试 |
-| 进入下一步 | 展示二选一：直接实施或 `brainstorming-blueprint`（写实施计划） |
+| 进入下一步 | 展示设计确认结果，按设计在当前会话实施 |

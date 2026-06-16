@@ -34,7 +34,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 pi 与 opencode 共用。
 
 - `AGENTS.main.md` — Agent 通用行为准则（pi/opencode 通过 symlink 引用）
-- `skills/` — 5 共享 skills（agents-md / blueprint / exec-direct / receiving-code-review / using-git-worktrees）
+- `skills/` — 3 共享 skills（agents-md / receiving-code-review / using-git-worktrees）
 
 ### Pi 配置 — `dot_pi/agent/`
 
@@ -51,7 +51,7 @@ pi 与 opencode 共用。
 映射至 `~/.config/opencode/`。
 
 - `opencode.jsonc` — 主配置（MCP / 权限规则 / agent build/plan 禁用）
-- `agents/` — 3 子代理模板（default + 2 蓝图审查子代理的 `.tmpl`）
+- `agents/` — 1 子代理模板（default 仅，代码审查由 commands 管理）
 - `commands/` — 5 斜杠命令（rebase-main / review-cycle / thesis-check-\* / update-agents-md）
 - `plugins/` — 2 TS 插件（main-worktree-guard / receiving-review）
 - `symlink_AGENTS.md` — opencode 通用准则入口
