@@ -23,62 +23,30 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | 工具 | 版本 | 用途 |
 |---|---|---|
 | chezmoi | latest (system) | 点文件管理，`mode = "symlink"` |
-| pnpm | 10.33.2 | TypeScript 扩展依赖管理 |
-| TypeScript | 6.0+ | 扩展/插件类型检查 |
-| Node | 20+ | JS 运行时 |
+| pnpm | latest (system) | TypeScript 扩展依赖管理 |
+| TypeScript | latest (system) | 扩展/插件类型检查 |
+| Node | latest (system) | JS 运行时 |
 
 ## 目录结构
 
 ### Agent 共享配置 — `dot_agents_meow/`
+pi 与 opencode 共用。含通用行为准则 `AGENTS.main.md`（两工具入口 symlink 至此）及 3 共享 skills。
 
-pi 与 opencode 共用。
+### Pi 配置 — `dot_pi/agent/` → `~/.pi/agent/`
+settings 通过 `run_onchange_` 脚本合并（非直接托管）。含 MCP 配置、TS 扩展、skills 入口 symlink。
 
-- `AGENTS.main.md` — Agent 通用行为准则（pi/opencode 通过 symlink 引用）
-- `skills/` — 3 共享 skills（agents-md / receiving-code-review / using-git-worktrees）
+### OpenCode 配置 — `dot_config/opencode/` → `~/.config/opencode/`
+含主配置、斜杠命令、TS 插件、AGENTS.md 入口 symlink。
 
-### Pi 配置 — `dot_pi/agent/`
-
-映射至 `~/.pi/agent/`。settings.json 通过 `run_onchange_` 脚本合并，非直接托管。
-
-- `symlink_AGENTS.md` — pi 入口，指向 `.agents_meow/AGENTS.main.md`
-- `settings.meow.json` — managed 键源（theme / quietStartup / retry / skills / enableSkillCommands / packages）
-- `mcp.json` — MCP 服务器（exa / paper-search / cnki）
-- `run_onchange_merge-pi-settings.sh` / `.ps1` — settings 合并脚本
-- `extensions/` — 5 个 `.ts` 扩展（command-aliases / main-worktree-guard / models-dev-import / receiving-review / subdir-agents-md）
-
-### OpenCode 配置 — `dot_config/opencode/`
-
-映射至 `~/.config/opencode/`。
-
-- `opencode.jsonc` — 主配置（MCP / 权限规则 / agent build/plan 禁用）
-- `agents/` — 1 子代理模板（default 仅，代码审查由 commands 管理）
-- `commands/` — 5 斜杠命令（rebase-main / review-cycle / thesis-check-\* / update-agents-md）
-- `plugins/` — 2 TS 插件（main-worktree-guard / receiving-review）
-- `symlink_AGENTS.md` — opencode 通用准则入口
-- `symlink_skills` — skills symlink
-
-### Rust 工具链配置 — `dot_cargo/` / `dot_config/sccache/`
-
-映射至 `~/.cargo/` 与 `~/.config/sccache/`。
-
-- `dot_cargo/config.toml` — Cargo 全局配置（rustc-wrapper = "sccache"）
-- `dot_config/sccache/config` — sccache 磁盘缓存大小配置
+### Rust 工具链 — `dot_cargo/` / `dot_config/sccache/`
+Cargo 全局配置（`rustc-wrapper = "sccache"`）、sccache 磁盘缓存。
 
 ### chezmoi 基础设施
+- `dot_*` 前缀映射至 `~/.`（如 `dot_config/*` → `~/.config/*`）
+- `dot_config/chezmoi/chezmoi.toml`：`mode = "symlink"`
+- `.chezmoiexternal.toml`：Windows 跨平台映射
+- `.chezmoiignore`：仓库不部署的文件清单
 
-- `dot_*` 命名约定：`dot_` 前缀文件映射至 `~/.`（如 `dot_config/*` → `~/.config/*`）
-- `dot_config/chezmoi/chezmoi.toml` — `mode = "symlink"`
-- `.chezmoiexternal.toml` — Windows 跨平台映射
-- `.chezmoiignore` — 仓库不部署的文件清单
-
-## Symlink 策略
-
-| 源（chezmoi 路径） | 目标 | 用途 |
-|---|---|---|
-| `dot_pi/agent/symlink_AGENTS.md` | `~/.agents_meow/AGENTS.main.md` | Pi 通用准则 |
-| `dot_config/opencode/symlink_AGENTS.md` | `~/.agents_meow/AGENTS.main.md` | OpenCode 通用准则 |
-
-两文件为各自工具的行为准则入口，实际内容位于 `dot_agents_meow/`。
 
 ## Commands
 
@@ -88,18 +56,13 @@ pi 与 opencode 共用。
 | `chezmoi -S . diff` | 预览差异 |
 | `chezmoi -S . apply` | 应用至 `$HOME` |
 | `chezmoi -S . add <path>` | 纳新文件入 chezmoi 管理 |
-| `pnpm check` | `tsc --noEmit` 类型检查 |
-
-## Testing
-
-当前无正式测试框架。`pnpm check`（`tsc --noEmit`）为最小验证 gate。
+| `pnpm check` | `tsc --noEmit` 类型检查（最小验证 gate） |
 
 ## 边界规则
 
 ### Always Do
 - 编辑后运行 `pnpm check` 确保类型通过
 - 用 `chezmoi -S . diff` 预览变更后再 apply
-- 添加新配置后同步更新 AGENTS.md 的目录描述
 
 ### Ask First
 - 纳新文件入 chezmoi 管理
