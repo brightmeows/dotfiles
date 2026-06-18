@@ -10,14 +10,14 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 | 层级 | 位置 | 职责 |
 |---|---|---|
-| 通用规则 | `dot_agents_meow/AGENTS.core.md` | 跨项目行为准则、编码规范、工程原则（opencode/pi 均 symlink 至此） |
+| 通用规则 | `dot_agents_meow/AGENTS.core.md` | 跨项目通用规则（原内容已废弃，待重写；opencode/pi 均 symlink 至此） |
 | 开发者规则 | `dot_agents_meow/AGENTS.dev.md` | 主 Agent 专属规则（提交规范等），主 Agent 通过 template include 加载 |
 | 仓库级 | `AGENTS.md`（本文件） | 项目上下文、管理方式、仓库特有约定 |
 | 子目录 | 各子包 `AGENTS.md` | 局部约定、领域逻辑 |
 
 规则：
 - 各层内容不重叠。代理优先取子目录 `AGENTS.md`，次退至根。
-- 根 `AGENTS.md` 不重复通用规则（通过 symlink 引用）。
+- 根 `AGENTS.md` 不重复 core 内容（通过 symlink 引用）。
 
 ## Tech Stack
 
@@ -31,7 +31,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 ## 目录结构
 
 ### Agent 共享配置 — `dot_agents_meow/`
-pi 与 opencode 共用。含通用行为准则 `AGENTS.core.md`（两工具入口 symlink 至此）、主 Agent 专属规则 `AGENTS.dev.md`（template include 加载）及 3 共享 skills。
+pi 与 opencode 共用。含通用规则占位 `AGENTS.core.md`（原内容废弃待重写；两工具入口 symlink 至此）、主 Agent 专属规则 `AGENTS.dev.md`（template include 加载）及 3 共享 skills。
 
 ### Pi 配置 — `dot_pi/agent/` → `~/.pi/agent/`
 settings 通过 `run_onchange_` 脚本合并（非直接托管）。含 MCP 配置、TS 扩展、skills 入口 symlink。
