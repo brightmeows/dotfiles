@@ -1,13 +1,13 @@
 ---
 name: using-git-worktrees
-description: 功能开发需要隔离时，或执行实施计划前使用。当前仓库无隔离工作区时适用。
+description: 仅在需要创建 Git Worktrees 时使用
 ---
 
 # 使用 Git Worktrees
 
 **核心原则：** 先检查现有隔离。回退到 git。不要对抗框架。
 
-**开始声明：** “我正在使用 using-git-worktrees skill 设置隔离工作区。”
+**开始声明：** “我正在使用 using-git-worktrees skill 创建 Git Worktree。”
 
 ## 检测隔离
 
