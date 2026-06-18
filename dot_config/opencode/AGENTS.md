@@ -1,1 +1,0 @@
-../../dot_agents_meow/AGENTS.main.md
