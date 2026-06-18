@@ -31,6 +31,9 @@
     "plan": {
       "disable": true,
     },
+    "explore": {
+      "disable": true,
+    },
   },
   "permission": {
     "read": {
