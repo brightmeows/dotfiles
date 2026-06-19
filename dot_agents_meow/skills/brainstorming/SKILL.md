@@ -17,9 +17,9 @@ Do NOT proceed to blueprint writing or implementation until the solution AND des
 
 ## 反模式：“太简单了不需要设计”
 
-任何非 trivial 的项目都经过此流程。待办清单、单函数工具、配置变更——只要不满足下方 trivial 条件，都需要先明确方案。“简单”项目恰是未经验证的假设造成最多返工的地方。
+任何非机械变更的项目都经过此流程。待办清单、单函数工具、配置变更——只要不满足下方机械变更条件，都需要先明确方案。“简单”项目恰是未经验证的假设造成最多返工的地方。
 
-### Trivial Bypass（微不足道的变更可跳过）
+### 机械变更（微不足道的变更可跳过）
 
 变更满足**全部**以下条件时可跳过本流程，直接实施：
 
@@ -34,7 +34,7 @@ Do NOT proceed to blueprint writing or implementation until the solution AND des
 
 ```dot
 digraph brainstorming {
-    trivial [shape=diamond, label="Trivial 变更？"];
+    trivial [shape=diamond, label="机械变更？"];
     approve [shape=diamond, label="设计批准？"];
 
     ctx     [label="探查项目上下文"];
@@ -64,9 +64,9 @@ digraph brainstorming {
 
 ## 工作流程
 
-### Step 0: 判断是否为 Trivial 变更
+### Step 0: 判断是否为机械变更
 
-是否满足 Trivial Bypass 条件？
+是否满足机械变更条件？
 - **满足** → 跳过本技能，直接实施（告知用户：“此变更简单，跳过设计流程直接实施”）
 - **不满足** → 继续下方流程
 
@@ -140,7 +140,7 @@ digraph brainstorming {
 
 | 阶段 | 动作 |
 |------|------|
-| Trivial 判断 | 满足 ≤5 行 + 配置值变更 → 跳过；否则走完整流程 |
+| 机械变更判断 | 满足 ≤5 行 + 配置值变更 → 跳过；否则走完整流程 |
 | 上下文探查 | 读项目结构、文档、近期提交，了解现有模式 |
 | 需求澄清 | 逐条提问，一次一问，优先选择题而非开放题 |
 | 方案选择 | 出 2-3 方案 → 列权衡 → 推荐 → 用户确认选定 |
