@@ -31,7 +31,9 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 ## 目录结构
 
 ### Agent 共享配置 — `dot_agents_meow/`
-pi 与 opencode 共用。含通用规则占位 `AGENTS.core.md`（原内容废弃待重写；两工具入口 symlink 至此）、主 Agent 专属规则 `AGENTS.dev.md`（template include 加载）及 3 共享 skills。
+pi 与 opencode 共用。含通用规则占位 `AGENTS.core.md`（原内容废弃待重写；两工具入口 symlink 至此）、主 Agent 专属规则 `AGENTS.dev.md`（template include 加载）及 8 共享 skills。
+
+Skills 命名规范：`<gerund>-<noun>`（全小写 kebab-case），如 `writing-skills`、`structuring-agents-md`。不接受 `skill-` 前缀、语言后缀等冗余成分。
 
 ### Pi 配置 — `dot_pi/agent/` → `~/.pi/agent/`
 settings 通过 `run_onchange_` 脚本合并（非直接托管）。含 MCP 配置、TS 扩展、skills 入口 symlink。

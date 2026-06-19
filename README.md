@@ -23,6 +23,6 @@ chezmoi update -S .
 
 - [obra/superpowers](https://github.com/obra/superpowers) — Code review skills（receiving / requesting code review）、code-reviewer subagent
 - [apollographql/skills](https://github.com/apollographql/skills) — rust-best-practices skill
-- [getsentry/skills](https://github.com/getsentry/skills) — agents-md skill
+- [getsentry/skills](https://github.com/getsentry/skills) — structuring-agents-md skill
 - [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) — caveman skill 系列
 - [jnMetaCode/superpowers-zh](https://github.com/jnMetaCode/superpowers-zh) — superpowers 中文版
