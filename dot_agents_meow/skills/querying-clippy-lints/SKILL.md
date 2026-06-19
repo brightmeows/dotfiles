@@ -69,7 +69,9 @@ python3 clippy-lint-query.py --version 1.80 --search vec_box
 |---------|------|
 | `--table`（默认） | 对齐文本表格 |
 | `--docs` | 完整文档（说明、示例、配置） |
-| `--json` | JSON Lines，每行一个 lint |
+| `--json` | JSON Lines 格式，每行一个 lint 对象 |
+
+> `--json` 输出为 JSON Lines（每行一个独立 JSON 对象，非数组）。字段：`id`、`group`、`level`、`version`、`applicability`；加 `--docs` 时增加 `docs` 字段。
 
 ### 方式二（备用）：手动获取页面后搜索
 
