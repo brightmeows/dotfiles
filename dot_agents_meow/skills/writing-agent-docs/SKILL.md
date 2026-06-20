@@ -204,5 +204,5 @@ export default function formatDate(date){ var result; ... }
 
 通用规则之上：
 
-- 写 **AGENTS.md**（项目上下文、层级作用域、Toolchain First、Always/Ask/Never 边界、反自动生成、100–150 行目标）→ 加载 `structuring-agents-md`
+- 写 **AGENTS.md**（项目上下文、层级作用域、Toolchain First、Always/Ask/Never 边界、反自动生成、最高不建议超 150 行，无最低要求）→ 加载 `structuring-agents-md`
 - 写 **SKILL.md**（TDD、技能类型、CSO、三级渐进式披露、一层引用深度、<500 行目标）→ 加载 `writing-skills`
