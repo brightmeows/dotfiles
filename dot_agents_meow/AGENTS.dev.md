@@ -6,5 +6,11 @@
 
 ## 提交规范
 
-- 按逻辑变更拆分提交，每个提交可独立测试、不引入功能性破坏。
-- 格式：Conventional Commits。
+- **原子提交**：一个提交只做一个逻辑变更。如果描述里必须用“和”/“以及”连接，就该拆分。
+- **可独立验证**：每个提交可安全 revert、不破坏仓库自洽。
+- **格式**：Conventional Commits，`type(scope)!: subject`。`!` 表示 breaking change、放在冒号前。scope 为变更模块名（小写 kebab-case），如 `core`, `api`, `cli`, `ui`, `deps`。
+- **Body**：只在 why 不显而易见时写，说明 why 而非 how（diff 已展示 how）。
+- **反模式**：
+  - 混合无关模块（如 `core` + `ui` 同提交）
+  - 笼统消息（`update`, `fix`, `changes`）
+  - 提交前不跑验证（`cargo check`, `pnpm check`, `chezmoi diff` 等）
