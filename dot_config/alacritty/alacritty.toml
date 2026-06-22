@@ -19,3 +19,8 @@ history = 100000
 opacity = 0.9
 padding.x = 5
 padding.y = 3
+
+[keyboard]
+bindings = [
+  { key = "F1", action = "ToggleViMode" },
+]
