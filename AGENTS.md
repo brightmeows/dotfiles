@@ -4,20 +4,14 @@
 
 Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Rime 输入法、AI 工具链等），涉及 10+ 异构格式（TOML/KDL/JSON/YAML/JSONC/Nu/INI）。精确性与一致性优先于花哨。
 
-## AGENTS.md 分层
+## 全局代理文件说明
 
-本仓库含多份 AGENTS.md，按层级分工：
+`dot_agents_meow/AGENTS.core.md` 和 `AGENTS.dev.md` 是 opencode/Pi 工具使用的**全局代理指令文件**，本仓库仅负责托管它们（通过 chezmoi 分发至 `AGENTS.md.tmpl` / `agents/default.md.tmpl` 等入口）。
 
-| 层级 | 位置 | 职责 |
-|---|---|---|
-| 通用规则 | `dot_agents_meow/AGENTS.core.md` | 跨项目通用规则（原内容已废弃，待重写；opencode/pi 均 symlink 至此） |
-| 开发者规则 | `dot_agents_meow/AGENTS.dev.md` | 主 Agent 专属规则（提交规范等），主 Agent 通过 template include 加载 |
-| 仓库级 | `AGENTS.md`（本文件） | 项目上下文、管理方式、仓库特有约定 |
-| 子目录 | 各子包 `AGENTS.md` | 局部约定、领域逻辑 |
-
-规则：
-- 各层内容不重叠。代理优先取子目录 `AGENTS.md`，次退至根。
-- 根 `AGENTS.md` 不重复 core 内容（通过 symlink 引用）。
+| 文件 | 内容 | 加载到 opencode 的方式 | 加载到 Pi 的方式 |
+|------|------|----------------------|-----------------|
+| `AGENTS.core.md` | “确定性优先”“中文引号”等通用行为 | `AGENTS.md.tmpl` → `{{ include }}` | `AGENTS.md.tmpl` → `{{ include }}` |
+| `AGENTS.dev.md` | 对话流程、提交规范等主代理工作流 | `agents/default.md.tmpl` → `{{ include }}` | `AGENTS.md.tmpl` → `{{ include }}` |
 
 ## Tech Stack
 
@@ -27,28 +21,6 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | pnpm | latest (system) | TypeScript 扩展依赖管理 |
 | TypeScript | latest (system) | 扩展/插件类型检查 |
 | Node | latest (system) | JS 运行时 |
-
-## 目录结构
-
-### Agent 共享配置 — `dot_agents_meow/`
-pi 与 opencode 共用。含通用规则占位 `AGENTS.core.md`（原内容废弃待重写；两工具入口 symlink 至此）、主 Agent 专属规则 `AGENTS.dev.md`（template include 加载）及 6 共享 skills。
-
-Skills 命名规范：`<gerund>-<noun>`（全小写 kebab-case）。不接受 `skill-` 前缀、语言后缀等冗余成分。
-
-### Pi 配置 — `dot_pi/agent/` → `~/.pi/agent/`
-settings 通过 `run_onchange_` 脚本合并（非直接托管）。含 MCP 配置、TS 扩展、skills 入口 symlink。
-
-### OpenCode 配置 — `dot_config/opencode/` → `~/.config/opencode/`
-含主配置、斜杠命令、TS 插件、AGENTS.md 入口 symlink。
-
-### Rust 工具链 — `dot_cargo/` / `dot_config/sccache/`
-Cargo 全局配置（`rustc-wrapper = "sccache"`）、sccache 磁盘缓存。
-
-### chezmoi 基础设施
-- `dot_*` 前缀映射至 `~/.`（如 `dot_config/*` → `~/.config/*`）
-- `dot_config/chezmoi/chezmoi.toml`：`mode = "symlink"`
-- `.chezmoiexternal.toml`：Windows 跨平台映射
-- `.chezmoiignore`：仓库不部署的文件清单
 
 
 ## Commands
