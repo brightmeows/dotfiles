@@ -77,7 +77,7 @@ python3 clippy-lint-query.py --version 1.80 --search vec_box
 
 当 Python 不可用时，用 `webfetch` 或 `anysearch_extract` 获取页面，在返回文本中搜索：
 
-- 按名称：搜索 `"lint_name"`（lint 名前有 `¶ ` 标记）
+- 按名称：搜索 `"lint_name"`（lint 名前有 `¶` 标记）
 - 按分组+级别：搜索 `"group level"`（如 `restriction allow`、`correctness deny`）
 - 按版本：搜索 `Added in: X.XX.0`
 - 按适用性：搜索 `Applicability: X`
@@ -87,11 +87,13 @@ python3 clippy-lint-query.py --version 1.80 --search vec_box
 ## 源码位置
 
 Lint 定义在 `clippy_lints/src/` 目录下：
+
 - 每个 lint（或关联组）对应一个文件或模块
 - lint 结构体上的文档注释 → 官网的 `docs` 字段
 - 通过 `declare_clippy_lint!` 宏注册
 
 查找某 lint 的源码：
+
 ```
 https://github.com/rust-lang/rust-clippy/blob/master/clippy_lints/src/{lint_name}.rs
 ```

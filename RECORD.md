@@ -51,4 +51,3 @@ npx --yes skills remove --yes --global caveman caveman-commit caveman-compress c
 ```bash
 npx --yes skills add getsentry/skills --yes --global --skill agents-md --agent claude-code
 ```
-

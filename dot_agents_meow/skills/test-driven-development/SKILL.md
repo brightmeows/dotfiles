@@ -16,12 +16,14 @@ description: 在实现功能或修复缺陷前使用，在编写实现代码之�
 ## 何时使用
 
 **始终使用：**
+
 - 新功能
 - 缺陷修复
 - 重构
 - 行为变更
 
 **例外（征求搭档同意）：**
+
 - 一次性原型
 - 生成代码
 - 配置文件
@@ -37,6 +39,7 @@ description: 在实现功能或修复缺陷前使用，在编写实现代码之�
 先写了代码？删掉。重来。
 
 **没有例外：**
+
 - 不留作“参考”
 - 不边写测试边“改编”
 - 不看它
@@ -87,6 +90,7 @@ test('retries failed operations 3 times', async () => {
   expect(result).toBe('success');
   expect(attempts).toBe(3);
 });
+
 ```
 命名清晰，测真实行为，一件事
 </Good>
@@ -102,10 +106,12 @@ test('retry works', async () => {
   expect(mock).toHaveBeenCalledTimes(3);
 });
 ```
+
 命名模糊，测的是 mock 不是代码
 </Bad>
 
 **要求：**
+
 - 一个行为
 - 命名清晰
 - 真实代码（除非不可避免，不用 mock）
@@ -119,6 +125,7 @@ npm test path/to/test.test.ts
 ```
 
 确认：
+
 - 测试失败（不是报错）
 - 失败消息符合预期
 - 失败原因是没有功能（不是拼写错误）
@@ -174,6 +181,7 @@ npm test path/to/test.test.ts
 ```
 
 确认：
+
 - 测试通过
 - 其他测试仍通过
 - 输出干净（无错误、无警告）
@@ -185,6 +193,7 @@ npm test path/to/test.test.ts
 ### REFACTOR - 清理
 
 仅在通过后才能做：
+
 - 消除重复
 - 改善命名
 - 提取辅助函数
@@ -208,6 +217,7 @@ npm test path/to/test.test.ts
 **“我之后写测试来验证功能”**
 
 后写的测试立刻通过。立刻通过证明不了什么：
+
 - 可能在测错误的东西
 - 可能在测实现细节而非行为
 - 可能漏掉你忘记的边界情况
@@ -218,6 +228,7 @@ npm test path/to/test.test.ts
 **“我已经手动测过所有边界情况了”**
 
 手动测试是零散的。你以为全测了，其实：
+
 - 没有测试记录
 - 代码变更后无法重跑
 - 压力下容易遗漏
@@ -228,6 +239,7 @@ npm test path/to/test.test.ts
 **“删掉 X 小时的工作是浪费”**
 
 沉没成本谬误。时间已经花掉了。你的选择是：
+
 - 删掉用 TDD 重写（多 X 小时，高可信度）
 - 保留然后补测试（30 分钟，低可信度，很可能有 bug）
 
@@ -236,6 +248,7 @@ npm test path/to/test.test.ts
 **“TDD 太教条，务实意味着要变通”**
 
 TDD 本身就很务实：
+
 - 提交前发现 bug（比事后调试快）
 - 防止回归（测试立即捕获破坏）
 - 文档化行为（测试展示如何使用代码）
@@ -292,6 +305,7 @@ TDD 本身就很务实：
 **Bug：** 空邮箱被接受
 
 **RED**
+
 ```typescript
 test('rejects empty email', async () => {
   const result = await submitForm({ email: '' });
@@ -300,12 +314,14 @@ test('rejects empty email', async () => {
 ```
 
 **验证 RED**
+
 ```bash
 $ npm test
 FAIL: expected 'Email required', got undefined
 ```
 
 **GREEN**
+
 ```typescript
 function submitForm(data: FormData) {
   if (!data.email?.trim()) {
@@ -316,6 +332,7 @@ function submitForm(data: FormData) {
 ```
 
 **验证 GREEN**
+
 ```bash
 $ npm test
 PASS
@@ -357,6 +374,7 @@ PASS
 ## 测试反模式
 
 在添加 mock 或测试工具时，阅读 `testing-anti-patterns.md` 避免常见陷阱：
+
 - 测试 mock 行为而不是真实行为
 - 给生产类添加仅测试用的方法
 - 不了解依赖就 mock

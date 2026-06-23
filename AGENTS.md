@@ -22,7 +22,6 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | TypeScript | latest (system) | 扩展/插件类型检查 |
 | Node | latest (system) | JS 运行时 |
 
-
 ## Commands
 
 | 命令 | 用途 |
@@ -36,16 +35,19 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 ## 边界规则
 
 ### Always Do
+
 - 编辑后运行 `pnpm check` 确保类型通过
 - 用 `chezmoi -S . diff` 预览变更后再 apply
 
 ### Ask First
+
 - 纳新文件入 chezmoi 管理
 - 修改 `run_onchange_` 合并脚本逻辑
 - 新增 MCP 配置 / 扩展 / 插件
 - 重构目录结构
 
 ### Never Do
+
 - 直接修改 `~/.` 下的已托管文件（始终编辑仓库源文件）
 - 提交 `.env` / 密钥 / token
 - 修改 `node_modules` 内容

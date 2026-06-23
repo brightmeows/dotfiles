@@ -7,6 +7,7 @@ description: 论文总检（全量）
 ## 第一步：检查
 
 派多个子 Agent 同时检查论文：
+
 1. 以 `AGENTS.md` 为基准验证，不依赖额外 skill。
 2. 启用 `cnki-aigc-rewrite` 检查 AI 痕迹。
 3. 启用 `thesis-writer` 并读取其中的 AI 痕迹消除部分，分析可优化点。

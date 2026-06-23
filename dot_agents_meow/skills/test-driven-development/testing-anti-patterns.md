@@ -21,6 +21,7 @@
 ## 反模式 1：测试 Mock 行为
 
 **违反示例：**
+
 ```typescript
 // ❌ 差：测试 mock 是否存在
 test('renders sidebar', () => {
@@ -30,6 +31,7 @@ test('renders sidebar', () => {
 ```
 
 **为什么不对：**
+
 - 你在验证 mock 能工作，不是组件能工作
 - 有 mock 时测试通过，没有时失败
 - 对真实行为一无所知
@@ -37,6 +39,7 @@ test('renders sidebar', () => {
 **搭档的纠正：** “我们是在测 mock 的行为吗？”
 
 **修正：**
+
 ```typescript
 // ✅ 好：测试真实组件或不 mock 它
 test('renders sidebar', () => {
@@ -63,6 +66,7 @@ test('renders sidebar', () => {
 ## 反模式 2：生产类中的测试专用方法
 
 **违反示例：**
+
 ```typescript
 // ❌ 差：destroy() 只在测试中使用
 class Session {
@@ -77,12 +81,14 @@ afterEach(() => session.destroy());
 ```
 
 **为什么不对：**
+
 - 生产类被测试专用代码污染
 - 如果意外在生产中调用会很危险
 - 违反 YAGNI 和关注点分离
 - 混淆了对象生命周期与实体生命周期
 
 **修正：**
+
 ```typescript
 // ✅ 好：测试工具处理测试清理
 // Session 没有 destroy()——它生产环境下是无状态的
@@ -118,6 +124,7 @@ afterEach(() => cleanupSession(session));
 ## 反模式 3：不了解就 Mock
 
 **违反示例：**
+
 ```typescript
 // ❌ 差：Mock 破坏了测试逻辑
 test('detects duplicate server', () => {
@@ -132,11 +139,13 @@ test('detects duplicate server', () => {
 ```
 
 **为什么不对：**
+
 - 被 mock 的方法有测试依赖的副作用（写入配置）
 - 为“保险”过度 mock 破坏了实际行为
 - 测试因错误原因通过，或莫名其妙地失败
 
 **修正：**
+
 ```typescript
 // ✅ 好：在正确的层级 mock
 test('detects duplicate server', () => {
@@ -177,6 +186,7 @@ test('detects duplicate server', () => {
 ## 反模式 4：不完整的 Mock
 
 **违反示例：**
+
 ```typescript
 // ❌ 差：部分 mock——只包含你以为需要的字段
 const mockResponse = {
@@ -189,6 +199,7 @@ const mockResponse = {
 ```
 
 **为什么不对：**
+
 - **部分 mock 隐藏了结构假设**——你只 mock 了你知道的字段
 - **下游代码可能依赖你没包含的字段**——静默失败
 - **测试通过但集成失败**——mock 不完整，真实 API 完整
@@ -197,6 +208,7 @@ const mockResponse = {
 **铁则：** Mock 完整的数据结构（如现实中存在的那样），而不仅仅是当前测试用到的字段。
 
 **修正：**
+
 ```typescript
 // ✅ 好：镜像真实 API 的完整性
 const mockResponse = {
@@ -228,6 +240,7 @@ const mockResponse = {
 ## 反模式 5：集成测试当后补
 
 **违反示例：**
+
 ```
 ✅ 实现完成
 ❌ 没写测试
@@ -235,11 +248,13 @@ const mockResponse = {
 ```
 
 **为什么不对：**
+
 - 测试是实现的一部分，不是可选的后续工作
 - TDD 本应已捕获这个问题
 - 没有测试就不能声称完成
 
 **修正：**
+
 ```
 TDD 循环：
 1. 写失败测试
@@ -251,6 +266,7 @@ TDD 循环：
 ## 当 Mock 变得过于复杂
 
 **警告信号：**
+
 - Mock 准备代码比测试逻辑还长
 - 为了让测试通过 mock 一切
 - Mock 缺少真实组件拥有的方法
@@ -263,6 +279,7 @@ TDD 循环：
 ## TDD 能预防这些反模式
 
 **为什么 TDD 有帮助：**
+
 1. **先写测试** → 迫使你思考到底在测什么
 2. **看它失败** → 确认测试测的是真实行为，不是 mock
 3. **最简实现** → 测试专用方法混不进来

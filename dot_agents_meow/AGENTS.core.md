@@ -12,6 +12,7 @@
 - **写**：需要执行、修复代码/配置时，优先用工具自带的自动功能（格式化、`--fix`、codemod 等）
 
 例如：
+
 - 代码风格 → `pnpm lint`（读），`pnpm format`（写）
 - 类型错误 → `pnpm check`（tsc --noEmit 读）
 - 配置验证 → JSON Schema 校验（读）
