@@ -1,0 +1,34 @@
+# dotfiles markdownlint 配置
+#
+# 适用范围：仓库内所有 markdown 文件
+#   - 技能文档（dot_agents_meow/skills/*/SKILL.md）
+#   - 代理指令（AGENTS.md、dot_agents_meow/AGENTS.*.md）
+#   - opencode commands（dot_config/opencode/commands/*.md）
+#   - 子代理、README、RECORD 等
+#
+# 以下禁用规则均因技能/代理文档特例：
+# - 代码块内容可能被误判为标题 (MD025)
+# - 技能文档中 fenced/indented 代码块混用 (MD046)
+# - CJK+代码混排表格导致列对齐误报 (MD060)
+# - 技能文档存在大量无 language spec 的代码块 (MD040)
+# - 多个"示例""何时使用"等标题重复 (MD024)
+# - 故意使用加粗文字作为子标题 (MD036)
+# - 中文标题尾部冒号 (MD026)
+# - 技能文档的语义化大写标签如 <HARD-GATE>/<Good>/<Bad> (MD033)
+
+default = true
+
+MD024 = false   # 不同章节允许相同标题（如多个"示例"）
+MD025 = false   # 代码块内容被误判为标题
+MD026 = false   # 中文标题尾部冒号（如"改写前："）
+MD033 = false   # 技能文档语义化大写标签（HARD-GATE/Good/Bad）
+MD036 = false   # 故意使用加粗文字作为子标题
+MD040 = false   # 技能文档大量代码块无需 language spec
+MD046 = false   # 代码块风格 fenced/indented 混用
+MD060 = false   # CJK+代码混排表格中列对齐误报
+
+[MD013]
+line_length = 200   # 行宽 200（CJK 混排 + URL 引用需要更多空间）
+code_blocks = false # 代码块内的长行不报错
+tables = false      # 表格内容不折行
+heading_line_length = 80  # 标题保持简短

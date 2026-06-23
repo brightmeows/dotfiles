@@ -1,0 +1,10 @@
+repos:
+  - repo: local
+    hooks:
+      - id: markdownlint
+        name: markdownlint
+        description: 检查所有 markdown 文件格式
+        entry: markdownlint --config .markdownlint.toml
+        language: system
+        types: [markdown]
+        files: \.md$
