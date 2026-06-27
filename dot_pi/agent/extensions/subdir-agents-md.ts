@@ -1,52 +1,48 @@
 /**
  * Subdirectory AGENTS.md Extension
  *
- * 懒加载子目录 AGENTS.md：当 LLM 访问某目录下的文件或其同名文件（如
- * src/memory.rs → src/memory/AGENTS.md）时自动注入该子包的 AGENTS.md。
+ * 懒加载子目录 AGENTS.md：当 LLM 访问某路径时，按需发现并注入"管辖"
+ * 该路径的子目录 AGENTS.md。
  *
- * 补足 Pi 默认只向上（父目录）不向下（子目录）的加载策略。
- * 注入方式参考 receiving-review.ts：context 事件推送至消息列表。
+ * 背景：Pi 默认只向上加载 AGENTS.md（cwd → 父目录 → 全局），不向下递归。
+ * 本扩展补足这一缺口。
+ *
+ * 设计（懒加载，零启动成本）：
+ * - 不在 session_start 全树扫描，不 fork git 进程。
+ * - 工具调用时（read/write/edit/bash cd 等）计算被访问路径的锚点目录
+ *   （文件所在目录 + 去扩展名的 co-located 目录，如 src/memory.rs →
+ *   src 与 src/memory），从各锚点向上查找 AGENTS.md（含锚点自身，止于
+ *   cwd、不含根），收集未加载者。
+ *   一条访问路径即覆盖三种命中：访问子目录本身 / 访问子目录内文件 /
+ *   访问子目录的同名兄弟文件。
+ * - 下一轮 LLM 调用前（context 事件）将内容以 user 消息注入消息列表。
  *
  * 规则：
- * - 仅当目录被「访问」时才加载（read / write / edit / bash cd 等工具调用）
- * - 各 AGENTS.md 独立记录加载状态，每 session 最多注入一次
- * - compact 后重置所有状态为未加载，允许重新注入
- * - 跳过隐藏目录及被 .gitignore 忽略的目录
- * - /reload 时重新扫描并重置状态
+ * - 每个 AGENTS.md 每 session 最多注入一次；compact 后重置，允许重新注入。
+ * - 仅注入 cwd 严格子目录中的 AGENTS.md；根 AGENTS.md 由 Pi 原生加载。
+ * - 不做 git-ignore 过滤：懒加载下仅处理实际被访问的路径，风险面小；
+ *   即便命中被忽略目录的 AGENTS.md，注入也无副作用。
+ *
+ * 注入方式参考 receiving-review.ts：context 事件推送至消息列表。
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { execSync } from "node:child_process";
 
-// ── Helpers ──
+// ── 路径提取 ──
 
-/** 目录是否被 git ignore？非 git 仓库或出错时返回 false */
-function isGitIgnored(dir: string): boolean {
-  try {
-    execSync("git check-ignore -q .", {
-      cwd: dir,
-      encoding: "utf8",
-      stdio: ["ignore", "ignore", "ignore"],
-      timeout: 1000,
-    });
-    return true;
-  } catch {
-    return false;
-  }
+/** 解析 bash 命令中首个操作数路径（跳过 flags），支持可选引号 */
+function parseBashPath(cmd: string, cwd: string): string | null {
+  const m = cmd
+    .trim()
+    .match(
+      /^(?:cd|pushd|ls|ll|la|cat|head|tail|less|more|rg|grep|find|stat|du|file)\b(?:\s+-\S*)*\s+(["']?)([^"'\s]+)\1/,
+    );
+  return m?.[2] ? path.relative(cwd, path.resolve(cwd, m[2])) : null;
 }
 
-/** 将工具参数中的路径规范化：绝对 → 相对 cwd，去 ./ 前缀 */
-function normalizePath(rawPath: string, cwd: string): string {
-  const normalized = path.normalize(rawPath);
-  if (path.isAbsolute(normalized)) {
-    return path.relative(cwd, normalized);
-  }
-  return normalized;
-}
-
-/** 从工具调用参数中提取被访问的文件/目录路径 */
+/** 从工具调用参数提取被访问路径（相对 cwd，已规范化，解析 .. 与绝对路径） */
 function extractAccessedPath(
   toolName: string,
   input: Record<string, unknown> | undefined | null,
@@ -56,213 +52,160 @@ function extractAccessedPath(
     return null;
   }
 
-  switch (toolName) {
-    case "read":
-    case "write":
-    case "edit":
-    case "grep":
-    case "find": {
-      const p = input["path"];
-      return typeof p === "string" ? normalizePath(p, cwd) : null;
-    }
-    case "bash": {
-      const cmd = input["command"];
-      if (typeof cmd !== "string") {
-        return null;
-      }
-      const trimmed = cmd.trim();
-      const cd = trimmed.match(/^(?:cd|pushd)\s+(\S+)/);
-      if (cd?.[1]) {
-        return normalizePath(cd[1], cwd);
-      }
-      const readCmd = trimmed.match(
-        /^(?:ls|ll|la|cat|head|tail|less|more|rg|grep|find|stat|du|file)\s+(\S+)/,
-      );
-      if (readCmd?.[1]) {
-        return normalizePath(readCmd[1], cwd);
-      }
-      return null;
-    }
-    default: {
-      return null;
-    }
+  if (toolName === "bash") {
+    const cmd = input["command"];
+    return typeof cmd === "string" ? parseBashPath(cmd, cwd) : null;
   }
+
+  const p = input["path"];
+  return typeof p === "string" && p.length > 0 ? path.relative(cwd, path.resolve(cwd, p)) : null;
 }
 
-// ── Scanner ──
+// ── 锚点与向上查找 ──
 
-interface ScannedFile {
-  /** 相对于 cwd 的路径，如 subpkg/a/AGENTS.md */
-  relPath: string;
-  /** 触发的父目录路径，如 subpkg/a */
-  parentDir: string;
-  /** 文件原始内容 */
-  content: string;
+/** Current 是否等于 root 或位于其下（严格前缀匹配，避免 /proj-x 误判 /proj） */
+function withinRoot(current: string, root: string): boolean {
+  return current === root || current.startsWith(root + path.sep);
 }
 
-function scanAgentsFiles(cwd: string, dir: string): ScannedFile[] {
-  const results: ScannedFile[] = [];
-  let entries: fs.Dirent[];
-
+/**
+ * 计算被访问路径（绝对）的锚点目录：
+ * - 目录 → [自身]
+ * - 文件 → [所在目录, 去扩展名的 co-located 目录]（后者可能不存在，无碍）
+ * - 不存在（如 write 目标）→ 按文件处理
+ */
+function anchorDirs(absPath: string): string[] {
+  const trimmed = absPath.replace(/\/+$/, "");
   try {
-    entries = fs.readdirSync(dir, { withFileTypes: true });
+    if (fs.statSync(trimmed).isDirectory()) {
+      return [trimmed];
+    }
   } catch {
-    return [];
+    // 不存在 → 按文件处理
+  }
+  const ext = path.extname(trimmed);
+  const dir = path.dirname(trimmed);
+  if (!ext) {
+    return [dir];
+  }
+  const coLocated = trimmed.slice(0, -ext.length);
+  return coLocated && coLocated !== dir ? [dir, coLocated] : [dir];
+}
+
+/**
+ * 从 absDir 向上查找 AGENTS.md，止于 absRoot（不含 absRoot：根 AGENTS.md
+ * 已由 Pi 原生加载）。返回相对 absRoot 的路径，近 → 远。
+ */
+function findAncestorAgentsMd(absDir: string, absRoot: string): string[] {
+  const results: string[] = [];
+  if (!withinRoot(absDir, absRoot)) {
+    return results;
   }
 
-  for (const entry of entries) {
-    if (!entry.isDirectory() || entry.isSymbolicLink()) {
-      continue;
-    }
-    if (entry.name.startsWith(".")) {
-      continue;
-    }
-    if (isGitIgnored(path.join(dir, entry.name))) {
-      continue;
-    }
-
-    const fullPath = path.join(dir, entry.name);
-    const agentsPath = path.join(fullPath, "AGENTS.md");
-
-    try {
-      if (fs.statSync(agentsPath).isFile()) {
-        const relPath = path.relative(cwd, agentsPath);
-        results.push({
-          content: fs.readFileSync(agentsPath, "utf8"),
-          parentDir: path.dirname(relPath),
-          relPath,
-        });
+  let current = absDir;
+  let guard = 0;
+  while (withinRoot(current, absRoot) && guard++ < 64) {
+    if (current !== absRoot) {
+      const md = path.join(current, "AGENTS.md");
+      try {
+        if (fs.statSync(md).isFile()) {
+          results.push(path.relative(absRoot, md));
+        }
+      } catch {
+        // 无 AGENTS.md
       }
-    } catch {
-      // 无 AGENTS.md，继续递归
     }
-
-    results.push(...scanAgentsFiles(cwd, fullPath));
+    const parent = path.dirname(current);
+    if (parent === current) {
+      break; // 文件系统根
+    }
+    current = parent;
   }
-
   return results;
 }
 
-// ── Matching ──
+// ── 格式化 ──
 
-/**
- * 判断 accessedPath 是否命中某 AGENTS.md 的触发条件：
- *   - 直接访问子目录本身               (accessedPath === parentDir)
- *   - 访问子目录下的文件                (accessedPath.startsWith(parentDir + "/"))
- *   - 访问子目录的同名兄弟文件（任意后缀）(accessedPath.startsWith(parentDir + "."))
- */
-function matchesAccess(file: ScannedFile, accessedPath: string): boolean {
-  if (accessedPath === file.parentDir) {
-    return true;
+function formatContent(relPaths: string[], cwd: string): string {
+  const parts: string[] = ["以下为本项目子目录中的 AGENTS.md，适用于你正在访问的子包："];
+  for (const rel of relPaths) {
+    let content: string;
+    try {
+      content = fs.readFileSync(path.resolve(cwd, rel), "utf8").trim();
+    } catch {
+      continue; // 注入前被删除
+    }
+    parts.push("", `## ./${rel}`, "", content);
   }
-  if (accessedPath.startsWith(`${file.parentDir}/`)) {
-    return true;
-  }
-  if (accessedPath.startsWith(`${file.parentDir}.`)) {
-    return true;
-  }
-  return false;
+  return parts.join("\n");
 }
 
-// ── Formatting ──
-
-function formatContent(files: ScannedFile[]): string {
-  const parts: string[] = ["以下为本项目子目录中的 AGENTS.md 文件内容。这些指令适用于对应子包。"];
-
-  for (const file of files) {
-    parts.push("", `## ./${file.relPath}`, "", file.content.trim());
-  }
-
-  return parts.join("\n");
+function depth(rel: string): number {
+  return rel.split(path.sep).length;
 }
 
 // ── Extension ──
 
 export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
-  let scanned: ScannedFile[] = [];
-  const loadedRelPaths = new Set<string>();
-  const pendingRelPaths = new Set<string>();
+  const loaded = new Set<string>();
+  const pending = new Set<string>();
+  let displayCwd = "";
 
-  function scanAndSort(cwd: string): ScannedFile[] {
-    const raw = scanAgentsFiles(cwd, cwd);
-
-    raw.sort((a, b) => {
-      const aDepth = a.relPath.split("/").length;
-      const bDepth = b.relPath.split("/").length;
-      return aDepth - bDepth || a.relPath.localeCompare(b.relPath);
-    });
-
-    return raw;
-  }
-
-  // ── session_start / reload：重新扫描并重置状态 ──
-  pi.on("session_start", async (_event, ctx) => {
-    scanned = scanAndSort(ctx.cwd);
-    loadedRelPaths.clear();
-    pendingRelPaths.clear();
-
-    if (scanned.length > 0) {
-      ctx.ui.notify(
-        `subdir-agents-md: monitoring ${scanned.length} AGENTS.md — ${scanned.map((f) => f.relPath).join(", ")}`,
-        "info",
-      );
-    }
+  // 新 session / reload / resume / fork：重置状态
+  pi.on("session_start", async () => {
+    loaded.clear();
+    pending.clear();
   });
 
-  // ── 工具调用时检测目录访问 ──
+  // 工具调用时按访问路径发现待注入的 AGENTS.md
   pi.on("tool_call", async (event, ctx) => {
-    if (scanned.length === 0) {
+    displayCwd = ctx.cwd;
+    const accessed = extractAccessedPath(event.toolName, event.input, ctx.cwd);
+    if (!accessed) {
       return;
     }
 
-    const accessedPath = extractAccessedPath(event.toolName, event.input, ctx.cwd);
-    if (!accessedPath) {
-      return;
-    }
-
-    for (const file of scanned) {
-      if (loadedRelPaths.has(file.relPath)) {
-        continue;
-      }
-      if (matchesAccess(file, accessedPath)) {
-        pendingRelPaths.add(file.relPath);
+    const root = path.resolve(ctx.cwd);
+    const accessedAbs = path.resolve(ctx.cwd, accessed);
+    for (const anchor of anchorDirs(accessedAbs)) {
+      for (const rel of findAncestorAgentsMd(anchor, root)) {
+        if (!loaded.has(rel)) {
+          pending.add(rel);
+        }
       }
     }
   });
 
-  // ── 下一轮 LLM 调用前注入待加载的 AGENTS.md ──
-  pi.on("context", async (event) => {
-    if (pendingRelPaths.size === 0) {
+  // 下一轮 LLM 调用前注入 pending
+  pi.on("context", async (event, ctx) => {
+    if (pending.size === 0) {
       return;
     }
 
-    // 收集尚未加载的
-    const triggered = scanned.filter(
-      (f) => pendingRelPaths.has(f.relPath) && !loadedRelPaths.has(f.relPath),
-    );
-    pendingRelPaths.clear();
-
-    if (triggered.length === 0) {
+    const toLoad = [...pending].filter((p) => !loaded.has(p));
+    pending.clear();
+    if (toLoad.length === 0) {
       return;
     }
 
-    for (const f of triggered) {
-      loadedRelPaths.add(f.relPath);
+    toLoad.sort((a, b) => depth(a) - depth(b) || a.localeCompare(b));
+    for (const p of toLoad) {
+      loaded.add(p);
     }
-
-    const text = formatContent(triggered);
 
     event.messages.push({
-      content: [{ text, type: "text" }],
+      content: [{ text: formatContent(toLoad, displayCwd), type: "text" }],
       role: "user",
       timestamp: Date.now(),
     });
 
+    ctx.ui.notify(`subdir-agents-md: ${toLoad.map((r) => `./${r}`).join(", ")}`, "info");
+
     return { messages: event.messages };
   });
 
-  // ── compact 后重置状态，允许重新注入 ──
+  // Compact 后重置已加载记录，允许重新注入
   pi.on("session_compact", async () => {
-    loadedRelPaths.clear();
+    loaded.clear();
   });
 }
