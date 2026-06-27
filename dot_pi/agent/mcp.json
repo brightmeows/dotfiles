@@ -21,6 +21,20 @@
       "url": "https://api.anysearch.com/mcp",
       "lifecycle": "keep-alive",
       "directTools": true
+    },
+    "context7": {
+      "url": "https://mcp.context7.com/mcp",
+      "lifecycle": "keep-alive",
+      "directTools": true
+    },
+    "cratesio-mcp": {
+      "command": "cratesio-mcp"
+    },
+    "docs-rs-mcp": {
+      "command": "pnpx",
+      "args": [
+        "@nuskey8/docs-rs-mcp@latest"
+      ]
     }
   }
 }
