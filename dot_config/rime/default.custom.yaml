@@ -1,15 +1,15 @@
 patch:
   schema_list:
-    - schema: double_pinyin_flypy  # 小鹤双拼
+    - schema: double_pinyin_flypy # 小鹤双拼
   switcher:
     hotkey:
-      BindSpace: false  # 禁用空格切换
-      Control+space: true  # 使用 Ctrl+Space 切换输入法
+      BindSpace: false # 禁用空格切换
+      Control+space: true # 使用 Ctrl+Space 切换输入法
     save_options:
-      - schema_id  # 保存选择的输入法
+      - schema_id # 保存选择的输入法
   ascii_composer:
     switch_key:
-      Shift_L: noop  # 禁用 Shift 左键切换
-      Shift_R: noop  # 禁用 Shift 右键切换
-      Control_L: noop  # 禁用 Control 左键切换
-      Control_R: noop  # 禁用 Control 右键切换
+      Shift_L: noop # 禁用 Shift 左键切换
+      Shift_R: noop # 禁用 Shift 右键切换
+      Control_L: noop # 禁用 Control 左键切换
+      Control_R: noop # 禁用 Control 右键切换

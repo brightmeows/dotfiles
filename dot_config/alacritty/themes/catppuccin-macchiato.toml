@@ -12,42 +12,42 @@ text = "#1e2030"
 cursor = "#c6a0f6"
 
 [colors.normal]
-black   = "#494d64"
-red     = "#ed8796"
-green   = "#a6da95"
-yellow  = "#eed49f"
-blue    = "#8aadf4"
+black = "#494d64"
+red = "#ed8796"
+green = "#a6da95"
+yellow = "#eed49f"
+blue = "#8aadf4"
 magenta = "#c6a0f6"
-cyan    = "#8bd5ca"
-white   = "#b8c0e0"
+cyan = "#8bd5ca"
+white = "#b8c0e0"
 
 [colors.bright]
-black   = "#5b5f7d"
-red     = "#f5bde6"
-green   = "#a6da95"
-yellow  = "#f5a97f"
-blue    = "#91d7e3"
+black = "#5b5f7d"
+red = "#f5bde6"
+green = "#a6da95"
+yellow = "#f5a97f"
+blue = "#91d7e3"
 magenta = "#f0c6c2"
-cyan    = "#7dc4e4"
-white   = "#f4dbd6"
+cyan = "#7dc4e4"
+white = "#f4dbd6"
 
 [colors.dim]
-black   = "#363a4f"
-red     = "#ed8796"
-green   = "#a6da95"
-yellow  = "#eed49f"
-blue    = "#8aadf4"
+black = "#363a4f"
+red = "#ed8796"
+green = "#a6da95"
+yellow = "#eed49f"
+blue = "#8aadf4"
 magenta = "#c6a0f6"
-cyan    = "#8bd5ca"
-white   = "#b8c0e0"
+cyan = "#8bd5ca"
+white = "#b8c0e0"
 
 [colors.search]
-matches         = { foreground = "#1e2030", background = "#eed49f" }
-focused_match   = { foreground = "#1e2030", background = "#a6da95" }
+matches = { foreground = "#1e2030", background = "#eed49f" }
+focused_match = { foreground = "#1e2030", background = "#a6da95" }
 
 [colors.hints]
 start = { foreground = "#1e2030", background = "#eed49f" }
-end   = { foreground = "#1e2030", background = "#ed8796" }
+end = { foreground = "#1e2030", background = "#ed8796" }
 
 [colors.footer_bar]
 foreground = "#1e2030"

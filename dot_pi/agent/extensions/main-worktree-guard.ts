@@ -6,66 +6,74 @@
  *
  */
 
-import { execSync } from "node:child_process";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { execSync } from "node:child_process";
 
 const WORKTREE_DIRS = [".worktrees", "worktrees", ".worktree", "worktree"];
 
 export default function (pi: ExtensionAPI) {
-	let warned = false;
+  let warned = false;
 
-	function getBranch(cwd: string): string {
-		try {
-			return execSync("git rev-parse --abbrev-ref HEAD", {
-				encoding: "utf8",
-				cwd,
-			}).trim();
-		} catch {
-			return "";
-		}
-	}
+  function getBranch(cwd: string): string {
+    try {
+      return execSync("git rev-parse --abbrev-ref HEAD", {
+        cwd,
+        encoding: "utf8",
+      }).trim();
+    } catch {
+      return "";
+    }
+  }
 
-	function findIgnoredWorktreeDir(cwd: string): string | null {
-		for (const dir of WORKTREE_DIRS) {
-			try {
-				execSync(`git check-ignore ${dir}`, {
-					encoding: "utf8",
-					cwd,
-					stdio: ["ignore", "pipe", "ignore"],
-				});
-				return dir;
-			} catch {
-				continue;
-			}
-		}
-		return null;
-	}
+  function findIgnoredWorktreeDir(cwd: string): string | null {
+    for (const dir of WORKTREE_DIRS) {
+      try {
+        execSync(`git check-ignore ${dir}`, {
+          cwd,
+          encoding: "utf8",
+          stdio: ["ignore", "pipe", "ignore"],
+        });
+        return dir;
+      } catch {
+        continue;
+      }
+    }
+    return null;
+  }
 
-	// compact 后重置，允许重新发出工作树提示
-	pi.on("session_compact", async () => {
-		warned = false;
-	});
+  // Compact 后重置，允许重新发出工作树提示
+  pi.on("session_compact", async () => {
+    warned = false;
+  });
 
-	pi.on("tool_execution_end", async (_event, ctx) => {
-		if (warned) return;
-		warned = true;
+  pi.on("tool_execution_end", async (_event, ctx) => {
+    if (warned) {
+      return;
+    }
+    warned = true;
 
-		const branch = getBranch(ctx.cwd);
-		if (!branch) return;
-		if (branch !== "main" && branch !== "master") return;
+    const branch = getBranch(ctx.cwd);
+    if (!branch) {
+      return;
+    }
+    if (branch !== "main" && branch !== "master") {
+      return;
+    }
 
-		const ignoredDir = findIgnoredWorktreeDir(ctx.cwd);
-		if (!ignoredDir) return;
+    const ignoredDir = findIgnoredWorktreeDir(ctx.cwd);
+    if (!ignoredDir) {
+      return;
+    }
 
-		const text = `工作树目录 ${ignoredDir} 已被 Git 忽略。`;
+    const text = `工作树目录 ${ignoredDir} 已被 Git 忽略。`;
 
-		pi.sendMessage(
-			{
-				customType: "main-worktree-guard",
-				content: text,
-				display: true,
-			},
-			{ deliverAs: "steer" },
-		);
-	});
+    pi.sendMessage(
+      {
+        content: text,
+        customType: "main-worktree-guard",
+        display: true,
+      },
+      { deliverAs: "steer" },
+    );
+  });
 }

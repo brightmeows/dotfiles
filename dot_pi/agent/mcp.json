@@ -22,21 +22,15 @@
     },
     "paper-search-mcp": {
       "command": "uvx",
-      "args": [
-        "git+https://github.com/openags/paper-search-mcp.git"
-      ]
+      "args": ["git+https://github.com/openags/paper-search-mcp.git"]
     },
     "cnki-mcp": {
       "command": "uvx",
-      "args": [
-        "git+https://github.com/h-lu/cnki-mcp.git"
-      ]
+      "args": ["git+https://github.com/h-lu/cnki-mcp.git"]
     },
     "docs-rs-mcp": {
       "command": "pnpx",
-      "args": [
-        "@nuskey8/docs-rs-mcp@latest"
-      ]
+      "args": ["@nuskey8/docs-rs-mcp@latest"]
     }
   }
 }

@@ -2,13 +2,13 @@ patch:
   schema/name: 小鹤双拼
   switches:
     - name: ascii_mode
-      reset: 1  # 默认英文模式
-      states: [ 中文, 西文 ]
+      reset: 1 # 默认英文模式
+      states: [中文, 西文]
     - name: simplification
-      reset: 1  # 简体输出
-      states: [ 漢字, 汉字 ]
-  speller/max_code_length: 4  # 最长4码
-  speller/auto_select: true  # 顶字上屏
-  speller/auto_select_unique_candidate: true  # 无重码自动上屏
+      reset: 1 # 简体输出
+      states: [漢字, 汉字]
+  speller/max_code_length: 4 # 最长4码
+  speller/auto_select: true # 顶字上屏
+  speller/auto_select_unique_candidate: true # 无重码自动上屏
   key_binder/bindings:
     - { when: always, toggle: ascii_mode, accept: Control+space }

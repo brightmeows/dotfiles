@@ -18,17 +18,17 @@
 
 default = true
 
-MD024 = false   # 不同章节允许相同标题（如多个"示例"）
-MD025 = false   # 代码块内容被误判为标题
-MD026 = false   # 中文标题尾部冒号（如"改写前："）
-MD033 = false   # 技能文档语义化大写标签（HARD-GATE/Good/Bad）
-MD036 = false   # 故意使用加粗文字作为子标题
-MD040 = false   # 技能文档大量代码块无需 language spec
-MD046 = false   # 代码块风格 fenced/indented 混用
-MD060 = false   # CJK+代码混排表格中列对齐误报
+MD024 = false # 不同章节允许相同标题（如多个"示例"）
+MD025 = false # 代码块内容被误判为标题
+MD026 = false # 中文标题尾部冒号（如"改写前："）
+MD033 = false # 技能文档语义化大写标签（HARD-GATE/Good/Bad）
+MD036 = false # 故意使用加粗文字作为子标题
+MD040 = false # 技能文档大量代码块无需 language spec
+MD046 = false # 代码块风格 fenced/indented 混用
+MD060 = false # CJK+代码混排表格中列对齐误报
 
 [MD013]
-line_length = 200   # 行宽 200（CJK 混排 + URL 引用需要更多空间）
+line_length = 200 # 行宽 200（CJK 混排 + URL 引用需要更多空间）
 code_blocks = false # 代码块内的长行不报错
-tables = false      # 表格内容不折行
-heading_line_length = 80  # 标题保持简短
+tables = false # 表格内容不折行
+heading_line_length = 80 # 标题保持简短
