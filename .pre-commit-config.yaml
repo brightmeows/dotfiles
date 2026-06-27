@@ -1,18 +1,20 @@
 repos:
   - repo: local
     hooks:
-      - id: oxfmt
-        name: oxfmt
-        description: 格式化 TS/JS/JSON/YAML/TOML 文件
-        entry: scripts/pre-commit-oxfmt.sh
+      - id: format-check
+        name: format-check
+        description: 检查 TS/JS/JSON/YAML/TOML 文件格式（不写回）
+        entry: pnpm format:check
         language: system
+        pass_filenames: false
         files: \.(ts|js|json|jsonc|yaml|yml|toml)$
 
-      - id: oxlint
-        name: oxlint
-        description: 检查并自动修复 JS/TS 代码问题
-        entry: node_modules/.bin/oxlint --fix
+      - id: lint
+        name: lint
+        description: 检查 JS/TS 代码问题（不写回）
+        entry: pnpm lint
         language: system
+        pass_filenames: false
         files: \.(ts|js)$
 
       - id: markdownlint

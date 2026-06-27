@@ -58,3 +58,4 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 - **分支策略**：日常修改直推 main（单人仓库）。大幅重构用 `git worktree` 隔离。
 - **提交格式**：Conventional Commits（`feat:` / `fix:` / `docs:` / `refactor:` / `chore:`）
 - **提交粒度**：按逻辑变更拆分提交。
+- **pre-commit hook**：`git commit` 触发 `pnpm format:check` / `pnpm lint` / markdownlint（见 `.pre-commit-config.yaml`），只检查不写回。失败时先本地修复（`pnpm format` / `pnpm lint:fix`），再重新 `git add` 提交。
