@@ -75,10 +75,6 @@ patch:
 
   # 快捷键（bindings 为 list，整体替换系统默认）
   key_binder:
-    # 以词定字（Lua）：上屏当前词句的首/末字
-    # 原为 []，因 [] 改作翻页，此处改为逗号句号
-    select_first_character: "comma"       # ,
-    select_last_character: "period"       # .
     bindings:
       # Tab / Shift+Tab 切换光标至下/上一个拼音
       - { when: composing, accept: Shift+Tab, send: Shift+Left }
