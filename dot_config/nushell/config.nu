@@ -9,7 +9,9 @@ $env.PATH = ($env.PATH | append ("~" | path expand | path join ".bun/bin"))
 
 # The default config record. This is where much of your global configuration is setup.
 $env.config.show_banner = false # true or false to enable or disable the welcome banner at startup
-$env.config.hooks.env_change.PWD = [
+$env.config.hooks = ($env.config.hooks | merge {
+    env_change: {
+        PWD: [
     # Direnv integration
     { ||
         if (which direnv | is-empty) {
@@ -22,7 +24,7 @@ $env.config.hooks.env_change.PWD = [
         # $env.PATH = $env.PATH | parse --regex ('' + `((?:(?:"(?:(?:\\[\\"])|.)*?")|(?:'.*?')|[^` + (char env_sep) + `]*)*)`) | each {|x| $x.capture0 | parse --regex `(?:"((?:(?:\\"|.))*?)")|(?:'(.*?)')|([^'"]*)` | each {|y| if ($y.capture0 != "") { $y.capture0 | str replace -ar `\\([\\"])` `$1` } else if ($y.capture1 != "") { $y.capture1 } else $y.capture2 } | str join }
         $env.PATH = $env.PATH | split row (char env_sep)
     }
-]
+]}})
 
 if (which starship | is-not-empty) {
     let starship_file = ($nu.data-dir | path join "vendor/autoload/starship.nu")
@@ -33,7 +35,7 @@ if (which starship | is-not-empty) {
 }
 
 try {
-    let gh_token = (do -i { gh auth token } | str trim)
+    let gh_token = (do { gh auth token } | str trim)
     if not ($gh_token | is-empty) {
         $env.GITHUB_TOKEN = $gh_token
     }
