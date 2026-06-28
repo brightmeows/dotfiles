@@ -2,6 +2,7 @@ patch:
   # 方案列表（整体替换系统默认的 8 个方案）
   schema_list:
     - schema: double_pinyin_flypy # 小鹤双拼
+    - schema: wubi98 # 五笔98
 
   # 中英切换：禁用 Shift/Ctrl 切换，仅用 Ctrl+Space
   ascii_composer:
