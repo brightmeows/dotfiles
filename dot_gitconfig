@@ -1,0 +1,7 @@
+[user]
+	name = BrightMeowS
+	email = brightmeows@163.com
+	signingkey = 0201C063854E82D6
+
+[commit]
+	gpgsign = true
