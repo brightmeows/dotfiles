@@ -8,8 +8,8 @@
 --   https://github.com/rime/squirrel/issues/957
 --   https://github.com/rime/librime/issues/631
 --
--- 行为：按 Ctrl+Space 时，若有未上屏输入，先上屏高亮候选词
--- （commit_text），再切换 ascii_mode。
+-- 行为：按 Ctrl+Space 时，若有未上屏输入，先上屏原始输入编码
+-- （commit_code 语义：上屏用户实际按下的字母），再切换 ascii_mode。
 
 local function processor(key, env)
   -- 忽略按键释放事件，只处理按下
@@ -24,9 +24,9 @@ local function processor(key, env)
   local engine = env.engine
   local ctx = engine.context
 
-  -- 有未上屏输入时，先上屏高亮候选词
+  -- 有未上屏输入时，先上屏原始输入编码（用户实际按下的字母）
   if ctx:is_composing() then
-    local text = ctx:get_commit_text()
+    local text = ctx.input
     if text and text ~= "" then
       engine:commit_text(text)
     end
