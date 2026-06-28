@@ -14,10 +14,11 @@ patch:
   speller/max_code_length: 4 # 最长4码
   speller/auto_select: true # 顶字上屏
   speller/auto_select_unique_candidate: true # 无重码自动上屏
-  # 中英切换由 lua processor 接管（切换时自动上屏现有输入），
-  # lua_processor 置于 processors 链首位以确保最先拦截 Ctrl+Space
+  # 中英切换与方案切换由 lua processor 接管（切换时自动上屏原始输入），
+  # lua_processor 置于 processors 链首位以确保最先拦截快捷键
   engine/processors:
     - lua_processor@*switch_ascii
+    - lua_processor@*switch_schema
     - ascii_composer
     - recognizer
     - key_binder
