@@ -1,12 +1,3 @@
-# PATH setup
-$env.PATH = ($env.PATH | split row (char env_sep))
-$env.PATH = ($env.PATH | append ("~" | path expand | path join "bin"))
-$env.PATH = ($env.PATH | append ("~" | path expand | path join ".local/bin"))
-$env.PATH = ($env.PATH | append ("~" | path expand | path join "go/bin"))
-$env.PATH = ($env.PATH | append ("~" | path expand | path join ".cargo/bin"))
-$env.PATH = ($env.PATH | append ("~" | path expand | path join ".opencode/bin"))
-$env.PATH = ($env.PATH | append ("~" | path expand | path join ".bun/bin"))
-
 # The default config record. This is where much of your global configuration is setup.
 $env.config.show_banner = false # true or false to enable or disable the welcome banner at startup
 $env.config.hooks = ($env.config.hooks | merge {
@@ -34,19 +25,8 @@ if (which starship | is-not-empty) {
     }
 }
 
-try {
-    let gh_token = (do { gh auth token } | str trim)
-    if not ($gh_token | is-empty) {
-        $env.GITHUB_TOKEN = $gh_token
-    }
-}
-
 # Aliases
 alias ze = zellij
 alias oc = opencode
 alias nv = nvim
 alias lg = lazygit
-
-if (which nixvim | is-not-empty) {
-    $env.EDITOR = "nixvim"
-}
