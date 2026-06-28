@@ -5,3 +5,7 @@
 
 [commit]
 	gpgsign = true
+
+[init]
+	defaultBranch = main
+	defaultObjectFormat = sha256
