@@ -57,4 +57,5 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 - **分支策略**：日常修改直推 main（单人仓库）。大幅重构用 `git worktree` 隔离。
 - **提交格式**：Conventional Commits（`feat:` / `fix:` / `docs:` / `refactor:` / `chore:`）
+- **提交语言**：中文
 - **提交粒度**：按逻辑变更拆分提交。
