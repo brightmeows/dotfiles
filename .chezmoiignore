@@ -15,7 +15,9 @@ tsconfig.json
 # Platform-specific: only run the right script per platform
 {{ if ne .chezmoi.os "windows" -}}
 .pi/agent/merge-pi-settings.ps1*
+merge-gitconfig.ps1*
 {{ end -}}
 {{ if eq .chezmoi.os "windows" -}}
 .pi/agent/merge-pi-settings.sh*
+merge-gitconfig.sh*
 {{ end -}}
