@@ -1,7 +1,7 @@
 patch:
   # 方案列表（整体替换系统默认的 8 个方案）
   schema_list:
-    - schema: double_pinyin_flypy  # 小鹤双拼
+    - schema: double_pinyin_flypy # 小鹤双拼
 
   # 中英切换：禁用 Shift/Ctrl 切换，仅用 Ctrl+Space
   ascii_composer:
@@ -19,7 +19,7 @@ patch:
     - emoji
     - full_shape
     - search_single_char
-  switcher/option_list_separator: ' / '
+  switcher/option_list_separator: " / "
 
   # 候选词个数（系统默认 5）
   menu/page_size: 9
@@ -35,40 +35,40 @@ patch:
 
   # 标点符号：half_shape 改为直接上屏风格，避免符号选择打断输入
   # full_shape 保留系统默认，不做改动
-  punctuator/digit_separators: ",.:"  # 数字后输入这些字符，再次输入数字时连同上屏；双击恢复映射（librime >= 1.13.0）
+  punctuator/digit_separators: ",.:" # 数字后输入这些字符，再次输入数字时连同上屏；双击恢复映射（librime >= 1.13.0）
   punctuator/half_shape:
-    ',' : '，'
-    '.' : '。'
-    '<' : '《'
-    '>' : '》'
-    '/' : '/'
-    '?' : '？'
-    ';' : '；'
-    ':' : '：'
-    '''' : { pair: [ '‘', '’' ] }
-    '"' : { pair: [ '“', '”' ] }
-    '\' : '、'
-    '|' : '|'
-    '`' : '·'
-    '~' : '~'
-    '!' : '！'
-    '@' : '@'
-    '#' : '#'
-    '%' : '%'
-    '$' : '¥'
-    '^' : '……'
-    '&' : '&'
-    '*' : '*'
-    '(' : '（'
-    ')' : '）'
-    '-' : '-'
-    '_' : ——
-    '+' : '+'
-    '=' : '='
-    '[' : '【'
-    ']' : '】'
-    '{' : '「'
-    '}' : '」'
+    ",": "，"
+    ".": "。"
+    "<": "《"
+    ">": "》"
+    "/": "/"
+    "?": "？"
+    ";": "；"
+    ":": "："
+    "'": { pair: ["‘", "’"] }
+    '"': { pair: ["“", "”"] }
+    '\': "、"
+    "|": "|"
+    "`": "·"
+    "~": "~"
+    "!": "！"
+    "@": "@"
+    "#": "#"
+    "%": "%"
+    "$": "¥"
+    "^": "……"
+    "&": "&"
+    "*": "*"
+    "(": "（"
+    ")": "）"
+    "-": "-"
+    "_": ——
+    "+": "+"
+    "=": "="
+    "[": "【"
+    "]": "】"
+    "{": "「"
+    "}": "」"
 
   # 输入码识别规则：新增下划线不上屏（保留系统默认的 email/uppercase/url）
   recognizer/patterns/underscore: "^[A-Za-z]+_.*"
@@ -94,19 +94,19 @@ patch:
       - { when: always, toggle: traditionalization, accept: Control+Shift+4 }
       - { when: always, toggle: traditionalization, accept: Control+Shift+dollar }
       # 小键盘映射到主键盘（数字、运算符、回车）
-      - {accept: KP_0, send: 0, when: composing}
-      - {accept: KP_1, send: 1, when: composing}
-      - {accept: KP_2, send: 2, when: composing}
-      - {accept: KP_3, send: 3, when: composing}
-      - {accept: KP_4, send: 4, when: composing}
-      - {accept: KP_5, send: 5, when: composing}
-      - {accept: KP_6, send: 6, when: composing}
-      - {accept: KP_7, send: 7, when: composing}
-      - {accept: KP_8, send: 8, when: composing}
-      - {accept: KP_9, send: 9, when: composing}
-      - {accept: KP_Decimal, send: period, when: composing}
-      - {accept: KP_Multiply, send: asterisk, when: composing}
-      - {accept: KP_Add,      send: plus,     when: composing}
-      - {accept: KP_Subtract, send: minus,    when: composing}
-      - {accept: KP_Divide,   send: slash,    when: composing}
-      - {accept: KP_Enter,    send: Return,   when: composing}
+      - { accept: KP_0, send: 0, when: composing }
+      - { accept: KP_1, send: 1, when: composing }
+      - { accept: KP_2, send: 2, when: composing }
+      - { accept: KP_3, send: 3, when: composing }
+      - { accept: KP_4, send: 4, when: composing }
+      - { accept: KP_5, send: 5, when: composing }
+      - { accept: KP_6, send: 6, when: composing }
+      - { accept: KP_7, send: 7, when: composing }
+      - { accept: KP_8, send: 8, when: composing }
+      - { accept: KP_9, send: 9, when: composing }
+      - { accept: KP_Decimal, send: period, when: composing }
+      - { accept: KP_Multiply, send: asterisk, when: composing }
+      - { accept: KP_Add, send: plus, when: composing }
+      - { accept: KP_Subtract, send: minus, when: composing }
+      - { accept: KP_Divide, send: slash, when: composing }
+      - { accept: KP_Enter, send: Return, when: composing }
