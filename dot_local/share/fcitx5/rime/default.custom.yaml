@@ -1,9 +1,116 @@
 patch:
+  # 方案列表（整体替换系统默认的 8 个方案）
   schema_list:
     - schema: double_pinyin_flypy  # 小鹤双拼
+
+  # 中英切换：禁用 Shift/Ctrl 切换，仅用 Ctrl+Space
   ascii_composer:
     switch_key:
-      Shift_L: noop  # 禁用 Shift 左键切换
-      Shift_R: noop  # 禁用 Shift 右键切换
-      Control_L: noop  # 禁用 Control 左键切换
-      Control_R: noop  # 禁用 Control 右键切换
+      Shift_L: noop
+      Shift_R: noop
+      Control_L: noop
+      Control_R: noop
+
+  # 方案选单：仅修改差异项，保留系统默认的 hotkeys/fold_options 等
+  switcher/caption: 「方案选单」
+  switcher/save_options:
+    - ascii_punct
+    - traditionalization
+    - emoji
+    - full_shape
+    - search_single_char
+  switcher/option_list_separator: ' / '
+
+  # 候选词个数（系统默认 5）
+  menu/page_size: 9
+
+  # 输入栏光标移动（需 librime >= 1.16.0；系统默认无此配置）
+  # 边界按音节移动，音节内部按字符移动
+  navigator:
+    bindings:
+      Left: left_by_char_no_loop
+      Right: right_by_char_no_loop
+      Shift+Left: left_by_syllable
+      Shift+Right: right_by_syllable
+
+  # 标点符号：half_shape 改为直接上屏风格，避免符号选择打断输入
+  # full_shape 保留系统默认，不做改动
+  punctuator/digit_separators: ",.:"  # 数字后输入这些字符，再次输入数字时连同上屏；双击恢复映射（librime >= 1.13.0）
+  punctuator/half_shape:
+    ',' : '，'
+    '.' : '。'
+    '<' : '《'
+    '>' : '》'
+    '/' : '/'
+    '?' : '？'
+    ';' : '；'
+    ':' : '：'
+    '''' : { pair: [ '‘', '’' ] }
+    '"' : { pair: [ '“', '”' ] }
+    '\' : '、'
+    '|' : '|'
+    '`' : '·'
+    '~' : '~'
+    '!' : '！'
+    '@' : '@'
+    '#' : '#'
+    '%' : '%'
+    '$' : '¥'
+    '^' : '……'
+    '&' : '&'
+    '*' : '*'
+    '(' : '（'
+    ')' : '）'
+    '-' : '-'
+    '_' : ——
+    '+' : '+'
+    '=' : '='
+    '[' : '【'
+    ']' : '】'
+    '{' : '「'
+    '}' : '」'
+
+  # 输入码识别规则：新增下划线不上屏（保留系统默认的 email/uppercase/url）
+  recognizer/patterns/underscore: "^[A-Za-z]+_.*"
+
+  # 快捷键（bindings 为 list，整体替换系统默认）
+  key_binder:
+    # 以词定字（Lua）：上屏当前词句的首/末字
+    # 原为 []，因 [] 改作翻页，此处改为逗号句号
+    select_first_character: "comma"       # ,
+    select_last_character: "period"       # .
+    bindings:
+      # Tab / Shift+Tab 切换光标至下/上一个拼音
+      - { when: composing, accept: Shift+Tab, send: Shift+Left }
+      - { when: composing, accept: Tab, send: Shift+Right }
+      # Option/Alt + ←/→ 切换光标至下/上一个拼音
+      - { when: composing, accept: Alt+Left, send: Shift+Left }
+      - { when: composing, accept: Alt+Right, send: Shift+Right }
+      # 翻页 - = 或 [ ]
+      - { when: has_menu, accept: minus, send: Page_Up }
+      - { when: has_menu, accept: equal, send: Page_Down }
+      - { when: has_menu, accept: bracketleft, send: Page_Up }
+      - { when: has_menu, accept: bracketright, send: Page_Down }
+      # 切换中英标点（Control+Shift+3 或 Control+Shift+#）
+      - { when: always, toggle: ascii_punct, accept: Control+Shift+3 }
+      - { when: always, toggle: ascii_punct, accept: Control+Shift+numbersign }
+      # 切换简繁（Control+Shift+4 或 Control+Shift+$）
+      - { when: always, toggle: traditionalization, accept: Control+Shift+4 }
+      - { when: always, toggle: traditionalization, accept: Control+Shift+dollar }
+      # 小键盘映射到主键盘（数字、运算符、回车）
+      - {accept: KP_0, send: 0, when: composing}
+      - {accept: KP_1, send: 1, when: composing}
+      - {accept: KP_2, send: 2, when: composing}
+      - {accept: KP_3, send: 3, when: composing}
+      - {accept: KP_4, send: 4, when: composing}
+      - {accept: KP_5, send: 5, when: composing}
+      - {accept: KP_6, send: 6, when: composing}
+      - {accept: KP_7, send: 7, when: composing}
+      - {accept: KP_8, send: 8, when: composing}
+      - {accept: KP_9, send: 9, when: composing}
+      - {accept: KP_Decimal, send: period, when: composing}
+      - {accept: KP_Multiply, send: asterisk, when: composing}
+      - {accept: KP_Add,      send: plus,     when: composing}
+      - {accept: KP_Subtract, send: minus,    when: composing}
+      - {accept: KP_Divide,   send: slash,    when: composing}
+      - {accept: KP_Enter,    send: Return,   when: composing}
