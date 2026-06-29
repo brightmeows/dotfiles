@@ -1,6 +1,8 @@
 #!/bin/bash
 # Merge managed Pi settings (from settings.meow.json) into settings.json
 # Pi-managed keys (provider, model, lastChangelogVersion) are preserved.
+# Trigger: reruns when settings.meow.json content changes
+# settings.meow.json hash: {{ include "dot_pi/agent/settings.meow.json" | sha256sum }}
 set -euo pipefail
 
 SETTINGS="${HOME}/.pi/agent/settings.json"
