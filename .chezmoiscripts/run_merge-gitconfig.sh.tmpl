@@ -1,6 +1,8 @@
 #!/bin/bash
 # Merge managed Git config (from .gitconfig.meow) into .gitconfig
 # Managed keys overwrite local values; local-only keys are preserved.
+# Trigger: reruns when dot_gitconfig.meow content changes
+# dot_gitconfig.meow hash: {{ include "dot_gitconfig.meow" | sha256sum }}
 set -euo pipefail
 
 MEOW="${HOME}/.gitconfig.meow"
