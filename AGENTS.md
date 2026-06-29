@@ -34,12 +34,26 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | `chezmoi -S . add <path>` | 纳新文件入 chezmoi 管理 |
 | `pnpm check` | `tsc --noEmit` 类型检查（最小验证 gate） |
 
+## 自动同步机制
+
+本仓库使用 chezmoi 脚本自动同步配置文件，确保本地配置与源文件保持一致。
+
+| 配置文件 | 源文件 | 目标文件 | 合并策略 |
+|---------|--------|---------|---------|
+| Git config | `dot_gitconfig.meow` | `~/.gitconfig` | .meow 覆盖同名键，保留 local-only 键 |
+| Pi settings | `dot_pi/agent/settings.meow.json` | `~/.pi/agent/settings.json` | .meow 覆盖同名键，packages 数组合并，Pi 管理键保留 |
+
+**使用方式**：修改源文件后运行 `chezmoi -S . apply`，脚本自动执行并同步配置。
+
+**实现机制**：合并脚本位于 `.chezmoiscripts/` 目录，使用 `run_` 前缀和模板 hash 监听源文件变化，自动触发合并。
+
 ## 边界规则
 
 ### Always Do
 
 - 编辑后运行 `pnpm check` 确保类型通过
 - 用 `chezmoi -S . diff` 预览变更后再 apply
+- 修改配置文件源文件后运行 `chezmoi -S . apply` 同步
 
 ### Ask First
 
