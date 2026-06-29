@@ -1,5 +1,10 @@
 patch:
+  # 方案元信息
   schema/name: 小鹤双拼
+  schema/dependencies:
+    - melt_eng
+
+  # 开关列表
   switches:
     - name: ascii_mode
       reset: 1 # 默认英文模式
@@ -11,11 +16,45 @@ patch:
       states: [漢字, 汉字]
     - name: ascii_punct
       states: [。，, ．，]
-  speller/max_code_length: 4 # 最长4码
-  speller/auto_select: true # 顶字上屏
-  speller/auto_select_unique_candidate: true # 无重码自动上屏
-  # 中英切换与方案切换由 lua processor 接管（切换时自动上屏原始输入），
-  # lua_processor 置于 processors 链首位以确保最先拦截快捷键
+    - name: emoji_suggestion
+      reset: 1
+      states: [ "😣️", "😁️" ]
+
+  # 编码器/拼写
+  speller/max_code_length: 4
+  speller/auto_select: true
+  speller/auto_select_unique_candidate: true
+
+  # 词典：使用万象词库
+  translator/dictionary: meow_flypy
+  translator/enable_user_dict: true
+  translator/enable_sentence: true
+  translator/enable_encoder: true
+  translator/encode_commit_history: true
+
+  # 英文子翻译器
+  melt_eng:
+    dictionary: melt_eng
+    enable_sentence: false
+    enable_completion: false
+    initial_quality: 0.8
+
+  # OpenCC Emoji
+  emoji_suggestion:
+    opencc_config: emoji.json
+    option_name: emoji_suggestion
+    tips: all
+    inherit_comment: false
+
+  # 简繁切换（默认简体输出，使用 t2s.json 将繁体转换为简体）
+  simplification:
+    option_name: simplification
+    opencc_config: t2s.json
+    tips: none
+    excluded_types:
+      - reverse_lookup
+
+  # 处理器链
   engine/processors:
     - lua_processor@*switch_ascii
     - lua_processor@*switch_schema
@@ -27,3 +66,19 @@ patch:
     - selector
     - navigator
     - express_editor
+
+  # 翻译器链
+  engine/translators:
+    - punct_translator
+    - table_translator
+    - table_translator@melt_eng
+    - reverse_lookup_translator
+
+  # 过滤器链
+  engine/filters:
+    - simplifier@emoji_suggestion
+    - simplifier@simplification
+    - uniquifier
+
+  # 识别规则
+  recognizer/patterns/reverse_lookup: "^[a-z]*'$"

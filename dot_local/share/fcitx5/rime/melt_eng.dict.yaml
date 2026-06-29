@@ -1,0 +1,9 @@
+---
+name: melt_eng
+version: "2024.02.11"
+sort: by_weight
+use_preset_vocabulary: true
+import_tables:
+  - dicts/rime_ice.en_ext
+  - dicts/rime_ice.en
+...
