@@ -1,0 +1,4 @@
+{{- /* 系统信息 + AGENTS.dev.md 均追加至系统提示词，通过 APPEND_SYSTEM.md 机制注入 */ -}}
+**系统**: {{ .chezmoi.osRelease.prettyName }} ({{ .chezmoi.arch }})
+
+{{ include "dot_agents_meow/AGENTS.dev.md" -}}

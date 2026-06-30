@@ -11,7 +11,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | 文件 | 内容 | 加载到 opencode 的方式 | 加载到 Pi 的方式 |
 |------|------|----------------------|-----------------|
 | `AGENTS.core.md` | “确定性优先”“中文引号”等通用行为 | `AGENTS.md.tmpl` → `{{ include }}` | `AGENTS.md.tmpl` → `{{ include }}` |
-| `AGENTS.dev.md` | 对话流程、提交规范等主代理工作流 | `agents/default.md.tmpl` → `{{ include }}` | `AGENTS.md.tmpl` → `{{ include }}` |
+| `AGENTS.dev.md` | 对话流程、提交规范等主代理工作流 | `agents/default.md.tmpl` → `{{ include }}` | `APPEND_SYSTEM.md.tmpl` → `{{ include }}`（追加至系统提示词） |
 
 ## Tech Stack
 

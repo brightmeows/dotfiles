@@ -1,5 +1,1 @@
-{{- /* 系统环境由 chezmoi 在 apply 时注入，.osRelease 来自 chezmoi 内置数据，不依赖外部命令 */ -}}
-**系统**: {{ .chezmoi.osRelease.prettyName }} ({{ .chezmoi.arch }})
-
 {{ include "dot_agents_meow/AGENTS.core.md" -}}
-{{ include "dot_agents_meow/AGENTS.dev.md" -}}
