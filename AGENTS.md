@@ -6,12 +6,12 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 ## 全局代理文件说明
 
-`dot_agents_meow/AGENTS.core.md` 和 `AGENTS.dev.md` 是 opencode/Pi 工具使用的**全局代理指令文件**，本仓库仅负责托管它们（通过 chezmoi 分发至 `AGENTS.md.tmpl` / `agents/default.md.tmpl` 等入口）。
+`dot_agents_meow/AGENTS.standards.md` 和 `AGENTS.autonomy.md` 是 opencode/Pi 工具使用的**全局代理指令文件**，本仓库仅负责托管它们（通过 chezmoi 分发至 `AGENTS.md.tmpl` / `agents/default.md.tmpl` 等入口）。
 
 | 文件 | 内容 | 加载到 opencode 的方式 | 加载到 Pi 的方式 |
 |------|------|----------------------|-----------------|
-| `AGENTS.core.md` | “确定性优先”“中文引号”等通用行为 | `AGENTS.md.tmpl` → `{{ include }}` | `AGENTS.md.tmpl` → `{{ include }}` |
-| `AGENTS.dev.md` | 对话流程、提交规范等主代理工作流 | `agents/default.md.tmpl` → `{{ include }}` | `APPEND_SYSTEM.md.tmpl` → `{{ include }}`（追加至系统提示词） |
+| `AGENTS.standards.md` | 工程质量准则（确定性优先、中文引号、提交规范） | `agents/default.md.tmpl` → `{{ include }}`（主代理系统提示词） | `APPEND_SYSTEM.md.tmpl` → `{{ include }}`（追加至系统提示词） |
+| `AGENTS.autonomy.md` | 自主决策协议（brainstorming、提问规则、渐进确认） | `agents/default.md.tmpl` → `{{ include }}`（主代理系统提示词） | `APPEND_SYSTEM.md.tmpl` → `{{ include }}`（追加至系统提示词） |
 
 ## Tech Stack
 
