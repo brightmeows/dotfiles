@@ -21,14 +21,4 @@ patch:
   speller/max_code_length: 4 # 最长4码
   speller/auto_select: true # 顶字上屏
   speller/auto_select_unique_candidate: true # 无重码自动上屏
-  # 方案切换（Ctrl+Shift+Space）由 lua processor 接管
-  engine/processors:
-    - lua_processor@*switch_schema
-    - ascii_composer
-    - recognizer
-    - key_binder
-    - speller
-    - punctuator
-    - selector
-    - navigator
-    - express_editor
+  # processors 使用方案默认链（ascii_composer/recognizer/key_binder/...）
