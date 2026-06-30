@@ -4,7 +4,7 @@ patch:
     - schema: double_pinyin_flypy # 小鹤双拼
     - schema: wubi98 # 五笔98
 
-  # 中英切换：禁用 Shift/Ctrl 切换，仅用 Ctrl+Space
+  # 中英切换由 fcitx5 Ctrl+Space 接管，Rime 内禁用所有切换键
   ascii_composer:
     switch_key:
       Shift_L: noop
@@ -17,7 +17,6 @@ patch:
   switcher/save_options:
     - ascii_punct
     - traditionalization
-    - emoji
     - full_shape
     - search_single_char
   switcher/option_list_separator: " / "

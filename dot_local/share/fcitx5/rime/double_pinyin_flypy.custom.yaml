@@ -2,7 +2,7 @@ patch:
   schema/name: 小鹤双拼
   switches:
     - name: ascii_mode
-      reset: 1 # 默认英文模式
+      reset: 0 # 默认中文模式；中英切换由 fcitx5 Ctrl+Space 接管
       states: [中文, 西文]
     - name: full_shape
       states: [半角, 全角]
@@ -11,13 +11,18 @@ patch:
       states: [漢字, 汉字]
     - name: ascii_punct
       states: [。，, ．，]
+  # 禁用 Rime 内部中英切换（由 fcitx5 控制）
+  ascii_composer:
+    switch_key:
+      Shift_L: noop
+      Shift_R: noop
+      Control_L: noop
+      Control_R: noop
   speller/max_code_length: 4 # 最长4码
   speller/auto_select: true # 顶字上屏
   speller/auto_select_unique_candidate: true # 无重码自动上屏
-  # 中英切换与方案切换由 lua processor 接管（切换时自动上屏原始输入），
-  # lua_processor 置于 processors 链首位以确保最先拦截快捷键
+  # 方案切换（Ctrl+Shift+Space）由 lua processor 接管
   engine/processors:
-    - lua_processor@*switch_ascii
     - lua_processor@*switch_schema
     - ascii_composer
     - recognizer
