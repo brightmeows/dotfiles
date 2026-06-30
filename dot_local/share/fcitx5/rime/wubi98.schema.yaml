@@ -4,7 +4,7 @@
 schema:
   schema_id: wubi98
   name: "五笔98"
-  version: "0.2"
+  version: "0.1"
   author:
     - 發明人 王永民先生
   description: |
@@ -13,7 +13,6 @@ schema:
     敲 z 鍵進入拼音反查
   dependencies:
     - pinyin_simp
-    - melt_eng
 
 switches:
   - name: ascii_mode
@@ -23,12 +22,6 @@ switches:
     states: [ 半角, 全角 ]
   - name: extended_charset
     states: [ 通用, 增廣 ]
-  - name: emoji_suggestion
-    reset: 1
-    states: [ "😣️", "😁️" ]
-  - name: simplification
-    reset: 1
-    states: [ "漢字", "汉字" ]
 
 engine:
   processors:
@@ -48,13 +41,8 @@ engine:
     - fallback_segmentor
   translators:
     - punct_translator
-    - table_translator
-    - table_translator@melt_eng
     - reverse_lookup_translator
-  filters:
-    - simplifier@emoji_suggestion
-    - simplifier@simplification
-    - uniquifier
+    - table_translator
 
 speller:
   delimiter: " ;'"
@@ -63,34 +51,12 @@ speller:
 translator:
   dictionary: wubi98
   enable_charset_filter: true
-  enable_sentence: false
-  enable_encoder: false
-  encode_commit_history: false
-  enable_user_dict: false
+  enable_sentence: true
+  enable_encoder: true
+  encode_commit_history: true
+  max_phrase_length: 4
   disable_user_dict_for_patterns:
     - "^z.*$"
-
-# 英文子翻译器
-melt_eng:
-  dictionary: melt_eng
-  enable_sentence: false
-  enable_completion: false
-  initial_quality: 0.8
-
-# OpenCC Emoji
-emoji_suggestion:
-  opencc_config: emoji.json
-  option_name: emoji_suggestion
-  tips: all
-  inherit_comment: false
-
-# 简繁切换（默认简体输出，使用 t2s.json 将繁体转换为简体）
-simplification:
-  option_name: simplification
-  opencc_config: t2s.json
-  tips: none
-  excluded_types:
-    - reverse_lookup
 
 reverse_lookup:
   dictionary: pinyin_simp

@@ -16,8 +16,8 @@ patch:
   switcher/caption: 「方案选单」
   switcher/save_options:
     - ascii_punct
-    - simplification
-    - emoji_suggestion
+    - traditionalization
+    - emoji
     - full_shape
     - search_single_char
   switcher/option_list_separator: " / "
@@ -92,11 +92,8 @@ patch:
       - { when: always, toggle: ascii_punct, accept: Control+Shift+3 }
       - { when: always, toggle: ascii_punct, accept: Control+Shift+numbersign }
       # 切换简繁（Control+Shift+4 或 Control+Shift+$）
-      - { when: always, toggle: simplification, accept: Control+Shift+4 }
-      - { when: always, toggle: simplification, accept: Control+Shift+dollar }
-      # 切换 Emoji（Control+Shift+E）
-      - { when: always, toggle: emoji_suggestion, accept: Control+Shift+e }
-      - { when: always, toggle: emoji_suggestion, accept: Control+Shift+E }
+      - { when: always, toggle: traditionalization, accept: Control+Shift+4 }
+      - { when: always, toggle: traditionalization, accept: Control+Shift+dollar }
       # 小键盘映射到主键盘（数字、运算符、回车）
       - { accept: KP_0, send: 0, when: composing }
       - { accept: KP_1, send: 1, when: composing }
