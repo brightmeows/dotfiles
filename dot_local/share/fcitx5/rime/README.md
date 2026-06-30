@@ -2,108 +2,71 @@
 
 Fcitx5 Rime 输入法配置，双方案：**小鹤双拼** + **五笔98**。
 
+## 架构分工
+
+```
+fcitx5               Rime
+─────────────────────────────────────────
+Ctrl+Space           仅管理中文打字
+keyboard-us ↔ rime   ascii_mode reset: 0
+（中英切换）          无内部中英切换
+```
+
+- **Ctrl+Space** — fcitx5 在 keyboard-us（英文）和 rime（中文）间切换
+- Rime 激活后**默认中文输入**，不管理中英切换
+- 方案切换使用 Rime 内置 switcher
+
 ## 方案一览
 
-| 方案 ID | 名称 | 类型 | 切换 |
-|---------|------|------|------|
-| `double_pinyin_flypy` | 小鹤双拼 | 双拼（自然码码表） | Ctrl+Shift+Space 或 Ctrl+` |
-| `wubi98` | 五笔98 | 形码（五笔字型98版） | 同上 |
+| 方案 ID | 名称 | 类型 |
+|---------|------|------|
+| `double_pinyin_flypy` | 小鹤双拼 | 双拼（小鹤双拼布局，明月拼音词典） |
+| `wubi98` | 五笔98 | 形码（五笔字型98版） |
 
-- **默认英文模式**（双拼）：打开即英文状态，减少终端/代码场景干扰
-- **Ctrl+Space**：唯一中英切换键（禁用了 Shift/Ctrl 切换，避免误触）
+- **双拼词典**：使用内置 `luna_pinyin`，无需额外词库文件
+- **五笔词典**：使用自有 `wubi98.dict.yaml`（约 98K 条目）
+- **拼音反查**（五笔下）：敲 `z` 前缀进入拼音反查
 
-## 功能特性
+## 快捷键一览
 
-### 词库
-
-| 词库 | 来源 | 说明 |
-|------|------|------|
-| **万象词库** (`rime_mint.*`) | oh-my-rime | 双拼主词库，含单字/基础/联想/兼容/关联约 30MB |
-| **melt_eng** | 雾凇英文扩展 | 中英混输，双拼和五笔下均可输入英文单词 |
-| **wubi98** | ibus-table + 五笔小筑 | 形码码表，约 98K 条目 |
-
-### Emoji
-
-输入中文后在候选区出现对应 Emoji。例如：
-- 输入 `kaixin` → 候选 `开心 😄`
-- 输入 `weixiao` → 候选 `微笑 😊`
-
-开关：**Ctrl+Shift+E**（或输入法状态栏切换）
-
-### 简繁切换
-
-默认简体输出。**Ctrl+Shift+4** 切换简繁。
-
-### 中英标点切换
-
-**Ctrl+Shift+3** 在 `。，` / `.,` 之间切换。
-
-### 翻页
-
-- `-` / `=` 或 `[` / `]`
-
-### 光标移动
-
-- `←` / `→`：按字符移动
-- `Shift+←` / `Shift+→`：按音节移动
-
-### 小键盘
-
-数字/运算符/回车映射到主键盘，输入时可用小键盘方便输入数字和表达式。
-
-### Lua 处理器
-
-- `switch_ascii.lua` — 接管中英切换，切换时自动上屏未确认输入
-- `switch_schema.lua` — 接管方案切换，切换时自动上屏未确认输入
+| 快捷键 | 功能 | 层级 |
+|--------|------|------|
+| **Ctrl+Space** | 中/英切换 | fcitx5 |
+| **Ctrl+Shift+`** 或 **F4** | 切换方案（双拼 ↔ 五笔） | Rime switcher |
+| **Ctrl+Shift+3** | 中英标点切换 | Rime |
+| **Ctrl+Shift+4** | 简繁切换 | Rime |
+| `-` / `=` 或 `[` / `]` | 翻页 | Rime |
+| `Tab` / `Shift+Tab` | 按音节移动光标 | Rime |
+| `Alt+←` / `Alt+→` | 按音节移动光标 | Rime |
+| 小键盘数字/运算符 | 等同主键盘（输入时可用） | Rime |
 
 ## 文件结构
 
 ```
+~/.config/fcitx5/
+├── profile                      # 输入法列表（keyboard-us + rime）
+└── conf/
+    ├── hotkey.conf              # 全局快捷键（Ctrl+Space trigger）
+    └── globalhotkey.conf
+
 ~/.local/share/fcitx5/rime/
-├── default.custom.yaml              # 全局设置（方案列表、按键、标点）
-├── double_pinyin_flypy.custom.yaml  # 小鹤双拼自定义（万象词库、英文、Emoji）
-├── wubi98.schema.yaml               # 五笔98 方案定义
-├── wubi98.custom.yaml               # 五笔98 Lua processor
-├── wubi98.dict.yaml                 # 五笔98 码表
-├── meow_flypy.dict.yaml             # 双拼→万象的桥接词典
-├── rime_mint.dict.yaml              # 万象主词典（导入子词典）
-├── melt_eng.dict.yaml               # 英文词典
-├── melt_eng.schema.yaml             # 英文方案
-├── dicts/                           # 万象词库子文件（10 个）
-│   ├── rime_mint.base.dict.yaml
-│   ├── rime_mint.chars.dict.yaml
-│   ├── rime_mint.ext.dict.yaml
-│   ├── rime_mint.correlation.dict.yaml
-│   ├── rime_mint.compatible.dict.yaml
-│   ├── rime_ice.en.dict.yaml
-│   ├── rime_ice.en_ext.dict.yaml
-│   ├── rime_ice.others.dict.yaml
-│   ├── other_kaomoji.dict.yaml
-│   └── custom_simple.dict.yaml
-├── opencc/                          # OpenCC 配置（Emoji 等）
-│   ├── emoji.json
-│   ├── emoji.txt
-│   ├── others.txt
-│   └── spoken.txt
-└── lua/
-    ├── switch_ascii.lua
-    └── switch_schema.lua
+├── default.custom.yaml          # 全局设置（方案列表、按键、标点）
+├── double_pinyin_flypy.custom.yaml  # 小鹤双拼自定义
+├── wubi98.schema.yaml           # 五笔98 方案定义
+├── wubi98.dict.yaml             # 五笔98 码表
+├── build/                       # Rime 编译输出（自动生成）
+├── lua/                         # 当前为空（无自定义处理器）
+├── opencc/                      # （保留目录，未使用）
+└── dicts/                       # （保留目录，未使用）
 ```
 
-## 快捷键一览
+## 配置要点
 
-| 快捷键 | 功能 |
-|--------|------|
-| **Ctrl+Space** | 切换中/英 |
-| **Ctrl+Shift+Space** 或 **Ctrl+`** | 切换方案（双拼 ↔ 五笔） |
-| **Ctrl+Shift+E** | 切换 Emoji |
-| **Ctrl+Shift+4** | 切换简繁 |
-| **Ctrl+Shift+3** | 切换中英标点 |
-| `-` / `=` | 翻页 |
-| `[` / `]` | 翻页 |
-| `Tab` / `Shift+Tab` | 按音节移动光标 |
-| `Alt+←` / `Alt+→` | 按音节移动光标 |
-| 小键盘数字/运算符 | 等同主键盘（输入时可用） |
+- **双拼默认中文**（`ascii_mode reset: 0`），激活即可输入
+- **Rime 内中英切换全部禁用**（`ascii_composer` 所有键设为 `noop`）
+- **候选词 9 个**（`menu/page_size: 9`）
+- **顶字上屏**（`auto_select: true`），无重码自动上屏
+- **直接上屏标点**（`half_shape` 符号直接输出，不弹出选单）
 
 ## 部署
 
@@ -113,9 +76,7 @@ chezmoi -S . apply
 
 # 触发 Rime 重新部署
 fcitx5-remote -r
+
+# 或重启 fcitx5
+pkill fcitx5 && sleep 1 && fcitx5 -d
 ```
-
-## 参考
-
-- [oh-my-rime (薄荷输入法)](https://github.com/Mintimate/oh-my-rime) — 万象词库、配置参考
-- [雾凇拼音](https://github.com/iDvel/rime-ice) — 英文词库
