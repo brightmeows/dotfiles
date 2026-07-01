@@ -20,6 +20,9 @@ $env.PATH = ($env.PATH | append ("~" | path expand | path join "go/bin"))
 $env.PATH = ($env.PATH | append ("~" | path expand | path join ".cargo/bin"))
 $env.PATH = ($env.PATH | append ("~" | path expand | path join ".opencode/bin"))
 $env.PATH = ($env.PATH | append ("~" | path expand | path join ".bun/bin"))
+# AppImages (建议使用 Gear Lever 管理 AppImages)
+# flatpak install flathub it.mijorus.gearlever
+$env.PATH = ($env.PATH | append ("~" | path expand | path join "AppImages"))
 
 # pnpm
 $env.PNPM_HOME = "/var/home/brightmeows/.local/share/pnpm"
