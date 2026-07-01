@@ -12,12 +12,12 @@
     },
     "context7": {
       "url": "https://mcp.context7.com/mcp",
-      "lifecycle": "lazy",
+      "lifecycle": "keep-alive",
       "directTools": false
     },
     "cratesio-mcp": {
       "command": "cratesio-mcp",
-      "lifecycle": "lazy",
+      "lifecycle": "keep-alive",
       "directTools": false
     },
     "paper-search-mcp": {
