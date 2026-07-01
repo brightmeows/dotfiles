@@ -30,7 +30,7 @@
     },
     "docs-rs-mcp": {
       "type": "local",
-      "command": ["pnpx", "@nuskey8/docs-rs-mcp@latest"],
+      "command": ["npx", "-y", "@nuskey8/docs-rs-mcp@latest"],
       "enabled": false,
     },
     "cnki-mcp": {

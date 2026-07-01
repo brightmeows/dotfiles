@@ -12,25 +12,31 @@
     },
     "context7": {
       "url": "https://mcp.context7.com/mcp",
-      "lifecycle": "keep-alive",
-      "directTools": true
+      "lifecycle": "lazy",
+      "directTools": false
     },
     "cratesio-mcp": {
       "command": "cratesio-mcp",
-      "lifecycle": "keep-alive",
-      "directTools": true
+      "lifecycle": "lazy",
+      "directTools": false
     },
     "paper-search-mcp": {
       "command": "uvx",
-      "args": ["git+https://github.com/openags/paper-search-mcp.git"]
+      "args": ["git+https://github.com/openags/paper-search-mcp.git"],
+      "lifecycle": "lazy",
+      "directTools": false
     },
     "cnki-mcp": {
       "command": "uvx",
-      "args": ["git+https://github.com/h-lu/cnki-mcp.git"]
+      "args": ["git+https://github.com/h-lu/cnki-mcp.git"],
+      "lifecycle": "lazy",
+      "directTools": false
     },
     "docs-rs-mcp": {
-      "command": "pnpx",
-      "args": ["@nuskey8/docs-rs-mcp@latest"]
+      "command": "npx",
+      "args": ["-y", "@nuskey8/docs-rs-mcp@latest"],
+      "lifecycle": "lazy",
+      "directTools": false
     }
   }
 }
