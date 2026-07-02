@@ -42,7 +42,19 @@
 检查 Markdown 文件：
 
 ````bash
-awk '/^(```|~~~)/{in_code=!in_code;next}in_code{next}{l=$0;gsub(/`[^`]*`/,"",l);printf "%d: %s\n",NR,l}' <文件>.md | rg "[\"'＂「」『』]"
+python3 - 文件.md << 'PYEOF'
+import re, sys
+in_code = False
+with open(sys.argv[1], encoding="utf-8") as fh:
+    for i, line in enumerate(fh, 1):
+        if re.match(r"^(```|~~~)", line):
+            in_code = not in_code
+            continue
+        if in_code:
+            continue
+        if re.search("[\u0022\u0027\uFF02\u300C\u300D\u300E\u300F]", re.sub(r"`[^`]*`", "", line)):
+            print(f"{i}: {line.rstrip()}")
+PYEOF
 ````
 
 ## 提交规范
