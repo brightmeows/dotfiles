@@ -1,8 +1,8 @@
 # 工程质量准则
 
-## 行为准则
+> 铁律：客观、可被工具/编译器/校验器判真伪的硬规则。
 
-### 确定性优先
+## 确定性优先
 
 能用工具/编译器/校验器自动处理的事，不手动做。
 
@@ -13,9 +13,12 @@
 
 例如：
 
-- 代码风格 → `pnpm lint`（读），`pnpm format`（写）
-- 类型错误 → `pnpm check`（tsc --noEmit 读）
+- 代码风格 → `pnpm lint`、`cargo clippy`（读），`pnpm format`、`cargo fmt`（写）
+- 类型错误 → `pnpm check`（tsc --noEmit）、`cargo check`（读）
 - 配置验证 → JSON Schema 校验（读）
+- 提交前验证 → `cargo check` / `pnpm check` / `chezmoi diff` 等（读，提交前必跑）
+
+**工具真空带**：目标格式无现成校验器/linter（如 KDL、Nu、自定义 JSONC）时，不得用弱校验（如纯 diff）冒充强校验（语义校验）；提交说明须注明该处为人工校验，确定性低于工具校验。
 
 ## 行为修正
 
@@ -42,12 +45,8 @@ awk '/^(```|~~~)/{in_code=!in_code;next}in_code{next}{l=$0;gsub(/`[^`]*`/,"",l);
 
 ## 提交规范
 
-- **即完即提（原子提交）**：每完成一个逻辑单元后立即提交，确保每个提交只做一个变更。如果描述里必须用“和”/“以及”连接，就该拆分。工作流：工作 → 提交 → 工作 → 提交 → …，不累积变更到最后一并处理。
-  - **忘了及时提交时**：能拆就拆（`git add -p`），拆不干净就整体提交并在 body 写明变更清单；核心是“现在就提”优先于“等想清楚怎么拆”。
-- **可独立验证**：每个提交可安全 revert、不破坏仓库自洽。
-- **格式**：Conventional Commits，`type(scope)!: subject`。`!` 表示 breaking change、放在冒号前。scope 为变更模块名（小写 kebab-case），如 `core`, `api`, `cli`, `ui`, `deps`。
-- **Body**：只在 why 不显而易见时写，说明 why 而非 how（diff 已展示 how）。
-- **反模式**：
-  - 混合无关模块（如 `core` + `ui` 同提交）
-  - 笼统消息（`update`, `fix`, `changes`）
-  - 提交前不跑验证（`cargo check`, `pnpm check`, `chezmoi diff` 等）
+**格式**：Conventional Commits，`type(scope)!: subject`。`!` 表示 breaking change、放在冒号前。scope 为变更模块名（小写 kebab-case），如 `core`, `api`, `cli`, `ui`, `deps`。
+
+**反模式**：
+
+- 笼统消息（`update`, `fix`, `changes`）
