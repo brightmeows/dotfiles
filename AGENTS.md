@@ -10,8 +10,8 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 | 文件 | 内容 | 加载到 opencode 的方式 | 加载到 Pi 的方式 |
 |------|------|----------------------|-----------------|
-| `AGENTS.standards.md` | 工程质量准则（确定性优先、中文引号、提交规范） | `agents/default.md.tmpl` → `{{ include }}`（主代理系统提示词） | `APPEND_SYSTEM.md.tmpl` → `{{ include }}`（追加至系统提示词） |
-| `AGENTS.autonomy.md` | 自主决策协议（brainstorming、提问规则、渐进确认） | `agents/default.md.tmpl` → `{{ include }}`（主代理系统提示词） | `APPEND_SYSTEM.md.tmpl` → `{{ include }}`（追加至系统提示词） |
+| `AGENTS.standards.md` | 工程质量准则（确定性优先、提交规范、中文引号） | `agents/default.md.tmpl` → `{{ include }}`（主代理系统提示词） | `APPEND_SYSTEM.md.tmpl` → `{{ include }}`（追加至系统提示词） |
+| `AGENTS.autonomy.md` | 自主决策协议（单一判据、两阶段提交、渐进确认陷阱） | `agents/default.md.tmpl` → `{{ include }}`（主代理系统提示词） | `APPEND_SYSTEM.md.tmpl` → `{{ include }}`（追加至系统提示词） |
 
 ## Tech Stack
 
