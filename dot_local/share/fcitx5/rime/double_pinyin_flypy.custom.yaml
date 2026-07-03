@@ -22,3 +22,4 @@ patch:
   speller/auto_select: true # 顶字上屏
   speller/auto_select_unique_candidate: true # 无重码自动上屏
   # processors 使用方案默认链（ascii_composer/recognizer/key_binder/...）
+  translator/dictionary: custom # 词库：继承 luna_pinyin + 自定义补充（见 custom.dict.yaml）

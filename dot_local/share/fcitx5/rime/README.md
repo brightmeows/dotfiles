@@ -23,7 +23,7 @@ keyboard-us ↔ rime   ascii_mode reset: 0
 | `double_pinyin_flypy` | 小鹤双拼 | 双拼（小鹤双拼布局，明月拼音词典） |
 | `wubi98` | 五笔98 | 形码（五笔字型98版） |
 
-- **双拼词典**：使用内置 `luna_pinyin`，无需额外词库文件
+- **双拼词典**：使用 `custom` 词库（继承内置 `luna_pinyin` + 自定义补充，见 `custom.dict.yaml`）
 - **五笔词典**：使用自有 `wubi98.dict.yaml`（约 98K 条目）
 - **拼音反查**（五笔下）：敲 `z` 前缀进入拼音反查
 
@@ -52,12 +52,12 @@ keyboard-us ↔ rime   ascii_mode reset: 0
 ~/.local/share/fcitx5/rime/
 ├── default.custom.yaml          # 全局设置（方案列表、按键、标点）
 ├── double_pinyin_flypy.custom.yaml  # 小鹤双拼自定义
+├── custom.dict.yaml            # 自定义词库（继承 luna_pinyin + 补充缺字）
 ├── wubi98.schema.yaml           # 五笔98 方案定义
 ├── wubi98.dict.yaml             # 五笔98 码表
 ├── build/                       # Rime 编译输出（自动生成）
 ├── lua/                         # 当前为空（无自定义处理器）
-├── opencc/                      # （保留目录，未使用）
-└── dicts/                       # （保留目录，未使用）
+└── opencc/                      # （保留目录，未使用）
 ```
 
 ## 配置要点
@@ -74,9 +74,6 @@ keyboard-us ↔ rime   ascii_mode reset: 0
 # 修改源文件后应用
 chezmoi -S . apply
 
-# 触发 Rime 重新部署
-fcitx5-remote -r
-
-# 或重启 fcitx5
-pkill fcitx5 && sleep 1 && fcitx5 -d
+# 重新部署 Rime（必须重启 fcitx5；fcitx5-remote -r 仅 reload 配置，不触发词库重新编译）
+pkill -x fcitx5 && sleep 1 && setsid fcitx5 </dev/null >/dev/null 2>&1 &
 ```

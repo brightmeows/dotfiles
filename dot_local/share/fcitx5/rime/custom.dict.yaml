@@ -1,0 +1,16 @@
+# Rime dictionary
+# encoding: utf-8
+#
+# 自定义词库
+# 继承系统 luna_pinyin，补充缺失字词（如“垌 dòng”）
+# schema 中以 translator/dictionary: custom 引用
+#
+---
+name: custom
+version: "2026-07-03"
+sort: by_weight
+use_preset_vocabulary: true
+import_tables:
+  - luna_pinyin
+...
+垌	dong	100%
