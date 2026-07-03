@@ -23,7 +23,7 @@ keyboard-us ↔ rime   ascii_mode reset: 0
 | `double_pinyin_flypy` | 小鹤双拼 | 双拼（小鹤双拼布局，明月拼音词典） |
 | `wubi98` | 五笔98 | 形码（五笔字型98版） |
 
-- **双拼词典**：使用 `custom` 词库（继承内置 `luna_pinyin` + zhwiki 维基百科 + moegirl 萌娘百科 + 自定义补充）
+- **双拼词典**：使用 `custom` 词库（系统 luna_pinyin 底座 + rime_ice 现代词库 + zhwiki 维基百科 + moegirl 萌娘百科 + 自定义补充）
 - **五笔词典**：使用自有 `wubi98.dict.yaml`（约 98K 条目）
 - **拼音反查**（五笔下）：敲 `z` 前缀进入拼音反查
 
@@ -52,19 +52,21 @@ keyboard-us ↔ rime   ascii_mode reset: 0
 ~/.local/share/fcitx5/rime/
 ├── default.custom.yaml          # 全局设置（方案列表、按键、标点）
 ├── double_pinyin_flypy.custom.yaml  # 小鹤双拼自定义
-├── custom.dict.yaml            # 自定义词库（import luna_pinyin + zhwiki + moegirl + 补字）
+├── custom.dict.yaml            # 自定义词库（import luna_pinyin + rime_ice + zhwiki + moegirl + 补字）
 ├── wubi98.schema.yaml           # 五笔98 方案定义
 ├── wubi98.dict.yaml             # 五笔98 码表
+├── cn_dicts/                    # rime_ice 词库（8105/base/ext/tencent，由脚本下载）
 ├── build/                       # Rime 编译输出（自动生成）
 ├── lua/                         # 当前为空（无自定义处理器）
 └── opencc/                      # （保留目录，未使用）
 
 ~/.local/bin/
-└── fetch-rime-dict.sh          # 下载第三方词库（zhwiki/moegirl，不入版本控制）
+└── fetch-rime-dict.sh          # 下载第三方词库（rime_ice/zhwiki/moegirl，不入版本控制）
 
 # 第三方词库（由脚本下载，不入版本控制）：
-# ~/.local/share/fcitx5/rime/zhwiki.dict.yaml   ~53 MB
-# ~/.local/share/fcitx5/rime/moegirl.dict.yaml  ~4 MB
+# ~/.local/share/fcitx5/rime/cn_dicts/*.dict.yaml   ~44 MB（rime_ice 通用词库）
+# ~/.local/share/fcitx5/rime/zhwiki.dict.yaml       ~53 MB（维基百科词条）
+# ~/.local/share/fcitx5/rime/moegirl.dict.yaml      ~4 MB（萌娘百科词条）
 ```
 
 ## 配置要点
@@ -77,7 +79,7 @@ keyboard-us ↔ rime   ascii_mode reset: 0
 
 ## 自定义词库
 
-`custom.dict.yaml` 供双拼方案使用，通过 `import_tables` 继承系统 `luna_pinyin` 全量词典（含单字与词组），再补收 luna_pinyin 缺失的字音（如“垌 dòng”）。rime 编译时将两者合并为单个 `table.bin`。
+`custom.dict.yaml` 供双拼方案使用，通过 `import_tables` 聚合多组词库：系统 `luna_pinyin`（底座，始终存在）、rime_ice 现代词库（8105 字表 + base/ext/tencent）、zhwiki、moegirl，并补收缺失字音（如“垌 dòng”）。rime 编译时合并为单个 `table.bin`。
 
 **添加字/词**：在文件 `...` 分隔符之后追加一行，列以 Tab 分隔：
 
@@ -93,7 +95,9 @@ keyboard-us ↔ rime   ascii_mode reset: 0
 
 ## 第三方词库
 
-zhwiki（维基百科词条）与 moegirl（萌娘百科词条）为第三方大数据文件，**不入版本控制**，由 `fetch-rime-dict.sh` 从上游 release 拉取。`custom.dict.yaml` 通过 `import_tables` 将它们与 `luna_pinyin` 一并编译进单个 `table.bin`。
+rime_ice（雾凇拼音）、zhwiki（维基百科词条）、moegirl（萌娘百科词条）为第三方大数据文件，**不入版本控制**，由 `fetch-rime-dict.sh` 拉取（rime_ice 从 git raw、其余从 release）。`custom.dict.yaml` 通过 `import_tables` 将它们与系统 `luna_pinyin` 底座一并编译进单个 `table.bin`。
+
+rime_ice 提供现代精校通用词库（基础词、扩展词、腾讯词向量），是系统 luna_pinyin（2018 版）的超集与现代化替代。其计算机/AI 词覆盖加上 zhwiki，已能兼顾日常技术词汇输入。
 
 ```bash
 # 首次 / 更新（默认拉取全部；可指定单个如 moegirl）

@@ -2,11 +2,12 @@
 # encoding: utf-8
 #
 # 自定义词库
-# 继承 luna_pinyin + zhwiki（维基百科）+ moegirl（萌娘百科），并补充缺失字词
+# luna_pinyin 为系统底座（始终存在）；rime_ice 为现代超集词库；
+# zhwiki（维基百科）/ moegirl（萌娘百科）为第三方词条；另补充缺失字词
 # schema 中以 translator/dictionary: custom 引用
 #
-# zhwiki / moegirl 为第三方大数据文件，不入版本控制；
-# 由 fetch-rime-dict.sh 下载至本目录（多机需各自运行）
+# 第三方词库（zhwiki / moegirl / cn_dicts/*）不入版本控制，
+# 由 fetch-rime-dict.sh 下载（多机需各自运行）
 ---
 name: custom
 version: "2026-07-03"
@@ -14,6 +15,10 @@ sort: by_weight
 use_preset_vocabulary: true
 import_tables:
   - luna_pinyin
+  - cn_dicts/8105     # rime_ice 通用规范汉字表
+  - cn_dicts/base     # rime_ice 基础词库
+  - cn_dicts/ext      # rime_ice 扩展词库
+  - cn_dicts/tencent  # rime_ice 腾讯词向量（大词库，编译慢）
   - zhwiki
   - moegirl
 ...
