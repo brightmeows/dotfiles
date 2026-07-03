@@ -76,6 +76,7 @@ keyboard-us ↔ rime   ascii_mode reset: 0
 - **候选词 9 个**（`menu/page_size: 9`）
 - **顶字上屏**（`auto_select: true`），无重码自动上屏
 - **直接上屏标点**（`half_shape` 符号直接输出，不弹出选单）
+- **关闭自学习**（`enable_user_dict: false`），词序固定为词库权重，不记录用户词典、不自动调频
 
 ## 自定义词库
 
