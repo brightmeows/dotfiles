@@ -23,7 +23,7 @@ keyboard-us ↔ rime   ascii_mode reset: 0
 | `double_pinyin_flypy` | 小鹤双拼 | 双拼（小鹤双拼布局，明月拼音词典） |
 | `wubi98` | 五笔98 | 形码（五笔字型98版） |
 
-- **双拼词典**：使用 `custom` 词库（继承内置 `luna_pinyin` + 自定义补充，见 `custom.dict.yaml`）
+- **双拼词典**：使用 `custom` 词库（继承内置 `luna_pinyin` + zhwiki 维基百科 + moegirl 萌娘百科 + 自定义补充）
 - **五笔词典**：使用自有 `wubi98.dict.yaml`（约 98K 条目）
 - **拼音反查**（五笔下）：敲 `z` 前缀进入拼音反查
 
@@ -52,12 +52,19 @@ keyboard-us ↔ rime   ascii_mode reset: 0
 ~/.local/share/fcitx5/rime/
 ├── default.custom.yaml          # 全局设置（方案列表、按键、标点）
 ├── double_pinyin_flypy.custom.yaml  # 小鹤双拼自定义
-├── custom.dict.yaml            # 自定义词库（继承 luna_pinyin + 补充缺字）
+├── custom.dict.yaml            # 自定义词库（import luna_pinyin + zhwiki + moegirl + 补字）
 ├── wubi98.schema.yaml           # 五笔98 方案定义
 ├── wubi98.dict.yaml             # 五笔98 码表
 ├── build/                       # Rime 编译输出（自动生成）
 ├── lua/                         # 当前为空（无自定义处理器）
 └── opencc/                      # （保留目录，未使用）
+
+~/.local/bin/
+└── fetch-rime-dict.sh          # 下载第三方词库（zhwiki/moegirl，不入版本控制）
+
+# 第三方词库（由脚本下载，不入版本控制）：
+# ~/.local/share/fcitx5/rime/zhwiki.dict.yaml   ~53 MB
+# ~/.local/share/fcitx5/rime/moegirl.dict.yaml  ~4 MB
 ```
 
 ## 配置要点
@@ -83,6 +90,20 @@ keyboard-us ↔ rime   ascii_mode reset: 0
 - 拼音用全拼书写，多音节词以空格分隔音节
 - 权重可省略（取默认词频）；填整数频次可调整候选排序
 - 编辑后须重新部署（见下节）
+
+## 第三方词库
+
+zhwiki（维基百科词条）与 moegirl（萌娘百科词条）为第三方大数据文件，**不入版本控制**，由 `fetch-rime-dict.sh` 从上游 release 拉取。`custom.dict.yaml` 通过 `import_tables` 将它们与 `luna_pinyin` 一并编译进单个 `table.bin`。
+
+```bash
+# 首次 / 更新（默认拉取全部；可指定单个如 moegirl）
+fetch-rime-dict.sh
+fetch-rime-dict.sh moegirl
+
+# 然后重启 fcitx5 重新编译
+```
+
+新机器部署 dotfiles 后须手动跑一次脚本拉取词库。加新词库只需在脚本的 `REGISTRY` 追加一行，再在 `custom.dict.yaml` 的 `import_tables` 加对应项。
 
 ## 部署
 

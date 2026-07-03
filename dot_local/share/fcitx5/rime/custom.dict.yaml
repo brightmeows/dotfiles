@@ -2,9 +2,11 @@
 # encoding: utf-8
 #
 # 自定义词库
-# 继承系统 luna_pinyin，补充缺失字词（如“垌 dòng”）
+# 继承 luna_pinyin + zhwiki（维基百科）+ moegirl（萌娘百科），并补充缺失字词
 # schema 中以 translator/dictionary: custom 引用
 #
+# zhwiki / moegirl 为第三方大数据文件，不入版本控制；
+# 由 fetch-rime-dict.sh 下载至本目录（多机需各自运行）
 ---
 name: custom
 version: "2026-07-03"
@@ -12,5 +14,7 @@ sort: by_weight
 use_preset_vocabulary: true
 import_tables:
   - luna_pinyin
+  - zhwiki
+  - moegirl
 ...
 垌	dong
