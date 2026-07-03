@@ -68,6 +68,22 @@ keyboard-us ↔ rime   ascii_mode reset: 0
 - **顶字上屏**（`auto_select: true`），无重码自动上屏
 - **直接上屏标点**（`half_shape` 符号直接输出，不弹出选单）
 
+## 自定义词库
+
+`custom.dict.yaml` 供双拼方案使用，通过 `import_tables` 继承系统 `luna_pinyin` 全量词典（含单字与词组），再补收 luna_pinyin 缺失的字音（如“垌 dòng”）。rime 编译时将两者合并为单个 `table.bin`。
+
+**添加字/词**：在文件 `...` 分隔符之后追加一行，列以 Tab 分隔：
+
+```
+垌	dong
+你好	ni hao	500
+```
+
+- rime 不区分“字库”与“词库”，单字、词组格式一致
+- 拼音用全拼书写，多音节词以空格分隔音节
+- 权重可省略（取默认词频）；填整数频次可调整候选排序
+- 编辑后须重新部署（见下节）
+
 ## 部署
 
 ```bash
