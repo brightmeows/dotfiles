@@ -124,7 +124,7 @@ tun:
   enable: true
   stack: mixed
   auto-route: true
-  auto-redirect: true
+  auto-redirect: false  # Fedora nftables 冲突（netlink file exists），auto-route 纯路由表已足够
   auto-detect-interface: true
   dns-hijack:
     - any:53
