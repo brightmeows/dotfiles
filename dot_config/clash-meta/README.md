@@ -54,6 +54,17 @@ chezmoi -S . apply       # 渲染
 sudo bash ~/.config/clash-meta/deploy.sh   # 部署 + 重载
 ```
 
+## 管理面板
+
+metacubexd 由 mihomo `external-ui` 本地托管（首次启动自动从 GitHub 下载到 `/var/lib/clash-meta/ui`）。
+
+- 域名访问：`http://clash.meow:9090/ui/`（`clash.meow` 经 mihomo `hosts` 解析为 127.0.0.1，依赖 tun 运行）
+- 直连访问：`http://127.0.0.1:9090/ui/`
+
+手动更新面板：`curl -X POST http://127.0.0.1:9090/upgrade/ui`
+
+> `external-ui` 静态托管与 `hosts` 映射在 mihomo **启动时**初始化，payload 热加载不触发；改这两项后需 `deploy.sh` 重启生效。
+
 ## 已知约束
 
 本配置针对 Fedora Kinoite（原子化系统）调校，部署时需注意以下几点。

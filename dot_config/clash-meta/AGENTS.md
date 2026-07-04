@@ -50,6 +50,10 @@ curl -sL <raw URL> -o /tmp/ref.yaml
 `tun.route-exclude-address` 必须排除全部本地网段，否则 mDNS / SSDP / 局域网设备发现会走代理而异常。须包含：私有段（`10/8`、`172.16/12`、`192.168/16`）、`127.0.0.0/8`（loopback）、
 `169.254.0.0/16`（link-local）、`224.0.0.0/4`（组播）及 IPv6 对应段（`fc00::/7`、`fe80::/10`、`ff00::/8`）。验证：`ip route get 169.254.1.1` 应走物理网卡而非 `mihomo`。
 
+### external-ui 与 hosts 仅启动时初始化
+
+`external-ui`（metacubexd 静态托管）与 `hosts`（`clash.meow` → 127.0.0.1）在 mihomo 启动时初始化。payload 热加载（`PUT /configs`）不重新注册 external-ui HTTP serve、不重载 hosts 表——改这两项后必须 `deploy.sh` 重启验证，不能靠热加载。
+
 ### 配置校验与热加载（无需 sudo 的验证闭环）
 
 ```bash
