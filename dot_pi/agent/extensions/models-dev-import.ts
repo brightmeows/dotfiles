@@ -39,10 +39,17 @@ function matchesAny(pattern: string | RegExp, url: string): boolean {
 }
 
 // ── Raw JSON types (subset of what api.json provides) ──
+interface RawReasoningOption {
+  type: "effort" | "budget_tokens" | "toggle";
+  /** 仅 type === "effort" 时有意义 */
+  values?: string[];
+}
+
 interface RawModel {
   id: string;
   name?: string;
   reasoning?: boolean;
+  reasoning_options?: RawReasoningOption[];
   modalities?: { input?: string[] };
   limit?: { context?: number; output?: number };
   cost?: {
@@ -224,6 +231,78 @@ function normalizeBaseUrl(url: string): string {
     .replace(/\/$/, ""); // 去尾斜杠
 }
 
+/**
+ * Pi 的思考挡位（与 pi-agent-core 的 ModelThinkingLevel 保持同步）。
+ * 硬编码以避免从 pi-coding-agent 主包导入内部类型。
+ */
+const PI_THINKING_LEVELS = ["off", "minimal", "low", "medium", "high", "xhigh"] as const;
+type PiThinkingLevel = (typeof PI_THINKING_LEVELS)[number];
+type ThinkingLevelMap = NonNullable<ProviderModelConfig["thinkingLevelMap"]>;
+
+/**
+ * 从 reasoning_options 中提取 effort 挡位列表。
+ * 若模型未声明 effort（如仅 toggle / budget_tokens），返回 undefined。
+ */
+function extractEffortValues(raw: RawModel): string[] | undefined {
+  const opts = raw.reasoning_options;
+  if (!Array.isArray(opts)) {
+    return undefined;
+  }
+  for (const o of opts) {
+    if (o?.type === "effort" && Array.isArray(o.values) && o.values.length > 0) {
+      return o.values;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * 根据 provider 支持的 effort 挡位构建 thinkingLevelMap。
+ *
+ * 映射规则：
+ * - off      → "none"（仅 provider 显式列出时；否则不设，保持 pi 默认“不发字段”行为）
+ * - minimal  → "minimal" 若有，否则降级到 "low"
+ * - low/medium/high → 同名直映
+ * - xhigh    → 顶档优先：max > xhigh > high
+ *
+ * 未声明 effort 的模型返回 undefined，pi 将原样发送挡位字符串（向后兼容）。
+ */
+function buildThinkingLevelMap(values: string[] | undefined): ThinkingLevelMap | undefined {
+  if (!values || values.length === 0) {
+    return undefined;
+  }
+  const set = new Set(values);
+  const map: Partial<Record<PiThinkingLevel, string | null>> = {};
+
+  if (set.has("none")) {
+    map.off = "none";
+  }
+  if (set.has("minimal")) {
+    map.minimal = "minimal";
+  } else if (set.has("low")) {
+    map.minimal = "low";
+  }
+  if (set.has("low")) {
+    map.low = "low";
+  }
+  if (set.has("medium")) {
+    map.medium = "medium";
+  }
+  if (set.has("high")) {
+    map.high = "high";
+  }
+  // 将 xhigh 档映射到 provider 的顶档（pi 枚举无 max，借 xhigh 通道）
+  if (set.has("max")) {
+    map.xhigh = "max";
+  } else if (set.has("xhigh")) {
+    map.xhigh = "xhigh";
+  } else if (set.has("high")) {
+    map.xhigh = "high";
+  }
+
+  return map;
+}
+
 /** 映射 models.dev 模型格式 → pi ProviderModelConfig */
 function mapModel(raw: RawModel): ProviderModelConfig | null {
   if (!raw.id) {
@@ -234,6 +313,8 @@ function mapModel(raw: RawModel): ProviderModelConfig | null {
   if (raw.modalities?.input?.includes("image")) {
     input.push("image");
   }
+
+  const thinkingLevelMap = buildThinkingLevelMap(extractEffortValues(raw));
 
   return {
     contextWindow: raw.limit?.context ?? 128_000,
@@ -248,5 +329,6 @@ function mapModel(raw: RawModel): ProviderModelConfig | null {
     maxTokens: raw.limit?.output ?? 16_384,
     name: raw.name ?? raw.id,
     reasoning: raw.reasoning ?? false,
+    ...(thinkingLevelMap ? { thinkingLevelMap } : {}),
   };
 }
