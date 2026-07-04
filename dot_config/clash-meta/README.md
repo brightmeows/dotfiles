@@ -58,6 +58,18 @@ sudo bash ~/.config/clash-meta/deploy.sh   # 部署 + 重载
 
 本配置针对 Fedora Kinoite（原子化系统）调校，部署时需注意以下几点。
 
+### 本地网络直连
+
+`tun.route-exclude-address` 已排除全部本地网段，确保局域网通信、设备发现、组播**不走代理**：
+
+- 私有段：`10.0.0.0/8`、`172.16.0.0/12`、`192.168.0.0/16`
+- loopback：`127.0.0.0/8`
+- link-local（mDNS/SSDP/zeroconf）：`169.254.0.0/16`
+- 组播（mDNS/SSDP/IGMP）：`224.0.0.0/4`
+- IPv6 对应段：`fc00::/7`、`fe80::/10`、`ff00::/8`
+
+验证：`ip route get 169.254.1.1` 应走物理网卡（如 `wlp1s0`）而非 `mihomo`。
+
 ### DNS 与 systemd-resolved
 
 参考配置原带的 `dns.listen: 0.0.0.0:53` 会与系统默认运行的 `systemd-resolved`（占用 `127.0.0.53/54:53`）冲突。本模板已**注释掉 `dns.listen`**，改由 `tun.dns-hijack: any:53` 在 tun 层接管 DNS 解析，二者各司其职，无需关闭 resolved。

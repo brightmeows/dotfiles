@@ -138,7 +138,12 @@ tun:
     - 10.0.0.0/8
     - 172.16.0.0/12
     - 192.168.0.0/16
+    - 127.0.0.0/8        # loopback
+    - 169.254.0.0/16     # link-local（mDNS/SSDP/zeroconf）
+    - 224.0.0.0/4        # 组播（mDNS/SSDP/IGMP）
     - fc00::/7
+    - fe80::/10          # IPv6 link-local
+    - ff00::/8           # IPv6 组播
 
 ### 订阅基础配置 [每天更新一次订阅节点，每 300 秒一次健康检查]
 NodeParam:
