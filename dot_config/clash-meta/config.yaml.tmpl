@@ -223,7 +223,7 @@ UrlTest:
 proxy-groups:
   # 主选择组
   - {
-      name: 🎯 节点选择,
+      name: 节点选择,
       type: select,
       proxies: [智能选择, 手动选择, DIRECT],
       url: http://connectivitycheck.platform.hicloud.com/generate_204,
@@ -236,15 +236,15 @@ proxy-groups:
       type: select,
       proxies:
         [
-          🇭🇰 - 手动选择,
-          🇯🇵 - 手动选择,
-          🇰🇷 - 手动选择,
-          🇸🇬 - 手动选择,
-          🇺🇸 - 手动选择,
-          🇬🇧 - 手动选择,
-          🇫🇷 - 手动选择,
-          🇩🇪 - 手动选择,
-          🇹🇼 - 手动选择,
+          香港 - 手动选择,
+          日本 - 手动选择,
+          韩国 - 手动选择,
+          新加坡 - 手动选择,
+          美国 - 手动选择,
+          英国 - 手动选择,
+          法国 - 手动选择,
+          德国 - 手动选择,
+          台湾 - 手动选择,
           Others - 手动选择,
         ],
       url: http://connectivitycheck.platform.hicloud.com/generate_204,
@@ -255,15 +255,15 @@ proxy-groups:
       type: select,
       proxies:
         [
-          🇭🇰 - 自动选择,
-          🇯🇵 - 自动选择,
-          🇰🇷 - 自动选择,
-          🇸🇬 - 自动选择,
-          🇺🇸 - 自动选择,
-          🇬🇧 - 自动选择,
-          🇫🇷 - 自动选择,
-          🇩🇪 - 自动选择,
-          🇹🇼 - 自动选择,
+          香港 - 自动选择,
+          日本 - 自动选择,
+          韩国 - 自动选择,
+          新加坡 - 自动选择,
+          美国 - 自动选择,
+          英国 - 自动选择,
+          法国 - 自动选择,
+          德国 - 自动选择,
+          台湾 - 自动选择,
         ],
       url: http://connectivitycheck.platform.hicloud.com/generate_204,
       icon: https://raw.githubusercontent.com/Orz-3/mini/master/Color/Urltest.png,
@@ -271,51 +271,51 @@ proxy-groups:
 
   # 应用分组
   - {
-      name: ✈️ 电报信息,
+      name: 电报信息,
       type: select,
-      proxies: [🎯 节点选择, 🇭🇰 - 自动选择, 🇯🇵 - 自动选择, 🇸🇬 - 自动选择, 🇺🇸 - 自动选择],
+      proxies: [节点选择, 香港 - 自动选择, 日本 - 自动选择, 新加坡 - 自动选择, 美国 - 自动选择],
       icon: https://raw.githubusercontent.com/Orz-3/mini/master/Color/Telegram.png,
     }
   - {
-      name: 🤖 AIGC,
+      name: AIGC,
       type: select,
-      proxies: [🇺🇸 - 自动选择, 🎯 节点选择, 🇭🇰 - 自动选择, 🇯🇵 - 自动选择, 🇸🇬 - 自动选择],
+      proxies: [美国 - 自动选择, 节点选择, 香港 - 自动选择, 日本 - 自动选择, 新加坡 - 自动选择],
       icon: https://raw.githubusercontent.com/Orz-3/mini/master/Color/OpenAI.png,
     }
   - {
-      name: 🍎 苹果服务,
+      name: 苹果服务,
       type: select,
-      proxies: [DIRECT, 🎯 节点选择, 🇭🇰 - 自动选择, 🇺🇸 - 自动选择],
+      proxies: [DIRECT, 节点选择, 香港 - 自动选择, 美国 - 自动选择],
       icon: https://raw.githubusercontent.com/Orz-3/mini/master/Color/Apple.png,
     }
   - {
-      name: Ⓜ️ 微软服务,
+      name: 微软服务,
       type: select,
-      proxies: [DIRECT, 🎯 节点选择, 🇭🇰 - 自动选择, 🇺🇸 - 自动选择],
+      proxies: [DIRECT, 节点选择, 香港 - 自动选择, 美国 - 自动选择],
       icon: https://raw.githubusercontent.com/Orz-3/mini/master/Color/Microsoft.png,
     }
 
   # 自动选择 - 按地区
-  - { name: 🇭🇰 - 自动选择, <<: *UrlTest, filter: *FilterHK }
-  - { name: 🇯🇵 - 自动选择, <<: *UrlTest, filter: *FilterJP }
-  - { name: 🇰🇷 - 自动选择, <<: *UrlTest, filter: *FilterKR }
-  - { name: 🇸🇬 - 自动选择, <<: *UrlTest, filter: *FilterSG }
-  - { name: 🇺🇸 - 自动选择, <<: *UrlTest, filter: *FilterUS }
-  - { name: 🇬🇧 - 自动选择, <<: *UrlTest, filter: *FilterUK }
-  - { name: 🇫🇷 - 自动选择, <<: *UrlTest, filter: *FilterFR }
-  - { name: 🇩🇪 - 自动选择, <<: *UrlTest, filter: *FilterDE }
-  - { name: 🇹🇼 - 自动选择, <<: *UrlTest, filter: *FilterTW }
+  - { name: 香港 - 自动选择, <<: *UrlTest, filter: *FilterHK }
+  - { name: 日本 - 自动选择, <<: *UrlTest, filter: *FilterJP }
+  - { name: 韩国 - 自动选择, <<: *UrlTest, filter: *FilterKR }
+  - { name: 新加坡 - 自动选择, <<: *UrlTest, filter: *FilterSG }
+  - { name: 美国 - 自动选择, <<: *UrlTest, filter: *FilterUS }
+  - { name: 英国 - 自动选择, <<: *UrlTest, filter: *FilterUK }
+  - { name: 法国 - 自动选择, <<: *UrlTest, filter: *FilterFR }
+  - { name: 德国 - 自动选择, <<: *UrlTest, filter: *FilterDE }
+  - { name: 台湾 - 自动选择, <<: *UrlTest, filter: *FilterTW }
 
   # 手动选择 - 按地区
-  - { name: 🇭🇰 - 手动选择, <<: *Select, filter: *FilterHK }
-  - { name: 🇯🇵 - 手动选择, <<: *Select, filter: *FilterJP }
-  - { name: 🇰🇷 - 手动选择, <<: *Select, filter: *FilterKR }
-  - { name: 🇸🇬 - 手动选择, <<: *Select, filter: *FilterSG }
-  - { name: 🇺🇸 - 手动选择, <<: *Select, filter: *FilterUS }
-  - { name: 🇬🇧 - 手动选择, <<: *Select, filter: *FilterUK }
-  - { name: 🇫🇷 - 手动选择, <<: *Select, filter: *FilterFR }
-  - { name: 🇩🇪 - 手动选择, <<: *Select, filter: *FilterDE }
-  - { name: 🇹🇼 - 手动选择, <<: *Select, filter: *FilterTW }
+  - { name: 香港 - 手动选择, <<: *Select, filter: *FilterHK }
+  - { name: 日本 - 手动选择, <<: *Select, filter: *FilterJP }
+  - { name: 韩国 - 手动选择, <<: *Select, filter: *FilterKR }
+  - { name: 新加坡 - 手动选择, <<: *Select, filter: *FilterSG }
+  - { name: 美国 - 手动选择, <<: *Select, filter: *FilterUS }
+  - { name: 英国 - 手动选择, <<: *Select, filter: *FilterUK }
+  - { name: 法国 - 手动选择, <<: *Select, filter: *FilterFR }
+  - { name: 德国 - 手动选择, <<: *Select, filter: *FilterDE }
+  - { name: 台湾 - 手动选择, <<: *Select, filter: *FilterTW }
   - { name: Others - 手动选择, <<: *Select, filter: *FilterOthers }
 
 ### 规则配置
@@ -325,7 +325,7 @@ RuleSet_classical:
     behavior: classical,
     interval: 43200,
     format: text,
-    proxy: 🎯 节点选择,
+    proxy: 节点选择,
   }
 RuleSet_domain:
   &RuleSet_domain {
@@ -333,7 +333,7 @@ RuleSet_domain:
     behavior: domain,
     interval: 43200,
     format: text,
-    proxy: 🎯 节点选择,
+    proxy: 节点选择,
   }
 RuleSet_ipcidr:
   &RuleSet_ipcidr {
@@ -341,7 +341,7 @@ RuleSet_ipcidr:
     behavior: ipcidr,
     interval: 43200,
     format: text,
-    proxy: 🎯 节点选择,
+    proxy: 节点选择,
   }
 
 # 订阅规则
@@ -500,29 +500,29 @@ rules:
   - RULE-SET,reject_domainset,REJECT
   - RULE-SET,reject_non_ip_drop,REJECT-DROP
   - RULE-SET,reject_non_ip_no_drop,REJECT
-  - RULE-SET,cdn_domainset,🎯 节点选择
-  - RULE-SET,cdn_non_ip,🎯 节点选择
-  - RULE-SET,stream_non_ip,🎯 节点选择
-  - RULE-SET,telegram_non_ip,✈️ 电报信息
+  - RULE-SET,cdn_domainset,节点选择
+  - RULE-SET,cdn_non_ip,节点选择
+  - RULE-SET,stream_non_ip,节点选择
+  - RULE-SET,telegram_non_ip,电报信息
   - RULE-SET,apple_cdn,DIRECT
-  - RULE-SET,download_domainset,🎯 节点选择
-  - RULE-SET,download_non_ip,🎯 节点选择
+  - RULE-SET,download_domainset,节点选择
+  - RULE-SET,download_non_ip,节点选择
   - RULE-SET,microsoft_cdn_non_ip,DIRECT
   - RULE-SET,apple_cn_non_ip,DIRECT
-  - RULE-SET,apple_services,🍎 苹果服务
-  - RULE-SET,microsoft_non_ip,Ⓜ️ 微软服务
-  - RULE-SET,ai_non_ip,🤖 AIGC
-  - RULE-SET,global_non_ip,🎯 节点选择
+  - RULE-SET,apple_services,苹果服务
+  - RULE-SET,microsoft_non_ip,微软服务
+  - RULE-SET,ai_non_ip,AIGC
+  - RULE-SET,global_non_ip,节点选择
   - RULE-SET,domestic_non_ip,DIRECT
   - RULE-SET,direct_non_ip,DIRECT
   - RULE-SET,lan_non_ip,DIRECT
 
   ### IP 类规则
   - RULE-SET,reject_ip,REJECT
-  - RULE-SET,telegram_ip,✈️ 电报信息
-  - RULE-SET,stream_ip,🎯 节点选择
+  - RULE-SET,telegram_ip,电报信息
+  - RULE-SET,stream_ip,节点选择
   - RULE-SET,lan_ip,DIRECT
   - RULE-SET,domestic_ip,DIRECT
   - RULE-SET,china_ip,DIRECT
 
-  - MATCH,🎯 节点选择
+  - MATCH,节点选择
