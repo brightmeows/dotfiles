@@ -243,6 +243,10 @@ function extractEffortValues(raw: RawModel): string[] | undefined {
  * - low/medium/high → 同名直映
  * - xhigh    → 顶档优先：max > xhigh > high
  *
+ * 注意：pi 的 TUI 思考选择器标签硬编码自 ThinkingLevel 枚举（off/minimal/low/medium/high/xhigh），
+ * 无法通过 thinkingLevelMap 改变。即使 xhigh 实际发送 "max"，TUI 仍显示 "xhigh"。
+ * 这是 pi-agent-core 上游限制，需给 ThinkingLevel 加 "max" 枚举才能根治。
+ *
  * 未声明 effort 的模型返回 undefined，pi 将原样发送挡位字符串（向后兼容）。
  */
 function buildThinkingLevelMap(values: string[] | undefined): ThinkingLevelMap | undefined {
@@ -269,7 +273,7 @@ function buildThinkingLevelMap(values: string[] | undefined): ThinkingLevelMap |
   if (set.has("high")) {
     map.high = "high";
   }
-  // 将 xhigh 档映射到 provider 的顶档（pi 枚举无 max，借 xhigh 通道）
+  // 将 xhigh 映射到 provider 顶档（pi 枚举无 max，借 xhigh 通道。TUI 标签仍为 "xhigh"，API 实际发 max）
   if (set.has("max")) {
     map.xhigh = "max";
   } else if (set.has("xhigh")) {
