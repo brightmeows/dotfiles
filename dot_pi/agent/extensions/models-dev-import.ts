@@ -92,17 +92,6 @@ export default async function (pi: ExtensionAPI) {
       continue;
     }
 
-    // ── reasoning effort 翻转：上游 detectCompat 对部分 provider（zai/nvidia/grok/moonshot 等）
-    // 保守默认 supportsReasoningEffort:false。但 models.dev 的 reasoning_options 是权威声明——
-    // 凡构建出 thinkingLevelMap 的模型都明确支持 effort 挡位，一律翻转上游默认，
-    // 让 reasoning_effort 字段正常发送。其余 compat 字段（thinkingFormat / maxTokensField 等）
-    // 完全信任 detectCompat 自动检测。
-    for (const m of models) {
-      if (m.thinkingLevelMap) {
-        m.compat = { ...m.compat, supportsReasoningEffort: true };
-      }
-    }
-
     // ── 环境变量守卫：所有声明的 env var 必须存在且非空 ──
     const envVars = provider.env ?? [];
     const missing = envVars.filter((e) => !process.env[e]);
@@ -303,7 +292,9 @@ function mapModel(raw: RawModel): ProviderModelConfig | null {
     input.push("image");
   }
 
-  const thinkingLevelMap = buildThinkingLevelMap(extractEffortValues(raw));
+  // 从 reasoning_options.effort 构建挡位映射（thinkingLevelMap）及 compat 翻转。
+  const effortValues = extractEffortValues(raw);
+  const thinkingLevelMap = buildThinkingLevelMap(effortValues);
 
   return {
     contextWindow: raw.limit?.context ?? 128_000,
@@ -319,5 +310,6 @@ function mapModel(raw: RawModel): ProviderModelConfig | null {
     name: raw.name ?? raw.id,
     reasoning: raw.reasoning ?? false,
     ...(thinkingLevelMap ? { thinkingLevelMap } : {}),
+    ...(effortValues ? { compat: { supportsReasoningEffort: true } } : {}),
   };
 }
