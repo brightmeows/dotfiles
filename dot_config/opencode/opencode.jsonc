@@ -51,16 +51,23 @@
     },
   },
   "permission": {
+    "external_directory": {
+      "/tmp/**": "allow",
+      "~/.agents_tmp/**": "allow",
+      "/nix/store/**": "allow",
+      "~/.local/share/rtk/tee/**": "allow",
+      "~/.cargo/registry/**": "allow",
+    },
     "read": {
-      "/tmp/*": "allow",
-      ".agents_tmp/*": "allow",
-      "/nix/store/*": "allow",
-      "~/.local/share/rtk/tee/*": "allow",
-      "~/.cargo/registry/*": "allow",
+      "/tmp/**": "allow",
+      "~/.agents_tmp/**": "allow",
+      "/nix/store/**": "allow",
+      "~/.local/share/rtk/tee/**": "allow",
+      "~/.cargo/registry/**": "allow",
     },
     "edit": {
-      "/tmp/*": "allow",
-      ".agents_tmp/*": "allow",
+      "/tmp/**": "allow",
+      "~/.agents_tmp/**": "allow",
     },
   },
 }
