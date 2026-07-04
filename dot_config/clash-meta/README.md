@@ -95,20 +95,20 @@ journalctl -u clash-meta -n 30 | grep "Tun adapter listening"  # 应有该日志
 
 验证：`ip route get 169.254.1.1` 应走物理网卡（如 `wlp1s0`）而非 `mihomo`。
 
-### Git SSH 直连
+### SSH 直连
 
-`github.com:22` 和 `codeberg.org:22` 的 SSH 流量走 DIRECT 直连，不走代理节点。
+所有 22 端口流量走 DIRECT 直连，不走代理节点。
 
-**原因**：机场节点普遍在服务器端封锁出站 22 端口（`iptables ... --dport 22 -j DROP`），防止用户通过 SSH 动态转发（`ssh -D`）把节点变成免费 SOCKS 代理跳板。SSH 走代理会超时，表现为 `git push` / `git pull`（SSH 方式）卡住无响应。
+**原因**：机场节点普遍在服务器端封锁出站 22 端口（`iptables ... --dport 22 -j DROP`），防止用户通过 SSH 动态转发（`ssh -D`）把节点变成免费 SOCKS 代理跳板。SSH 走代理必然超时，表现为 `git push` / `git pull`（SSH 方式）、`ssh` 远程登录卡住无响应。
+
+**规则设计**：用一条 `DST-PORT,22,DIRECT` 覆盖所有 SSH 目标（GitHub、Codeberg、自建仓库等），无需逐域名添加规则。
 
 **影响范围**：
 
-| Git 方式 | 端口 | 走向 | 是否受机场封 22 影响 |
+| 连接方式 | 端口 | 走向 | 是否受机场封 22 影响 |
 |---------|------|------|-------------------|
-| SSH（`git@github.com:...`） | 22 | DIRECT 直连 | 否（绕过代理） |
+| SSH（`git@github.com:...`、`ssh user@host`） | 22 | DIRECT 直连 | 否（绕过代理） |
 | HTTPS（`https://github.com/...`） | 443 | 代理节点 | 否（443 不封） |
-
-GitHub 额外支持 `ssh.github.com:443`（HTTPS 隧道 SSH 入口），也已配置直连。Codeberg 仅支持传统 22 端口 SSH，无 HTTPS 隧道入口。
 
 ### DNS 与 systemd-resolved
 

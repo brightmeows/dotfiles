@@ -387,15 +387,9 @@ rules:
 {{- end }}
 {{- end }}
 {{- end }}
-  # Git SSH 直连规则
-  # 机场节点普遍封锁出站 22 端口（防 SSH 跳板），SSH 走代理会超时
-  # GitHub/Codeberg 在中国可达，直连无问题
-  #
-  # GitHub SSH：HTTPS隧道入口 + 传统22端口
-  - DOMAIN,ssh.github.com,DIRECT
-  - AND,(DOMAIN,github.com),(DST-PORT,22),DIRECT
-  # Codeberg SSH：仅传统22端口（无 HTTPS 隧道入口）
-  - AND,(DOMAIN,codeberg.org),(DST-PORT,22),DIRECT
+  # SSH 直连：机场普遍封出站 22 端口（防 SSH 跳板），SSH 走代理必然超时
+  # 一条端口规则覆盖所有 SSH 目标，无需逐域名添加
+  - DST-PORT,22,DIRECT
 
   ### 非 IP 类规则
   - RULE-SET,reject_non_ip,REJECT
