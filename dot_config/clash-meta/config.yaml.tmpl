@@ -387,12 +387,15 @@ rules:
 {{- end }}
 {{- end }}
 {{- end }}
-  # GitHub SSH直连规则
-  # 精确匹配GitHub SSH连接（支持AND操作符的内核）
-  # 1. HTTPS隧道SSH：ssh.github.com:443
+  # Git SSH 直连规则
+  # 机场节点普遍封锁出站 22 端口（防 SSH 跳板），SSH 走代理会超时
+  # GitHub/Codeberg 在中国可达，直连无问题
+  #
+  # GitHub SSH：HTTPS隧道入口 + 传统22端口
   - DOMAIN,ssh.github.com,DIRECT
-  # 2. 传统SSH：github.com:22（使用AND操作符组合域名和端口）
   - AND,(DOMAIN,github.com),(DST-PORT,22),DIRECT
+  # Codeberg SSH：仅传统22端口（无 HTTPS 隧道入口）
+  - AND,(DOMAIN,codeberg.org),(DST-PORT,22),DIRECT
 
   ### 非 IP 类规则
   - RULE-SET,reject_non_ip,REJECT
