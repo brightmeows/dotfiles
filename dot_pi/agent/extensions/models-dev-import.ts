@@ -30,16 +30,6 @@ const CACHE_DIR = join(homedir(), ".pi", "agent", "cache");
 const CACHE_FILE = join(CACHE_DIR, "models-dev-registry.json");
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 小时
 
-// ── zai 系（智谱 GLM）provider 特征，与 pi-ai detectCompat 的 isZai 判断保持一致 ──
-// 每项可为字符串（URL 子串匹配）或正则表达式。
-// 上游 detectCompat 对这些 provider 默认 supportsReasoningEffort:false，
-// 此处按模型是否声明 effort 精细化翻转，让 GLM-5.2 等 effort 模型可发送挡位。
-const ZAI_PATTERNS: (string | RegExp)[] = ["open.bigmodel.cn", "api.z.ai"];
-
-function matchesAny(pattern: string | RegExp, url: string): boolean {
-  return typeof pattern === "string" ? url.includes(pattern) : pattern.test(url);
-}
-
 // ── Raw JSON types (subset of what api.json provides) ──
 interface RawReasoningOption {
   type: "effort" | "budget_tokens" | "toggle";
@@ -102,21 +92,14 @@ export default async function (pi: ExtensionAPI) {
       continue;
     }
 
-    // ── compat 覆写：zai 系 provider 强制 zai thinking 格式，并按模型能力开启 reasoning effort ──
-    // 已构建出 thinkingLevelMap = 该模型声明了 effort 挡位（如 GLM-5.2 的 [high,max]），
-    // 需显式 supportsReasoningEffort:true 翻转 detectCompat 对 isZai 的默认 false。
-    // 仅声明 toggle 的模型（GLM-5.1/4.6 等）无 thinkingLevelMap，保持 false，只走 thinking toggle。
-    const baseUrl = provider.api ?? "";
-    if (ZAI_PATTERNS.some((p) => matchesAny(p, baseUrl))) {
-      for (const m of models) {
-        const hasEffort = m.thinkingLevelMap !== undefined;
-        m.compat = {
-          maxTokensField: "max_tokens",
-          supportsDeveloperRole: false,
-          supportsReasoningEffort: hasEffort,
-          supportsStore: false,
-          thinkingFormat: "zai",
-        };
+    // ── reasoning effort 翻转：上游 detectCompat 对部分 provider（zai/nvidia/grok/moonshot 等）
+    // 保守默认 supportsReasoningEffort:false。但 models.dev 的 reasoning_options 是权威声明——
+    // 凡构建出 thinkingLevelMap 的模型都明确支持 effort 挡位，一律翻转上游默认，
+    // 让 reasoning_effort 字段正常发送。其余 compat 字段（thinkingFormat / maxTokensField 等）
+    // 完全信任 detectCompat 自动检测。
+    for (const m of models) {
+      if (m.thinkingLevelMap) {
+        m.compat = { ...m.compat, supportsReasoningEffort: true };
       }
     }
 
