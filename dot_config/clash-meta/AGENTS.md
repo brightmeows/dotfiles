@@ -50,6 +50,18 @@ curl -sL <raw URL> -o /tmp/ref.yaml
 `tun.route-exclude-address` 必须排除全部本地网段，否则 mDNS / SSDP / 局域网设备发现会走代理而异常。须包含：私有段（`10/8`、`172.16/12`、`192.168/16`）、`127.0.0.0/8`（loopback）、
 `169.254.0.0/16`（link-local）、`224.0.0.0/4`（组播）及 IPv6 对应段（`fc00::/7`、`fe80::/10`、`ff00::/8`）。验证：`ip route get 169.254.1.1` 应走物理网卡而非 `mihomo`。
 
+### auto-redirect 与 Fedora firewalld 冲突（TUN 静默失败）
+
+`tun.auto-redirect: true` 用 nftables 在 output 链重定向本机出站流量到 tun（mihomo 1.19.5+，文档标“比 auto-route 快”）。
+**Fedora firewalld 默认 nftables backend**，auto-redirect 创建规则时与之冲突，netlink 返回 EEXIST（`file exists`），
+mihomo 报 `Start TUN listening error: auto redirect: ...`，tun 接口**从未创建**、流量全走直连——
+但 mihomo 进程仍 active，极具迷惑性。
+
+桌面单机透明代理**不需要 auto-redirect**：`auto-route`（路由表 2022 + ip rule fwmark）已足够把本机流量导入 tun，
+纯路由表方式不碰 nftables。auto-redirect 为网关/转发场景设计。本配置 `auto-redirect: false`，勿改回 true。
+
+诊断 TUN 未生效：`ip -br link | grep mihomo`（无）+ `ip route show table 2022`（空）+ `journalctl -u clash-meta | grep "auto redirect"`（file exists）。
+
 ### external-controller 端口与 external-ui serve 启动时绑定
 
 `external-controller` 监听端口与 `external-ui` 的 HTTP serve 在 mihomo 启动时绑定。payload 热加载（`PUT /configs`）不重新绑定端口、不重新注册 ui serve——改这两项后必须 `deploy.sh` 重启验证。

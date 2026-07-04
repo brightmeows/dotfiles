@@ -70,6 +70,19 @@ metacubexd 由 mihomo `external-ui` 本地托管（首次启动自动从 GitHub 
 
 本配置针对 Fedora Kinoite（原子化系统）调校，部署时需注意以下几点。
 
+### TUN 生效验证
+
+部署后确认 tun 真正接管流量（曾因 auto-redirect 冲突导致 tun 静默失败，mihomo 进程仍 active 极具迷惑性）：
+
+```bash
+ip -br link | grep mihomo                      # 应出现 mihomo 接口
+ip route show table 2022 | head -3             # 应有 0.0.0.0/1、128.0.0.0/1
+curl -s https://www.cloudflare.com/cdn-cgi/trace | grep ^ip=  # 节点 IP（非本地运营商）
+journalctl -u clash-meta -n 30 | grep "Tun adapter listening"  # 应有该日志
+```
+
+任一项缺失即 tun 未生效，查 `journalctl -u clash-meta | grep -i error`。
+
 ### 本地网络直连
 
 `tun.route-exclude-address` 已排除全部本地网段，确保局域网通信、设备发现、组播**不走代理**：
@@ -88,7 +101,13 @@ metacubexd 由 mihomo `external-ui` 本地托管（首次启动自动从 GitHub 
 
 ### firewalld
 
-系统默认启用 firewalld，它通过 nftables 管理自己的表，与 mihomo `auto-redirect` 的 nft 表互相独立、可共存。`deploy.sh` 会把 `mihomo` tun 接口置入 `trusted` zone 以放行其流量（best-effort，失败不阻断主流程）。
+系统默认启用 firewalld（nftables backend）。**实测 `auto-redirect: true` 会与之冲突**：
+auto-redirect 用 nftables 在 output 链重定向流量，创建规则时 netlink 返回 EEXIST（`file exists`），
+导致 TUN listening 失败、tun 接口从未创建。
+本配置已关闭 `auto-redirect`，仅靠 `auto-route`（路由表 2022 + ip rule），
+纯路由表方式不碰 nftables，与 firewalld 真正独立共存。
+
+`deploy.sh` 会把 `mihomo` tun 接口置入 `trusted` zone 放行流量（best-effort）。
 
 ### SELinux
 
