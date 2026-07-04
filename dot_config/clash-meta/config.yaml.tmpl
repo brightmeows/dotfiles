@@ -81,6 +81,22 @@ dns:
       - 0.0.0.0/32
       - 127.0.0.0/8
       - 100.64.0.0/10
+  # 订阅源专用 DNS：绕过 fallback，避免解析境外 IP 时触发需走节点的 fallback 死锁
+  nameserver-policy:
+{{- $seen := dict }}
+{{- range $sub := $subs }}
+{{- $kv := splitList "=" $sub }}
+{{- if ge (len $kv) 2 }}
+{{- $url := join "=" (rest $kv) }}
+{{- if and (ne (trim $url) "") (or (hasPrefix "http://" $url) (hasPrefix "https://" $url)) }}
+{{- $u := urlParse $url }}
+{{- if and $u.host (not (hasKey $seen $u.host)) }}
+{{- $_ := set $seen $u.host true }}
+    "{{ $u.host }}": [https://dns.alidns.com/dns-query, https://doh.pub/dns-query]
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
 
 # 域名嗅探
 # https://wiki.metacubex.one/config/sniff/
@@ -450,6 +466,19 @@ rule-providers:
 
 # 分流规则
 rules:
+  # 订阅源直连（打破下载死锁：respect-rules 下 DIRECT 域名用 nameserver 解析 + 直连，不依赖节点）
+{{- range $sub := $subs }}
+{{- $kv := splitList "=" $sub }}
+{{- if ge (len $kv) 2 }}
+{{- $url := join "=" (rest $kv) }}
+{{- if and (ne (trim $url) "") (or (hasPrefix "http://" $url) (hasPrefix "https://" $url)) }}
+{{- $u := urlParse $url }}
+{{- if $u.host }}
+  - DOMAIN,{{ $u.host }},DIRECT
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
   # GitHub SSH直连规则
   # 精确匹配GitHub SSH连接（支持AND操作符的内核）
   # 1. HTTPS隧道SSH：ssh.github.com:443
