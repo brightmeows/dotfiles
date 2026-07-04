@@ -83,7 +83,7 @@ CFG=$(python3 -c 'import json;print(json.dumps(open("/var/home/brightmeows/.conf
 curl -X PUT 'http://127.0.0.1:9090/configs?force=true' -d "{\"payload\":$CFG}"
 
 # 3. 验证地区组节点就位
-curl -s http://127.0.0.1:9090/proxies | python3 -c "import json,sys;d=json.load(sys.stdin)['proxies'];print('🇭🇰',len(d['🇭🇰 - 自动选择']['all']),'🇯🇵',len(d['🇯🇵 - 自动选择']['all']))"
+curl -s http://127.0.0.1:9090/proxies | python3 -c "import json,sys;d=json.load(sys.stdin)['proxies'];print('🇭🇰',len(d['香港 - 手动选择']['all']),'🇯🇵',len(d['日本 - 手动选择']['all']))"
 ```
 
 `PUT /configs` 的 `path` 模式只接受 `/var/lib/clash-meta` 下路径（mihomo 安全限制），验证时必须用 `payload` 传内容。
