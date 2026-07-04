@@ -27,6 +27,9 @@ MD040 = false # 技能文档大量代码块无需 language spec
 MD046 = false # 代码块风格 fenced/indented 混用
 MD060 = false # CJK+代码混排表格中列对齐误报
 
+[MD010]
+code_blocks = false # 代码块内可能含 tab 分隔数据（如 Rime 词库示例）
+
 [MD013]
 line_length = 200 # 行宽 200（CJK 混排 + URL 引用需要更多空间）
 code_blocks = false # 代码块内的长行不报错

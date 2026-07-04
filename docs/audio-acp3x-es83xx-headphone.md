@@ -91,7 +91,8 @@ static int acp3x_es83xx_headphone_power_event(...) {
 
 上游补丁 [[PATCH AUTOSEL 6.18-6.1] ASoC: Intel: sof_es8336: Add DMI quirk for Huawei BOD-WXX9](https://www.spinics.net/lists/stable/msg911673.html)（针对同系列 BOD-WXX9，2026-02）的 RFC 部分明确记录了**完全相同**的现象：
 
-> GPIO values change in driver (`gpiod_get_value()` shows logical value changes) but not physically (debugfs gpio shows no change). The same `gpiod_set_value_cansleep()` calls work correctly in probe context with `msleep()`, but fail when called from DAPM event callbacks.
+> GPIO values change in driver (`gpiod_get_value()` shows logical value changes) but not physically (debugfs gpio shows no change).
+> The same `gpiod_set_value_cansleep()` calls work correctly in probe context with `msleep()`, but fail when called from DAPM event callbacks.
 >
 > - GPIO 17 (speakers): changes in driver, no physical change
 > - GPIO 16 (headphone): changes in driver, no physical change
