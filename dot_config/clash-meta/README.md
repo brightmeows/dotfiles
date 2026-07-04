@@ -58,8 +58,10 @@ sudo bash ~/.config/clash-meta/deploy.sh   # 部署 + 重载
 
 metacubexd 由 mihomo `external-ui` 本地托管（首次启动自动从 GitHub 下载到 `/var/lib/clash-meta/ui`）。`external-controller` 监听 80 端口，浏览器按 RFC 6761 将 `clash.localhost` 自动解析为 127.0.0.1，故无需 `:9090`、无需 `hosts` / `/etc/hosts`：
 
-- 面板：`http://clash.localhost/ui/`
-- 直连：`http://127.0.0.1/ui/`
+- 面板：`http://clash.localhost/ui/metacubexd/`（`external-ui-name` 决定子路径）
+- 直连：`http://127.0.0.1/ui/metacubexd/`
+
+面板首次进入需填后端：`http://clash.localhost` 或 `http://127.0.0.1`（默认 80，**不要带 `:9090`**）。
 
 手动更新面板：`curl -X POST http://127.0.0.1/upgrade/ui`
 

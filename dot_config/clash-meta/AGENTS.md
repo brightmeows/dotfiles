@@ -56,7 +56,10 @@ curl -sL <raw URL> -o /tmp/ref.yaml
 
 ### 本地面板访问（clash.localhost）
 
-面板用 `http://clash.localhost/ui/`：`clash.localhost` 由浏览器按 RFC 6761 自动解析为 127.0.0.1，`external-controller` 监听 80 免端口。**不要用 mihomo `hosts` 做本地域名**——实测其对 DNS 查询的拦截不可靠（自定义 TLD 查询返回 NXDOMAIN），`.localhost` 走浏览器原生解析绕过此问题。
+面板用 `http://clash.localhost/ui/metacubexd/`（`external-ui-name` 决定子路径）：
+`clash.localhost` 由浏览器按 RFC 6761 自动解析为 127.0.0.1，`external-controller` 监听 80 免端口。
+面板后端填 `http://clash.localhost`（默认 80，勿带 `:9090`）。
+**不要用 mihomo `hosts` 做本地域名**——实测其对 DNS 查询的拦截不可靠（自定义 TLD 查询返回 NXDOMAIN），`.localhost` 走浏览器原生解析绕过此问题。
 
 ### 配置校验与热加载（无需 sudo 的验证闭环）
 
