@@ -56,14 +56,14 @@ sudo bash ~/.config/clash-meta/deploy.sh   # 部署 + 重载
 
 ## 管理面板
 
-metacubexd 由 mihomo `external-ui` 本地托管（首次启动自动从 GitHub 下载到 `/var/lib/clash-meta/ui`）。
+metacubexd 由 mihomo `external-ui` 本地托管（首次启动自动从 GitHub 下载到 `/var/lib/clash-meta/ui`）。`external-controller` 监听 80 端口，浏览器按 RFC 6761 将 `clash.localhost` 自动解析为 127.0.0.1，故无需 `:9090`、无需 `hosts` / `/etc/hosts`：
 
-- 域名访问：`http://clash.meow:9090/ui/`（`clash.meow` 经 mihomo `hosts` 解析为 127.0.0.1，依赖 tun 运行）
-- 直连访问：`http://127.0.0.1:9090/ui/`
+- 面板：`http://clash.localhost/ui/`
+- 直连：`http://127.0.0.1/ui/`
 
-手动更新面板：`curl -X POST http://127.0.0.1:9090/upgrade/ui`
+手动更新面板：`curl -X POST http://127.0.0.1/upgrade/ui`
 
-> `external-ui` 静态托管与 `hosts` 映射在 mihomo **启动时**初始化，payload 热加载不触发；改这两项后需 `deploy.sh` 重启生效。
+> `external-controller` 端口与 `external-ui` serve 在 mihomo **启动时**绑定，payload 热加载不触发；改这两项后需 `deploy.sh` 重启生效。
 
 ## 已知约束
 

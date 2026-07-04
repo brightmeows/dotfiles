@@ -50,9 +50,13 @@ curl -sL <raw URL> -o /tmp/ref.yaml
 `tun.route-exclude-address` 必须排除全部本地网段，否则 mDNS / SSDP / 局域网设备发现会走代理而异常。须包含：私有段（`10/8`、`172.16/12`、`192.168/16`）、`127.0.0.0/8`（loopback）、
 `169.254.0.0/16`（link-local）、`224.0.0.0/4`（组播）及 IPv6 对应段（`fc00::/7`、`fe80::/10`、`ff00::/8`）。验证：`ip route get 169.254.1.1` 应走物理网卡而非 `mihomo`。
 
-### external-ui 与 hosts 仅启动时初始化
+### external-controller 端口与 external-ui serve 启动时绑定
 
-`external-ui`（metacubexd 静态托管）与 `hosts`（`clash.meow` → 127.0.0.1）在 mihomo 启动时初始化。payload 热加载（`PUT /configs`）不重新注册 external-ui HTTP serve、不重载 hosts 表——改这两项后必须 `deploy.sh` 重启验证，不能靠热加载。
+`external-controller` 监听端口与 `external-ui` 的 HTTP serve 在 mihomo 启动时绑定。payload 热加载（`PUT /configs`）不重新绑定端口、不重新注册 ui serve——改这两项后必须 `deploy.sh` 重启验证。
+
+### 本地面板访问（clash.localhost）
+
+面板用 `http://clash.localhost/ui/`：`clash.localhost` 由浏览器按 RFC 6761 自动解析为 127.0.0.1，`external-controller` 监听 80 免端口。**不要用 mihomo `hosts` 做本地域名**——实测其对 DNS 查询的拦截不可靠（自定义 TLD 查询返回 NXDOMAIN），`.localhost` 走浏览器原生解析绕过此问题。
 
 ### 配置校验与热加载（无需 sudo 的验证闭环）
 

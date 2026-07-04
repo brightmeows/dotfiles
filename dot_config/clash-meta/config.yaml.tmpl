@@ -8,13 +8,11 @@
 */ -}}
 {{- /* 用 bash 的 $HOME（chezmoi 执行命令时继承），不依赖 .chezmoi.homedir 变量（该 key 不存在） */ -}}
 {{- $subs := output "bash" "-c" "set -a; . $HOME/.env_self 2>/dev/null; env | grep '_SUBSCRIPTION=' || true" | splitList "\n" -}}
-external-controller: "127.0.0.1:9090"
+external-controller: "127.0.0.1:80"
 external-ui: ./ui
 external-ui-name: metacubexd
 external-ui-url: "https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip"
-# 本地配置域名（经 tun dns-hijack 解析为 127.0.0.1，访问 http://clash.meow:9090/ui/ 打开面板）
-hosts:
-  "clash.meow": 127.0.0.1
+# 管理面板：http://clash.localhost/ui/（clash.localhost 由浏览器按 RFC 6761 自动解析为 127.0.0.1；监听 80 免端口）
 
 allow-lan: true
 mode: rule
