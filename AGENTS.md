@@ -22,6 +22,15 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | TypeScript | latest (system) | 扩展/插件类型检查 |
 | Node | latest (system) | JS 运行时 |
 
+## 系统配置记录
+
+`docs/` 目录下记录了本系统的关键配置决策和历史变更，方便后续排查和重建。
+
+| 文件 | 内容 |
+|------|------|
+| [`docs/fedora-kinoite-multimedia-repo-config.md`](docs/fedora-kinoite-multimedia-repo-config.md) | Fedora Kinoite 44 多媒体仓库布局、编解码能力分析、terra-mesa 移除记录 |
+| [`docs/audio-acp3x-es83xx-headphone.md`](docs/audio-acp3x-es83xx-headphone.md) | AMD ACP3x 音频耳机问题处理 |
+
 ## Commands
 
 > **⚠️ 重要约定**： chezmoi 命令必须使用 `-S .` 指定源目录为当前仓库根目录（`~/Codes/dotfiles`）。这是本仓库的非标准目录结构要求，避免使用默认的 `~/.local/share/chezmoi`。
