@@ -1,20 +1,28 @@
-export PATH="$PATH"
-export PATH="$PATH:$HOME/bin"
-export PATH="$PATH:$HOME/.local/bin"
-export PATH="$PATH:$HOME/go/bin"
-export PATH="$PATH:$HOME/.cargo/bin"
-export PATH="$PATH:$HOME/.opencode/bin"
-export PATH="$PATH:$HOME/.bun/bin"
-# AppImages (建议使用 Gear Lever 管理 AppImages)
-# flatpak install flathub it.mijorus.gearlever
-export PATH="$PATH:$HOME/AppImages"
+# Load env file with += (append) and <= (prepend) support
+# Format: KEY=VALUE | KEY+=value (append with :) | KEY<=value (prepend with :)
+_load_env_file() {
+    local file="$1"
+    [ -f "$file" ] || return 0
+    local key value current
+    while IFS='=' read -r key value; do
+        [[ "$key" =~ ^[[:space:]]*# ]] && continue
+        [[ -z "${key// }" ]] && continue
+        key="${key#"${key%%[![:space:]]*}"}"
+        key="${key%"${key##*[![:space:]]}"}"
+        local op="="
+        if [[ "$key" == *+ ]]; then op="+="; key="${key%+}"
+        elif [[ "$key" == *\< ]]; then op="<="; key="${key%\<}"; fi
+        value="${value/#\~/$HOME}"
+        case "$op" in
+            =)  export "$key=$value" ;;
+            "+=") current="${!key}"; export "$key=${current:+$current:}$value" ;;
+            "<=") current="${!key}"; export "$key=$value${current:+:$current}" ;;
+        esac
+    done < "$file"
+}
 
-# Load custom environment variables
-if [ -f "$HOME/.env_self" ]; then
-    set -a
-    source "$HOME/.env_self"
-    set +a
-fi
+_load_env_file "$HOME/.env_common"
+_load_env_file "$HOME/.env_self"
 
 alias k="kubectl"
 alias ze="zellij"
@@ -38,4 +46,3 @@ if command -v gh &> /dev/null; then
     fi
 fi
 
-export NIXPKGS_ALLOW_UNFREE=1
