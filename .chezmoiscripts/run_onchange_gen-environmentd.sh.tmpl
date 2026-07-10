@@ -1,0 +1,63 @@
+#!/bin/bash
+# Generate ~/.config/environment.d/50-meow.conf from ~/.env_common
+# Translates += (append) and <= (prepend) operators into environment.d's
+# ${KEY:+...} guard syntax, merging multiple ops per key into one assignment.
+# Trigger: reruns when dot_env_common content changes.
+# dot_env_common hash: {{ include "dot_env_common" | sha256sum }}
+set -euo pipefail
+
+SOURCE="{{ .chezmoi.sourceDir }}/dot_env_common"
+OUTDIR="${HOME}/.config/environment.d"
+OUTFILE="${OUTDIR}/50-meow.conf"
+
+if [ ! -f "$SOURCE" ]; then
+    echo "Warning: $SOURCE not found, skipping environment.d generation" >&2
+    exit 0
+fi
+
+mkdir -p "$OUTDIR"
+
+awk '
+# Skip comments and empty lines
+/^[[:space:]]*#/ || /^[[:space:]]*$/ { next }
+{
+    eq = index($0, "=")
+    if (eq == 0) next
+    raw = substr($0, 1, eq - 1); sub(/^[ \t]+|[ \t]+$/, "", raw)
+    val = substr($0, eq + 1)
+    # environment.d does not support ~ expansion; use ${HOME}
+    sub(/^~/, "${HOME}", val)
+
+    if (raw ~ /\+$/) { op = "+="; key = substr(raw, 1, length(raw) - 1) }
+    else if (raw ~ /<$/) { op = "<="; key = substr(raw, 1, length(raw) - 1) }
+    else { op = "="; key = raw }
+
+    if (!(key in order_idx)) { order_idx[key] = ++nkeys; order[nkeys] = key }
+
+    if (op == "+=")      app[key] = (key in app ? app[key] ":" val : val)
+    else if (op == "<=") pre[key] = (key in pre ? val ":" pre[key] : val)
+    else                 { base[key] = val; hasbase[key] = 1 }
+}
+END {
+    for (i = 1; i <= nkeys; i++) {
+        k = order[i]
+        # ${K:+${K}:} guards append so no leading colon when unset
+        ref  = "${" k ":+${" k "}:}"
+        gref = "${" k ":+:${" k "}}"
+        if (k in hasbase) {
+            v = base[k]
+            if (k in pre) v = pre[k] ":" v
+            if (k in app) v = v ":" app[k]
+            print k "=" v
+        } else if (k in app && !(k in pre)) {
+            print k "=" ref app[k]
+        } else if (k in pre && !(k in app)) {
+            print k "=" pre[k] gref
+        } else {
+            print k "=" pre[k] "${" k ":+:${" k "}:}" app[k]
+        }
+    }
+}
+' "$SOURCE" > "$OUTFILE"
+
+echo "Generated $OUTFILE"
