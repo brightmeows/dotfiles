@@ -40,3 +40,7 @@ try {
 if (which nixvim | is-not-empty) {
     $env.EDITOR = "nixvim"
 }
+
+# Alias vi/vim → nvim
+alias vi = nvim
+alias vim = nvim
