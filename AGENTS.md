@@ -58,6 +58,29 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 **实现机制**：合并脚本位于 `.chezmoiscripts/` 目录，使用 `run_` 前缀和模板 hash 监听源文件变化，自动触发合并。
 
+## 环境变量配置
+
+环境变量采用“单一数据源 + 双加载路径”架构。
+
+**数据源**：`dot_env_common`（bash 与 nushell 共享的静态变量，chezmoi 管理）+ 可选 `~/.env_self`（本地补充，不入仓库）。
+
+**自定义语法**（`KEY=` 原样 / `KEY+=` 以 `:` 追加 / `KEY<=` 前插）由 shell 加载器与 environment.d 生成脚本共用。
+
+**双加载路径**：
+
+| 路径 | 消费者 | 影响范围 | 读取源 |
+|---|---|---|---|
+| ① Shell | `dot_bashrc`（`_load_env_file`）、`dot_config/nushell/env.nu`（`load-env-file`） | TTY/SSH 登录的交互式 shell | `.env_common` + `.env_self` |
+| ② systemd environment.d | `run_onchange_gen-environmentd.sh.tmpl` → `~/.config/environment.d/50-meow.conf` | systemd user manager 及图形会话（Hyprland/niri） | 仅 `.env_common` |
+
+**踩坑点**：
+
+- environment.d **不影响** TTY/SSH 登录的 shell——纯 shell 变量只走路径①
+- `~/.env_self` **只被 shell 读取**，不进 environment.d——本地补充的变量在图形会话/服务中不可见
+- nushell 加载器不支持 `$VAR` 引用展开，含变量引用的项须保留在各 shell 配置内
+
+> environment.d 生成产物 `50-meow.conf` 的同步机制见上文“自动同步机制”一节。
+
 ## 边界规则
 
 ### Always Do
