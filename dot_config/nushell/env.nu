@@ -1,5 +1,6 @@
 # Load environment file with += (append) and <= (prepend) support
-# Format: KEY=VALUE | KEY+=value (append with :) | KEY<=value (prepend with :)
+# Format: KEY=VALUE | KEY+=value (append) | KEY<=value (prepend)
+# Separator for path-like variables uses (char env_sep), platform-appropriate.
 def --env load-env-file [path: string] {
     if not ($path | path exists) { return }
     let lines = (open $path
@@ -24,7 +25,7 @@ def --env load-env-file [path: string] {
             } else if ($cur | is-empty) {
                 $value
             } else {
-                $"($cur):($value)"
+                $"($cur)(char env_sep)($value)"
             }
             load-env ({} | insert $key $new)
         } else if ($raw_key | str ends-with "<") {
@@ -35,7 +36,7 @@ def --env load-env-file [path: string] {
             } else if ($cur | is-empty) {
                 $value
             } else {
-                $"($value):($cur)"
+                $"($value)(char env_sep)($cur)"
             }
             load-env ({} | insert $key $new)
         } else {
@@ -47,7 +48,7 @@ def --env load-env-file [path: string] {
 load-env-file ($env.HOME | path join ".env_common")
 load-env-file ($env.HOME | path join ".env_self")
 
-# Convert PATH to list (env files loaded it as colon-separated string)
+# Convert PATH to list (env files loaded it as OS-separator-separated string)
 $env.PATH = ($env.PATH | split row (char env_sep))
 
 # pnpm
