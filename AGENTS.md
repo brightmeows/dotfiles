@@ -81,6 +81,17 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 > environment.d 生成产物 `50-meow.conf` 的同步机制见上文“自动同步机制”一节。
 
+## 跨平台注意事项
+
+本仓库管理多台机器的配置文件，部分配置项具有**平台特异性**（OS 路径、shell 位置、包管理器路径等），不应纳入共享的 dotfiles 源文件。
+
+| 配置示例 | 所属场景 | 处理方式 |
+|---------|---------|--------|
+| Pi `shellPath` | Windows Git Bash 路径，因安装方式而异 | 直接写入 `~/.pi/agent/settings.json`，不入 `settings.meow.json` |
+| `~/.env_self` | 本地补充的环境变量 | 见“环境变量配置”，**不入仓库** |
+
+**原则**：路径、端口、密钥等机器相关配置 → 本机直接写入目标文件，不入源文件；行为、主题、偏好等共享配置 → 写入源文件，通过 chezmoi 分发。
+
 ## 边界规则
 
 ### Always Do
