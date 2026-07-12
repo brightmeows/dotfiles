@@ -94,6 +94,8 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 **原则**：路径、端口、密钥等机器相关配置 → 本机直接写入目标文件，不入源文件；行为、主题、偏好等共享配置 → 写入源文件，通过 chezmoi 分发。
 
+> ⚠️ 有部分应用的配置文件在各平台的实际应用位置不同（例如 Nu 在 Linux 上使用 `~/.config/nushell`，在 Windows 上使用 `%AppData%\nushell`）。chezmoi 通过 `dot_` → `.` 命名约定和 `chezmoi.toml.tmpl` 中的精确路径映射来处理这些差异，修改时请确认目标位置。
+
 ## 边界规则
 
 ### Always Do

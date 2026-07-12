@@ -45,11 +45,21 @@ def --env load-env-file [path: string] {
     }
 }
 
+# Save original system PATH before any modifications
+let _system_path = ($env.PATH | default ($env.Path | default ""))
+
 load-env-file ($env.HOME | path join ".env_common")
 load-env-file ($env.HOME | path join ".env_self")
 
-# Convert PATH to list (env files loaded it as OS-separator-separated string)
+# Convert PATH to list
 $env.PATH = ($env.PATH | split row (char env_sep))
+
+# Merge with original system paths if they were lost
+let _sys = ($_system_path | split row (char env_sep) | where {|p| ($p | str trim) != "" })
+let _sys_missing = ($_sys | where {|p| $p not-in ($env.PATH | default []) })
+if ($_sys_missing | length) > 0 {
+    $env.PATH = ($env.PATH | append $_sys_missing)
+}
 
 # pnpm
 $env.PNPM_HOME = "/var/home/brightmeows/.local/share/pnpm"
