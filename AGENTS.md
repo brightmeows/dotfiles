@@ -78,6 +78,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 - environment.d **不影响** TTY/SSH 登录的 shell——纯 shell 变量只走路径①
 - `~/.env_self` **只被 shell 读取**，不进 environment.d——本地补充的变量在图形会话/服务中不可见
 - nushell 加载器不支持 `$VAR` 引用展开，含变量引用的项须保留在各 shell 配置内
+- Nu 的 `load-env-file` 的 `PATH+=` 处理器会根据 `$env.PATH` 的类型分支：list→`append`，string→`concat`。Windows 上初始为 list，但部分场景（Nu 版本/交互模式差异）可能丢失系统 PATH。`env.nu` 底部有安全兜底——保存原始 PATH 并在末尾合并缺失条目。
 
 > environment.d 生成产物 `50-meow.conf` 的同步机制见上文“自动同步机制”一节。
 
