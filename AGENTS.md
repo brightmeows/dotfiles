@@ -58,6 +58,21 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 **实现机制**：合并脚本位于 `.chezmoiscripts/` 目录，使用 `run_` 前缀和模板 hash 监听源文件变化，自动触发合并。
 
+## 跨平台路径映射
+
+部分应用的配置文件在各平台的实际应用位置不同（例如 Nu 在 Linux 上使用 `~/.config/nushell`，在 Windows 上使用 `%AppData%\nushell`）。chezmoi 的 `.chezmoiexternal.toml` 负责处理这些差异：
+
+```toml
+{{- if eq .chezmoi.os "windows" }}
+# Windows 上将源文件复制到 %AppData% 对应位置
+["AppData/Roaming/nushell/env.nu"]
+type = "file"
+url = "file://{{ .chezmoi.sourceDir }}/dot_config/nushell/env.nu"
+{{- end }}
+```
+
+修改此类配置文件时，需确认目标位置是否由 `.chezmoiexternal.toml` 定义，而非 `dot_` 命名约定的默认位置。
+
 ## 环境变量配置
 
 环境变量采用“单一数据源 + 双加载路径”架构。
@@ -95,7 +110,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 **原则**：路径、端口、密钥等机器相关配置 → 本机直接写入目标文件，不入源文件；行为、主题、偏好等共享配置 → 写入源文件，通过 chezmoi 分发。
 
-> ⚠️ 有部分应用的配置文件在各平台的实际应用位置不同（例如 Nu 在 Linux 上使用 `~/.config/nushell`，在 Windows 上使用 `%AppData%\nushell`）。chezmoi 通过 `dot_` → `.` 命名约定和 `chezmoi.toml.tmpl` 中的精确路径映射来处理这些差异，修改时请确认目标位置。
+> ⚠️ `.chezmoiexternal.toml` 中定义的平台路径映射优先级高于 `dot_` → `.` 默认命名约定。修改配置文件前请先检查此文件。
 
 ## 边界规则
 
