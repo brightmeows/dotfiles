@@ -1,0 +1,6 @@
+mode = "symlink"
+
+{{ if and (eq .chezmoi.os "windows") (lookPath "bash") -}}
+[interpreters]
+sh = { command = {{ lookPath "bash" | toJson }} }
+{{- end }}
