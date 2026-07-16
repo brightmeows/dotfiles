@@ -25,7 +25,7 @@ def --env load-env-file [path: string] {
 
         if ($raw_key | str ends-with "+") {
             let key = ($raw_key | str substring 0..<-1)
-            let cur = ($env | get -i $key)
+            let cur = ($env | get -o $key)
             let new = if ($cur | describe | str starts-with "list") {
                 $cur | append $value
             } else if ($cur | is-empty) {
@@ -36,7 +36,7 @@ def --env load-env-file [path: string] {
             load-env ({} | insert $key $new)
         } else if ($raw_key | str ends-with "<") {
             let key = ($raw_key | str substring 0..<-1)
-            let cur = ($env | get -i $key)
+            let cur = ($env | get -o $key)
             let new = if ($cur | describe | str starts-with "list") {
                 $cur | prepend $value
             } else if ($cur | is-empty) {
