@@ -57,6 +57,12 @@ with open(sys.argv[1], encoding="utf-8") as fh:
 PYEOF
 ````
 
+## 文档同步
+
+修改仓库功能或配置后，必须同步更新相关文档。
+
+- 面向代理的文档的同步（仓库各 `AGENTS.md` 等），使用 `writing-agent-docs` 技能及其子技能。
+
 ## 提交规范
 
 **格式**：Conventional Commits，`type(scope)!: subject`。`!` 表示 breaking change、放在冒号前。scope 为变更模块名（小写 kebab-case），如 `core`, `api`, `cli`, `ui`, `deps`。
