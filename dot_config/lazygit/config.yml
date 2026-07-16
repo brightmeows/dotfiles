@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/jesseduffield/lazygit/master/schema/config.json
+# lazygit 配置 —— 仅保留实际想覆盖默认值的项
+# 参考文档: https://github.com/jesseduffield/lazygit/blob/master/docs/Config.md
+
+gui:
+  # Nerd Font v3，启用文件树图标（前提：终端字体为 Nerd Font v3）
+  nerdFontsVersion: "3"
+  # 中文界面
+  language: zh-CN
+
+git:
+  # 用 delta 渲染 diff（系统已装 /usr/bin/delta）
+  pagers:
+    - name: delta
+      colorArg: always
+      pager: delta --dark --paging=never
+
+os:
+  # 按 e 编辑文件 / reword 时直接调用 nvim
+  editPreset: nvim
