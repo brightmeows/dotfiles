@@ -69,8 +69,6 @@
       "/tmp/**": "allow",
       "~/.agents_tmp/**": "allow",
     },
-    "skill": {
-      "using-superpowers": "deny",
-    },
+    "skill": {},
   },
 }
