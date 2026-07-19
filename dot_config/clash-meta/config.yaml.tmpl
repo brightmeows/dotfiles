@@ -14,7 +14,8 @@ external-ui-name: metacubexd
 external-ui-url: "https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip"
 # 管理面板：http://clash.localhost:9090/ui/metacubexd/（9090 与 metacubexd 默认后端一致，免手动填）
 
-allow-lan: true
+# false：桌面单机 TUN 透明代理，无需给局域网其它设备当代理网关，减少攻击面
+allow-lan: false
 mode: rule
 log-level: warning
 ipv6: false
@@ -25,9 +26,10 @@ tcp-concurrent: true
 profile:
   store-selected: true
   store-fake-ip: true
+  store-cache: true  # 持久化节点延迟测试结果，重启免重新探测
 
 geo-auto-update: true
-geo-update-interval: 240
+geo-update-interval: 86400  # GeoIP/GeoSite 库每日更新一次足够，原 240(4h) 过于频繁徒增后台流量
 geox-url:
   geoip: "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat"
   geosite: "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat"
@@ -58,6 +60,13 @@ dns:
     - "time.windows.com"
     - "time.apple.com"
     - "time.cloudflare.com"
+    # Git 托管走真实 IP：DST-PORT,22,DIRECT 时无需 fake-ip 反查域名，消除 SSH 首连抖动
+    # 配合 fallback-filter.domain 让这些域名经境外 DNS 解析，避免国内 DNS 返回污染 IP
+    - "+.github.com"
+    - "+.githubusercontent.com"
+    - "+.codeberg.org"
+    - "+.gitlab.com"
+    - "+.gitlab-static.net"
   default-nameserver:
     - 114.114.114.114
     - 223.5.5.5
@@ -68,7 +77,8 @@ dns:
   nameserver:
     - https://dns.alidns.com/dns-query
     - https://doh.pub/dns-query
-    - https://dns.cloudflare.com/dns-query
+    # 不放境外 DoH：respect-rules 下解析 DoH 服务端域名本身要走 rules→节点，启动期/节点故障时扩大死锁面
+    # 境外 DNS 全部放 fallback，由 fallback-filter 判定污染后兜底（与官方 DNS 文档示例结构一致）
   respect-rules: true
   proxy-server-nameserver:
     - https://dns.alidns.com/dns-query
@@ -85,6 +95,15 @@ dns:
       - 0.0.0.0/32
       - 127.0.0.0/8
       - 100.64.0.0/10
+    # 已知易被国内 DNS 污染的境外域名：直接走 fallback（境外 DNS）解析，跳过 nameserver 污染判定环节
+    # 注：geosite 字段官方已标注废弃（改用 nameserver-policy），此处只用 domain 显式列举
+    domain:
+      - "+.google.com"
+      - "+.googlevideo.com"
+      - "+.github.com"
+      - "+.githubusercontent.com"
+      - "+.codeberg.org"
+      - "+.gitlab.com"
   # 订阅源专用 DNS：绕过 fallback，避免解析境外 IP 时触发需走节点的 fallback 死锁
   nameserver-policy:
 {{- $seen := dict }}
@@ -117,7 +136,8 @@ sniffer:
       ports: [443, 8443]
       override-destination: true
   skip-domain:
-    - "Mijia Cloud"
+    # "Mijia Cloud" 已移除：非合法域名格式（含空格），匹配不到任何实际查询；
+    # 米家设备发现走 mDNS（224.0.0.251 / ff02::fb），已被 tun.route-exclude-address 排除，不进代理
     - "+.push.apple.com"
 
 tun:
@@ -157,7 +177,8 @@ NodeParam:
     health-check:
       {
         enable: true,
-        url: "http://connectivitycheck.platform.hicloud.com/generate_204",
+        # 境外端点：代理节点的价值在“能连境外”，用国内端点会把“能连国内但境外已挂”的节点误判为健康
+        url: "https://www.gstatic.com/generate_204",
         interval: 300,
       },
   }
@@ -191,8 +212,14 @@ FilterUS: &FilterUS '^(?=.*((?i)🇺🇸|美国|波特兰|达拉斯|俄勒冈|�
 FilterUK: &FilterUK '^(?=.*((?i)🇬🇧|英国|伦敦|\b(UK|United Kingdom)(\d+)?\b))(?!.*((?i)回国|校园|网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$'
 FilterFR: &FilterFR '^(?=.*((?i)🇫🇷|法国|\b(FR|France)(\d+)?\b))(?!.*((?i)回国|校园|网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$'
 FilterDE: &FilterDE '^(?=.*((?i)🇩🇪|德国|\b(DE|Germany)(\d+)?\b))(?!.*((?i)回国|校园|网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$'
+# 特意保留现状：未含“剩余/过期/时间”等信息节点排除项（对比其它地区 filter 都有负向 lookahead）
+# 已知副作用：手动选中信息类条目（如“剩余流量:100GB”“过期时间”）会连接失败，仅影响显式手动选择
+# 若日后要排除，给本 filter 追加与 FilterHK 相同的 (?!.*回国|校园|...) 负向 lookahead 段即可
 FilterOthers: &FilterOthers "^(?!.*(🇭🇰|HK|Hong|香港|🇹🇼|TW|Taiwan|Wan|台湾|🇯🇵|JP|Japan|日本|🇸🇬|SG|Singapore|狮城|新加坡|🇺🇸|US|United States|America|美国|🇩🇪|DE|Germany|德国|🇬🇧|UK|United Kingdom|英国|🇰🇷|KR|Korea|韩国|韓|🇫🇷|FR|France|法国)).*$"
 ### 策略组
+# 特意全手动（type: select），不设 url-test/fallback 自动组：偏好显式控制节点选择，
+# 避免自动测速组在节点波动时频繁切换导致出口 IP 漂移（影响需要稳定 IP 的会话场景）
+# 副作用：当前节点故障时需手动切换，不会自动 fallback；可接受
 
 # 顶层：选择地区
 proxy-groups:
@@ -375,13 +402,16 @@ rule-providers:
 # 分流规则
 rules:
   # 订阅源直连（打破下载死锁：respect-rules 下 DIRECT 域名用 nameserver 解析 + 直连，不依赖节点）
+  # 同域名多订阅去重（与 nameserver-policy 一致），避免生成冗余规则
+{{- $seen := dict }}
 {{- range $sub := $subs }}
 {{- $kv := splitList "=" $sub }}
 {{- if ge (len $kv) 2 }}
 {{- $url := join "=" (rest $kv) }}
 {{- if and (ne (trim $url) "") (or (hasPrefix "http://" $url) (hasPrefix "https://" $url)) }}
 {{- $u := urlParse $url }}
-{{- if $u.host }}
+{{- if and $u.host (not (hasKey $seen $u.host)) }}
+{{- $_ := set $seen $u.host true }}
   - DOMAIN,{{ $u.host }},DIRECT
 {{- end }}
 {{- end }}

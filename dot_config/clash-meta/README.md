@@ -95,6 +95,10 @@ journalctl -u clash-meta -n 30 | grep "Tun adapter listening"  # 应有该日志
 
 验证：`ip route get 169.254.1.1` 应走物理网卡（如 `wlp1s0`）而非 `mihomo`。
 
+### allow-lan
+
+`allow-lan: false`（关闭局域网入站）。桌面单机 TUN 透明代理无需给其它设备当代理网关，关闭可减少攻击面。若后期需为局域网其他设备提供代理服务，改回 `true` 并确认 `external-controller` 监听地址绑定正确。
+
 ### SSH 直连
 
 所有 22 端口流量走 DIRECT 直连，不走代理节点。
@@ -102,6 +106,11 @@ journalctl -u clash-meta -n 30 | grep "Tun adapter listening"  # 应有该日志
 **原因**：机场节点普遍在服务器端封锁出站 22 端口（`iptables ... --dport 22 -j DROP`），防止用户通过 SSH 动态转发（`ssh -D`）把节点变成免费 SOCKS 代理跳板。SSH 走代理必然超时，表现为 `git push` / `git pull`（SSH 方式）、`ssh` 远程登录卡住无响应。
 
 **规则设计**：用一条 `DST-PORT,22,DIRECT` 覆盖所有 SSH 目标（GitHub、Codeberg、自建仓库等），无需逐域名添加规则。
+
+**fake-ip-filter 配合**：常用 Git 托管域名（`+.github.com`、`+.githubusercontent.com`、
+`+.codeberg.org`、`+.gitlab.com`）已加入 `dns.fake-ip-filter`（blacklist 模式），
+这些域名直接返回真实 IP 而非 fake-ip。作用是 fake-ip 模式下 DST-PORT,22,DIRECT
+时无需反查 fake-ip→域名，消除 SSH 首连抖动。
 
 **影响范围**：
 

@@ -29,7 +29,10 @@ tags: [mihomo, clash-meta, proxy, tun]
 | `rules` 头部 `DOMAIN,host,DIRECT` | 订阅域名直连 | 连接死锁：下载订阅走 MATCH→节点→无节点 |
 | `dns.nameserver-policy` | 订阅域名用国内 DoH | DNS 死锁：解析境外 IP 触发 fallback→走节点→无节点 |
 
-域名提取统一用 `urlParse $url | .host`。`nameserver-policy` 是 mapping，须用 `dict` / `hasKey` 去重（同一域名多个订阅会生成重复 key 导致 mihomo 报错）。
+域名提取统一用 `urlParse $url | .host`。`nameserver-policy` 是 mapping，须用 `dict` / `hasKey` 去重
+（同一域名多个订阅会生成重复 key 导致 mihomo 报错）。`rules` 头部 `DOMAIN,host,DIRECT` 现在同样使用
+`dict` / `hasKey` 去重（与 nameserver-policy 一致的 `$seen` dict 模式，但 rules 是序列而非 mapping，
+去重目的是消除冗余规则而非避免报错）。
 
 ## 踩坑点
 
@@ -43,7 +46,13 @@ curl -sL <raw URL> -o /tmp/ref.yaml
 
 ### DNS 双死锁（respect-rules + fallback）
 
-`respect-rules: true` 让 DNS 按域名匹配的规则选 nameserver；`fallback`（境外 DoH）需走节点。节点未就绪时（启动期、订阅失效），**解析到境外 IP 的域名全部超时**——包括订阅域名本身，形成“下不到订阅→无节点→解析更下不到”的死循环。订阅域名靠 `nameserver-policy` 绕过 fallback 打破。改 `dns` 全局策略前务必理解此耦合。
+`respect-rules: true` 让 DNS 按域名匹配的规则选 nameserver；`fallback`（境外 DoH）需走节点。节点未就绪时（启动期、订阅失效），**解析到境外 IP 的域名全部超时**——包括订阅域名本身，形成“下不到订阅→无节点→解析更下不到”的死循环。
+
+**死锁面控制**：`nameserver` 仅含国内 DoH（alidns / doh.pub），不放境外 DoH（如 cloudflare）——境外 DNS 全放 `fallback`。避免 `nameserver` 中的境外 DoH 服务端域名在 respect-rules 下同样需走节点才能解析，把死锁面从订阅域名扩到所有经该 DoH 解析的域名。
+
+订阅域名靠 `nameserver-policy` 绕过 fallback 打破。改 `dns` 全局策略前务必理解此耦合。
+
+**新增**：`fallback-filter.domain` 显式列出了已知易被污染的境外域名（`+.google.com`、`+.github.com` 等），让这些域名直接走 fallback（境外 DNS）解析，跳过 nameserver 污染→fallback-filter 判定的环节，更快拿到正确 IP。
 
 ### route-exclude-address 须含本地网段
 
