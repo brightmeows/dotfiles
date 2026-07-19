@@ -9,6 +9,8 @@ gui:
   language: zh-CN
   # 聚焦的侧栏自动放大（手风琴效果）
   expandFocusedSidePanel: true
+  # PgUp/PgDn 滚动行数（默认 2 行太少，设为 10 接近半页）
+  scrollHeight: 10
 
 git:
   # 用 delta 渲染 diff（系统已装 /usr/bin/delta）
