@@ -1,1 +1,8 @@
 node_modules
+
+# OpenSpec 自动生成的工具配置
+.opencode/
+.pi/
+
+# OpenSpec 已归档的变更历史
+openspec/changes/archive/
