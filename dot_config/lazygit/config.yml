@@ -15,7 +15,7 @@ git:
   pagers:
     - name: delta
       colorArg: always
-      pager: delta --dark --paging=never
+      pager: delta --dark --paging=never --hunk-header-decoration-style=none
   # gpgsign=true 时默认每次提交都挂起、显示 Press enter to return。
   # 此处 pinentry 经包装脚本解析为 pinentry-qt（GUI 弹窗），且 gpg-agent
   # 已缓存密码（最长 24h），故可安全跳过挂起，提交流程不再被打断。
