@@ -1,5 +1,4 @@
 {{- /* 全部代理指令通过 APPEND_SYSTEM.md 追加至系统提示词 */ -}}
 **系统**: {{ with .chezmoi.osRelease }}{{ .prettyName }}{{ else }}Windows{{ end }} ({{ .chezmoi.arch }})
 
-{{ include "dot_agents_meow/AGENTS.standards.md" -}}
-{{ include "dot_agents_meow/AGENTS.autonomy.md" -}}
+{{ include "dot_agents_meow/AGENTS.main.md" -}}

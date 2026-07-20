@@ -6,12 +6,11 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 ## 全局代理文件说明
 
-`dot_agents_meow/AGENTS.standards.md` 和 `AGENTS.autonomy.md` 是 opencode/Pi 工具使用的**全局代理指令文件**，本仓库仅负责托管它们（通过 chezmoi 分发至 `AGENTS.md.tmpl` / `agents/default.md.tmpl` 等入口）。
+`dot_agents_meow/AGENTS.main.md` 是 opencode/Pi 工具使用的**全局代理指令文件**，本仓库仅负责托管它（通过 chezmoi 分发至 `agents/default.md.tmpl` / `APPEND_SYSTEM.md.tmpl` 等入口）。
 
 | 文件 | 内容 | 加载到 opencode 的方式 | 加载到 Pi 的方式 |
 |------|------|----------------------|-----------------|
-| `AGENTS.standards.md` | 工程质量准则（确定性优先、提交规范、中文引号） | `agents/default.md.tmpl` → `{{ include }}`（主代理系统提示词） | `APPEND_SYSTEM.md.tmpl` → `{{ include }}`（追加至系统提示词） |
-| `AGENTS.autonomy.md` | 自主决策协议（单一判据、两阶段提交、渐进确认陷阱） | `agents/default.md.tmpl` → `{{ include }}`（主代理系统提示词） | `APPEND_SYSTEM.md.tmpl` → `{{ include }}`（追加至系统提示词） |
+| `AGENTS.main.md` | 工程质量准则 + 自主决策协议 | `agents/default.md.tmpl` → `{{ include }}`（主代理系统提示词） | `APPEND_SYSTEM.md.tmpl` → `{{ include }}`（追加至系统提示词） |
 
 ## Tech Stack
 
