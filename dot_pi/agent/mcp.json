@@ -3,7 +3,7 @@
     "exa": {
       "url": "https://mcp.exa.ai/mcp",
       "lifecycle": "keep-alive",
-      "directTools": true
+      "directTools": false
     },
     "anysearch": {
       "url": "https://api.anysearch.com/mcp",
