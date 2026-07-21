@@ -7,6 +7,8 @@
     },
     "anysearch": {
       "url": "https://api.anysearch.com/mcp",
+      "auth": "bearer",
+      "bearerTokenEnv": "ANYSEARCH_API_KEY",
       "lifecycle": "keep-alive",
       "directTools": true
     },
