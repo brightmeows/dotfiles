@@ -99,7 +99,41 @@ journalctl -u clash-meta | grep "no such device"      # 应为空
 journalctl -u clash-meta | grep "Auto detect interface"  # 应为空（已关）
 ```
 
-**勿改回 `auto-detect-interface: true`**：会重新引入 ENODEV（实测 6h 内 16213 次 `no such device`）。多网卡切换需求已由 main 表 + NM 等价满足。
+**勿改回 `auto-detect-interface: true`**：会重新引入 ENODEV（实测 6h 内 16213 次 `no such device`）。
+多网卡切换需求已由 main 表 + NM 等价满足。
+
+**⚠ 配套必需：DNS 模块漏 mark 修补（1.19.24 无 PR#3007）**
+
+顶层 `routing-mark: 2158` 覆盖**代理 outbound**，但**不覆盖 DNS 模块的内部查询**
+（default-nameserver 的 UDP、DoH 的 443）。这些查询无 mark → 命中 ip rule 9002
+（`from 0.0.0.0 iif lo lookup 2022`）→ 进 tun → 被 dns-hijack 劫持 → 解析循环。
+
+**症状**：doh.pub / alidns 被 mihomo 内部解析成 fake-ip（198.18.x），
+DIRECT outbound 连它们时 mihomo 检测 loopback 主动拒绝，
+日志 `reject loopback connection to: doh.pub:443`，实测 6h 17979 次——
+比 ENODEV 更严重（破坏 DNS 解析，影响所有域名）。
+PR#3007（2026-07）正是修这个（自动给 self-traffic 打 mark），但 1.19.24 不含。
+
+**修补**：创建带 fwmark 的 direct 代理，DNS 各 nameserver 用 `#DNS直连` 后缀强制走它：
+
+```yaml
+proxies:
+  - name: DNS直连
+    type: direct
+    routing-mark: 2158
+dns:
+  default-nameserver:      [114.114.114.114#DNS直连, ...]
+  nameserver:              [https://dns.alidns.com/dns-query#DNS直连, ...]
+  proxy-server-nameserver: [...#DNS直连]
+```
+
+`#代理名` 是 mihomo DNS 的 URL 后缀语法（见官方 DNS 文档），让该 nameserver 的查询经指定代理出站。
+DNS直连 带 routing-mark 2158，查询打 mark 走 main 表绕开 tun。
+
+**验证**：`journalctl -u clash-meta | grep "reject loopback"` 应为空。
+
+**升级后**：含 PR#3007 的版本会自动给 DNS 模块查询打 mark，
+此 `#DNS直连` 修补可移除（但保留无害，仅多一层显式绑定）。
 
 ### external-controller 端口与 external-ui serve 启动时绑定
 

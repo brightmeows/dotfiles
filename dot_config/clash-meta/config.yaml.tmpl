@@ -14,6 +14,13 @@
 # 消除网卡抖动期 netlink 空名导致的 ENODEV。值 2158 对齐 mihomo PR#3007 outputMark 默认值。
 routing-mark: 2158
 
+# DNS 专用直连代理：带 fwmark 2158，让 DNS 模块查询走 main 表绕开 tun。
+# 修补 1.19.24 无 PR#3007 导致 DNS 模块查询不打 mark、走 9002 进 tun 被 dns-hijack 劫持的回归。
+proxies:
+  - name: DNS直连
+    type: direct
+    routing-mark: 2158
+
 external-controller: "127.0.0.1:9090"
 external-ui: ./ui
 external-ui-name: metacubexd
@@ -74,21 +81,21 @@ dns:
     - "+.gitlab.com"
     - "+.gitlab-static.net"
   default-nameserver:
-    - 114.114.114.114
-    - 223.5.5.5
-    - 119.29.29.29
-    - 180.76.76.76
+    - 114.114.114.114#DNS直连
+    - 223.5.5.5#DNS直连
+    - 119.29.29.29#DNS直连
+    - 180.76.76.76#DNS直连
   use-hosts: true
   use-system-hosts: true
   nameserver:
-    - https://dns.alidns.com/dns-query
-    - https://doh.pub/dns-query
+    - https://dns.alidns.com/dns-query#DNS直连
+    - https://doh.pub/dns-query#DNS直连
     # 不放境外 DoH：respect-rules 下解析 DoH 服务端域名本身要走 rules→节点，启动期/节点故障时扩大死锁面
     # 境外 DNS 全部放 fallback，由 fallback-filter 判定污染后兜底（与官方 DNS 文档示例结构一致）
   respect-rules: true
   proxy-server-nameserver:
-    - https://dns.alidns.com/dns-query
-    - https://doh.pub/dns-query
+    - https://dns.alidns.com/dns-query#DNS直连
+    - https://doh.pub/dns-query#DNS直连
   fallback:
     - https://dns.google/dns-query
     - https://dns.twnic.tw/dns-query
