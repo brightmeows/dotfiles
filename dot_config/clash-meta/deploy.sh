@@ -7,16 +7,20 @@
 #   - systemd：clash-meta.service 运行
 #
 # 用法：sudo bash ~/.config/clash-meta/deploy.sh
+#       pkexec bash ~/.config/clash-meta/deploy.sh
 set -euo pipefail
 
 DST="/etc/clash-meta/config.yaml"
 DATA_DIR="/var/lib/clash-meta"
 TUN_IF="mihomo"
 
-# 推断真实用户家目录（避开 sudo 下 $HOME=/root）
+# 推断真实用户家目录（避开提权后 $HOME=/root）；支持 sudo（SUDO_USER）与 pkexec（PKEXEC_UID）
 REAL_USER="${SUDO_USER:-}"
+if [ -z "$REAL_USER" ] && [ -n "${PKEXEC_UID:-}" ]; then
+  REAL_USER="$(getent passwd "$PKEXEC_UID" | cut -d: -f1)"
+fi
 if [ -z "$REAL_USER" ]; then
-  echo "✗ 请用普通用户 sudo 执行（依赖 SUDO_USER），不要直接以 root 身份运行"
+  echo "✗ 请用普通用户 sudo/pkexec 执行（依赖 SUDO_USER 或 PKEXEC_UID），不要直接以 root 身份运行"
   exit 1
 fi
 REAL_HOME="$(getent passwd "$REAL_USER" | cut -d: -f6)"
@@ -48,6 +52,16 @@ systemctl enable clash-meta >/dev/null
 systemctl restart clash-meta
 sleep 1
 echo "✓ clash-meta 已 enable + restart"
+
+# 出站防回环：fwmark 策略路由（配合 config.yaml 顶层 routing-mark: 2158）
+# 带 mark 2158 的包走 main 表（物理网卡），绕开 auto-route 的 table 2022（tun）回环。
+# pref 8998 < 9000（auto-route rule 起始），确保带 mark 包优先于 tun 回收规则匹配。幂等：先 del 后 add。
+RULE_PREF=8998
+RULE_MARK=2158
+echo "▶ 配置出站 fwmark 策略路由（pref $RULE_PREF, fwmark $RULE_MARK → main 表）"
+ip rule del pref "$RULE_PREF" 2>/dev/null || true
+ip rule add fwmark "$RULE_MARK" lookup main pref "$RULE_PREF"
+echo "✓ ip rule: fwmark $RULE_MARK → main (pref $RULE_PREF)"
 
 # firewalld 放行 tun 接口（与 auto-redirect 共存，best-effort）
 if systemctl is-active --quiet firewalld; then

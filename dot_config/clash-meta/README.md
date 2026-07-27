@@ -133,6 +133,30 @@ auto-redirect 用 nftables 在 output 链重定向流量，创建规则时 netli
 
 `deploy.sh` 会把 `mihomo` tun 接口置入 `trusted` zone 放行流量（best-effort）。
 
+### 出站防回环（fwmark 策略路由）
+
+本配置**关闭** `tun.auto-detect-interface`，改用 fwmark 策略路由防回环。原因：auto-detect 的 `SO_BINDTODEVICE` 在网卡抖动（WiFi 波动、USB↔无线切换）时 netlink 偶发返回空接口名，导致 `no such device` (ENODEV) 大量出现，节点连接中断。
+
+机制（三层协作）：
+
+| 层 | 配置 | 作用 |
+|---|---|---|
+| mihomo | 顶层 `routing-mark: 2158` | 所有出站包打 fwmark 2158 |
+| mihomo | `tun.auto-detect-interface: false` | 不再 SO_BINDTODEVICE，消除空名 bug |
+| 系统 | `ip rule fwmark 2158 lookup main pref 8998`（deploy.sh 维护） | 带 mark 包走 main 表（物理网卡），绕开 tun 回环 |
+
+**多网卡自动跟随**：main 表 default 由 NetworkManager 实时维护，USB 有线↔WiFi 切换时自动生效，无需重新部署。
+
+**部署后验证**：
+
+```bash
+ip rule show | grep 8998                              # 应有 fwmark 0x86e lookup main
+ip route get 1.1.1.1 mark 0x86e                       # 应显示 dev <物理网卡>（非 mihomo）
+journalctl -u clash-meta --since "10 min ago" | grep "no such device"  # 应为空
+```
+
+> 详细原理与实测数据见 [AGENTS.md](./AGENTS.md)「出站防回环」段。
+
 ### SELinux
 
 mihomo 二进制为 `bin_t`、无专属 SELinux 策略，运行于 `unconfined_service_t`（放行域），正常情况下不会被拦截。若启动后功能异常，先查 AVC：
