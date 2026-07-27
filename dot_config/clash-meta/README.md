@@ -144,7 +144,6 @@ auto-redirect 用 nftables 在 output 链重定向流量，创建规则时 netli
 | mihomo | 顶层 `routing-mark: 2158` | 所有出站包打 fwmark 2158 |
 | mihomo | `tun.auto-detect-interface: false` | 不再 SO_BINDTODEVICE，消除空名 bug |
 | 系统 | `ip rule fwmark 2158 lookup main pref 8998`（deploy.sh 维护） | 带 mark 包走 main 表（物理网卡），绕开 tun 回环 |
-| mihomo | `proxies.DNS直连` + DNS `#DNS直连` 后缀 | DNS 模块查询绕开 tun（修补 1.19.24 漏 mark，否则 reject loopback） |
 
 **多网卡自动跟随**：main 表 default 由 NetworkManager 实时维护，USB 有线↔WiFi 切换时自动生效，无需重新部署。
 
