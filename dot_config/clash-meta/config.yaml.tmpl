@@ -1,19 +1,13 @@
 {{- /*
   mihomo (clash-meta) 配置模板。
-  静态主体搬运自 MiyakoMeow/nixos-config（curl raw 保留精确缩进），改动四处：
+  静态主体搬运自 MiyakoMeow/nixos-config（curl raw 保留精确缩进），改动三处：
     1. 移除原硬编码私人订阅（Node），proxy-providers 改为下方模板循环
     2. dns.listen 注释（避开 systemd-resolved 抢占 53，靠 tun dns-hijack 接管）
     3. proxy-providers 由 ~/.env_self 的 *_SUBSCRIPTION 合法 http(s) URL 自动注入
-    4. 出站防回环改用 fwmark 策略路由（routing-mark + 关 auto-detect），消除网卡抖动期 ENODEV
   渲染产物含明文订阅 URL，仅落在 $HOME（~/.config/clash-meta/config.yaml），不进 git。
 */ -}}
 {{- /* 用 bash 的 $HOME（chezmoi 执行命令时继承），不依赖 .chezmoi.homedir 变量（该 key 不存在） */ -}}
 {{- $subs := output "bash" "-c" "set -a; . $HOME/.env_self 2>/dev/null; env | grep '_SUBSCRIPTION=' || true" | splitList "\n" -}}
-# 出站防回环：mihomo 所有出站包打 fwmark 2158，配合 deploy.sh 的 ip rule 走 main 表（物理网卡），
-# 绕开 auto-route 的 table 2022（tun）回环。替代 auto-detect-interface 的 SO_BINDTODEVICE，
-# 消除网卡抖动期 netlink 空名导致的 ENODEV。值 2158 对齐 mihomo PR#3007 outputMark 默认值。
-routing-mark: 2158
-
 external-controller: "127.0.0.1:9090"
 external-ui: ./ui
 external-ui-name: metacubexd
@@ -151,9 +145,7 @@ tun:
   stack: mixed
   auto-route: true
   auto-redirect: false  # Fedora nftables 冲突（netlink file exists），auto-route 纯路由表已足够
-  # false：不再 SO_BINDTODEVICE，消除网卡抖动期 netlink 空名→ENODEV。防回环改由顶层 routing-mark
-  # + deploy.sh ip rule 实现。多网卡（USB 有线↔WiFi）跟随靠 main 表 default（NM 实时维护），无需接口探测。
-  auto-detect-interface: false
+  auto-detect-interface: true
   dns-hijack:
     - any:53
     - tcp://any:53

@@ -1,6 +1,6 @@
 ---
 description: mihomo (clash-meta) tun 代理配置的维护约定与踩坑点
-tags: [mihomo, clash-meta, proxy, tun, fwmark]
+tags: [mihomo, clash-meta, proxy, tun]
 ---
 
 # clash-meta 配置（面向代理）
@@ -70,36 +70,6 @@ mihomo 报 `Start TUN listening error: auto redirect: ...`，tun 接口**从未�
 纯路由表方式不碰 nftables。auto-redirect 为网关/转发场景设计。本配置 `auto-redirect: false`，勿改回 true。
 
 诊断 TUN 未生效：`ip -br link | grep mihomo`（无）+ `ip route show table 2022`（空）+ `journalctl -u clash-meta | grep "auto redirect"`（file exists）。
-
-### 出站防回环：fwmark 替代 auto-detect-interface（消除 ENODEV）
-
-`auto-detect-interface: true` 在网卡抖动（WiFi 波动、USB↔无线切换）时，netlink 探测出口接口偶发返回空名
-（日志 `Auto detect interface for X get empty name` → `return '<invalid>' to avoid lookback`）。
-随后 `SO_BINDTODEVICE` 绑定失败，内核返回 `no such device` (ENODEV)——节点 TLS 隧道中断，
-客户端表现偶发连接重置/SSL 错误。多网卡切换场景下高频触发。
-
-**根因**：auto-detect 的 `SO_BINDTODEVICE` 是 TUN 防回环的手段之一，但依赖每次拨号实时探测接口名，脆弱。
-
-**解法**：改用 fwmark 策略路由防回环，彻底绕开接口探测：
-
-- 顶层 `routing-mark: 2158`：mihomo 所有出站包打 mark 2158（含代理流量，非仅 self-traffic）
-- `tun.auto-detect-interface: false`：不再 SO_BINDTODEVICE，消除空名 bug
-- `deploy.sh` 维护 `ip rule add fwmark 2158 lookup main pref 8998`：带 mark 的包走 main 表（物理网卡），绕开 auto-route 的 table 2022（tun）回环
-
-**多网卡自动跟随**：main 表 default 由 NetworkManager 实时维护，USB↔WiFi 切换时 NM 更新 default，带 mark 出站自动跟随，零配置——这正是关闭 auto-detect 却不丢失切换能力的原理。
-
-**fwmark 值 2158 的由来**：对齐 mihomo [PR#3007](https://github.com/MetaCubeX/mihomo/pull/3007)（2026-07，修复 `auto-route && !auto-redirect` 下 self-traffic 回环）的 `outputMark` 默认值。
-当前 1.19.24 不含该 PR，故手动设顶层 routing-mark；未来升级到含该 PR 的版本时值一致，无需改。
-
-**实测验证**（2026-07-27，1.19.24）：
-
-```
-ip route get 108.162.198.60 mark 0x86e        # 应显示 dev <物理网卡>（非 mihomo tun）
-journalctl -u clash-meta | grep "no such device"      # 应为空
-journalctl -u clash-meta | grep "Auto detect interface"  # 应为空（已关）
-```
-
-**勿改回 `auto-detect-interface: true`**：会重新引入 ENODEV（实测 6h 内 16213 次 `no such device`）。多网卡切换需求已由 main 表 + NM 等价满足。
 
 ### external-controller 端口与 external-ui serve 启动时绑定
 
