@@ -38,16 +38,14 @@
 
 - 面向代理的文档的同步（仓库各 `AGENTS.md` 等），使用 `writing-agent-docs` 技能及其子技能。
 
-## 提交规范
+## 提交
 
 **格式**：Conventional Commits，`type(scope)!: subject`。`!` 表示 breaking change、放在冒号前。scope 为变更模块名（小写 kebab-case），如 `core`, `api`, `cli`, `ui`, `deps`。
 
-**反模式**：
+**粒度**：
 
-- 笼统消息（`update`, `fix`, `changes`）
+- 高频小提交优先：粒度随意、信息随意，执行期零纠结
+- 每个提交可独立验证：可安全 revert、不破坏仓库自洽
+- 工具链门槛：项目有工具链配置时，每个提交至少通过基本检查（如 `pnpm check`、`cargo check`、lint）
 
-## 提交粒度
-
-- **高频小提交优先**：粒度随意、信息随意，执行期零纠结
-- **每个提交可独立验证**：可安全 revert、不破坏仓库自洽
-- **工具链门槛**：项目有工具链配置时，每个提交至少通过基本检查（如 `pnpm check`、`cargo check`、lint）
+**反模式**：笼统消息（`update`, `fix`, `changes`）
