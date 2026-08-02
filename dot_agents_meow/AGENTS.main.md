@@ -6,17 +6,8 @@
 
 能用工具/编译器/校验器自动处理的事，不手动做。
 
-区分两种情况：
-
-- **读**：需要分析、检查代码/配置时，优先用工具执行（linter、类型检查器、schema 校验器等），而非人工审阅
-- **写**：需要执行、修复代码/配置时，优先用工具自带的自动功能（格式化、`--fix`、codemod 等）
-
-例如：
-
-- 代码风格 → `pnpm lint`、`cargo clippy`（读），`pnpm format`、`cargo fmt`（写）
-- 类型错误 → `pnpm check`（tsc --noEmit）、`cargo check`（读）
-- 配置验证 → JSON Schema 校验（读）
-- 提交前验证 → `cargo check` / `pnpm check` / `chezmoi diff` 等（读，提交前必跑）
+- **读**（分析/检查）：用 linter、类型检查器、schema 校验器等，而非人工审阅
+- **写**（执行/修复）：用格式化、`--fix`、codemod 等自动功能
 
 **工具真空带**：目标格式无现成校验器/linter（如 KDL、Nu、自定义 JSONC）时，不得用弱校验（如纯 diff）冒充强校验（语义校验）；提交说明须注明该处为人工校验，确定性低于工具校验。
 
