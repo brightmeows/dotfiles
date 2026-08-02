@@ -26,36 +26,11 @@
 
 ### 中文引号
 
-**简体中文横排必须使用弯引号**（全角、有向），遵循 GB/T 15834-2011：
+**简体中文横排必须使用弯引号**（全角、有向），遵循 GB/T 15834-2011：双引号 **“ ”**、单引号 **‘ ’**，嵌套先双后单（“…‘…’…”）。
 
-- 双引号用 **“ ”**（U+201C/201D），单引号用 **‘ ’**（U+2018/2019）
-- 嵌套顺序：先双后单（“…‘…’…”）
+**严禁**：直引号 `" '`（仅代码字符串可用）、全角无向引号 `＂`（兼容字符）、直角引号 `「 」『 』`（繁中/日文标准）——均非简中横排所用。
 
-**严禁**以下引号：
-
-- 直引号 `" '`（半角，U+0022/0027）——仅代码字符串标识可用
-- 全角无向引号 `＂`（U+FF02）——兼容字符，中文不使用
-- 直角引号 `「 」『 』`（U+300C-300F）——繁中/日文/简中直排的标准，非简中横排所用
-
-#### 检查命令参考
-
-检查 Markdown 文件：
-
-````bash
-python3 - 文件.md << 'PYEOF'
-import re, sys
-in_code = False
-with open(sys.argv[1], encoding="utf-8") as fh:
-    for i, line in enumerate(fh, 1):
-        if re.match(r"^(```|~~~)", line):
-            in_code = not in_code
-            continue
-        if in_code:
-            continue
-        if re.search("[\u0022\u0027\uFF02\u300C\u300D\u300E\u300F]", re.sub(r"`[^`]*`", "", line)):
-            print(f"{i}: {line.rstrip()}")
-PYEOF
-````
+**检查**：`python3 ~/.agents_meow/scripts/check-cn-quotes.py 文件.md`
 
 ## 文档同步
 
