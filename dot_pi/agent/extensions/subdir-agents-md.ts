@@ -15,16 +15,19 @@
  *   cwd、不含根），收集未加载者。
  *   一条访问路径即覆盖三种命中：访问子目录本身 / 访问子目录内文件 /
  *   访问子目录的同名兄弟文件。
- * - 下一轮 LLM 调用前（context 事件）将内容以 user 消息注入消息列表。
+ * - 下一轮 LLM 调用前（context 事件）以 user 消息注入路径提示（不注入内容）。
  *
- * 注入方式（双轨，消息形态参考 inline-date / inline-env / inline-git-status）：
- * - 完整内容：context 事件临时注入，仅当轮 LLM 可见、不持久化（省 token）。
- * - 一行摘要：pi.sendMessage 持久化 custom_message（customType 按路径区分，
+ * 注入方式（系统层 + 触发层，均不注入完整内容）：
+ * - 系统层：before_agent_start 向系统提示词追加 AGENTS.md 机制说明（常量文本，
+ *   每轮幂等追加，让 LLM 知晓子目录可能嵌套规则文件及其优先级）。
+ * - 触发层：context 事件临时注入一行路径清单，告知 LLM 访问路径下存在子目录
+ *   AGENTS.md 但未加载内容（省 token）；LLM 按需用 read 工具自行读取。
+ * - 留痕提示：pi.sendMessage 持久化 custom_message（customType 按路径区分，
  *   display: true TUI 可见，会话留痕）。/resume、reload 后闭包状态归零时用
- *   sessionManager.getEntries() 查重，避免重复投递摘要。
+ *   sessionManager.getEntries() 查重，避免重复投递提示。
  *
  * 规则：
- * - 每个 AGENTS.md 每 session 最多注入一次；compact 后重置，允许重新注入。
+ * - 每个 AGENTS.md 每 session 最多提示一次；compact 后重置，允许重新提示。
  * - 仅注入 cwd 严格子目录中的 AGENTS.md；根 AGENTS.md 由 Pi 原生加载。
  * - 不做 git-ignore 过滤：懒加载下仅处理实际被访问的路径，风险面小；
  *   即便命中被忽略目录的 AGENTS.md，注入也无副作用。
@@ -36,6 +39,14 @@ import * as path from "node:path";
 
 /** 摘要 custom_message 的 customType 前缀，后接 AGENTS.md 相对路径 */
 const CUSTOM_TYPE_PREFIX = "subdir-agents-md:";
+
+/** 系统提示词注入：AGENTS.md 机制说明（让 LLM 从会话开始就知晓子目录规则的存在与优先级） */
+const AGENTS_MD_NOTICE = [
+  "AGENTS.md 机制说明：",
+  "- AGENTS.md 是项目写给 AI 代理的规则文件（“给代理看的 README”），记录构建/测试命令、代码风格、安全与操作边界；仓库根 AGENTS.md 已由 Pi 原生加载。",
+  "- 子目录可能嵌套 AGENTS.md，仅适用于对应子包/子目录，遵循“最近者优先”：越靠近被处理文件的 AGENTS.md 优先级越高。",
+  "- 访问子目录内文件时，若该目录向上存在 AGENTS.md，Pi 会提示其路径；处理该子包前请先用 read 工具读取相应文件再行动。",
+].join("\n");
 
 // ── 路径提取 ──
 
@@ -133,16 +144,26 @@ function findAncestorAgentsMd(absDir: string, absRoot: string): string[] {
 
 // ── 格式化 ──
 
-function formatContent(relPaths: string[], cwd: string): string {
-  const parts: string[] = ["以下为本项目子目录中的 AGENTS.md，适用于你正在访问的子包："];
-  for (const rel of relPaths) {
-    let content: string;
+/**
+ * 生成"提示存在"通知：仅列出子目录 AGENTS.md 的相对路径，不读取内容，
+ * 让 LLM 按需用 read 工具自行加载（省 token，避免无关内容进上下文）。
+ */
+function formatNotice(relPaths: string[], cwd: string): string {
+  const existing = relPaths.filter((rel) => {
     try {
-      content = fs.readFileSync(path.resolve(cwd, rel), "utf8").trim();
+      return fs.statSync(path.resolve(cwd, rel)).isFile();
     } catch {
-      continue; // 注入前被删除
+      return false; // 提示前被删除
     }
-    parts.push("", `## ./${rel}`, "", content);
+  });
+  if (existing.length === 0) {
+    return "";
+  }
+  const parts: string[] = [
+    "以下子目录存在 AGENTS.md（尚未加载进上下文）。若你正在处理对应子目录/子包，请先用 read 工具读取对应文件再行动：",
+  ];
+  for (const rel of existing) {
+    parts.push(`- ./${rel}`);
   }
   return parts.join("\n");
 }
@@ -164,7 +185,12 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
     pending.clear();
   });
 
-  // 工具调用时按访问路径发现待注入的 AGENTS.md
+  // 系统上下文：每轮用户提交时向系统提示词追加 AGENTS.md 机制说明（每轮重建，天然幂等）
+  pi.on("before_agent_start", async (event) => ({
+    systemPrompt: `${event.systemPrompt}\n\n${AGENTS_MD_NOTICE}`,
+  }));
+
+  // 工具调用时按访问路径发现待提示的 AGENTS.md
   pi.on("tool_call", async (event, ctx) => {
     displayCwd = ctx.cwd;
     const accessed = extractAccessedPath(event.toolName, event.input, ctx.cwd);
@@ -183,7 +209,7 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
     }
   });
 
-  // 下一轮 LLM 调用前注入 pending：完整内容临时注入 + 一行摘要持久化留痕
+  // 下一轮 LLM 调用前提示 pending：路径清单临时注入 + 留痕提示持久化
   pi.on("context", async (event, ctx) => {
     if (pending.size === 0) {
       return;
@@ -200,15 +226,18 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
       loaded.add(p);
     }
 
-    event.messages.push({
-      content: [{ text: formatContent(toLoad, displayCwd), type: "text" }],
-      role: "user",
-      timestamp: Date.now(),
-    });
+    const notice = formatNotice(toLoad, displayCwd);
+    if (notice) {
+      event.messages.push({
+        content: [{ text: notice, type: "text" }],
+        role: "user",
+        timestamp: Date.now(),
+      });
+    }
 
-    // 摘要留痕：每个 AGENTS.md 一条 custom_message（display: true TUI 可见）。
+    // 留痕提示：每个 AGENTS.md 一条 custom_message（display: true TUI 可见）。
     // GetEntries 查重针对 /resume、reload 后闭包状态归零的场景——会话历史
-    // 已有同 customType 的摘要则跳过，避免重复投递。
+    // 已有同 customType 的提示则跳过，避免重复投递。
     for (const rel of toLoad) {
       const customType = CUSTOM_TYPE_PREFIX + rel;
       const hasInjected = ctx.sessionManager
@@ -218,7 +247,7 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
         pi.sendMessage(
           {
             customType,
-            content: `[子目录规则] 已注入 ./${rel}`,
+            content: `[子目录规则] 检测到 ./${rel}，未注入内容（按需 read）`,
             display: true,
           },
           { deliverAs: "steer" },
@@ -229,7 +258,7 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
     return { messages: event.messages };
   });
 
-  // Compact 后重置已加载记录，允许重新注入
+  // Compact 后重置已加载记录，允许重新提示
   pi.on("session_compact", async () => {
     loaded.clear();
   });
