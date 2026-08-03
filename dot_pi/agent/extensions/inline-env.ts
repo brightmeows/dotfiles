@@ -1,9 +1,10 @@
 /**
  * Inline Environment extension for pi
  *
- * 在每条用户消息（agent 开始前）把系统环境信息注入 system prompt，
- * 让 LLM 知道当前平台的包管理 / 会话 / shell / 工具链，避免基于
- * 通用 Linux 的预训练知识给出错误命令（如 Kinoite 上建议 dnf）。
+ * 在用户提交消息（agent 开始前）注入系统环境信息（session 内一次，
+ * TUI 可见，同 inline-git-status），让 LLM 知道当前平台的包管理 / 会话 /
+ * shell / 工具链，避免基于通用 Linux 的预训练知识给出错误命令
+ * （如 Kinoite 上建议 dnf）。
  *
  * 跨平台分层设计：
  * - 基础层：Node 原生 process（platform / arch / node 版本 / 环境变量），
@@ -199,15 +200,28 @@ function realEnv(): EnvContext {
 }
 
 export default function (pi: ExtensionAPI) {
-  // 静态信息：session 内不变，首次注入时检测一次并缓存
+  // 静态信息：session 内不变，注入一次即可（compact 后重置重新注入）
+  let injected = false;
   let cached: SystemInfo | null = null;
 
-  pi.on("before_agent_start", async (event) => {
+  pi.on("session_compact", async () => {
+    injected = false;
+  });
+
+  pi.on("before_agent_start", async () => {
+    if (injected) {
+      return;
+    }
+    injected = true;
     if (!cached) {
       cached = detectEnv(realEnv());
     }
     return {
-      systemPrompt: `${event.systemPrompt}\n\n${formatEnvText(cached)}`,
+      message: {
+        customType: "inline-env",
+        content: formatEnvText(cached),
+        display: true,
+      },
     };
   });
 }
