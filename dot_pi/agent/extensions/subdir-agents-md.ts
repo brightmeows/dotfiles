@@ -42,10 +42,8 @@ const CUSTOM_TYPE_PREFIX = "subdir-agents-md:";
 
 /** 系统提示词注入：AGENTS.md 机制说明（让 LLM 从会话开始就知晓子目录规则的存在与优先级） */
 const AGENTS_MD_NOTICE = [
-  "AGENTS.md 机制说明：",
-  "- AGENTS.md 是项目写给 AI 代理的规则文件（“给代理看的 README”），记录构建/测试命令、代码风格、安全与操作边界；仓库根 AGENTS.md 已由 Pi 原生加载。",
-  "- 子目录可能嵌套 AGENTS.md，仅适用于对应子包/子目录，遵循“最近者优先”：越靠近被处理文件的 AGENTS.md 优先级越高。",
-  "- 访问子目录内文件时，若该目录向上存在 AGENTS.md，Pi 会提示其路径；处理该子包前请先用 read 工具读取相应文件再行动。",
+  "AGENTS.md：项目写给 AI 代理的规则文件，根级已由 Pi 加载。",
+  "子目录可能嵌套 AGENTS.md，遵循“最近者优先”；Pi 提示存在时，先 read 读取再处理该子包。",
 ].join("\n");
 
 // ── 路径提取 ──
@@ -159,13 +157,10 @@ function formatNotice(relPaths: string[], cwd: string): string {
   if (existing.length === 0) {
     return "";
   }
-  const parts: string[] = [
-    "以下子目录存在 AGENTS.md（尚未加载进上下文）。若你正在处理对应子目录/子包，请先用 read 工具读取对应文件再行动：",
-  ];
-  for (const rel of existing) {
-    parts.push(`- ./${rel}`);
-  }
-  return parts.join("\n");
+  return [
+    "[子目录规则] 以下路径存在 AGENTS.md（未加载，按需 read）：",
+    ...existing.map((rel) => `- ./${rel}`),
+  ].join("\n");
 }
 
 function depth(rel: string): number {
@@ -247,7 +242,7 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
         pi.sendMessage(
           {
             customType,
-            content: `[子目录规则] 检测到 ./${rel}，未注入内容（按需 read）`,
+            content: `[子目录规则] 检测到 ./${rel}（按需 read）`,
             display: true,
           },
           { deliverAs: "steer" },
