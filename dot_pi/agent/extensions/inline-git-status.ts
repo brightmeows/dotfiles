@@ -18,7 +18,7 @@
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 
 const WORKTREE_DIRS = [".worktrees", "worktrees", ".worktree", "worktree"];
 
@@ -30,9 +30,10 @@ export interface GitStatus {
 }
 
 // 执行 git 命令，失败（非仓库 / 命令不存在）返回 null
+// ExecFileSync 参数数组形式：不经 shell、自动处理引号，路径含空格时 Windows 安全
 function runGit(cwd: string, args: string[]): string | null {
   try {
-    return execSync(`git ${args.join(" ")}`, {
+    return execFileSync("git", args, {
       cwd,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"],
