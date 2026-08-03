@@ -1,18 +1,17 @@
 /**
  * Inline Date extension for pi
  *
- * 在用户提交消息（agent 开始前）注入当前时间，双轨设计：
+ * 在用户提交消息（agent 开始前）注入当前日期（不含时分秒），双轨设计：
  * - message：session 内首次注入一条可见提示（TUI 显示，customType=inline-date）
- * - systemPrompt：每轮刷新最新时间，让 LLM 始终知道当前日期/时刻
+ * - systemPrompt：每轮刷新当天日期，让 LLM 始终知道今天几号
  *
- * 为什么双轨：
- * - 时间信息天生会过期，需每轮刷新（Claude Code 社区痛点：session 开始时
- *   注入一次的时间很快过期，见 anthropics/claude-code#24182 / #34530）；
- *   system prompt 每轮重新构建、不累积
- * - 可见提示复用 message 展示（同 inline-git-status），避免每次刷新时
- *   在会话历史堆积过期的旧时间戳
+ * 只注入日期、不注入时间：
+ * - 时分秒变化太快，注入时间戳会让长会话里的时间信息迅速过期且
+ *   与可见消息不一致
+ * - 日期每天变化一次，system prompt 每轮刷新保持同日内一致、
+ *   跨天自动更新
  *
- * 内容：中文完整日期（含星期）+ 时间 + 时区名 + UTC 偏移。
+ * 内容：中文完整日期（含星期）+ 时区名 + UTC 偏移。
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -25,11 +24,10 @@ export default function (pi: ExtensionAPI) {
     injectedMessage = false;
   });
 
-  pi.on("before_agent_start", async (event) => {
+  pi.on("before_agent_start", async (event, ctx) => {
     const now = new Date();
     const formatted = new Intl.DateTimeFormat("zh-CN", {
       dateStyle: "full",
-      timeStyle: "medium",
     }).format(now);
     const tz = new Intl.DateTimeFormat().resolvedOptions().timeZone;
     const offsetMin = -now.getTimezoneOffset();
@@ -39,7 +37,7 @@ export default function (pi: ExtensionAPI) {
     const offsetM = absMin % 60;
     const offsetStr = `${sign}${offsetH}${offsetM ? `:${String(offsetM).padStart(2, "0")}` : ""}`;
 
-    const line = `当前时间：${formatted}（${tz}, UTC${offsetStr}）`;
+    const line = `今天日期：${formatted}（${tz}, UTC${offsetStr}）`;
     const result: {
       message?: {
         customType: string;
@@ -52,11 +50,17 @@ export default function (pi: ExtensionAPI) {
     };
     if (!injectedMessage) {
       injectedMessage = true;
-      result.message = {
-        customType: "inline-date",
-        content: `[日期] ${line}`,
-        display: true,
-      };
+      // /resume 场景：会话历史已含可见提示则跳过，仅 systemPrompt 刷新日期
+      const hasInjected = ctx.sessionManager
+        .getEntries()
+        .some((entry) => entry.type === "custom_message" && entry.customType === "inline-date");
+      if (!hasInjected) {
+        result.message = {
+          customType: "inline-date",
+          content: `[日期] ${line}`,
+          display: true,
+        };
+      }
     }
     return result;
   });

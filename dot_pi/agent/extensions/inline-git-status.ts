@@ -108,6 +108,14 @@ export default function (pi: ExtensionAPI) {
     }
     injected = true;
 
+    // /resume 等场景：扩展重载后闭包状态归零，会话历史已含注入消息则跳过
+    const hasInjected = ctx.sessionManager
+      .getEntries()
+      .some((entry) => entry.type === "custom_message" && entry.customType === "inline-git-status");
+    if (hasInjected) {
+      return;
+    }
+
     const { cwd } = ctx;
     const info = detectGitStatus(cwd);
     let text: string;

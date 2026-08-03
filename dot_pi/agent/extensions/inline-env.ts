@@ -208,11 +208,18 @@ export default function (pi: ExtensionAPI) {
     injected = false;
   });
 
-  pi.on("before_agent_start", async () => {
+  pi.on("before_agent_start", async (_event, ctx) => {
     if (injected) {
       return;
     }
     injected = true;
+    // /resume 场景：会话历史已含注入消息则跳过
+    const hasInjected = ctx.sessionManager
+      .getEntries()
+      .some((entry) => entry.type === "custom_message" && entry.customType === "inline-env");
+    if (hasInjected) {
+      return;
+    }
     if (!cached) {
       cached = detectEnv(realEnv());
     }
