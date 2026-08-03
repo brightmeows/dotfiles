@@ -17,18 +17,25 @@
  *   访问子目录的同名兄弟文件。
  * - 下一轮 LLM 调用前（context 事件）将内容以 user 消息注入消息列表。
  *
+ * 注入方式（双轨，消息形态参考 inline-date / inline-env / inline-git-status）：
+ * - 完整内容：context 事件临时注入，仅当轮 LLM 可见、不持久化（省 token）。
+ * - 一行摘要：pi.sendMessage 持久化 custom_message（customType 按路径区分，
+ *   display: true TUI 可见，会话留痕）。/resume、reload 后闭包状态归零时用
+ *   sessionManager.getEntries() 查重，避免重复投递摘要。
+ *
  * 规则：
  * - 每个 AGENTS.md 每 session 最多注入一次；compact 后重置，允许重新注入。
  * - 仅注入 cwd 严格子目录中的 AGENTS.md；根 AGENTS.md 由 Pi 原生加载。
  * - 不做 git-ignore 过滤：懒加载下仅处理实际被访问的路径，风险面小；
  *   即便命中被忽略目录的 AGENTS.md，注入也无副作用。
- *
- * 注入方式参考 receiving-review.ts：context 事件推送至消息列表。
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import * as fs from "node:fs";
 import * as path from "node:path";
+
+/** 摘要 custom_message 的 customType 前缀，后接 AGENTS.md 相对路径 */
+const CUSTOM_TYPE_PREFIX = "subdir-agents-md:";
 
 // ── 路径提取 ──
 
@@ -176,7 +183,7 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
     }
   });
 
-  // 下一轮 LLM 调用前注入 pending
+  // 下一轮 LLM 调用前注入 pending：完整内容临时注入 + 一行摘要持久化留痕
   pi.on("context", async (event, ctx) => {
     if (pending.size === 0) {
       return;
@@ -199,7 +206,25 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
       timestamp: Date.now(),
     });
 
-    ctx.ui.notify(`subdir-agents-md: ${toLoad.map((r) => `./${r}`).join(", ")}`, "info");
+    // 摘要留痕：每个 AGENTS.md 一条 custom_message（display: true TUI 可见）。
+    // GetEntries 查重针对 /resume、reload 后闭包状态归零的场景——会话历史
+    // 已有同 customType 的摘要则跳过，避免重复投递。
+    for (const rel of toLoad) {
+      const customType = CUSTOM_TYPE_PREFIX + rel;
+      const hasInjected = ctx.sessionManager
+        .getEntries()
+        .some((entry) => entry.type === "custom_message" && entry.customType === customType);
+      if (!hasInjected) {
+        pi.sendMessage(
+          {
+            customType,
+            content: `[子目录规则] 已注入 ./${rel}`,
+            display: true,
+          },
+          { deliverAs: "steer" },
+        );
+      }
+    }
 
     return { messages: event.messages };
   });
