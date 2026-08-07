@@ -1,50 +1,47 @@
 /**
  * Subdirectory AGENTS.md Extension
  *
- * 懒加载子目录 AGENTS.md：当 LLM 访问某路径时，按需发现并注入"管辖"
- * 该路径的子目录 AGENTS.md。
+ * 懒加载子目录 AGENTS.md：LLM 访问某路径时，按需发现并将"管辖"该路径
+ * 的子目录 AGENTS.md 内容直接注入上下文（Pi 默认只向上加载，不向下递归）。
  *
- * 背景：Pi 默认只向上加载 AGENTS.md（cwd → 父目录 → 全局），不向下递归。
- * 本扩展补足这一缺口。
+ * 设计要点：
+ * - 懒加载、零启动成本：不预扫描、不 fork git；工具调用时计算被访问路径
+ *   的锚点目录（文件所在目录 + 去扩展名的 co-located 目录，如 src/memory.rs
+ *   → src 与 src/memory），向上查找 AGENTS.md（含锚点，止于 cwd、不含根）。
+ * - 注入即留痕（custom_message + steer）：context 事件对未注入的 AGENTS.md
+ *   用 pi.sendMessage 投递 custom_message（customType 标注 + display:true），
+ *   持久化到 session、下一轮进 LLM context、TUI 可见，三合一。
+ * - 去重靠查找（buildContextEntries）：用 compact-aware 的 buildContextEntries
+ *   查找已注入的 customType（同文件去重）与 details.hash（同内容多子包去重）；
+ *   命中则跳过，compact 压缩后查不到则重新注入。哈希存 custom_message 的
+ *   details（不进 LLM）。无闭包状态、无手动重置，compact 语义自然体现。
  *
- * 设计（懒加载，零启动成本）：
- * - 不在 session_start 全树扫描，不 fork git 进程。
- * - 工具调用时（read/write/edit/bash cd 等）计算被访问路径的锚点目录
- *   （文件所在目录 + 去扩展名的 co-located 目录，如 src/memory.rs →
- *   src 与 src/memory），从各锚点向上查找 AGENTS.md（含锚点自身，止于
- *   cwd、不含根），收集未加载者。
- *   一条访问路径即覆盖三种命中：访问子目录本身 / 访问子目录内文件 /
- *   访问子目录的同名兄弟文件。
- * - 下一轮 LLM 调用前（context 事件）以 user 消息注入路径提示（不注入内容）。
- *
- * 注入方式（系统层 + 触发层，均不注入完整内容）：
- * - 系统层：before_agent_start 向系统提示词追加 AGENTS.md 机制说明（常量文本，
- *   每轮幂等追加，让 LLM 知晓子目录可能嵌套规则文件及其优先级）。
- * - 触发层：context 事件临时注入一行路径清单，告知 LLM 访问路径下存在子目录
- *   AGENTS.md 但未加载内容（省 token）；LLM 按需用 read 工具自行读取。
- * - 留痕提示：pi.sendMessage 持久化 custom_message（customType 按路径区分，
- *   display: true TUI 可见，会话留痕）。/resume、reload 后闭包状态归零时用
- *   sessionManager.getEntries() 查重，避免重复投递提示。
- *
- * 规则：
- * - 每个 AGENTS.md 每 session 最多提示一次；compact 后重置，允许重新提示。
- * - 仅注入 cwd 严格子目录中的 AGENTS.md；根 AGENTS.md 由 Pi 原生加载。
- * - 不做 git-ignore 过滤：懒加载下仅处理实际被访问的路径，风险面小；
- *   即便命中被忽略目录的 AGENTS.md，注入也无副作用。
+ * 规则：仅注入 cwd 严格子目录（根 AGENTS.md 由 Pi 原生加载）；不截断、
+ * 不过滤 git-ignore。
  */
 
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { CustomMessageEntry, ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-/** 摘要 custom_message 的 customType 前缀，后接 AGENTS.md 相对路径 */
+/** 注入 custom_message 的 customType 前缀，后接 AGENTS.md 相对路径 */
 const CUSTOM_TYPE_PREFIX = "subdir-agents-md:";
 
-/** 系统提示词注入：AGENTS.md 机制说明（让 LLM 从会话开始就知晓子目录规则的存在与优先级） */
-const AGENTS_MD_NOTICE = [
-  "AGENTS.md：项目写给 AI 代理的规则文件，根级已由 Pi 加载。",
-  "子目录可能嵌套 AGENTS.md，遵循“最近者优先”；Pi 提示存在时，先 read 读取再处理该子包。",
-].join("\n");
+// ── 注入提示文案 ──
+
+/** 注入内容段的标记头 */
+const injectNotice = (rel: string): string => `[自动注入] ./${rel}`;
+
+// ── 内容哈希（品牌类型，同内容多子包去重） ──
+
+/** SHA256 十六进制摘要的品牌类型；仅由 hashOf 构造，禁止任意字符串冒充 */
+type Hash = string & { readonly __brand: "Hash" };
+
+/** 计算内容的 sha256 摘要（唯一构造 Hash 的入口） */
+function hashOf(content: string): Hash {
+  return createHash("sha256").update(content).digest("hex") as Hash;
+}
 
 // ── 路径提取 ──
 
@@ -140,54 +137,25 @@ function findAncestorAgentsMd(absDir: string, absRoot: string): string[] {
   return results;
 }
 
-// ── 格式化 ──
+// ── 内容读取 ──
 
-/**
- * 生成"提示存在"通知：仅列出子目录 AGENTS.md 的相对路径，不读取内容，
- * 让 LLM 按需用 read 工具自行加载（省 token，避免无关内容进上下文）。
- */
-function formatNotice(relPaths: string[], cwd: string): string {
-  const existing = relPaths.filter((rel) => {
-    try {
-      return fs.statSync(path.resolve(cwd, rel)).isFile();
-    } catch {
-      return false; // 提示前被删除
-    }
-  });
-  if (existing.length === 0) {
-    return "";
+/** 读取文件内容（读取失败返回 null，调用方据此跳过并允许下次重试） */
+function readContent(absPath: string): string | null {
+  try {
+    return fs.readFileSync(absPath, "utf8");
+  } catch {
+    return null;
   }
-  return [
-    "[子目录规则] 以下路径存在 AGENTS.md（未加载，按需 read）：",
-    ...existing.map((rel) => `- ./${rel}`),
-  ].join("\n");
-}
-
-function depth(rel: string): number {
-  return rel.split(path.sep).length;
 }
 
 // ── Extension ──
 
 export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
-  const loaded = new Set<string>();
+  /** 待处理的相对路径（tool_call 收集，context 消费；Set 自动去重） */
   const pending = new Set<string>();
-  let displayCwd = "";
 
-  // 新 session / reload / resume / fork：重置状态
-  pi.on("session_start", async () => {
-    loaded.clear();
-    pending.clear();
-  });
-
-  // 系统上下文：每轮用户提交时向系统提示词追加 AGENTS.md 机制说明（每轮重建，天然幂等）
-  pi.on("before_agent_start", async (event) => ({
-    systemPrompt: `${event.systemPrompt}\n\n${AGENTS_MD_NOTICE}`,
-  }));
-
-  // 工具调用时按访问路径发现待提示的 AGENTS.md
+  // 工具调用时按访问路径发现待注入的 AGENTS.md（仅收集相对路径，不读内容）
   pi.on("tool_call", async (event, ctx) => {
-    displayCwd = ctx.cwd;
     const accessed = extractAccessedPath(event.toolName, event.input, ctx.cwd);
     if (!accessed) {
       return;
@@ -197,64 +165,63 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
     const accessedAbs = path.resolve(ctx.cwd, accessed);
     for (const anchor of anchorDirs(accessedAbs)) {
       for (const rel of findAncestorAgentsMd(anchor, root)) {
-        if (!loaded.has(rel)) {
-          pending.add(rel);
-        }
+        pending.add(rel);
       }
     }
   });
 
-  // 下一轮 LLM 调用前提示 pending：路径清单临时注入 + 留痕提示持久化
-  pi.on("context", async (event, ctx) => {
+  // 下一轮 LLM 调用前：查找去重，未注入的用 custom_message 投递（steer）
+  pi.on("context", async (_event, ctx) => {
     if (pending.size === 0) {
       return;
     }
 
-    const toLoad = [...pending].filter((p) => !loaded.has(p));
+    const { cwd } = ctx;
+    const toProcess = [...pending];
     pending.clear();
-    if (toLoad.length === 0) {
-      return;
-    }
 
-    toLoad.sort((a, b) => depth(a) - depth(b) || a.localeCompare(b));
-    for (const p of toLoad) {
-      loaded.add(p);
-    }
+    // 查找当前上下文里已注入的子目录 AGENTS.md（compact-aware：原内容被
+    // 压缩后不再返回，自然允许重新注入）
+    const existing = ctx.sessionManager
+      .buildContextEntries()
+      .filter(
+        (e): e is CustomMessageEntry =>
+          e.type === "custom_message" && e.customType.startsWith(CUSTOM_TYPE_PREFIX),
+      );
+    const inContextRels = new Set(
+      existing.map((e) => e.customType.slice(CUSTOM_TYPE_PREFIX.length)),
+    );
+    const inContextHashes = new Set(
+      existing
+        .map((e) => (e.details as { hash?: string } | undefined)?.hash)
+        .filter((h): h is string => typeof h === "string"),
+    );
 
-    const notice = formatNotice(toLoad, displayCwd);
-    if (notice) {
-      event.messages.push({
-        content: [{ text: notice, type: "text" }],
-        role: "user",
-        timestamp: Date.now(),
-      });
-    }
+    // 同 turn 内已注入的哈希（steer 延迟到下 turn drain，本 turn 多个 pending 靠它去重）
+    const seenHashes = new Set<string>();
 
-    // 留痕提示：每个 AGENTS.md 一条 custom_message（display: true TUI 可见）。
-    // GetEntries 查重针对 /resume、reload 后闭包状态归零的场景——会话历史
-    // 已有同 customType 的提示则跳过，避免重复投递。
-    for (const rel of toLoad) {
-      const customType = CUSTOM_TYPE_PREFIX + rel;
-      const hasInjected = ctx.sessionManager
-        .getEntries()
-        .some((entry) => entry.type === "custom_message" && entry.customType === customType);
-      if (!hasInjected) {
-        pi.sendMessage(
-          {
-            customType,
-            content: `[子目录规则] 检测到 ./${rel}（按需 read）`,
-            display: true,
-          },
-          { deliverAs: "steer" },
-        );
+    for (const rel of toProcess) {
+      if (inContextRels.has(rel)) {
+        continue; // 同文件已在上下文
       }
+      const content = readContent(path.resolve(cwd, rel));
+      if (content === null) {
+        continue; // 文件读取失败，允许下次重试
+      }
+      const hash = hashOf(content);
+      if (inContextHashes.has(hash) || seenHashes.has(hash)) {
+        continue; // 同内容已在上下文（别的子包）或本 turn 已注入，跳过
+      }
+      seenHashes.add(hash);
+      pi.sendMessage(
+        {
+          customType: CUSTOM_TYPE_PREFIX + rel,
+          content: `${injectNotice(rel)}\n${content}`,
+          details: { hash },
+          display: true,
+        },
+        { deliverAs: "steer" },
+      );
     }
-
-    return { messages: event.messages };
-  });
-
-  // Compact 后重置已加载记录，允许重新提示
-  pi.on("session_compact", async () => {
-    loaded.clear();
   });
 }
