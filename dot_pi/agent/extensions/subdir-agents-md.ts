@@ -8,9 +8,10 @@
  * - 懒加载、零启动成本：不预扫描、不 fork git；工具调用时计算被访问路径
  *   的锚点目录（文件所在目录 + 去扩展名的 co-located 目录，如 src/memory.rs
  *   → src 与 src/memory），向上查找 AGENTS.md（含锚点，止于 cwd、不含根）。
- * - 注入即留痕（custom_message + steer）：context 事件对未注入的 AGENTS.md
- *   用 pi.sendMessage 投递 custom_message（customType 标注 + display:true），
- *   持久化到 session、下一轮进 LLM context、TUI 可见，三合一。
+ * - 注入（custom_message + steer）：context 事件对未注入的 AGENTS.md 用
+ *   pi.sendMessage 投递 custom_message（display:false），完整内容下一轮进
+ *   LLM context 但不在 TUI 显示；另用 appendEntry 投递 TUI 短提示（custom
+ *   entry，不进 LLM），TUI 只见“已注入”标记而非完整内容。
  * - 去重靠查找（buildContextEntries）：用 compact-aware 的 buildContextEntries
  *   查找已注入的 customType（同文件去重）与 details.hash（同内容多子包去重）；
  *   命中则跳过，compact 压缩后查不到则重新注入。哈希存 custom_message 的
@@ -24,9 +25,12 @@ import type { CustomMessageEntry, ExtensionAPI } from "@earendil-works/pi-coding
 import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { Text } from "@earendil-works/pi-tui";
 
-/** 注入 custom_message 的 customType 前缀，后接 AGENTS.md 相对路径 */
+/** 完整内容 custom_message 的 customType 前缀，后接 AGENTS.md 相对路径（进 LLM） */
 const CUSTOM_TYPE_PREFIX = "subdir-agents-md:";
+/** TUI 提示 custom entry 的 customType（不进 LLM，仅 TUI 可见） */
+const NOTICE_TYPE = "subdir-agents-md-notice";
 
 // ── 注入提示文案 ──
 
@@ -151,6 +155,12 @@ function readContent(absPath: string): string | null {
 // ── Extension ──
 
 export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
+  // TUI 提示渲染（custom entry，不进 LLM）：只显示“已注入”标记，完整内容不进 TUI
+  pi.registerEntryRenderer(NOTICE_TYPE, (entry, _opts, theme) => {
+    const rel = (entry.data as { rel?: string } | undefined)?.rel ?? "";
+    return new Text(theme.fg("dim", injectNotice(rel)));
+  });
+
   /** 待处理的相对路径（tool_call 收集，context 消费；Set 自动去重） */
   const pending = new Set<string>();
 
@@ -213,15 +223,18 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
         continue; // 同内容已在上下文（别的子包）或本 turn 已注入，跳过
       }
       seenHashes.add(hash);
+      // 完整内容进 LLM（display:false：TUI 不显示完整，避免刷屏）
       pi.sendMessage(
         {
           customType: CUSTOM_TYPE_PREFIX + rel,
           content: `${injectNotice(rel)}\n${content}`,
           details: { hash },
-          display: true,
+          display: false,
         },
         { deliverAs: "steer" },
       );
+      // TUI 短提示（custom entry，不进 LLM）
+      pi.appendEntry(NOTICE_TYPE, { rel });
     }
   });
 }
