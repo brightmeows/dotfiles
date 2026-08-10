@@ -37,7 +37,11 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 > **⚠️ 重要约定**： chezmoi 命令必须使用 `-S .` 指定源目录为当前仓库根目录（`~/Codes/dotfiles`）。这是本仓库的非标准目录结构要求，避免使用默认的 `~/.local/share/chezmoi`。
 > **ℹ️ Symlink 模式**：本仓库使用 `mode = "symlink"`，目标文件是源文件的符号链接而非副本。编辑源文件后目标文件已自动同步，`chezmoi -S . apply` 通常无额外操作（除非涉及模板渲染或 `run_onchange_` 脚本）。修改后直接 `git commit` 即可，不必每次 apply。
-> **⚠️ 删除类命令陷阱**：`npx skills remove` 等工具会解除引用删除目标文件——在仓库目录内运行会顺着 `~/.agents_meow/skills/<name>` 的 symlink 把仓库源文件一并删掉。执行此类命令前先确认目标为市场安装目录（`~/.agents/skills/`），或在仓库目录外运行。
+> **⚠️ npx skills 作用域**：`npx skills` 不带 `--agent` 时对所有已检测 agent 生效
+> （含 pi 的 `~/.pi/agent/skills`、opencode 的 `~/.config/opencode/skills` 等）。
+> 本仓库 shell 已内置 `skills` wrapper（bash 与 nushell）自动注入 `--agent codex`，只动 `~/.agents/skills`；裸跑 `npx skills` 写命令前先确认作用域。
+> opencode 技能目录 `~/.config/opencode/skills` 由 `dot_config/opencode/symlink_skills.tmpl` 管理，指向 `~/.agents_meow/skills` 分发目录
+> （曾指向仓库源目录，2026-08-10 曾导致 `npx skills remove` 顺着 symlink 删除仓库源文件）。
 
 | 命令 | 用途 |
 |---|---|

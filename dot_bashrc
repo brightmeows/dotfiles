@@ -46,3 +46,8 @@ if command -v gh &> /dev/null; then
     fi
 fi
 
+
+# npx skills：默认只作用于 ~/.agents/skills（universal agent=codex），避免波及 pi 等 agent 目录
+skills() {
+    npx --yes skills "$@" --agent codex
+}

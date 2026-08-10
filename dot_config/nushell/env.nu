@@ -90,3 +90,8 @@ if (which nixvim | is-not-empty) {
 # Alias vi/vim → nvim
 alias vi = nvim
 alias vim = nvim
+
+# npx skills：默认只作用于 ~/.agents/skills（universal agent=codex）
+def skills [...args] {
+    npx --yes skills ...$args --agent codex
+}
