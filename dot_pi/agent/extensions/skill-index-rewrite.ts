@@ -20,11 +20,14 @@
  * - Pi 收集技能按 realpath 去重、先到先得：~/.pi/agent/skills 下的
  *   symlink 镜像先扫到，展示路径会落在 symlink 上，清理/重装后易失效。
  * - 渲染前对 filePath 做规范化：技能位于非规范目录时，若规范目录
- *   （项目 .pi/skills、祖先 .agents/skills、~/.agents/skills）存在同名
+ *   （项目 .agents/skills、祖先链 .agents/skills、~/.agents/skills）存在同名
  *   技能且 realpath 一致（同一文件的镜像），展示路径改用规范目录。
+ *   .pi/skills 系列（用户 ~/.pi/agent/skills、项目 <cwd>/.pi/skills）均
+ *   非规范目录：用户级与项目级统一以 .agents/skills 为规范优先。
  * - realpath 不一致（同名真冲突）或不可解析时保持 Pi 原路径，绝不
  *   把提示词路径指向别的文件内容。
- * - 分组排序时项目级目录（.pi/skills、祖先 .agents/skills）优先于全局。
+ * - 分组排序：项目级目录（.pi/skills、祖先 .agents/skills）优先于全局，
+ *   其中 .agents/skills 组先于 .pi/skills 组，再按技能数量降序。
  *
  * 不改 Pi 源码、不改技能文件；信息完整保留（name+description）。
  */
@@ -182,33 +185,49 @@ function pathGroupKey(filePath: string): string {
 /** 用户级规范技能目录：真实安装位置优先于 symlink 镜像目录 */
 const CANONICAL_USER_DIRS = [join(homedir(), ".agents", "skills")];
 
+/** 项目级目录集合：sort 供排序判断，canon 供路径重映射 */
+interface ProjectSkillDirs {
+  /** 项目级目录全集（排序用）：<cwd>/.pi/skills + 祖先链 .agents/skills（排除
+   *  ~/.agents/skills，与 Pi collectAncestorAgentsSkillDirs 的过滤行为对称） */
+  sort: string[];
+  /** 项目级规范目录（重映射目标）：仅祖先链 .agents/skills */
+  canon: string[];
+}
+
 /**
- * 收集项目级技能目录：<cwd>/.pi/skills + cwd 祖先链的 .agents/skills
- * （与 Pi collectAncestorAgentsSkillDirs 行为对称，从近到远）。
+ * 收集项目级技能目录（从近到远）：
+ * - sort：<cwd>/.pi/skills + cwd 祖先链的 .agents/skills
+ * - canon：仅祖先链 .agents/skills（.pi/skills 非规范目录，其技能若存在
+ *   realpath 一致的 .agents/skills 镜像会被规范化）
  */
-function collectProjectSkillDirs(cwd: string): string[] {
-  const dirs: string[] = [join(cwd, ".pi", "skills")];
+function collectProjectSkillDirs(cwd: string): ProjectSkillDirs {
+  const [userAgents] = CANONICAL_USER_DIRS;
+  const sort: string[] = [join(cwd, ".pi", "skills")];
+  const canon: string[] = [];
   let dir = cwd;
   while (true) {
-    dirs.push(join(dir, ".agents", "skills"));
+    const agents = join(dir, ".agents", "skills");
+    if (agents !== userAgents) {
+      sort.push(agents);
+      canon.push(agents);
+    }
     const parent = dirname(dir);
     if (parent === dir) {
       break;
     }
     dir = parent;
   }
-  return dirs;
+  return { sort, canon };
 }
 
 /**
- * 展示路径规范化：技能位于非规范目录（如 ~/.pi/agent/skills 的 symlink
- * 镜像）时，若规范目录（项目目录、~/.agents/skills）存在同名技能且 realpath
- * 一致（证明是同一文件），改用规范目录路径；realpath 不一致（同名真冲突）
- * 或不可解析（断链）时保持原路径。
+ * 展示路径规范化：技能位于非规范目录（如 ~/.pi/agent/skills、项目 .pi/skills
+ * 的 symlink 镜像）时，若规范目录（项目 .agents/skills → ~/.agents/skills）
+ * 存在同名技能且 realpath 一致（证明是同一文件），改用规范目录路径；
+ * realpath 不一致（同名真冲突）或不可解析（断链）时保持原路径。
  */
-function canonicalSkillFilePath(filePath: string, projectDirs: string[]): string {
+function canonicalSkillFilePath(filePath: string, canonDirs: string[]): string {
   const groupDir = dirname(dirname(filePath));
-  const canonDirs = [...projectDirs, ...CANONICAL_USER_DIRS];
   if (canonDirs.includes(groupDir)) {
     return filePath;
   }
@@ -279,6 +298,7 @@ export default function (pi: ExtensionAPI) {
 
     const base = event.systemPrompt.replace(PI_DEFAULT_BLOCK_RE, "");
     const projectDirs = collectProjectSkillDirs(ctx.cwd);
+    const canonDirs = [...projectDirs.canon, ...CANONICAL_USER_DIRS];
     const { map: globalMap, ok: globalOk } = loadSourceMap();
     // 项目 lock 优先于全局 lock（就近优先，与 AGENTS.md 层级语义一致）
     const projectMap = loadProjectSourceMap(ctx.cwd);
@@ -288,7 +308,7 @@ export default function (pi: ExtensionAPI) {
     // 按 dir → origin 双层分组（用于排序，渲染时扁平——不嵌套 origin 标签）
     const dirMap = new Map<string, Map<string, SkillIndexEntry[]>>();
     for (const skill of skills) {
-      const dg = pathGroupKey(canonicalSkillFilePath(skill.filePath, projectDirs));
+      const dg = pathGroupKey(canonicalSkillFilePath(skill.filePath, canonDirs));
       let originGroup = dirMap.get(dg);
       if (!originGroup) {
         originGroup = new Map();
@@ -316,13 +336,16 @@ export default function (pi: ExtensionAPI) {
     ];
 
     // 按 dir → origin 嵌套排序，扁平渲染（group 下按 source 注释分段，skill 无 origin 属性）
-    // 项目级目录组（.pi/skills、祖先 .agents/skills）优先于全局，再按数量降序
+    // 项目级目录组（.pi/skills、祖先 .agents/skills）优先于全局；同级别内
+    // .agents/skills 组先于 .pi/skills 组，再按数量降序
     const isProjectDir = (dg: string) =>
-      projectDirs.some((p) => dg === p || dg.startsWith(`${p}${sep}`));
+      projectDirs.sort.some((p) => dg === p || dg.startsWith(`${p}${sep}`));
+    const isAgentsDir = (dg: string) => canonDirs.includes(dg);
     // eslint-disable-next-line unicorn/no-array-sort -- [...展开] 已是新数组，sort 安全
     const dirEntries = [...dirMap.entries()].sort(
       (a, b) =>
         Number(isProjectDir(b[0])) - Number(isProjectDir(a[0])) ||
+        Number(isAgentsDir(b[0])) - Number(isAgentsDir(a[0])) ||
         countGroup(b[1]) - countGroup(a[1]) ||
         a[0].localeCompare(b[0]),
     );
