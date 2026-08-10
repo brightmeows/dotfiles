@@ -287,7 +287,7 @@ export function formatGitLine(ctx: GitContext): string {
 const TOOL_RECOMMENDATIONS = [
   { bin: "rg", replaces: "grep" },
   { bin: "fd", replaces: "find" },
-  { bin: "jq", replaces: "JSON" },
+  { bin: "jq", replaces: "JSON处理" },
   { bin: "bat", replaces: "cat" },
   { bin: "eza", replaces: "ls" },
   { bin: "delta", replaces: "diff" },
@@ -316,7 +316,7 @@ export function formatToolsLine(installed: string[]): string | null {
   }
   const installedSet = new Set(installed);
   const items = TOOL_RECOMMENDATIONS.filter((t) => installedSet.has(t.bin))
-    .map((t) => `${t.bin}→${t.replaces}`)
+    .map((t) => `${t.bin}替代${t.replaces}`)
     .join("、");
   return `[CLI 工具] 优先使用现代替代：${items}`;
 }
