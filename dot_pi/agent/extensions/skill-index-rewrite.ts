@@ -92,7 +92,7 @@ function escapeXml(str: string): string {
 }
 
 /** 渲染单个 skill 为 XML 条目（origin 为分类属性；仅 name+description，路径由 group dir 体现） */
-function renderSkill(skill: SkillIndexEntry, origin: string, indent = "    "): string[] {
+function renderSkill(skill: SkillIndexEntry, origin: string, indent = "  "): string[] {
   return [
     `${indent}<skill origin="${escapeXml(origin)}">`,
     `${indent}  <name>${escapeXml(skill.name)}</name>`,
