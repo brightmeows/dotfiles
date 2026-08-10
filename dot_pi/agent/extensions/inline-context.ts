@@ -1,0 +1,372 @@
+/**
+ * Inline Context extension for pi
+ *
+ * 在用户提交消息（agent 开始前）注入系统上下文，合并原 inline-date /
+ * inline-env / inline-git-status 三个扩展：
+ * - 日期：每轮现算，systemPrompt 注入（跨天自动更新）
+ * - 系统环境：session 内一次，异步预计算，systemPrompt 注入
+ * - Git 状态：session 内一次，异步预计算，systemPrompt 注入
+ * - 首条消息注入一条极简摘要 message（display: true），TUI 可见一行
+ *
+ * 设计决策（可验证优先）：
+ * - 检测全部异步化（execFile 而非 execFileSync）：原 inline-env 用同步
+ *   execFileSync 跑 `pnpm --version` 单条阻塞 921ms，首条消息卡顿近 1 秒
+ *   （benchmark 实测）；现在 session_start 时后台预计算，before_agent_start
+ *   只 await 缓存结果，不阻塞事件循环
+ * - 检测项精简：保留影响 LLM 决策的高价值项（OS / 不可变系统 / 会话 /
+ *   桌面 / 容器），删除低价值项（shell / node / pnpm 版本、内核版本、
+ *   架构）——需要时 LLM 可自行用命令查询
+ * - 完整信息走 systemPrompt（每轮重建，compact 后自动恢复，无状态），
+ *   摘要 message 只用于 TUI 可见性，不承载关键信息
+ */
+
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { execFile } from "node:child_process";
+import { basename } from "node:path";
+import { promisify } from "node:util";
+
+const execFileAsync = promisify(execFile);
+
+// ---------- 日期 ----------
+
+function utcOffsetStr(): string {
+  const offsetMin = -new Date().getTimezoneOffset();
+  const sign = offsetMin < 0 ? "-" : "+";
+  const absMin = Math.abs(offsetMin);
+  const offsetH = Math.floor(absMin / 60);
+  const offsetM = absMin % 60;
+  return `${sign}${offsetH}${offsetM ? `:${String(offsetM).padStart(2, "0")}` : ""}`;
+}
+
+function formatDateLine(): string {
+  const now = new Date();
+  const formatted = new Intl.DateTimeFormat("zh-CN", {
+    dateStyle: "full",
+  }).format(now);
+  const tz = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return `今天日期：${formatted}（${tz}, UTC${utcOffsetStr()}）`;
+}
+
+// 摘要用短格式：8月10日 周一 UTC+8
+function formatDateShort(): string {
+  const date = new Intl.DateTimeFormat("zh-CN", {
+    month: "long",
+    day: "numeric",
+    weekday: "short",
+  }).format(new Date());
+  return `${date} UTC${utcOffsetStr()}`;
+}
+
+// ---------- 系统环境 ----------
+
+export interface EnvContext {
+  platform: NodeJS.Platform;
+  env: Record<string, string | undefined>;
+  exec: (cmd: string, args: string[]) => Promise<string | null>; // 失败返回 null
+}
+
+export interface SystemInfo {
+  platform: NodeJS.Platform;
+  os: string | null;
+  immutable: boolean;
+  session: string | null;
+  desktop: string | null;
+  container: string | null;
+}
+
+// Fedora Atomic 桌面变体：均为不可变系统
+const IMMUTABLE_VARIANTS = new Set([
+  "kinoite",
+  "silverblue",
+  "sericea",
+  "onyx",
+  "sodalite",
+  "atomic",
+]);
+
+async function readOsRelease(exec: EnvContext["exec"]): Promise<{
+  pretty: string | null;
+  variantId: string | null;
+}> {
+  const text = await exec("cat", ["/etc/os-release"]);
+  if (!text) {
+    return { pretty: null, variantId: null };
+  }
+  const pretty = text.match(/^PRETTY_NAME="?([^"\n]*)"?/m)?.[1] ?? null;
+  const variantId = text.match(/^VARIANT_ID="?([^"\n]*)"?/m)?.[1] ?? null;
+  return { pretty, variantId };
+}
+
+function platformLabel(platform: NodeJS.Platform): string {
+  switch (platform) {
+    case "win32": {
+      return "Windows";
+    }
+    case "darwin": {
+      return "macOS";
+    }
+    case "linux": {
+      return "Linux";
+    }
+    default: {
+      return platform;
+    }
+  }
+}
+
+// 基础层（process）兜底 + 增强层（平台命令，失败自动省略）
+export async function detectEnv(ctx: EnvContext): Promise<SystemInfo> {
+  const { platform, env, exec } = ctx;
+  let os: string | null = null;
+  let immutable = false;
+  let container: string | null = null;
+
+  if (platform === "linux") {
+    const release = await readOsRelease(exec);
+    if (release.pretty) {
+      os = release.pretty;
+      immutable =
+        IMMUTABLE_VARIANTS.has(release.variantId ?? "") ||
+        (await exec("rpm-ostree", ["--version"])) !== null;
+    }
+    const virt = await exec("systemd-detect-virt", ["--container"]);
+    if (virt && virt !== "none" && virt !== "0") {
+      container = virt;
+    }
+  } else if (platform === "darwin") {
+    const ver = await exec("sw_vers", ["-productVersion"]);
+    os = ver ? `macOS ${ver}` : "macOS";
+  } else if (platform === "win32") {
+    os = "Windows";
+  }
+
+  return {
+    platform,
+    os,
+    immutable,
+    session: env["XDG_SESSION_TYPE"] ?? null,
+    desktop: env["XDG_CURRENT_DESKTOP"] ?? null,
+    container,
+  };
+}
+
+export function formatEnvLine(info: SystemInfo): string {
+  const parts: string[] = [];
+  const osLabel = info.os ?? platformLabel(info.platform);
+  parts.push(
+    info.immutable ? `${osLabel}（不可变系统：系统级包用 rpm-ostree / flatpak）` : osLabel,
+  );
+  if (info.session) {
+    parts.push(info.desktop ? `${info.session} 会话（${info.desktop}）` : `${info.session} 会话`);
+  }
+  if (info.container) {
+    parts.push(`容器环境（${info.container}）`);
+  }
+  return `[系统环境] ${parts.join("；")}`;
+}
+
+// 摘要用短标签：Fedora Kinoite(不可变)
+function shortEnvLabel(info: SystemInfo): string {
+  const osLabel = info.os ?? platformLabel(info.platform);
+  // "Fedora Linux 44.x (Kinoite)" → "Fedora Kinoite"
+  const m = info.os?.match(/^([^\s]+).*\(([^)]+)\)$/);
+  const base = m ? `${m[1]!} ${m[2]!}` : osLabel;
+  return info.immutable ? `${base}(不可变)` : base;
+}
+
+// ---------- Git 状态 ----------
+
+const WORKTREE_DIRS = [".worktrees", "worktrees", ".worktree", "worktree"];
+
+export interface GitStatus {
+  root: string;
+  branch: string | null; // 当前分支（detached HEAD 时为 null）
+  isWorktree: boolean;
+  isSubmodule: boolean;
+}
+
+export interface GitContext {
+  info: GitStatus | null;
+  ignoredWorktreeDir: string | null;
+}
+
+// 执行 git 命令，失败（非仓库 / 命令不存在）返回 null
+async function runGit(cwd: string, args: string[]): Promise<string | null> {
+  try {
+    const { stdout } = await execFileAsync("git", args, { cwd, encoding: "utf8" });
+    return String(stdout).trim();
+  } catch {
+    return null;
+  }
+}
+
+// 不在 Git 仓库时返回 null
+export async function detectGitStatus(cwd: string): Promise<GitStatus | null> {
+  const gitDir = await runGit(cwd, ["rev-parse", "--git-dir"]);
+  if (!gitDir) {
+    return null;
+  }
+  const commonDir = await runGit(cwd, ["rev-parse", "--git-common-dir"]);
+  const root = await runGit(cwd, ["rev-parse", "--show-toplevel"]);
+  const branch = await runGit(cwd, ["branch", "--show-current"]);
+  const superproject = await runGit(cwd, ["rev-parse", "--show-superproject-working-tree"]);
+
+  // Superproject 路径输出非空 ⇒ 位于 submodule 中
+  const isSubmodule = Boolean(superproject);
+  // Linked worktree：git-dir 与 git-common-dir 不同（submodule 除外）
+  const isWorktree = !isSubmodule && Boolean(commonDir) && gitDir !== commonDir;
+
+  return {
+    root: root ?? cwd,
+    branch: branch || null,
+    isWorktree,
+    isSubmodule,
+  };
+}
+
+// 返回第一个已被 .gitignore 忽略的工作树目录名，否则 null
+// 并行检测所有候选目录，比串行快一个量级
+export async function findIgnoredWorktreeDir(cwd: string): Promise<string | null> {
+  const results = await Promise.all(
+    WORKTREE_DIRS.map(async (dir) => {
+      const out = await runGit(cwd, ["check-ignore", "-q", dir]);
+      return out !== null ? dir : null;
+    }),
+  );
+  return results.find((dir) => dir !== null) ?? null;
+}
+
+// Git 状态 + worktree 建议合并检测，供 systemPrompt 每轮复用
+export async function detectGitContext(cwd: string): Promise<GitContext> {
+  const info = await detectGitStatus(cwd);
+  if (!info) {
+    return { info: null, ignoredWorktreeDir: null };
+  }
+  let ignoredWorktreeDir: string | null = null;
+  if (
+    (info.branch === "main" || info.branch === "master") &&
+    !info.isWorktree &&
+    !info.isSubmodule
+  ) {
+    ignoredWorktreeDir = await findIgnoredWorktreeDir(cwd);
+  }
+  return { info, ignoredWorktreeDir };
+}
+
+export function formatGitLine(ctx: GitContext): string {
+  const { info, ignoredWorktreeDir } = ctx;
+  if (!info) {
+    return "[Git 状态] 当前目录不在 Git 仓库中。";
+  }
+  const { root, branch, isWorktree, isSubmodule } = info;
+  let text: string;
+  if (isSubmodule) {
+    text = `[Git 状态] 当前位于 Git submodule（仓库根 ${root}，分支 ${branch ?? "detached HEAD"}），按普通仓库对待。`;
+  } else if (isWorktree) {
+    text = `[Git 状态] 当前位于 Git linked worktree（仓库根 ${root}，分支 ${branch ?? "detached HEAD"}），工作区已隔离。`;
+  } else {
+    text = `[Git 状态] 当前位于 Git 仓库（根目录 ${root}，分支 ${branch ?? "detached HEAD"}）。`;
+  }
+  if (!branch) {
+    text += " 处于 detached HEAD，由外部管理，收尾时需创建分支。";
+  }
+  if (ignoredWorktreeDir) {
+    text += ` 工作树目录 ${ignoredWorktreeDir} 已被 Git 忽略，建议在隔离分支上开发：\`git worktree add ${ignoredWorktreeDir}/<新分支> -b <新分支>\`，避免直改 ${branch ?? "HEAD"}。`;
+  }
+  return text;
+}
+
+// ---------- 摘要 message ----------
+
+export function buildSummary(env: SystemInfo | null, git: GitContext | null): string {
+  const parts: string[] = [`[上下文] ${formatDateShort()}`];
+  if (env) {
+    parts.push(shortEnvLabel(env));
+  }
+  if (git?.info) {
+    parts.push(`git ${basename(git.info.root)}@${git.info.branch ?? "detached"}`);
+  } else {
+    parts.push("不在 Git 仓库");
+  }
+  return parts.join(" | ");
+}
+
+// ---------- 扩展主体 ----------
+
+// /resume 兼容：旧版三个扩展的注入消息也视为已注入，避免重复注入
+const CUSTOM_TYPE = "inline-context";
+const LEGACY_CUSTOM_TYPES = new Set(["inline-date", "inline-env", "inline-git-status"]);
+
+function realEnv(): EnvContext {
+  return {
+    platform: process.platform,
+    env: process.env,
+    exec: async (cmd, args) => {
+      try {
+        const { stdout } = await execFileAsync(cmd, args, { encoding: "utf8" });
+        return String(stdout).trim();
+      } catch {
+        return null;
+      }
+    },
+  };
+}
+
+export default function (pi: ExtensionAPI) {
+  // 首条消息是否已注入摘要（compact 后重置，允许重新展示）
+  let injectedMessage = false;
+  // Session_start 时启动的异步预计算（不阻塞事件循环）
+  let envPromise: Promise<SystemInfo | null> | null = null;
+  let gitPromise: Promise<GitContext> | null = null;
+
+  pi.on("session_compact", async () => {
+    injectedMessage = false;
+  });
+
+  // Session 启动即后台预计算环境与 Git 状态，首条消息时直接取缓存
+  pi.on("session_start", async (_event, ctx) => {
+    envPromise = detectEnv(realEnv());
+    gitPromise = detectGitContext(ctx.cwd);
+  });
+
+  pi.on("before_agent_start", async (event, ctx) => {
+    // 已完成的 promise await 为零成本；未完成则等异步结果（不阻塞 TUI）
+    const envInfo = (await envPromise) ?? null;
+    const gitInfo = (await gitPromise) ?? null;
+
+    const dateLine = `[日期] ${formatDateLine()}`;
+    const envLine = envInfo ? formatEnvLine(envInfo) : "";
+    const gitLine = gitInfo ? formatGitLine(gitInfo) : "";
+    const systemPrompt = `${event.systemPrompt}\n\n${dateLine}\n${envLine}\n${gitLine}`;
+
+    const result: {
+      message?: {
+        customType: string;
+        content: string;
+        display: boolean;
+      };
+      systemPrompt: string;
+    } = { systemPrompt };
+
+    // 首条消息注入一条极简摘要（TUI 可见），完整信息已进 systemPrompt
+    if (!injectedMessage) {
+      injectedMessage = true;
+      // /resume 场景：历史已含（新或旧版）注入消息则跳过
+      const hasInjected = ctx.sessionManager
+        .getEntries()
+        .some(
+          (entry) =>
+            entry.type === "custom_message" &&
+            (entry.customType === CUSTOM_TYPE || LEGACY_CUSTOM_TYPES.has(entry.customType)),
+        );
+      if (!hasInjected) {
+        result.message = {
+          customType: CUSTOM_TYPE,
+          content: buildSummary(envInfo, gitInfo),
+          display: true,
+        };
+      }
+    }
+    return result;
+  });
+}
