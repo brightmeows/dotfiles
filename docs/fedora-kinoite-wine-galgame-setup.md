@@ -6,7 +6,12 @@
 
 ## 结论先行
 
-采用**路径 C：rpm-ostree overlay 系统 wine + winetricks，umu-launcher + GE-Proton 作为视频播放增强层**。
+采用**路径 C：rpm-ostree overlay 系统 wine + winetricks**，但实际运行 32 位游戏用 **Kron4ek wine-tkg 11.13（wow64 构建，用户级）**。
+
+**核心坑**：系统 wine 11.0 的 wow64 模式加载 32 位模块时用 `mmap(RW) + mprotect(RX)`，在 SELinux enforcing 下触发 `execmod` 拒绝，
+表现为 `map_image_into_view failed to set protection, noexec filesystem?` 或 `could not load kernel32.dll, status c0000135`。
+拒绝对象为 composefs 底层 ostree object 文件（AVC: denied { execmod }，scontext 记录为 kernel_t）。wine-tkg 11.13 加载时 mmap 直接带 exec，不触发该检查，**无需修改 SELinux**。
+完整排查过程见 [fedora-kinoite-wine-selinux-execmod.md](fedora-kinoite-wine-selinux-execmod.md)。
 
 选择理由（对照路径 A：flatpak Lutris）：
 
@@ -14,9 +19,8 @@
 |------|------|
 | 无生肉需求 | flatpak 方案最大卖点（沙箱内打包翻译工具链）不适用 |
 | 绿色版直跑 | 终端 `wine game.exe` 最直接，Lutris 的安装器流程是负担 |
-| Fedora wine 元包 | 自动拉全 i686 依赖，一次 overlay 解决 32 位问题 |
 | 老 galgame 多为 d3d9 2D | wined3d 即可（vnwiki 建议老 VN 禁用 DXVK），无需 lutris 的 DXVK 集成 |
-| 视频播放 | wine 11 自带 FFmpeg 媒体后端；增强层用 umu + GE-Proton11（winedmo 重写视频管线，2026-06 发布，免 wmp11/lavfilters 等组件） |
+| 视频播放 | wine 11 自带 FFmpeg 媒体后端；增强层可用 umu + GE-Proton11（winedmo 重写视频管线） |
 
 ## 安装步骤
 
@@ -27,7 +31,20 @@ sudo rpm-ostree install --apply-live wine winetricks
 wine --version   # 验证，应为 wine-11.0
 ```
 
-### 2. umu-launcher（用户级，uv 安装）
+系统 wine 仅用于 64 位程序与 winetricks 组件管理；32 位 galgame 走 wine-tkg（见下）。
+
+### 2. Kron4ek wine-tkg 11.13（32 位游戏实际运行环境，用户级）
+
+```bash
+mkdir -p ~/.local/share/wine-tkg
+curl -sL -o /tmp/wine-tkg.tar.xz "https://github.com/Kron4ek/Wine-Builds/releases/download/11.13/wine-11.13-staging-tkg-amd64-wow64.tar.xz"
+tar -xJf /tmp/wine-tkg.tar.xz -C ~/.local/share/wine-tkg/ --strip-components=1
+~/.local/share/wine-tkg/bin/wine --version   # wine-11.13.r0.gd1f772d1 ( TkG Staging NTsync )
+```
+
+`amd64-wow64` 构建无需系统 i686 库。升级 wine 版本后必须重建前缀。
+
+### 3. umu-launcher（备用，用户级，uv 安装）
 
 ```bash
 uv tool install git+https://github.com/Open-Wine-Components/umu-launcher
@@ -78,6 +95,7 @@ Steam 上存在的游戏可加 `GAMEID=<steam appid> STORE=steam` 让 protonfixe
 
 | 症状 | 处理 |
 |------|------|
+| 32 位游戏报 `map_image_into_view ... noexec filesystem?` / `could not load kernel32.dll` | SELinux execmod 拒绝系统 wine 的 mmap(RW)+mprotect(RX) 加载路径，改用 wine-tkg 前缀（其 mmap 带 exec 不受影响） |
 | 动画 OP 黑屏/卡死 | 顺序试：wine 11 MF FFmpeg 后端（注册表 `DisableGstByteStreamHandler=1`）→ `winetricks wmp11 quartz` → 上 GE-Proton |
 | 字体乱码/方框 | `winetricks cjkfonts` → MS 日文字体包复制进前缀 Fonts |
 | Nitroplus 引擎（村正/沙耶/素晴日）巨慢 | Proton 通病，改用 vanilla 裸 wine + 关 esync/fsync + `winetricks xact` |
@@ -94,25 +112,24 @@ Steam 上存在的游戏可加 `GAMEID=<steam appid> STORE=steam` 让 protonfixe
 
 ## 当前状态
 
-- [x] 前缀目录 `~/.local/share/wineprefixes/{proton_ge,vanilla}` 已建
-- [x] 默认前缀 `~/.wine` 已初始化（wineboot + cjkfonts 思源黑体，2026-08-10），直接 `wine game.exe` 即可用
-- [x] umu-launcher 1.4.4 已装（`~/.local/bin/umu-run`，uv tool）
+- [x] 前缀目录 `~/.local/share/wineprefixes/{proton_ge,vanilla,tkg}` 已建
+- [x] wine-tkg 11.13（Kron4ek staging-tkg amd64-wow64）已装 `~/.local/share/wine-tkg/`，tkg 前缀已初始化
+- [x] **ラブピカルポッピー！运行成功**（2026-08-10，wine-tkg + tkg 前缀，SELinux enforcing 下）
+- [x] 默认前缀 `~/.wine` 已初始化（wineboot + cjkfonts 思源黑体），仅用于 64 位程序
+- [x] umu-launcher 1.4.4 已装（备用，`~/.local/bin/umu-run`）
 - [x] overlay wine 11.0 (Staging) + winetricks（2026-08-10，`--apply-live` 免重启）
-- [x] vanilla 前缀初始化（wineboot，含 mono）
-- [x] 冒烟测试通过（`wine cmd /c ver` 返回 Windows 10.0.19045）
-- [x] cjkfonts 字体兜底（sourcehansans.ttc 已装入 Fonts，注册表步骤有已知 bug 可忽略）
-- [x] GE-Proton 预热下载完成（~/.local/share/umu 661M + proton_ge 前缀 698M）
+- [x] GE-Proton 预热下载完成（~/.local/share/umu + proton_ge 前缀）
 
 ## 使用速查
 
 ```bash
-# 默认前缀直跑（推荐，无需 WINEPREFIX）
+# 32 位 galgame 直跑（主路径）
 cd ~/Games/<游戏目录>
-LANG=ja_JP.UTF-8 wine game.exe
+WINEPREFIX=~/.local/share/wineprefixes/tkg LANG=ja_JP.UTF-8 ~/.local/share/wine-tkg/bin/wine game.exe
 
-# 视频播放有问题时换 GE-Proton（proton_ge 前缀）
-WINEPREFIX=~/.local/share/wineprefixes/proton_ge PROTONPATH=GE-Proton umu-run ~/Games/<游戏目录>/game.exe
-
-# 老引擎兼容性排查时用 vanilla 前缀
+# 64 位程序/winetricks 组件管理（系统 wine）
 WINEPREFIX=~/.local/share/wineprefixes/vanilla LANG=ja_JP.UTF-8 wine game.exe
+
+# 视频播放有问题时试 GE-Proton（proton_ge 前缀）
+WINEPREFIX=~/.local/share/wineprefixes/proton_ge PROTONPATH=GE-Proton umu-run ~/Games/<游戏目录>/game.exe
 ```
