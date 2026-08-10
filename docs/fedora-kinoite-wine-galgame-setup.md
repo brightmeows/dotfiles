@@ -95,6 +95,7 @@ Steam 上存在的游戏可加 `GAMEID=<steam appid> STORE=steam` 让 protonfixe
 ## 当前状态
 
 - [x] 前缀目录 `~/.local/share/wineprefixes/{proton_ge,vanilla}` 已建
+- [x] 默认前缀 `~/.wine` 已初始化（wineboot + cjkfonts 思源黑体，2026-08-10），直接 `wine game.exe` 即可用
 - [x] umu-launcher 1.4.4 已装（`~/.local/bin/umu-run`，uv tool）
 - [x] overlay wine 11.0 (Staging) + winetricks（2026-08-10，`--apply-live` 免重启）
 - [x] vanilla 前缀初始化（wineboot，含 mono）
@@ -105,10 +106,13 @@ Steam 上存在的游戏可加 `GAMEID=<steam appid> STORE=steam` 让 protonfixe
 ## 使用速查
 
 ```bash
-# 绿色版直跑
+# 默认前缀直跑（推荐，无需 WINEPREFIX）
 cd ~/Games/<游戏目录>
-WINEPREFIX=~/.local/share/wineprefixes/vanilla LANG=ja_JP.UTF-8 wine game.exe
+LANG=ja_JP.UTF-8 wine game.exe
 
-# 视频播放有问题时换 GE-Proton
+# 视频播放有问题时换 GE-Proton（proton_ge 前缀）
 WINEPREFIX=~/.local/share/wineprefixes/proton_ge PROTONPATH=GE-Proton umu-run ~/Games/<游戏目录>/game.exe
+
+# 老引擎兼容性排查时用 vanilla 前缀
+WINEPREFIX=~/.local/share/wineprefixes/vanilla LANG=ja_JP.UTF-8 wine game.exe
 ```
