@@ -141,4 +141,7 @@ WINEPREFIX=~/.local/share/wineprefixes/proton_ge PROTONPATH=GE-Proton umu-run ~/
 | wayland 模式下窗口闪现后进程消失 | wined3d 的 wayland 驱动在 swapchain resize 时 `_invalid_parameter` 崩溃 | 启动时 `env -u WAYLAND_DISPLAY DISPLAY=:0` 强制 X11（XWayland） |
 | `BGIError.txt`：BW 形式数据注册致命错误 | wine 的 UI 语言（注册表 LocaleName）被 LANG=ja_JP 改为 ja-JP，汉化版在日文 UI 下崩溃 | LANG 必须 zh_CN.UTF-8（wine 会用 LANG 更新注册表 LocaleName，ja_JP 会复现） |
 | 鼠标点击位置与 UI 错位 | KDE XWayland 分数缩放（kwinrc `[Xwayland] Scale=1.25`）坐标映射错位 | 备选方案：wine DPI 设为 120 匹配缩放，或 kwinrc XWayland Scale 改为 1 后重启 KWin |
+| 启动闪退（无 BGIError 或 BW 错误） | 强杀游戏（wineserver -k）会留下损坏的 BGI.gdb 半成品，后续启动必崩 | 启动脚本已自动清理 BGI.gdb/BGIError.txt；切勿在游戏运行时跑 wineserver -k |
 | 启动慢（30-60 秒） | BGI 引擎初始化，`main process heap section wait timed out` 是重试非死锁 | 等待即可，勿重复启动 |
+
+启动脚本 `~/.local/bin/lovepical-poppy` 已内置：清理 BGI 缓存、确保注册表 LocaleName=zh-CN、X11 模式 + 中文语言。
