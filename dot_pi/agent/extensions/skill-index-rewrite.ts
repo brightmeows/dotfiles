@@ -16,13 +16,23 @@
  * - skill 只含 name+description；路径 = <group dir>/<skill name>/SKILL.md，
  *   路径链只有 group→skill 两层，推断无歧义。
  *
+ * 展示路径规范化（避免 symlink / 旧安装问题）：
+ * - Pi 收集技能按 realpath 去重、先到先得：~/.pi/agent/skills 下的
+ *   symlink 镜像先扫到，展示路径会落在 symlink 上，清理/重装后易失效。
+ * - 渲染前对 filePath 做规范化：技能位于非规范目录时，若规范目录
+ *   （项目 .pi/skills、祖先 .agents/skills、~/.agents/skills）存在同名
+ *   技能且 realpath 一致（同一文件的镜像），展示路径改用规范目录。
+ * - realpath 不一致（同名真冲突）或不可解析时保持 Pi 原路径，绝不
+ *   把提示词路径指向别的文件内容。
+ * - 分组排序时项目级目录（.pi/skills、祖先 .agents/skills）优先于全局。
+ *
  * 不改 Pi 源码、不改技能文件；信息完整保留（name+description）。
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join } from "node:path";
+import { basename, dirname, join, sep } from "node:path";
 
 /** 技能索引条目所需的最小结构（Skill 类型的子集，避免依赖其类型导出） */
 interface SkillIndexEntry {
@@ -164,9 +174,65 @@ function shortenHome(p: string): string {
   return p.startsWith(home) ? `~${p.slice(home.length)}` : p;
 }
 
-/** 路径分组键：skills 目录（技能目录的上一层） */
+/** 路径分组键：skills 目录（技能目录的上一层，绝对路径） */
 function pathGroupKey(filePath: string): string {
-  return shortenHome(dirname(dirname(filePath)));
+  return dirname(dirname(filePath));
+}
+
+/** 用户级规范技能目录：真实安装位置优先于 symlink 镜像目录 */
+const CANONICAL_USER_DIRS = [join(homedir(), ".agents", "skills")];
+
+/**
+ * 收集项目级技能目录：<cwd>/.pi/skills + cwd 祖先链的 .agents/skills
+ * （与 Pi collectAncestorAgentsSkillDirs 行为对称，从近到远）。
+ */
+function collectProjectSkillDirs(cwd: string): string[] {
+  const dirs: string[] = [join(cwd, ".pi", "skills")];
+  let dir = cwd;
+  while (true) {
+    dirs.push(join(dir, ".agents", "skills"));
+    const parent = dirname(dir);
+    if (parent === dir) {
+      break;
+    }
+    dir = parent;
+  }
+  return dirs;
+}
+
+/**
+ * 展示路径规范化：技能位于非规范目录（如 ~/.pi/agent/skills 的 symlink
+ * 镜像）时，若规范目录（项目目录、~/.agents/skills）存在同名技能且 realpath
+ * 一致（证明是同一文件），改用规范目录路径；realpath 不一致（同名真冲突）
+ * 或不可解析（断链）时保持原路径。
+ */
+function canonicalSkillFilePath(filePath: string, projectDirs: string[]): string {
+  const groupDir = dirname(dirname(filePath));
+  const canonDirs = [...projectDirs, ...CANONICAL_USER_DIRS];
+  if (canonDirs.includes(groupDir)) {
+    return filePath;
+  }
+  const name = basename(dirname(filePath));
+  let currentReal: string | null = null;
+  try {
+    currentReal = realpathSync(dirname(filePath));
+  } catch {
+    return filePath;
+  }
+  for (const dir of canonDirs) {
+    const candidate = join(dir, name);
+    if (!existsSync(join(candidate, "SKILL.md"))) {
+      continue;
+    }
+    try {
+      if (realpathSync(candidate) === currentReal) {
+        return join(candidate, "SKILL.md");
+      }
+    } catch {
+      // 候选不可解析，跳过
+    }
+  }
+  return filePath;
 }
 
 /** XML 文本转义（与 Pi formatSkillsForPrompt 一致） */
@@ -212,6 +278,7 @@ export default function (pi: ExtensionAPI) {
     }
 
     const base = event.systemPrompt.replace(PI_DEFAULT_BLOCK_RE, "");
+    const projectDirs = collectProjectSkillDirs(ctx.cwd);
     const { map: globalMap, ok: globalOk } = loadSourceMap();
     // 项目 lock 优先于全局 lock（就近优先，与 AGENTS.md 层级语义一致）
     const projectMap = loadProjectSourceMap(ctx.cwd);
@@ -221,7 +288,7 @@ export default function (pi: ExtensionAPI) {
     // 按 dir → origin 双层分组（用于排序，渲染时扁平——不嵌套 origin 标签）
     const dirMap = new Map<string, Map<string, SkillIndexEntry[]>>();
     for (const skill of skills) {
-      const dg = pathGroupKey(skill.filePath);
+      const dg = pathGroupKey(canonicalSkillFilePath(skill.filePath, projectDirs));
       let originGroup = dirMap.get(dg);
       if (!originGroup) {
         originGroup = new Map();
@@ -249,12 +316,18 @@ export default function (pi: ExtensionAPI) {
     ];
 
     // 按 dir → origin 嵌套排序，扁平渲染（group 下按 source 注释分段，skill 无 origin 属性）
+    // 项目级目录组（.pi/skills、祖先 .agents/skills）优先于全局，再按数量降序
+    const isProjectDir = (dg: string) =>
+      projectDirs.some((p) => dg === p || dg.startsWith(`${p}${sep}`));
     // eslint-disable-next-line unicorn/no-array-sort -- [...展开] 已是新数组，sort 安全
     const dirEntries = [...dirMap.entries()].sort(
-      (a, b) => countGroup(b[1]) - countGroup(a[1]) || a[0].localeCompare(b[0]),
+      (a, b) =>
+        Number(isProjectDir(b[0])) - Number(isProjectDir(a[0])) ||
+        countGroup(b[1]) - countGroup(a[1]) ||
+        a[0].localeCompare(b[0]),
     );
     for (const [dg, originGroup] of dirEntries) {
-      lines.push(`<group dir="${escapeXml(dg)}/">`);
+      lines.push(`<group dir="${escapeXml(shortenHome(dg))}/">`);
       // eslint-disable-next-line unicorn/no-array-sort -- [...展开] 已是新数组，sort 安全
       const originEntries = [...originGroup.entries()].sort(
         (a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]),
