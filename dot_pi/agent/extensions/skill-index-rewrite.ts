@@ -5,13 +5,14 @@
  * - 移除 Pi 默认建议式激活指令（Seleznov 650 次试验激活率 77%），改为
  *   指令式 + 负向约束 + 偏向加载规则（同试验 100%）。
  * - 不做关键词检索凸显（token 重叠粗糙、易误判）；所有技能统一按
- *   安装来源（origin，来自 ~/.agents/.skill-lock.json）排序，模型自行按
+ *   安装来源仓库（来自 ~/.agents/.skill-lock.json）排序，模型自行按
  *   description 判断加载。
  *
  * 格式（纯 XML，路径零歧义设计）：
  * - <group dir="..."> 标注 skills 目录（dir 明确是目录，非完整路径）。
- * - 同一 source 的技能以 <!-- source: ... --> 注释分段；注释是纯标注，
- *   不属于任何元素，防止 source 被模型误当成路径段拼接。
+ * - 同一安装仓库的技能以 <!-- 来源仓库: ... --> 注释分段；注释是纯标注，
+ *   不属于任何元素。注释内容为 host/owner/repo 形态（如
+ *   github.com/larksuite/cli），域名打头不可能与本地路径混淆。
  * - skill 只含 name+description；路径 = <group dir>/<skill name>/SKILL.md，
  *   路径链只有 group→skill 两层，推断无歧义。
  *
@@ -38,18 +39,45 @@ const PI_DEFAULT_BLOCK_RE =
 /** 技能安装清单（类 package-lock），提供 origin 分类维度 */
 const LOCK_FILE = join(homedir(), ".agents", ".skill-lock.json");
 
-/** 安装清单无记录的技能 origin 标签 */
-const LOCAL_LABEL = "本地/未锁定";
-/** 安装清单读取失败时所有技能的 origin 标签 */
-const UNKNOWN_LABEL = "未知来源（lock 读取失败）";
+/** 安装清单无记录的技能来源标签 */
+const LOCAL_LABEL = "本地";
+/** 安装清单读取失败时所有技能的来源标签 */
+const UNKNOWN_LABEL = "未知（lock 读取失败）";
 
 /** 安装清单的 skills 字段条目结构 */
 interface LockSkillEntry {
   source?: string;
+  sourceUrl?: string;
+  sourceType?: string;
 }
 
 /**
- * 读取 .skill-lock.json，建立 name → origin 映射。
+ * 从 lock 条目派生来源仓库显示标签：
+ * - local 类型 → LOCAL_LABEL
+ * - sourceUrl 可解析 → "host/owner/repo"（去 .git 后缀）：域名形态不可能
+ *   被模型误当成本地路径段拼接（任何本地路径不会以 xxx.com/ 开头）
+ * - 其余（ssh 形式等）回退 source 短标识
+ */
+function deriveSourceLabel(info: LockSkillEntry): string | null {
+  if (info.sourceType === "local") {
+    return LOCAL_LABEL;
+  }
+  if (info.sourceUrl) {
+    try {
+      const u = new URL(info.sourceUrl);
+      const path = u.pathname.replace(/^\/+/, "").replace(/\.git$/, "");
+      if (u.hostname && path) {
+        return `${u.hostname}/${path}`;
+      }
+    } catch {
+      // URL 解析失败（如 ssh 形式），回退 source
+    }
+  }
+  return info.source ?? null;
+}
+
+/**
+ * 读取 .skill-lock.json，建立 name → 来源仓库标签映射。
  * 文件不存在或解析失败时返回 ok:false，调用方据 fallback 标签区分。
  */
 function loadSourceMap(): { map: Map<string, string>; ok: boolean } {
@@ -59,8 +87,9 @@ function loadSourceMap(): { map: Map<string, string>; ok: boolean } {
     const map = new Map<string, string>();
     if (data.skills) {
       for (const [name, info] of Object.entries(data.skills)) {
-        if (info?.source) {
-          map.set(name, info.source);
+        const label = deriveSourceLabel(info);
+        if (label) {
+          map.set(name, label);
         }
       }
     }
@@ -152,7 +181,7 @@ export default function (pi: ExtensionAPI) {
       "- 宁可多加载一个不需要的，也不要漏掉关键步骤；加载错的代价远小于漏掉的代价。",
       "- 这些技能含 API 端点、命令等预训练知识里没有的专有内容；即便觉得能用通用工具完成，也要先加载。",
       "- 只有确认无任何技能相关，才可不加载。",
-      "- 技能 SKILL.md 路径 = <group dir>/<skill name>/SKILL.md（dir 是目录；<!-- source: ... --> 注释只是分类标注，不在路径链上），加载时按此拼路径 read。",
+      "- 技能 SKILL.md 路径 = <group dir>/<skill name>/SKILL.md（dir 是目录；<!-- 来源仓库: ... --> 注释仅标注安装仓库，不在路径链上），加载时按此拼路径 read。",
       "- 加载 SKILL.md 后，若它引用 references/scripts 等相对路径文件，按指引一并读取，不要跳过。",
     ];
 
@@ -168,7 +197,7 @@ export default function (pi: ExtensionAPI) {
         (a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]),
       );
       for (const [og, groupSkills] of originEntries) {
-        lines.push(`  <!-- source: ${sanitizeComment(og)} -->`);
+        lines.push(`  <!-- 来源仓库: ${sanitizeComment(og)} -->`);
         for (const skill of groupSkills) {
           lines.push(...renderSkill(skill));
         }
