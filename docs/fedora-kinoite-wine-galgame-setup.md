@@ -123,9 +123,9 @@ Steam 上存在的游戏可加 `GAMEID=<steam appid> STORE=steam` 让 protonfixe
 ## 使用速查
 
 ```bash
-# 32 位 galgame 直跑（主路径）
+# 汉化版 galgame 直跑（主路径：X11 模式 + 中文语言）
 cd ~/Games/<游戏目录>
-WINEPREFIX=~/.local/share/wineprefixes/tkg LANG=ja_JP.UTF-8 ~/.local/share/wine-tkg/bin/wine game.exe
+env -u WAYLAND_DISPLAY LANG=zh_CN.UTF-8 DISPLAY=:0 WINEPREFIX=~/.local/share/wineprefixes/tkg ~/.local/share/wine-tkg/bin/wine game.exe
 
 # 64 位程序/winetricks 组件管理（系统 wine）
 WINEPREFIX=~/.local/share/wineprefixes/vanilla LANG=ja_JP.UTF-8 wine game.exe
@@ -133,3 +133,12 @@ WINEPREFIX=~/.local/share/wineprefixes/vanilla LANG=ja_JP.UTF-8 wine game.exe
 # 视频播放有问题时试 GE-Proton（proton_ge 前缀）
 WINEPREFIX=~/.local/share/wineprefixes/proton_ge PROTONPATH=GE-Proton umu-run ~/Games/<游戏目录>/game.exe
 ```
+
+## 已知问题（汉化版ラブピカルポッピー！实测）
+
+| 问题 | 根因 | 处理 |
+|------|------|------|
+| wayland 模式下窗口闪现后进程消失 | wined3d 的 wayland 驱动在 swapchain resize 时 `_invalid_parameter` 崩溃 | 启动时 `env -u WAYLAND_DISPLAY DISPLAY=:0` 强制 X11（XWayland） |
+| `BGIError.txt`：BW 形式数据注册致命错误 | wine 的 UI 语言（注册表 LocaleName）被 LANG=ja_JP 改为 ja-JP，汉化版在日文 UI 下崩溃 | LANG 必须 zh_CN.UTF-8（wine 会用 LANG 更新注册表 LocaleName，ja_JP 会复现） |
+| 鼠标点击位置与 UI 错位 | KDE XWayland 分数缩放（kwinrc `[Xwayland] Scale=1.25`）坐标映射错位 | 备选方案：wine DPI 设为 120 匹配缩放，或 kwinrc XWayland Scale 改为 1 后重启 KWin |
+| 启动慢（30-60 秒） | BGI 引擎初始化，`main process heap section wait timed out` 是重试非死锁 | 等待即可，勿重复启动 |
