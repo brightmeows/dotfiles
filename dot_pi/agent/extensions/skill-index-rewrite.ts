@@ -10,8 +10,8 @@
  *
  * 格式（纯 XML，路径零歧义设计）：
  * - <group dir="..."> 标注 skills 目录（dir 明确是目录，非完整路径）。
- * - <skill origin="..."> 直接挂在 group 下（不嵌套 <source> 标签），避免
- *   source 被误当成路径段。origin 是分类属性，不在路径链上。
+ * - 同一 source 的技能以 <!-- source: ... --> 注释分段；注释是纯标注，
+ *   不属于任何元素，防止 source 被模型误当成路径段拼接。
  * - skill 只含 name+description；路径 = <group dir>/<skill name>/SKILL.md，
  *   路径链只有 group→skill 两层，推断无歧义。
  *
@@ -91,10 +91,15 @@ function escapeXml(str: string): string {
     .replace(/'/g, "&apos;");
 }
 
-/** 渲染单个 skill 为 XML 条目（origin 为分类属性；仅 name+description，路径由 group dir 体现） */
-function renderSkill(skill: SkillIndexEntry, origin: string, indent = "  "): string[] {
+/** XML 注释安全化：注释内不允许出现 -- 序列，也不能以 - 结尾 */
+function sanitizeComment(s: string): string {
+  return s.replace(/--/g, "- -").replace(/-$/, "- ");
+}
+
+/** 渲染单个 skill 为 XML 条目（仅 name+description，路径由 group dir 体现） */
+function renderSkill(skill: SkillIndexEntry, indent = "  "): string[] {
   return [
-    `${indent}<skill origin="${escapeXml(origin)}">`,
+    `${indent}<skill>`,
     `${indent}  <name>${escapeXml(skill.name)}</name>`,
     `${indent}  <description>${escapeXml(skill.description)}</description>`,
     `${indent}</skill>`,
@@ -147,11 +152,11 @@ export default function (pi: ExtensionAPI) {
       "- 宁可多加载一个不需要的，也不要漏掉关键步骤；加载错的代价远小于漏掉的代价。",
       "- 这些技能含 API 端点、命令等预训练知识里没有的专有内容；即便觉得能用通用工具完成，也要先加载。",
       "- 只有确认无任何技能相关，才可不加载。",
-      "- 技能 SKILL.md 路径 = <group dir>/<skill name>/SKILL.md（dir 是目录，origin 是分类非路径），加载时按此拼路径 read。",
+      "- 技能 SKILL.md 路径 = <group dir>/<skill name>/SKILL.md（dir 是目录；<!-- source: ... --> 注释只是分类标注，不在路径链上），加载时按此拼路径 read。",
       "- 加载 SKILL.md 后，若它引用 references/scripts 等相对路径文件，按指引一并读取，不要跳过。",
     ];
 
-    // 按 dir → origin 嵌套排序，扁平渲染（group 下直接 skill，带 origin 属性）
+    // 按 dir → origin 嵌套排序，扁平渲染（group 下按 source 注释分段，skill 无 origin 属性）
     // eslint-disable-next-line unicorn/no-array-sort -- [...展开] 已是新数组，sort 安全
     const dirEntries = [...dirMap.entries()].sort(
       (a, b) => countGroup(b[1]) - countGroup(a[1]) || a[0].localeCompare(b[0]),
@@ -163,8 +168,9 @@ export default function (pi: ExtensionAPI) {
         (a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]),
       );
       for (const [og, groupSkills] of originEntries) {
+        lines.push(`  <!-- source: ${sanitizeComment(og)} -->`);
         for (const skill of groupSkills) {
-          lines.push(...renderSkill(skill, og));
+          lines.push(...renderSkill(skill));
         }
       }
       lines.push(`</group>`);
