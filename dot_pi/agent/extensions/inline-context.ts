@@ -18,11 +18,16 @@
  *   架构）——需要时 LLM 可自行用命令查询
  * - 完整信息走 systemPrompt（每轮重建，compact 后自动恢复，无状态），
  *   摘要 message 只用于 TUI 可见性，不承载关键信息
+ * - 工具与 gh 状态：检测已安装的现代 CLI 替代（rg/fd/jq/bat/eza/delta/sd）
+ *   与 gh 登录账号，让 LLM 写命令时优先用已装工具、知道 gh 可做认证操作；
+ *   未安装 / 未登录自动省略，不占上下文
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { execFile } from "node:child_process";
-import { basename } from "node:path";
+import { readFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { basename, join } from "node:path";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
@@ -276,9 +281,101 @@ export function formatGitLine(ctx: GitContext): string {
   return text;
 }
 
+// ---------- CLI 工具 ----------
+
+// 候选现代替代工具（仅注入已安装的，未装自动省略）
+const TOOL_RECOMMENDATIONS = [
+  { bin: "rg", replaces: "grep" },
+  { bin: "fd", replaces: "find" },
+  { bin: "jq", replaces: "JSON" },
+  { bin: "bat", replaces: "cat" },
+  { bin: "eza", replaces: "ls" },
+  { bin: "delta", replaces: "diff" },
+  { bin: "sd", replaces: "sed" },
+] as const;
+
+// 返回已安装的工具名列表（并行检测，--version 验证可执行性）
+export async function detectTools(): Promise<string[]> {
+  const results = await Promise.all(
+    TOOL_RECOMMENDATIONS.map(async ({ bin }) => {
+      try {
+        await execFileAsync(bin, ["--version"], { encoding: "utf8" });
+        return bin;
+      } catch {
+        return null;
+      }
+    }),
+  );
+  type ToolBin = (typeof TOOL_RECOMMENDATIONS)[number]["bin"];
+  return results.filter((b): b is ToolBin => b !== null);
+}
+
+export function formatToolsLine(installed: string[]): string | null {
+  if (installed.length === 0) {
+    return null;
+  }
+  const installedSet = new Set(installed);
+  const items = TOOL_RECOMMENDATIONS.filter((t) => installedSet.has(t.bin))
+    .map((t) => `${t.bin}→${t.replaces}`)
+    .join("、");
+  return `[CLI 工具] 优先使用现代替代：${items}`;
+}
+
+// ---------- GitHub CLI ----------
+
+export interface GhStatus {
+  // Hosts.yml 中存储的账号（keyring / 明文文件）
+  storedAccounts: string[];
+  // 环境变量 token 是否存在（GITHUB_TOKEN / GH_TOKEN，gh 优先使用）
+  hasEnvToken: boolean;
+}
+
+// 纯本地检测（零进程零网络）：gh auth status 对 env token 会走 API 反查
+// 账号名（实测 1.7s 网络请求），会拖慢首条消息；读 hosts.yml + 环境变量
+// 瞬时完成，代价是 env token 的账号名不可知（gh 会自动使用，不影响操作）
+export async function detectGh(): Promise<GhStatus | null> {
+  const storedAccounts: string[] = [];
+  const configPath =
+    process.platform === "win32"
+      ? join(process.env["APPDATA"] ?? homedir(), "GitHub CLI", "hosts.yml")
+      : join(homedir(), ".config", "gh", "hosts.yml");
+  try {
+    const text = await readFile(configPath, "utf8");
+    // Hosts.yml 中账号键为 8 空格缩进，形如 "        MiyakoMeow:"
+    for (const line of text.split("\n")) {
+      const m = line.match(/^ {8}([^:\s]+):/);
+      if (m) {
+        storedAccounts.push(m[1]!);
+      }
+    }
+  } catch {
+    // 未安装 gh 或未登录：无配置文件
+  }
+  const hasEnvToken = Boolean(process.env["GITHUB_TOKEN"] ?? process.env["GH_TOKEN"]);
+  if (storedAccounts.length === 0 && !hasEnvToken) {
+    return null;
+  }
+  return { storedAccounts, hasEnvToken };
+}
+
+export function formatGhLine(status: GhStatus): string {
+  const parts: string[] = [];
+  if (status.hasEnvToken) {
+    parts.push("GITHUB_TOKEN 环境变量");
+  }
+  parts.push(...status.storedAccounts);
+  return `[GitHub] gh 已登录：${parts.join("、")}`;
+}
+
 // ---------- 摘要 message ----------
 
-export function buildSummary(env: SystemInfo | null, git: GitContext | null): string {
+export function buildSummary(opts: {
+  env: SystemInfo | null;
+  git: GitContext | null;
+  tools: string[];
+  gh: GhStatus | null;
+}): string {
+  const { env, git, tools, gh } = opts;
   const parts: string[] = [`[上下文] ${formatDateShort()}`];
   if (env) {
     parts.push(shortEnvLabel(env));
@@ -287,6 +384,13 @@ export function buildSummary(env: SystemInfo | null, git: GitContext | null): st
     parts.push(`git ${basename(git.info.root)}@${git.info.branch ?? "detached"}`);
   } else {
     parts.push("不在 Git 仓库");
+  }
+  if (tools.length > 0) {
+    parts.push(tools.join("/"));
+  }
+  if (gh) {
+    const names = [...(gh.hasEnvToken ? ["env"] : []), ...gh.storedAccounts];
+    parts.push(`gh:${names.join("+")}`);
   }
   return parts.join(" | ");
 }
@@ -318,6 +422,8 @@ export default function (pi: ExtensionAPI) {
   // Session_start 时启动的异步预计算（不阻塞事件循环）
   let envPromise: Promise<SystemInfo | null> | null = null;
   let gitPromise: Promise<GitContext> | null = null;
+  let toolsPromise: Promise<string[]> | null = null;
+  let ghPromise: Promise<GhStatus | null> | null = null;
 
   pi.on("session_compact", async () => {
     injectedMessage = false;
@@ -327,17 +433,25 @@ export default function (pi: ExtensionAPI) {
   pi.on("session_start", async (_event, ctx) => {
     envPromise = detectEnv(realEnv());
     gitPromise = detectGitContext(ctx.cwd);
+    toolsPromise = detectTools();
+    ghPromise = detectGh();
   });
 
   pi.on("before_agent_start", async (event, ctx) => {
     // 已完成的 promise await 为零成本；未完成则等异步结果（不阻塞 TUI）
     const envInfo = (await envPromise) ?? null;
     const gitInfo = (await gitPromise) ?? null;
+    const tools = (await toolsPromise) ?? [];
+    const gh = (await ghPromise) ?? null;
 
     const dateLine = `[日期] ${formatDateLine()}`;
     const envLine = envInfo ? formatEnvLine(envInfo) : "";
     const gitLine = gitInfo ? formatGitLine(gitInfo) : "";
-    const systemPrompt = `${event.systemPrompt}\n\n${dateLine}\n${envLine}\n${gitLine}`;
+    const toolsLine = tools.length > 0 ? formatToolsLine(tools) : "";
+    const ghLine = gh ? formatGhLine(gh) : "";
+    const systemPrompt = `${event.systemPrompt}\n\n${[dateLine, envLine, gitLine, toolsLine, ghLine]
+      .filter(Boolean)
+      .join("\n")}`;
 
     const result: {
       message?: {
@@ -362,7 +476,7 @@ export default function (pi: ExtensionAPI) {
       if (!hasInjected) {
         result.message = {
           customType: CUSTOM_TYPE,
-          content: buildSummary(envInfo, gitInfo),
+          content: buildSummary({ env: envInfo, git: gitInfo, tools, gh }),
           display: true,
         };
       }
