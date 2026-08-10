@@ -5,8 +5,8 @@
  * - 移除 Pi 默认建议式激活指令（Seleznov 650 次试验激活率 77%），改为
  *   指令式 + 负向约束 + 偏向加载规则（同试验 100%）。
  * - 不做关键词检索凸显（token 重叠粗糙、易误判）；所有技能统一按
- *   安装来源仓库（来自 ~/.agents/.skill-lock.json）排序，模型自行按
- *   description 判断加载。
+ *   安装来源仓库（~/.agents/.skill-lock.json + 项目 skills-lock.json）排序，
+ *   模型自行按 description 判断加载。
  *
  * 格式（纯 XML，路径零歧义设计）：
  * - <group dir="..."> 标注 skills 目录（dir 明确是目录，非完整路径）。
@@ -36,7 +36,7 @@ interface SkillIndexEntry {
 const PI_DEFAULT_BLOCK_RE =
   /\n\nThe following skills provide specialized instructions[\s\S]*?<\/available_skills>/;
 
-/** 技能安装清单（类 package-lock），提供 origin 分类维度 */
+/** 技能安装清单（全局，~/.agents/.skill-lock.json，v3；项目级 skills-lock.json，v1） */
 const LOCK_FILE = join(homedir(), ".agents", ".skill-lock.json");
 
 /** 安装清单无记录的技能来源标签 */
@@ -51,29 +51,88 @@ interface LockSkillEntry {
   sourceType?: string;
 }
 
+/** 从 URL 字符串解析 host/owner/repo 形态（去 .git）；非 URL 返回 null */
+function parseHostRepo(urlLike: string): string | null {
+  try {
+    const u = new URL(urlLike);
+    const path = u.pathname.replace(/^\/+/, "").replace(/\.git$/, "");
+    if (u.hostname && path) {
+      return `${u.hostname}/${path}`;
+    }
+  } catch {
+    // 非 URL
+  }
+  return null;
+}
+
 /**
  * 从 lock 条目派生来源仓库显示标签：
  * - local 类型 → LOCAL_LABEL
- * - sourceUrl 可解析 → "host/owner/repo"（去 .git 后缀）：域名形态不可能
- *   被模型误当成本地路径段拼接（任何本地路径不会以 xxx.com/ 开头）
- * - 其余（ssh 形式等）回退 source 短标识
+ * - sourceUrl 可解析 → "host/owner/repo"：域名形态不可能被模型误当成本地
+ *   路径段拼接（任何本地路径不会以 xxx.com/ 开头）
+ * - github 类型无 sourceUrl（项目 lock v1 的特征）→ 短标识补 github.com 域名；
+ *   ssh（git@host:path）与 URL 形式解析为 host/path
  */
 function deriveSourceLabel(info: LockSkillEntry): string | null {
   if (info.sourceType === "local") {
     return LOCAL_LABEL;
   }
   if (info.sourceUrl) {
-    try {
-      const u = new URL(info.sourceUrl);
-      const path = u.pathname.replace(/^\/+/, "").replace(/\.git$/, "");
-      if (u.hostname && path) {
-        return `${u.hostname}/${path}`;
-      }
-    } catch {
-      // URL 解析失败（如 ssh 形式），回退 source
+    const fromUrl = parseHostRepo(info.sourceUrl);
+    if (fromUrl) {
+      return fromUrl;
     }
   }
-  return info.source ?? null;
+  if (info.source) {
+    const s = info.source.replace(/\.git$/, "");
+    if (info.sourceType === "github") {
+      const fromUrl = parseHostRepo(s);
+      if (fromUrl) {
+        return fromUrl;
+      }
+      const ssh = s.match(/^git@([^:]+):(.+)$/);
+      if (ssh) {
+        return `${ssh[1]}/${ssh[2]}`;
+      }
+      if (!s.includes("://") && !s.startsWith("ssh://") && s.split("/").length === 2) {
+        return `github.com/${s}`;
+      }
+    }
+    return s;
+  }
+  return null;
+}
+
+/**
+ * 读取项目级 lock（npx skills 项目安装时在项目根创建 skills-lock.json，v1）。
+ * 从 cwd 向上逐层查找（与 Pi 收集祖先 .agents/skills 的行为对称），近 → 远
+ * 合并，近者优先（调用方再覆盖全局 map）。
+ */
+function loadProjectSourceMap(cwd: string): Map<string, string> {
+  const map = new Map<string, string>();
+  let dir = cwd;
+  while (true) {
+    try {
+      const raw = readFileSync(join(dir, "skills-lock.json"), "utf8");
+      const data = JSON.parse(raw) as { skills?: Record<string, LockSkillEntry> };
+      if (data.skills) {
+        for (const [name, info] of Object.entries(data.skills)) {
+          const label = deriveSourceLabel(info);
+          if (label && !map.has(name)) {
+            map.set(name, label);
+          }
+        }
+      }
+    } catch {
+      // 无 lock 或解析失败，继续向上查找
+    }
+    const parent = dirname(dir);
+    if (parent === dir) {
+      break;
+    }
+    dir = parent;
+  }
+  return map;
 }
 
 /**
@@ -145,7 +204,7 @@ function countGroup(m: Map<string, SkillIndexEntry[]>): number {
 }
 
 export default function (pi: ExtensionAPI) {
-  pi.on("before_agent_start", async (event, _ctx) => {
+  pi.on("before_agent_start", async (event, ctx) => {
     const allSkills = (event.systemPromptOptions.skills ?? []) as SkillIndexEntry[];
     const skills = allSkills.filter((s) => !s.disableModelInvocation);
     if (skills.length === 0) {
@@ -153,7 +212,11 @@ export default function (pi: ExtensionAPI) {
     }
 
     const base = event.systemPrompt.replace(PI_DEFAULT_BLOCK_RE, "");
-    const { map: sourceMap, ok: lockOk } = loadSourceMap();
+    const { map: globalMap, ok: globalOk } = loadSourceMap();
+    // 项目 lock 优先于全局 lock（就近优先，与 AGENTS.md 层级语义一致）
+    const projectMap = loadProjectSourceMap(ctx.cwd);
+    const sourceMap = new Map([...globalMap, ...projectMap]);
+    const lockOk = globalOk || projectMap.size > 0;
 
     // 按 dir → origin 双层分组（用于排序，渲染时扁平——不嵌套 origin 标签）
     const dirMap = new Map<string, Map<string, SkillIndexEntry[]>>();
@@ -181,7 +244,7 @@ export default function (pi: ExtensionAPI) {
       "- 宁可多加载一个不需要的，也不要漏掉关键步骤；加载错的代价远小于漏掉的代价。",
       "- 这些技能含 API 端点、命令等预训练知识里没有的专有内容；即便觉得能用通用工具完成，也要先加载。",
       "- 只有确认无任何技能相关，才可不加载。",
-      "- 技能 SKILL.md 路径 = <group dir>/<skill name>/SKILL.md（dir 是目录；<!-- 来源仓库: ... --> 注释仅标注安装仓库，不在路径链上），加载时按此拼路径 read。",
+      "- 技能 SKILL.md 路径 = <group dir>/<skill name>/SKILL.md，加载时按此拼路径 read。",
       "- 加载 SKILL.md 后，若它引用 references/scripts 等相对路径文件，按指引一并读取，不要跳过。",
     ];
 
