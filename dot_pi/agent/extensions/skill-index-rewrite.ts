@@ -5,15 +5,15 @@
  * - 移除 Pi 默认建议式激活指令（Seleznov 650 次试验激活率 77%），改为
  *   指令式 + 负向约束 + 偏向加载规则（同试验 100%）。
  * - 不做关键词检索凸显（token 重叠粗糙、易误判）；所有技能统一按
- *   【路径 → source】双层嵌套分组，模型自行按 description 判断加载。
- * - 路径来自 filePath 的 skills 目录，source 来自 ~/.agents/.skill-lock.json
- *   的安装来源。单技能 source 各自一组；lock 无记录标"本地/未锁定"，
- *   读取失败标"未知来源（lock 读取失败）"。
+ *   安装来源（origin，来自 ~/.agents/.skill-lock.json）排序，模型自行按
+ *   description 判断加载。
  *
- * 格式：保留 <available_skills> XML 外壳（agentskills.io 标准信号，模型
- * 预训练识别），内部用 <group>/<source> XML 标签分组。skill 条目只含
- * name+description（路径由 <group path> 体现，模型按路径规则推断
- * SKILL.md 位置，见激活规则）。
+ * 格式（纯 XML，路径零歧义设计）：
+ * - <group dir="..."> 标注 skills 目录（dir 明确是目录，非完整路径）。
+ * - <skill origin="..."> 直接挂在 group 下（不嵌套 <source> 标签），避免
+ *   source 被误当成路径段。origin 是分类属性，不在路径链上。
+ * - skill 只含 name+description；路径 = <group dir>/<skill name>/SKILL.md，
+ *   路径链只有 group→skill 两层，推断无歧义。
  *
  * 不改 Pi 源码、不改技能文件；信息完整保留（name+description）。
  */
@@ -35,12 +35,12 @@ interface SkillIndexEntry {
 const PI_DEFAULT_BLOCK_RE =
   /\n\nThe following skills provide specialized instructions[\s\S]*?<\/available_skills>/;
 
-/** 技能安装清单（类 package-lock），提供 source 分类维度 */
+/** 技能安装清单（类 package-lock），提供 origin 分类维度 */
 const LOCK_FILE = join(homedir(), ".agents", ".skill-lock.json");
 
-/** 安装清单无记录的技能 source 标签 */
+/** 安装清单无记录的技能 origin 标签 */
 const LOCAL_LABEL = "本地/未锁定";
-/** 安装清单读取失败时所有技能的 source 标签 */
+/** 安装清单读取失败时所有技能的 origin 标签 */
 const UNKNOWN_LABEL = "未知来源（lock 读取失败）";
 
 /** 安装清单的 skills 字段条目结构 */
@@ -49,7 +49,7 @@ interface LockSkillEntry {
 }
 
 /**
- * 读取 .skill-lock.json，建立 name → source 映射。
+ * 读取 .skill-lock.json，建立 name → origin 映射。
  * 文件不存在或解析失败时返回 ok:false，调用方据 fallback 标签区分。
  */
 function loadSourceMap(): { map: Map<string, string>; ok: boolean } {
@@ -91,17 +91,17 @@ function escapeXml(str: string): string {
     .replace(/'/g, "&apos;");
 }
 
-/** 渲染单个 skill 为 XML 条目（仅 name+description；路径由 group path 体现） */
-function renderSkill(skill: SkillIndexEntry, indent = "    "): string[] {
+/** 渲染单个 skill 为 XML 条目（origin 为分类属性；仅 name+description，路径由 group dir 体现） */
+function renderSkill(skill: SkillIndexEntry, origin: string, indent = "    "): string[] {
   return [
-    `${indent}<skill>`,
+    `${indent}<skill origin="${escapeXml(origin)}">`,
     `${indent}  <name>${escapeXml(skill.name)}</name>`,
     `${indent}  <description>${escapeXml(skill.description)}</description>`,
     `${indent}</skill>`,
   ];
 }
 
-/** 统计一个 path 组内的技能总数（用于排序） */
+/** 统计一个 dir 组内的技能总数（用于排序） */
 function countGroup(m: Map<string, SkillIndexEntry[]>): number {
   let total = 0;
   for (const skills of m.values()) {
@@ -121,20 +121,20 @@ export default function (pi: ExtensionAPI) {
     const base = event.systemPrompt.replace(PI_DEFAULT_BLOCK_RE, "");
     const { map: sourceMap, ok: lockOk } = loadSourceMap();
 
-    // 所有技能按 path → source 双层分组（不做关键词检索凸显）
-    const pathMap = new Map<string, Map<string, SkillIndexEntry[]>>();
+    // 按 dir → origin 双层分组（用于排序，渲染时扁平——不嵌套 origin 标签）
+    const dirMap = new Map<string, Map<string, SkillIndexEntry[]>>();
     for (const skill of skills) {
-      const pg = pathGroupKey(skill.filePath);
-      let sourceGroup = pathMap.get(pg);
-      if (!sourceGroup) {
-        sourceGroup = new Map();
-        pathMap.set(pg, sourceGroup);
+      const dg = pathGroupKey(skill.filePath);
+      let originGroup = dirMap.get(dg);
+      if (!originGroup) {
+        originGroup = new Map();
+        dirMap.set(dg, originGroup);
       }
-      const sg = lockOk ? (sourceMap.get(skill.name) ?? LOCAL_LABEL) : UNKNOWN_LABEL;
-      let arr = sourceGroup.get(sg);
+      const og = lockOk ? (sourceMap.get(skill.name) ?? LOCAL_LABEL) : UNKNOWN_LABEL;
+      let arr = originGroup.get(og);
       if (!arr) {
         arr = [];
-        sourceGroup.set(sg, arr);
+        originGroup.set(og, arr);
       }
       arr.push(skill);
     }
@@ -147,27 +147,25 @@ export default function (pi: ExtensionAPI) {
       "- 宁可多加载一个不需要的，也不要漏掉关键步骤；加载错的代价远小于漏掉的代价。",
       "- 这些技能含 API 端点、命令等预训练知识里没有的专有内容；即便觉得能用通用工具完成，也要先加载。",
       "- 只有确认无任何技能相关，才可不加载。",
-      "- 技能 SKILL.md 路径 = <group path>/<skill name>/SKILL.md，加载时按此拼路径 read。",
+      "- 技能 SKILL.md 路径 = <group dir>/<skill name>/SKILL.md（dir 是目录，origin 是分类非路径），加载时按此拼路径 read。",
       "- 加载 SKILL.md 后，若它引用 references/scripts 等相对路径文件，按指引一并读取，不要跳过。",
     ];
 
-    // 按 path → source 嵌套渲染
+    // 按 dir → origin 嵌套排序，扁平渲染（group 下直接 skill，带 origin 属性）
     // eslint-disable-next-line unicorn/no-array-sort -- [...展开] 已是新数组，sort 安全
-    const pathEntries = [...pathMap.entries()].sort(
+    const dirEntries = [...dirMap.entries()].sort(
       (a, b) => countGroup(b[1]) - countGroup(a[1]) || a[0].localeCompare(b[0]),
     );
-    for (const [pg, sourceGroup] of pathEntries) {
-      lines.push(`<group path="${escapeXml(pg)}/">`);
+    for (const [dg, originGroup] of dirEntries) {
+      lines.push(`<group dir="${escapeXml(dg)}/">`);
       // eslint-disable-next-line unicorn/no-array-sort -- [...展开] 已是新数组，sort 安全
-      const sourceEntries = [...sourceGroup.entries()].sort(
+      const originEntries = [...originGroup.entries()].sort(
         (a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]),
       );
-      for (const [sg, groupSkills] of sourceEntries) {
-        lines.push(`  <source name="${escapeXml(sg)}" count="${groupSkills.length}">`);
+      for (const [og, groupSkills] of originEntries) {
         for (const skill of groupSkills) {
-          lines.push(...renderSkill(skill));
+          lines.push(...renderSkill(skill, og));
         }
-        lines.push(`  </source>`);
       }
       lines.push(`</group>`);
     }
