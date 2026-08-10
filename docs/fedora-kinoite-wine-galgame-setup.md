@@ -72,6 +72,8 @@ Steam 上存在的游戏可加 `GAMEID=<steam appid> STORE=steam` 让 protonfixe
 - 游戏运行加 `LANG=ja_JP.UTF-8`（KEY 社等有 gaijin check，还需 `TZ=Asia/Tokyo`）
 - 字体兜底：`WINEPREFIX=... winetricks cjkfonts`；点名 MS ゴシック/MS 明朝的乱码游戏，复制微软日文字体包进前缀 `drive_c/windows/Fonts`
 
+> 实测坑：winetricks cjkfonts 在 64 位前缀的注册表导入步骤有 bug（`syswow64\regedit.exe` 路径转义导致状态码 53），但字体文件（sourcehansans.ttc）已正常装入 `drive_c/windows/Fonts`，wine 自动扫描即可用，注册步骤仅影响字体链接优化，可忽略。
+
 ## 排错速查
 
 | 症状 | 处理 |
@@ -94,6 +96,19 @@ Steam 上存在的游戏可加 `GAMEID=<steam appid> STORE=steam` 让 protonfixe
 
 - [x] 前缀目录 `~/.local/share/wineprefixes/{proton_ge,vanilla}` 已建
 - [x] umu-launcher 1.4.4 已装（`~/.local/bin/umu-run`，uv tool）
-- [ ] overlay wine + winetricks（需 sudo，待执行）
-- [ ] vanilla 前缀初始化（wineboot）
-- [ ] GE-Proton 首次下载预热（第一次 `PROTONPATH=GE-Proton umu-run` 时自动完成）
+- [x] overlay wine 11.0 (Staging) + winetricks（2026-08-10，`--apply-live` 免重启）
+- [x] vanilla 前缀初始化（wineboot，含 mono）
+- [x] 冒烟测试通过（`wine cmd /c ver` 返回 Windows 10.0.19045）
+- [x] cjkfonts 字体兜底（sourcehansans.ttc 已装入 Fonts，注册表步骤有已知 bug 可忽略）
+- [x] GE-Proton 预热下载完成（~/.local/share/umu 661M + proton_ge 前缀 698M）
+
+## 使用速查
+
+```bash
+# 绿色版直跑
+cd ~/Games/<游戏目录>
+WINEPREFIX=~/.local/share/wineprefixes/vanilla LANG=ja_JP.UTF-8 wine game.exe
+
+# 视频播放有问题时换 GE-Proton
+WINEPREFIX=~/.local/share/wineprefixes/proton_ge PROTONPATH=GE-Proton umu-run ~/Games/<游戏目录>/game.exe
+```
