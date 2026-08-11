@@ -163,12 +163,21 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
 
   /** 待处理的相对路径（tool_call 收集，context 消费；Set 自动去重） */
   const pending = new Set<string>();
+  /** 代理用 read 显式读取过的 AGENTS.md 相对路径（compact 后清空，允许重注入） */
+  const explicitlyRead = new Set<string>();
 
   // 工具调用时按访问路径发现待注入的 AGENTS.md（仅收集相对路径，不读内容）
   pi.on("tool_call", async (event, ctx) => {
     const accessed = extractAccessedPath(event.toolName, event.input, ctx.cwd);
     if (!accessed) {
       return;
+    }
+
+    // 代理用 read 显式读取了 AGENTS.md 本身 → 标记，context 阶段跳过注入：
+    // 内容已作为 tool_result 进 LLM，重复注入纯浪费 token。仅限 read 工具——
+    // bash cat 等场景少，且 parseBashPath 难以区分“读全文”与“ls 列目录”
+    if (event.toolName === "read" && path.basename(accessed) === "AGENTS.md") {
+      explicitlyRead.add(accessed);
     }
 
     const root = path.resolve(ctx.cwd);
@@ -214,6 +223,9 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
       if (inContextRels.has(rel)) {
         continue; // 同文件已在上下文
       }
+      if (explicitlyRead.has(rel)) {
+        continue; // 代理已显式读取，内容已作为 tool_result 进 LLM
+      }
       const content = readContent(path.resolve(cwd, rel));
       if (content === null) {
         continue; // 文件读取失败，允许下次重试
@@ -236,5 +248,10 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
       // TUI 短提示（custom entry，不进 LLM）
       pi.appendEntry(NOTICE_TYPE, { rel });
     }
+  });
+
+  // compact 后 tool_result 被压缩、代理不再记得内容，允许重新注入
+  pi.on("session_compact", async () => {
+    explicitlyRead.clear();
   });
 }
