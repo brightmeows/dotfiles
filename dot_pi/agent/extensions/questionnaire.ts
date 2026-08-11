@@ -4,10 +4,11 @@
  * Single question: simple options list
  * Multiple questions: tab bar navigation between questions
  *
- * 来源：官方示例 examples/extensions/questionnaire.ts（pi 0.84.1）原样复制，
- * 注册工具名 `questionnaire`。相对上游仅两处适配：头部来源注释、仓库严格
- * tsconfig（`noUncheckedIndexedAccess` / `exactOptionalPropertyTypes`）下的
- * 最小类型修复。typebox 为仓库 devDependency（运行时由 Pi 内部解析，仓库
+ * 基于官方示例 examples/extensions/questionnaire.ts（pi 0.84.1）演化而来，
+ * 注册工具名 `questionnaire`。2026-08-11 由 official-clone 克隆区提升为顶层
+ * 单文件扩展，可自由修改（不再受"原样克隆上游"约束）。相对上游的已知差异：
+ * 仓库严格 tsconfig（`noUncheckedIndexedAccess` / `exactOptionalPropertyTypes`）
+ * 下的最小类型修复。typebox 为仓库 devDependency（运行时由 Pi 内部解析，仓库
  * 声明仅为 `pnpm check` 通过）。
  *
  * 上游：/var/home/brightmeows/.local/lib/node_modules/@earendil-works/pi-coding-agent/examples/extensions/questionnaire.ts
@@ -29,7 +30,6 @@ import { Type } from "typebox";
 interface QuestionOption {
   value: string;
   label: string;
-  description?: string;
 }
 
 type RenderOption = QuestionOption & { isOther?: boolean };
@@ -58,30 +58,29 @@ interface QuestionnaireResult {
 
 // Schema
 const QuestionOptionSchema = Type.Object({
-  value: Type.String({ description: "The value returned when selected" }),
-  label: Type.String({ description: "Display label for the option" }),
-  description: Type.Optional(
-    Type.String({ description: "Optional description shown below label" }),
-  ),
+  value: Type.String({ description: "选中时返回的值" }),
+  label: Type.String({ description: "选项的显示标签" }),
 });
 
 const QuestionSchema = Type.Object({
-  id: Type.String({ description: "Unique identifier for this question" }),
+  id: Type.String({ description: "该问题的唯一标识" }),
   label: Type.Optional(
     Type.String({
-      description:
-        "Short contextual label for tab bar, e.g. 'Scope', 'Priority' (defaults to Q1, Q2)",
+      description: "tab 栏的简短上下文标签，如“范围”“优先级”（默认 Q1、Q2）",
     }),
   ),
-  prompt: Type.String({ description: "The full question text to display" }),
-  options: Type.Array(QuestionOptionSchema, { description: "Available options to choose from" }),
+  prompt: Type.String({
+    description: "要显示的完整问题正文（建议简短，≤ 200 字符）",
+    maxLength: 200,
+  }),
+  options: Type.Array(QuestionOptionSchema, { description: "供选择的选项列表" }),
   allowOther: Type.Optional(
-    Type.Boolean({ description: "Allow 'Type something' option (default: true)" }),
+    Type.Boolean({ description: "是否允许“输入其他内容”选项（默认 true）" }),
   ),
 });
 
 const QuestionnaireParams = Type.Object({
-  questions: Type.Array(QuestionSchema, { description: "Questions to ask the user" }),
+  questions: Type.Array(QuestionSchema, { description: "要向用户提出的问题" }),
 });
 
 function errorResult(
@@ -99,15 +98,15 @@ export function registerQuestionnaire(pi: ExtensionAPI) {
     name: "questionnaire",
     label: "Questionnaire",
     description:
-      "Ask the user one or more questions. Use for clarifying requirements, getting preferences, or confirming decisions. For single questions, shows a simple option list. For multiple questions, shows a tab-based interface.",
+      "向用户提出一个或多个问题。用于澄清需求、获取偏好或确认决策。单问题显示为简单的选项列表；多问题显示为带 tab 切换的界面。建议：调用本工具前，先在对话正文里把各个选项的完整含义向用户解释清楚，让用户带着理解在界面里选择。",
     parameters: QuestionnaireParams,
 
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
       if (ctx.mode !== "tui") {
-        return errorResult("Error: UI not available (running in non-interactive mode)");
+        return errorResult("错误：UI 不可用（运行在非交互模式）");
       }
       if (params.questions.length === 0) {
-        return errorResult("Error: No questions provided");
+        return errorResult("错误：未提供任何问题");
       }
 
       // Normalize questions with defaults
@@ -129,7 +128,7 @@ export function registerQuestionnaire(pi: ExtensionAPI) {
         let cachedLines: string[] | undefined;
         const answers = new Map<string, Answer>();
 
-        // Editor for "Type something" option
+        // “输入其他内容…”选项的编辑器
         const editorTheme: EditorTheme = {
           borderColor: (s) => theme.fg("accent", s),
           selectList: {
@@ -161,7 +160,7 @@ export function registerQuestionnaire(pi: ExtensionAPI) {
           if (!q) return [];
           const opts: RenderOption[] = [...q.options];
           if (q.allowOther) {
-            opts.push({ value: "__other__", label: "Type something.", isOther: true });
+            opts.push({ value: "__other__", label: "输入其他内容…", isOther: true });
           }
           return opts;
         }
@@ -203,7 +202,7 @@ export function registerQuestionnaire(pi: ExtensionAPI) {
         // Editor submit callback
         editor.onSubmit = (value) => {
           if (!inputQuestionId) return;
-          const trimmed = value.trim() || "(no response)";
+          const trimmed = value.trim() || "（未作答）";
           saveAnswer(inputQuestionId, trimmed, trimmed, true);
           inputMode = false;
           inputQuestionId = null;
@@ -332,7 +331,7 @@ export function registerQuestionnaire(pi: ExtensionAPI) {
             }
             const canSubmit = allAnswered();
             const isSubmitTab = currentTab === questions.length;
-            const submitText = " ✓ Submit ";
+            const submitText = " ✓ 提交 ";
             const submitStyled = isSubmitTab
               ? theme.bg("selectedBg", theme.fg("text", submitText))
               : theme.fg(canSubmit ? "success" : "dim", submitText);
@@ -351,9 +350,6 @@ export function registerQuestionnaire(pi: ExtensionAPI) {
               const color = selected || (isOther && inputMode) ? "accent" : "text";
 
               addWrappedWithPrefix(prefix, theme.fg(color, label));
-              if (opt.description) {
-                addWrappedWithPrefix("     ", theme.fg("muted", opt.description));
-              }
             }
           }
 
@@ -364,32 +360,32 @@ export function registerQuestionnaire(pi: ExtensionAPI) {
             // Show options for reference
             renderOptions();
             lines.push("");
-            addWrappedWithPrefix(" ", theme.fg("muted", "Your answer:"));
+            addWrappedWithPrefix(" ", theme.fg("muted", "你的回答："));
             for (const line of editor.render(Math.max(1, renderWidth - 2))) {
               lines.push(` ${line}`);
             }
             lines.push("");
-            addWrappedWithPrefix(" ", theme.fg("dim", "Enter to submit • Esc to cancel"));
+            addWrappedWithPrefix(" ", theme.fg("dim", "回车提交 • Esc 取消"));
           } else if (currentTab === questions.length) {
-            addWrappedWithPrefix(" ", theme.fg("accent", theme.bold("Ready to submit")));
+            addWrappedWithPrefix(" ", theme.fg("accent", theme.bold("准备提交")));
             lines.push("");
             for (const question of questions) {
               const answer = answers.get(question.id);
               if (answer) {
-                const prefix = answer.wasCustom ? "(wrote) " : "";
+                const prefix = answer.wasCustom ? "（自填）" : "";
                 const summary = `${theme.fg("muted", `${question.label}: `)}${theme.fg("text", prefix + answer.label)}`;
                 addWrappedWithPrefix(" ", summary);
               }
             }
             lines.push("");
             if (allAnswered()) {
-              addWrappedWithPrefix(" ", theme.fg("success", "Press Enter to submit"));
+              addWrappedWithPrefix(" ", theme.fg("success", "按回车提交"));
             } else {
               const missing = questions
                 .filter((q) => !answers.has(q.id))
                 .map((q) => q.label)
                 .join(", ");
-              addWrappedWithPrefix(" ", theme.fg("warning", `Unanswered: ${missing}`));
+              addWrappedWithPrefix(" ", theme.fg("warning", `未作答：${missing}`));
             }
           } else if (q) {
             addWrappedWithPrefix(" ", theme.fg("text", q.prompt));
@@ -400,8 +396,8 @@ export function registerQuestionnaire(pi: ExtensionAPI) {
           lines.push("");
           if (!inputMode) {
             const help = isMulti
-              ? "Tab/←→ navigate • ↑↓ select • Enter confirm • Esc cancel"
-              : "↑↓ navigate • Enter select • Esc cancel";
+              ? "Tab/←→ 切换 • ↑↓ 选择 • 回车确认 • Esc 取消"
+              : "↑↓ 选择 • 回车选中 • Esc 取消";
             addWrappedWithPrefix(" ", theme.fg("dim", help));
           }
           lines.push(theme.fg("accent", "─".repeat(renderWidth)));
@@ -421,7 +417,7 @@ export function registerQuestionnaire(pi: ExtensionAPI) {
 
       if (result.cancelled) {
         return {
-          content: [{ type: "text", text: "User cancelled the questionnaire" }],
+          content: [{ type: "text", text: "用户取消了问卷" }],
           details: result,
         };
       }
@@ -429,9 +425,9 @@ export function registerQuestionnaire(pi: ExtensionAPI) {
       const answerLines = result.answers.map((a) => {
         const qLabel = questions.find((q) => q.id === a.id)?.label || a.id;
         if (a.wasCustom) {
-          return `${qLabel}: user wrote: ${a.label}`;
+          return `${qLabel}：用户自填：${a.label}`;
         }
-        return `${qLabel}: user selected: ${a.index}. ${a.label}`;
+        return `${qLabel}：用户选择：${a.index}. ${a.label}`;
       });
 
       return {
@@ -445,7 +441,7 @@ export function registerQuestionnaire(pi: ExtensionAPI) {
       const count = qs.length;
       const labels = qs.map((q) => q.label || q.id).join(", ");
       let text = theme.fg("toolTitle", theme.bold("questionnaire "));
-      text += theme.fg("muted", `${count} question${count !== 1 ? "s" : ""}`);
+      text += theme.fg("muted", `${count} 个问题`);
       if (labels) {
         text += theme.fg("dim", ` (${labels})`);
       }
@@ -459,16 +455,20 @@ export function registerQuestionnaire(pi: ExtensionAPI) {
         return new Text(text?.type === "text" ? text.text : "", 0, 0);
       }
       if (details.cancelled) {
-        return new Text(theme.fg("warning", "Cancelled"), 0, 0);
+        return new Text(theme.fg("warning", "已取消"), 0, 0);
       }
       const lines = details.answers.map((a) => {
         if (a.wasCustom) {
-          return `${theme.fg("success", "✓ ")}${theme.fg("accent", a.id)}: ${theme.fg("muted", "(wrote) ")}${a.label}`;
+          return `${theme.fg("success", "✓ ")}${theme.fg("accent", a.id)}：${theme.fg("muted", "（自填）")}${a.label}`;
         }
         const display = a.index ? `${a.index}. ${a.label}` : a.label;
-        return `${theme.fg("success", "✓ ")}${theme.fg("accent", a.id)}: ${display}`;
+        return `${theme.fg("success", "✓ ")}${theme.fg("accent", a.id)}：${display}`;
       });
       return new Text(lines.join("\n"), 0, 0);
     },
   });
+}
+
+export default function (pi: ExtensionAPI) {
+  registerQuestionnaire(pi);
 }

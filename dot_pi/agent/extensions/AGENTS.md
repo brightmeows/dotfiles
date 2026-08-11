@@ -13,11 +13,7 @@ tags: [pi, extensions, typescript]
 - `skill-ext/`：技能域扩展合并目录。Pi 的扩展发现只支持一层子目录且每目录单一入口（`extensions/*/index.ts`），本目录将技能相关扩展合并为 `index.ts` 一个扩展实例顺序注册（2026-08-11 由顶层 skill-index-rewrite.ts / skill-ref-hint.ts 归组，index-rewrite 拆出
   source-labels / path-canon / render 三个纯函数模块；同日新增 subskill-hint：探测技能包的 skills/ 子技能结构并追加 XML 列表；
   ref-hint 改为目录枚举提示（整树递归、相对路径 + 基准注记、跳过隐藏与 skills/ 区））
-- `official-clone/`：官方示例克隆区（2026-08-11 新增），入口 `index.ts`。当前收录
-  questionnaire 工具（复制自 pi 0.84.1 官方 `examples/extensions/questionnaire.ts`，注册工具名
-  `questionnaire`）；相对上游仅两处适配：头部来源注释、仓库严格 tsconfig
-  （`noUncheckedIndexedAccess` / `exactOptionalPropertyTypes`）下的最小类型修复。typebox 为仓库
-  devDependency（运行时由 Pi 内部解析，仓库声明仅为 `pnpm check` 通过）
+- `questionnaire.ts`：问卷工具（顶层单文件扩展）。基于官方示例 `examples/extensions/questionnaire.ts`（pi 0.84.1）演化，2026-08-11 由 official-clone 克隆区提升为顶层文件、可自由修改；typebox 为仓库 devDependency（运行时由 Pi 内部解析，仓库声明仅为 `pnpm check` 通过）
 - 归组标准：文件名含 `skill` 的扩展入 `skill-ext/`；主题归他域者（如 receiving-review 属评审工作流）留顶层
 - 新增技能相关扩展：文件放入 `skill-ext/` 并在 `index.ts` 注册；模块间 import 用 `./xxx.ts` 写法（tsconfig 已开 `allowImportingTsExtensions`）
 
@@ -35,3 +31,10 @@ pi -p -e dot_pi/agent/extensions/skill-ext/index.ts -e /tmp/dump-ext.ts --no-ses
 - 对比验证（行为回归）：从 git 检出旧版到 /tmp，两边分别 `pi -p -e <被测> -e <dump>` 跑，diff dump 落盘产物。对比前临时移走全局同源目录（`~/.pi/agent/extensions/skill-ext`），否则新旧双重改写，diff 失真
 - 验证 `tool_result` 拦截类扩展（ref-hint）：`-p` 控制台不打印 tool_result 原文，须在 dump 扩展里监听 `tool_result` 并把 read SKILL.md 的 content 落盘（链尾拿到的是改写后内容）
 - 断链清理：chezmoi apply 不清理孤儿 symlink——源文件删除后 `~/.pi/agent/extensions/` 残留断链 symlink 且 Pi 加载报错，手动 `rm` 处理
+- 顶层扩展 default factory：`extensions/*.ts` 必须 `export default function (pi)`，
+  仅命名导出会导致 Pi 加载报错 "Extension does not export a valid factory function"。
+  从子目录合并入口提到顶层时须补 default factory；`pnpm check` 不查此契约，
+  须 `pi -p -e` 实测加载（2026-08-11 questionnaire 迁移踩坑）
+- dump 工具定义验证 schema：`pi.on("session_start")` 内调 `pi.getAllTools()`，
+  `-e` dump 扩展 + `--no-session` 跑，`parameters` 即 typebox JSON Schema
+  （含 `maxLength`，确认已传 LLM）
