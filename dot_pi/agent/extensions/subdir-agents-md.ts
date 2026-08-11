@@ -9,13 +9,14 @@
  *   的锚点目录（文件所在目录 + 去扩展名的 co-located 目录，如 src/memory.rs
  *   → src 与 src/memory），向上查找 AGENTS.md（含锚点，止于 cwd、不含根）。
  * - 注入（custom_message + steer）：context 事件对未注入的 AGENTS.md 用
- *   pi.sendMessage 投递 custom_message（display:false），完整内容下一轮进
- *   LLM context 但不在 TUI 显示；另用 appendEntry 投递 TUI 短提示（custom
- *   entry，不进 LLM），TUI 只见“已注入”标记而非完整内容。
+ *   pi.sendMessage 投递 custom_message（display:true），完整内容下一轮进
+ *   LLM context；registerMessageRenderer 让 TUI 只渲染“已注入”标记而非
+ *   完整内容（display 只控 TUI 渲染，content 总进 LLM）。
  * - 去重靠查找（buildContextEntries）：用 compact-aware 的 buildContextEntries
  *   查找已注入的 customType（同文件去重）与 details.hash（同内容多子包去重）；
  *   命中则跳过，compact 压缩后查不到则重新注入。哈希存 custom_message 的
- *   details（不进 LLM）。无闭包状态、无手动重置，compact 语义自然体现。
+ *   details（不进 LLM）。代理用 read 显式读取过的 AGENTS.md（explicitlyRead
+ *   集合）亦跳过——内容已作为 tool_result 进 LLM；compact 后清空允许重注入。
  *
  * 规则：仅注入 cwd 严格子目录（根 AGENTS.md 由 Pi 原生加载）；不截断、
  * 不过滤 git-ignore。
@@ -27,10 +28,8 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { Text } from "@earendil-works/pi-tui";
 
-/** 完整内容 custom_message 的 customType 前缀，后接 AGENTS.md 相对路径（进 LLM） */
+/** custom_message 的 customType 前缀，后接 AGENTS.md 相对路径（进 LLM + TUI 渲染查找键） */
 const CUSTOM_TYPE_PREFIX = "subdir-agents-md:";
-/** TUI 提示 custom entry 的 customType（不进 LLM，仅 TUI 可见） */
-const NOTICE_TYPE = "subdir-agents-md-notice";
 
 // ── 注入提示文案 ──
 
@@ -155,12 +154,6 @@ function readContent(absPath: string): string | null {
 // ── Extension ──
 
 export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
-  // TUI 提示渲染（custom entry，不进 LLM）：只显示“已注入”标记，完整内容不进 TUI
-  pi.registerEntryRenderer(NOTICE_TYPE, (entry, _opts, theme) => {
-    const rel = (entry.data as { rel?: string } | undefined)?.rel ?? "";
-    return new Text(theme.fg("dim", injectNotice(rel)));
-  });
-
   /** 待处理的相对路径（tool_call 收集，context 消费；Set 自动去重） */
   const pending = new Set<string>();
   /** 代理用 read 显式读取过的 AGENTS.md 相对路径（compact 后清空，允许重注入） */
@@ -235,18 +228,23 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
         continue; // 同内容已在上下文（别的子包）或本 turn 已注入，跳过
       }
       seenHashes.add(hash);
-      // 完整内容进 LLM（display:false：TUI 不显示完整，避免刷屏）
+      // display:true 让 TUI 渲染本条 message；registerMessageRenderer 只显示
+      // “已注入”标记，完整内容由 content 进 LLM（display 不影响 content 进
+      // LLM，只控 TUI 渲染）。per-rel 注册：getMessageRenderer 按 customType
+      // 精确匹配，动态 customType 需逐一注册
+      pi.registerMessageRenderer(
+        CUSTOM_TYPE_PREFIX + rel,
+        (_msg, _opts, t) => new Text(t.fg("dim", injectNotice(rel))),
+      );
       pi.sendMessage(
         {
           customType: CUSTOM_TYPE_PREFIX + rel,
           content: `${injectNotice(rel)}\n${content}`,
           details: { hash },
-          display: false,
+          display: true,
         },
         { deliverAs: "steer" },
       );
-      // TUI 短提示（custom entry，不进 LLM）
-      pi.appendEntry(NOTICE_TYPE, { rel });
     }
   });
 
