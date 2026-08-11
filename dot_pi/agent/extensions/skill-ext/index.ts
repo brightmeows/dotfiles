@@ -15,8 +15,10 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { registerIndexRewrite } from "./index-rewrite.ts";
 import { registerRefHint } from "./ref-hint.ts";
+import { registerSubskillHint } from "./subskill-hint.ts";
 
 export default function (pi: ExtensionAPI) {
   registerIndexRewrite(pi);
   registerRefHint(pi);
+  registerSubskillHint(pi);
 }

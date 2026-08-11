@@ -11,7 +11,7 @@ tags: [pi, extensions, typescript]
 
 - 顶层 `*.ts`：单文件扩展，Pi 自动发现（`extensions/*.ts`）
 - `skill-ext/`：技能域扩展合并目录。Pi 的扩展发现只支持一层子目录且每目录单一入口（`extensions/*/index.ts`），本目录将技能相关扩展合并为 `index.ts` 一个扩展实例顺序注册（2026-08-11 由顶层 skill-index-rewrite.ts / skill-ref-hint.ts 归组，index-rewrite 拆出
-  source-labels / path-canon / render 三个纯函数模块）
+  source-labels / path-canon / render 三个纯函数模块；同日新增 subskill-hint：探测技能包的 skills/ 子技能结构并追加 XML 列表，ref-hint 相应忽略 skills/ 目录路径）
 - 归组标准：文件名含 `skill` 的扩展入 `skill-ext/`；主题归他域者（如 receiving-review 属评审工作流）留顶层
 - 新增技能相关扩展：文件放入 `skill-ext/` 并在 `index.ts` 注册；模块间 import 用 `./xxx.ts` 写法（tsconfig 已开 `allowImportingTsExtensions`）
 

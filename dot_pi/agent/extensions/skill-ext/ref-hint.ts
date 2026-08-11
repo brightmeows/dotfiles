@@ -18,7 +18,7 @@
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { existsSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
 
 /** Markdown 相对链接：[显示文本](相对路径)，仅匹配 ./ 或 ../ 开头 */
 const REL_LINK_RE = /\[(?<label>[^\]]*)\]\((?<rel>\.\.?\/[^)\s]+)\)/g;
@@ -50,6 +50,8 @@ export function registerRefHint(pi: ExtensionAPI) {
     }
 
     const baseDir = dirname(filePath);
+    // skills/ 子目录内的路径由 subskill-hint 负责提示，此处过滤避免重复
+    const skillsPrefix = `${join(baseDir, "skills")}${sep}`;
     const refs: string[] = [];
     const seen = new Set<string>();
 
@@ -63,7 +65,7 @@ export function registerRefHint(pi: ExtensionAPI) {
       }
       const label = match.groups?.["label"] ?? rel;
       const abs = resolve(baseDir, rel);
-      if (seen.has(abs) || !existsSync(abs)) {
+      if (seen.has(abs) || !existsSync(abs) || abs.startsWith(skillsPrefix)) {
         continue;
       }
       seen.add(abs);
