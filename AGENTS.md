@@ -32,6 +32,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 |------|------|
 | [`docs/fedora-kinoite-multimedia-repo-config.md`](docs/fedora-kinoite-multimedia-repo-config.md) | Fedora Kinoite 44 多媒体仓库布局、编解码能力分析、terra-mesa 移除记录 |
 | [`docs/audio-acp3x-es83xx-headphone.md`](docs/audio-acp3x-es83xx-headphone.md) | AMD ACP3x 音频耳机问题处理 |
+| [`docs/fedora-kinoite-obs-vaapi-encode.md`](docs/fedora-kinoite-obs-vaapi-encode.md) | OBS Studio VAAPI 硬件编码配置、VCN 单元监控方法 |
 | [`docs/npx-skills-usage.md`](docs/npx-skills-usage.md) | npx skills 作用域机制、remove 假成功 bug、安全操作姿势与验证方法 |
 
 ## Commands
