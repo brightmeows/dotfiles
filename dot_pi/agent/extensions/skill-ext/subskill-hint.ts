@@ -18,8 +18,8 @@
  *   省略元素，name 缺失回退子目录名；不设上限全列
  * - 格式：XML <group dir="..."> + <skill>，路径 = <group dir>/<skill
  *   name>/SKILL.md（与系统提示词索引的路径推断约定一致）
- * - 与 ref-hint 分工：ref-hint 列 SKILL.md 正文引用的相对文件（忽略
- *   skills/ 目录），本扩展列目录结构发现的子技能；两者独立段追加
+ * - 与 ref-hint 分工：ref-hint 枚举技能根全部文件（跳过 skills/ 区），
+ *   本扩展列目录结构发现的子技能；两者独立段追加
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";

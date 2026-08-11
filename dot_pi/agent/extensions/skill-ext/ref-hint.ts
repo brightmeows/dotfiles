@@ -1,30 +1,24 @@
 /**
  * Skill Reference Hint（skill-ext 主模块，原 skill-ref-hint.ts）
  *
- * 在模型 read 任意 SKILL.md 后，于同一 tool_result 末尾追加该技能引用的
- * 子文件清单（路径 + 链接显示文本），提示模型按需读取，解决"参考文件
- * 不读取"问题（技能生效决策点链中的执行失败节点）。
+ * 在模型 read 任意 SKILL.md 后，枚举其所在目录（技能根）下的全部文件，
+ * 于同一 tool_result 末尾追加相对路径清单（基准 = SKILL.md 所在目录），
+ * 让模型在读完 SKILL.md 后即知该技能的全部辅助材料，按需 read。
  *
- * 设计取向（符合用户约束）：
- * - 不新增工具：仅通过 tool_result 拦截追加提示文本。
- * - 优先提示"存在"而非注入正文：只列出子文件路径，不读取其正文；模型
- *   据提示自行决定是否 read。仅 existsSync 验证文件存在。
- * - 时机最优：提示紧跟 SKILL.md 正文（模型刚读完、即将决策下一步），
- *   命中率天然高于散落在系统提示词里的静态指令。
- *
- * 仅处理 SKILL.md 内指向同目录树的相对链接（./ 或 ../ 开头），忽略
- * http 链接与绝对路径。每个技能最多提示一定数量子文件，避免过长。
+ * 设计决策（2026-08-11 主人确认，由"正文链接解析"改为"目录枚举"）：
+ * - 枚举范围：技能根整树递归（含子目录）；跳过隐藏文件/目录（.* 前缀，
+ *   与 Pi 技能发现一致）；跳过所有名为 skills 的目录（子技能区归
+ *   subskill-hint 结构化提示，避免重复）
+ * - 输出：一行基准（SKILL.md 所在目录绝对路径）+ 全部文件相对路径
+ *   （./ 开头，相对基准）；不设上限
+ * - 相对路径原因：正文链接解析已废弃——目录枚举天然覆盖正文引用；
+ *   相对路径短、技能目录迁移后不变；基准绝对路径明示（read 工具按
+ *   cwd 解析相对路径，模型需自行换算，基准注出则换算零歧义）
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { existsSync } from "node:fs";
-import { dirname, join, resolve, sep } from "node:path";
-
-/** Markdown 相对链接：[显示文本](相对路径)，仅匹配 ./ 或 ../ 开头 */
-const REL_LINK_RE = /\[(?<label>[^\]]*)\]\((?<rel>\.\.?\/[^)\s]+)\)/g;
-
-/** 单个技能最多提示的子文件数，防止清单过长稀释注意力 */
-const MAX_REFS = 12;
+import { readdirSync, statSync } from "node:fs";
+import { dirname, join, relative } from "node:path";
 
 /** 从 read 工具参数中安全提取路径 */
 function extractPath(input: Record<string, unknown>): string | null {
@@ -32,8 +26,50 @@ function extractPath(input: Record<string, unknown>): string | null {
   return typeof p === "string" && p.length > 0 ? p : null;
 }
 
+/**
+ * 递归枚举目录下全部文件（相对基准路径）：
+ * - 跳过隐藏文件/目录（.* 前缀，与 Pi 技能发现一致）
+ * - 跳过所有名为 skills 的目录（子技能区归 subskill-hint）
+ * - symlink 跟随 statSync 判断类型（与 Pi 技能发现一致），断链跳过
+ */
+function walkFiles(dir: string, baseDir: string, out: string[]): void {
+  let entries;
+  try {
+    entries = readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return;
+  }
+  for (const entry of entries) {
+    if (entry.name.startsWith(".")) {
+      continue;
+    }
+    let isDirectory = entry.isDirectory();
+    let isFile = entry.isFile();
+    if (entry.isSymbolicLink()) {
+      try {
+        const stats = statSync(join(dir, entry.name));
+        isDirectory = stats.isDirectory();
+        isFile = stats.isFile();
+      } catch {
+        // 断链 symlink，跳过
+        continue;
+      }
+    }
+    if (isDirectory) {
+      if (entry.name === "skills") {
+        continue;
+      }
+      walkFiles(join(dir, entry.name), baseDir, out);
+      continue;
+    }
+    if (isFile) {
+      out.push(relative(baseDir, join(dir, entry.name)));
+    }
+  }
+}
+
 export function registerRefHint(pi: ExtensionAPI) {
-  pi.on("tool_result", async (event, _ctx) => {
+  pi.on("tool_result", async (event) => {
     if (event.toolName !== "read") {
       return;
     }
@@ -50,37 +86,22 @@ export function registerRefHint(pi: ExtensionAPI) {
     }
 
     const baseDir = dirname(filePath);
-    // skills/ 子目录内的路径由 subskill-hint 负责提示，此处过滤避免重复
-    const skillsPrefix = `${join(baseDir, "skills")}${sep}`;
-    const refs: string[] = [];
-    const seen = new Set<string>();
-
-    for (const match of first.text.matchAll(REL_LINK_RE)) {
-      if (refs.length >= MAX_REFS) {
-        break;
-      }
-      const rel = match.groups?.["rel"];
-      if (!rel) {
-        continue;
-      }
-      const label = match.groups?.["label"] ?? rel;
-      const abs = resolve(baseDir, rel);
-      if (seen.has(abs) || !existsSync(abs) || abs.startsWith(skillsPrefix)) {
-        continue;
-      }
-      seen.add(abs);
-      // 优先用链接显示文本作说明；若文本本身是路径则用相对路径
-      const note = label && !label.startsWith(".") ? label : rel;
-      refs.push(`  - ${note} → ${abs}`);
+    const files: string[] = [];
+    walkFiles(baseDir, baseDir, files);
+    if (files.length === 0) {
+      return;
     }
+    files.sort();
 
-    if (refs.length === 0) {
+    // 排除 SKILL.md 自身（模型刚读完，无需提示）
+    const hintFiles = files.filter((f) => f !== "SKILL.md");
+    if (hintFiles.length === 0) {
       return;
     }
 
-    const hint = `\n\n---\n该技能引用了以下子文件（按 SKILL.md 指引判断是否需要读取，不要跳过）：\n${refs.join(
-      "\n",
-    )}`;
+    const hint = `\n\n---\n该技能包含以下文件（相对路径，基准 = ${baseDir}/）：\n${hintFiles
+      .map((f) => `  - ./${f}`)
+      .join("\n")}`;
 
     const rest = event.content.slice(1);
     return {

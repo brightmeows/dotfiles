@@ -4,7 +4,7 @@
  * Pi 扩展发现只支持一层子目录 + 单一入口（index.ts），本目录将全部技能域
  * 扩展合并为一个扩展实例顺序注册：
  * - index-rewrite.ts：技能索引重写（before_agent_start 改写系统提示词技能索引段）
- * - ref-hint.ts：技能引用提示（tool_result 拦截，SKILL.md 读后追加子文件清单）
+ * - ref-hint.ts：技能文件枚举提示（tool_result 拦截，SKILL.md 读后追加目录文件清单）
  *
  * 目录组织（2026-08-11 归组）：由 extensions/ 根目录平铺的 skill-index-rewrite.ts /
  * skill-ref-hint.ts 迁入；index-rewrite 内部拆出 source-labels / path-canon / render
