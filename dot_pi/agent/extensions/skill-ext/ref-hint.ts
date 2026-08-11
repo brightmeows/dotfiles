@@ -1,5 +1,5 @@
 /**
- * Skill Reference Hint Extension
+ * Skill Reference Hint（skill-ext 主模块，原 skill-ref-hint.ts）
  *
  * 在模型 read 任意 SKILL.md 后，于同一 tool_result 末尾追加该技能引用的
  * 子文件清单（路径 + 链接显示文本），提示模型按需读取，解决"参考文件
@@ -32,7 +32,7 @@ function extractPath(input: Record<string, unknown>): string | null {
   return typeof p === "string" && p.length > 0 ? p : null;
 }
 
-export default function (pi: ExtensionAPI) {
+export function registerRefHint(pi: ExtensionAPI) {
   pi.on("tool_result", async (event, _ctx) => {
     if (event.toolName !== "read") {
       return;
