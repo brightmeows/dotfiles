@@ -13,6 +13,11 @@ tags: [pi, extensions, typescript]
 - `skill-ext/`：技能域扩展合并目录。Pi 的扩展发现只支持一层子目录且每目录单一入口（`extensions/*/index.ts`），本目录将技能相关扩展合并为 `index.ts` 一个扩展实例顺序注册（2026-08-11 由顶层 skill-index-rewrite.ts / skill-ref-hint.ts 归组，index-rewrite 拆出
   source-labels / path-canon / render 三个纯函数模块；同日新增 subskill-hint：探测技能包的 skills/ 子技能结构并追加 XML 列表；
   ref-hint 改为目录枚举提示（整树递归、相对路径 + 基准注记、跳过隐藏与 skills/ 区））
+- `official-clone/`：官方示例克隆区（2026-08-11 新增），入口 `index.ts`。当前收录
+  questionnaire 工具（复制自 pi 0.84.1 官方 `examples/extensions/questionnaire.ts`，注册工具名
+  `questionnaire`）；相对上游仅两处适配：头部来源注释、仓库严格 tsconfig
+  （`noUncheckedIndexedAccess` / `exactOptionalPropertyTypes`）下的最小类型修复。typebox 为仓库
+  devDependency（运行时由 Pi 内部解析，仓库声明仅为 `pnpm check` 通过）
 - 归组标准：文件名含 `skill` 的扩展入 `skill-ext/`；主题归他域者（如 receiving-review 属评审工作流）留顶层
 - 新增技能相关扩展：文件放入 `skill-ext/` 并在 `index.ts` 注册；模块间 import 用 `./xxx.ts` 写法（tsconfig 已开 `allowImportingTsExtensions`）
 
