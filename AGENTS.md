@@ -39,7 +39,8 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 > **ℹ️ Symlink 模式**：本仓库使用 `mode = "symlink"`，目标文件是源文件的符号链接而非副本。编辑源文件后目标文件已自动同步，`chezmoi -S . apply` 通常无额外操作（除非涉及模板渲染或 `run_onchange_` 脚本）。修改后直接 `git commit` 即可，不必每次 apply。
 > **⚠️ npx skills 作用域**：`npx skills` 不带 `--agent` 时对所有已检测 agent 生效
 > （含 pi 的 `~/.pi/agent/skills`、opencode 的 `~/.config/opencode/skills` 等）。
-> 本仓库 shell 已内置 `skills` wrapper（bash 与 nushell）自动注入 `--agent codex`，只动 `~/.agents/skills`；裸跑 `npx skills` 写命令前先确认作用域。
+> 2026-08-11 已移除 bash/nushell 的 `skills` wrapper（曾自动注入 `--agent codex`）；现在裸跑 `npx skills` 写命令前必须先确认作用域。
+> **remove 需注意**：不带 `-a` 时 targeting 所有 agent（会清理各 agent 专属目录中的同名技能）；指定 `-a` 时仅列出所有已安装的 universal agent（codex+opencode）才会真删 canonical 与 lock，否则报成功但实际不删。
 > opencode 技能目录 `~/.config/opencode/skills` 由 `dot_config/opencode/symlink_skills.tmpl` 管理，指向 `~/.agents_meow/skills` 分发目录
 > （曾指向仓库源目录，2026-08-10 曾导致 `npx skills remove` 顺着 symlink 删除仓库源文件）。
 
