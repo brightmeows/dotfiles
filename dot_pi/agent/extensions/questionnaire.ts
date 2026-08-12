@@ -7,9 +7,10 @@
  * 基于官方示例 examples/extensions/questionnaire.ts（pi 0.84.1）演化而来，
  * 注册工具名 `questionnaire`。2026-08-11 由 official-clone 克隆区提升为顶层
  * 单文件扩展，可自由修改（不再受"原样克隆上游"约束）。相对上游的已知差异：
- * 仓库严格 tsconfig（`noUncheckedIndexedAccess` / `exactOptionalPropertyTypes`）
- * 下的最小类型修复。typebox 为仓库 devDependency（运行时由 Pi 内部解析，仓库
- * 声明仅为 `pnpm check` 通过）。
+ * ① UI 文案与 schema description 中文化；② 仓库严格 tsconfig
+ * （`noUncheckedIndexedAccess` / `exactOptionalPropertyTypes`）下的最小类型
+ * 修复；③ typebox 为仓库 devDependency（运行时由 Pi 内部解析，仓库声明仅为
+ * `pnpm check` 通过）。功能特性与上游完全对齐。
  *
  * 上游：/var/home/brightmeows/.local/lib/node_modules/@earendil-works/pi-coding-agent/examples/extensions/questionnaire.ts
  */
@@ -30,6 +31,7 @@ import { Type } from "typebox";
 interface QuestionOption {
   value: string;
   label: string;
+  description?: string;
 }
 
 type RenderOption = QuestionOption & { isOther?: boolean };
@@ -60,6 +62,7 @@ interface QuestionnaireResult {
 const QuestionOptionSchema = Type.Object({
   value: Type.String({ description: "选中时返回的值" }),
   label: Type.String({ description: "选项的显示标签" }),
+  description: Type.Optional(Type.String({ description: "选项下方显示的补充说明（可选）" })),
 });
 
 const QuestionSchema = Type.Object({
@@ -69,10 +72,7 @@ const QuestionSchema = Type.Object({
       description: "tab 栏的简短上下文标签，如“范围”“优先级”（默认 Q1、Q2）",
     }),
   ),
-  prompt: Type.String({
-    description: "要显示的完整问题正文（建议简短，≤ 200 字符）",
-    maxLength: 200,
-  }),
+  prompt: Type.String({ description: "要显示的完整问题正文" }),
   options: Type.Array(QuestionOptionSchema, { description: "供选择的选项列表" }),
   allowOther: Type.Optional(
     Type.Boolean({ description: "是否允许“输入其他内容”选项（默认 true）" }),
@@ -93,7 +93,7 @@ function errorResult(
   };
 }
 
-export function registerQuestionnaire(pi: ExtensionAPI) {
+export default function questionnaire(pi: ExtensionAPI) {
   pi.registerTool({
     name: "questionnaire",
     label: "Questionnaire",
@@ -350,6 +350,9 @@ export function registerQuestionnaire(pi: ExtensionAPI) {
               const color = selected || (isOther && inputMode) ? "accent" : "text";
 
               addWrappedWithPrefix(prefix, theme.fg(color, label));
+              if (opt.description) {
+                addWrappedWithPrefix("     ", theme.fg("muted", opt.description));
+              }
             }
           }
 
@@ -467,8 +470,4 @@ export function registerQuestionnaire(pi: ExtensionAPI) {
       return new Text(lines.join("\n"), 0, 0);
     },
   });
-}
-
-export default function (pi: ExtensionAPI) {
-  registerQuestionnaire(pi);
 }
