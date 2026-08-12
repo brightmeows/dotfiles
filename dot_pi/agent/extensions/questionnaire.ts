@@ -14,6 +14,10 @@
  * 折叠态显示答案摘要 + 展开快捷键提示，展开态还原完整问答（prompt + 所有选项
  * 含 description + ✓ 选中标记），复用问卷弹窗的排版风格。
  *
+ * 2026-08-12 ⑤ 选项参数简化：每个选项只留 `label`（展示文本即返回值，无
+ * 重复字段，且消除模型漏传必填字段的校验失败）；label 必填且 `minLength: 1`
+ * 防空串；schema 严格化（`additionalProperties: false`），多余属性直接校验失败。
+ *
  * 上游：/var/home/brightmeows/.local/lib/node_modules/@earendil-works/pi-coding-agent/examples/extensions/questionnaire.ts
  */
 
@@ -31,7 +35,6 @@ import { Type } from "typebox";
 
 // Types
 interface QuestionOption {
-  value: string;
   label: string;
   description?: string;
 }
@@ -48,7 +51,6 @@ interface Question {
 
 interface Answer {
   id: string;
-  value: string;
   label: string;
   wasCustom: boolean;
   index?: number;
@@ -60,30 +62,41 @@ interface QuestionnaireResult {
   cancelled: boolean;
 }
 
-// Schema
-const QuestionOptionSchema = Type.Object({
-  value: Type.String({ description: "选中时返回的值" }),
-  label: Type.String({ description: "选项的显示标签" }),
-  description: Type.Optional(Type.String({ description: "选项下方显示的补充说明（可选）" })),
-});
-
-const QuestionSchema = Type.Object({
-  id: Type.String({ description: "该问题的唯一标识" }),
-  label: Type.Optional(
-    Type.String({
-      description: "tab 栏的简短上下文标签，如“范围”“优先级”（默认 Q1、Q2）",
+// Schema（三层均 additionalProperties: false 严格校验，多余属性直接失败）
+const QuestionOptionSchema = Type.Object(
+  {
+    label: Type.String({
+      minLength: 1,
+      description: "选项的展示文本（用户看到的内容，选中后即作为返回值）",
     }),
-  ),
-  prompt: Type.String({ description: "要显示的完整问题正文" }),
-  options: Type.Array(QuestionOptionSchema, { description: "供选择的选项列表" }),
-  allowOther: Type.Optional(
-    Type.Boolean({ description: "是否允许“输入其他内容”选项（默认 true）" }),
-  ),
-});
+    description: Type.Optional(Type.String({ description: "选项下方显示的补充说明（可选）" })),
+  },
+  { additionalProperties: false },
+);
 
-const QuestionnaireParams = Type.Object({
-  questions: Type.Array(QuestionSchema, { description: "要向用户提出的问题" }),
-});
+const QuestionSchema = Type.Object(
+  {
+    id: Type.String({ description: "该问题的唯一标识" }),
+    label: Type.Optional(
+      Type.String({
+        description: "tab 栏的简短上下文标签，如“范围”“优先级”（默认 Q1、Q2）",
+      }),
+    ),
+    prompt: Type.String({ description: "要显示的完整问题正文" }),
+    options: Type.Array(QuestionOptionSchema, { description: "供选择的选项列表" }),
+    allowOther: Type.Optional(
+      Type.Boolean({ description: "是否允许“输入其他内容”选项（默认 true）" }),
+    ),
+  },
+  { additionalProperties: false },
+);
+
+const QuestionnaireParams = Type.Object(
+  {
+    questions: Type.Array(QuestionSchema, { description: "要向用户提出的问题" }),
+  },
+  { additionalProperties: false },
+);
 
 function errorResult(
   message: string,
@@ -162,7 +175,7 @@ export default function questionnaire(pi: ExtensionAPI) {
           if (!q) return [];
           const opts: RenderOption[] = [...q.options];
           if (q.allowOther) {
-            opts.push({ value: "__other__", label: "输入其他内容…", isOther: true });
+            opts.push({ label: "输入其他内容…", isOther: true });
           }
           return opts;
         }
@@ -185,16 +198,9 @@ export default function questionnaire(pi: ExtensionAPI) {
           refresh();
         }
 
-        function saveAnswer(
-          questionId: string,
-          value: string,
-          label: string,
-          wasCustom: boolean,
-          index?: number,
-        ) {
+        function saveAnswer(questionId: string, label: string, wasCustom: boolean, index?: number) {
           answers.set(questionId, {
             id: questionId,
-            value,
             label,
             wasCustom,
             ...(index !== undefined ? { index } : {}),
@@ -202,10 +208,10 @@ export default function questionnaire(pi: ExtensionAPI) {
         }
 
         // Editor submit callback
-        editor.onSubmit = (value) => {
+        editor.onSubmit = (text) => {
           if (!inputQuestionId) return;
-          const trimmed = value.trim() || "（未作答）";
-          saveAnswer(inputQuestionId, trimmed, trimmed, true);
+          const trimmed = text.trim() || "（未作答）";
+          saveAnswer(inputQuestionId, trimmed, true);
           inputMode = false;
           inputQuestionId = null;
           editor.setText("");
@@ -278,7 +284,7 @@ export default function questionnaire(pi: ExtensionAPI) {
               refresh();
               return;
             }
-            saveAnswer(q.id, opt.value, opt.label, false, optionIndex + 1);
+            saveAnswer(q.id, opt.label, false, optionIndex + 1);
             advanceAfterAnswer();
             return;
           }
@@ -495,7 +501,7 @@ export default function questionnaire(pi: ExtensionAPI) {
 
         const opts: RenderOption[] = [...q.options];
         if (q.allowOther) {
-          opts.push({ value: "__other__", label: "输入其他内容…", isOther: true });
+          opts.push({ label: "输入其他内容…", isOther: true });
         }
         for (const [i, opt] of opts.entries()) {
           const selectedRegular =
