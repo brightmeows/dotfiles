@@ -18,7 +18,7 @@ tags: [pi, extensions, typescript]
 
 ## 新增与归组
 
-- 文件名含 `skill` 的扩展 → 放 `skill-ext/` 并在 `index.ts` 注册；主题归他域者（如 receiving-review 属评审工作流）留顶层
+- 文件名含 `skill` 的扩展 → 放 `skill-ext/` 并在 `index.ts` 注册；主题归他域者留顶层
 - 模块间 import 用 `./xxx.ts` 写法（tsconfig 已开 `allowImportingTsExtensions`）；跨扩展共享逻辑放 `lib/`，勿放顶层（会被当作扩展加载）
 - 顶层扩展须实测加载：`pnpm check` 不查 default factory 契约，须 `pi -p -e <扩展> --no-session` 验证
 - 各文件头部注释即设计文档：改动前完整读取，改动后同步更新（含 lib/ 模块）
@@ -30,7 +30,7 @@ LLM 注入且用户需知情的操作，用户提示显示一律统一（2026-08
 - 投递 custom_message（`display: true`），TUI 渲染注册 `lib/inject-notice.ts` 的 `renderInjectNotice`
 - `details.notice`：提示文案，统一格式 `[自动注入] <来源>：<说明>`，collapsed（默认）只显示它
 - `content`：注入全文（进 LLM；ctrl+o 展开工具输出后显示全文）
-- 消费方：subdir-agents-md（懒加载子目录 AGENTS.md）、receiving-review（skill 注入）、inline-context（环境摘要）、skill-ext（首轮索引重写摘要）
+- 消费方：subdir-agents-md（懒加载子目录 AGENTS.md）、inline-context（环境摘要）、skill-ext（首轮索引重写摘要）
 
 实现要点：renderer 按 customType 精确匹配（不支持前缀/通配）；不注册 renderer 时默认渲染直接显示 content 全文（无折叠）。
 
