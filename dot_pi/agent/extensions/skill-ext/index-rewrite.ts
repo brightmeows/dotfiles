@@ -4,6 +4,8 @@
  * 重写系统提示词中的技能索引段，解决技能激活可靠性 + 组织清晰度：
  * - 移除 Pi 默认建议式激活指令（Seleznov 650 次试验激活率 77%），改为
  *   指令式 + 负向约束 + 偏向加载规则（同试验 100%）。
+ * - 默认块移除走 R5 策略（措辞精确为主 + 纯标签兜底 + 断言守门），抗 Pi
+ *   版本措辞漂移，杜绝“默认块残留 + 新块 = 重复”，详见下方正则注释。
  * - 不做关键词检索凸显（token 重叠粗糙、易误判）；所有技能统一按
  *   安装来源仓库（~/.agents/.skill-lock.json + 项目 skills-lock.json）排序，
  *   模型自行按 description 判断加载。
@@ -52,9 +54,25 @@ import {
   type SkillIndexEntry,
 } from "./render.ts";
 
-/** Pi 默认技能索引块（来自 formatSkillsForPrompt 源码），用于定位并移除 */
-const PI_DEFAULT_BLOCK_RE =
+/**
+ * Pi 默认技能索引块的移除策略（R5：措辞精确为主，标签兜底，断言守门）。
+ *
+ * formatSkillsForPrompt（pi skills.js）产出的默认块 = 前导说明文字
+ * （建议式激活指令，3 行英文）+ <available_skills>…</available_skills>。
+ * 本扩展要整体移除它，换成自己的指令式索引。
+ *
+ * PI_INTRO_BLOCK_RE（主）：锚定前导措辞 “The following skills…”，精确
+ *   吃掉“说明 + 标签”整段。措辞随 Pi 版本可能变，失配时降级到兜底。
+ * PI_TAGS_BLOCK_RE（兜底）：纯 <available_skills> 标签锚点，结构稳定
+ *   （XML 标签名遵 Agent Skills 标准），保证标签块必被移除，杜绝“默认块
+ *   残留 + 新块 = 重复”。代价：只吃标签块，遗留前导说明（冗余不致命）。
+ *
+ * 不用“标签 + 向前回溯吃说明段”：会把标签前最近的无空行段落误当说明吞掉
+ * （误伤 prompt 合法内容），实测否决。断言兜底：两层都没吃掉标签块时告警。
+ */
+const PI_INTRO_BLOCK_RE =
   /\n\nThe following skills provide specialized instructions[\s\S]*?<\/available_skills>/;
+const PI_TAGS_BLOCK_RE = /<available_skills>[\s\S]*?<\/available_skills>/;
 
 export function registerIndexRewrite(pi: ExtensionAPI) {
   // 统一渲染（默认外观，collapsed 只显示注入提示）
@@ -62,8 +80,11 @@ export function registerIndexRewrite(pi: ExtensionAPI) {
 
   // 首轮是否已投递知情提示（compact 后重置，允许重新提示）
   let notified = false;
+  // 断言告警去重（compact 后重置）：默认块没被两层正则移除时，首轮告警一次
+  let assertNotified = false;
   pi.on("session_compact", async () => {
     notified = false;
+    assertNotified = false;
   });
 
   pi.on("before_agent_start", async (event, ctx) => {
@@ -73,7 +94,25 @@ export function registerIndexRewrite(pi: ExtensionAPI) {
       return;
     }
 
-    const base = event.systemPrompt.replace(PI_DEFAULT_BLOCK_RE, "");
+    // R5：措辞正则优先（精确移除“说明+标签”整段），失配则纯标签兜底（至少移除标签块）
+    const introMatched = PI_INTRO_BLOCK_RE.test(event.systemPrompt);
+    const base = introMatched
+      ? event.systemPrompt.replace(PI_INTRO_BLOCK_RE, "")
+      : event.systemPrompt.replace(PI_TAGS_BLOCK_RE, "");
+    // 断言：两层正则之一应已移除默认标签块；若仍残留，Pi 大改结构，告警人工介入
+    if (!assertNotified && PI_TAGS_BLOCK_RE.test(base)) {
+      assertNotified = true;
+      pi.sendMessage(
+        {
+          customType: "skill-ext",
+          content:
+            "[自动注入] 技能索引：警告——未能移除 Pi 默认技能块（两层正则均失配，疑似 Pi 结构变更），可能出现重复块，请检查 index-rewrite.ts 正则",
+          details: { notice: "skill-ext 默认块移除断言失败" },
+          display: true,
+        },
+        { deliverAs: "steer" },
+      );
+    }
     const projectDirs = collectProjectSkillDirs(ctx.cwd);
     const canonDirs = [...projectDirs.canon, ...CANONICAL_USER_DIRS];
     const { map: globalMap, ok: globalOk } = loadSourceMap();
