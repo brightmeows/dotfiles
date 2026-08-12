@@ -28,7 +28,7 @@ import type { CustomMessageEntry, ExtensionAPI } from "@earendil-works/pi-coding
 import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { renderInjectNotice } from "./lib/inject-notice.ts";
+import { renderInjectNotice } from "../lib/inject-notice.ts";
 
 /** 注入消息的固定 customType（去重键 + TUI 渲染查找键，标签即默认外观的 [customType]） */
 const CUSTOM_TYPE = "subdir-agents-md";

@@ -11,16 +11,20 @@ tags: [pi, extensions, typescript]
 
 | 路径 | 角色 | 要点 |
 |------|------|------|
-| 顶层 `*.ts` | 单文件扩展 | Pi 自动发现（`extensions/*.ts`）；必须 `export default function (pi)`，仅命名导出会加载报错 |
-| `skill-ext/` | 技能域扩展合并目录 | Pi 发现只支持一层子目录单入口（`extensions/*/index.ts`）；技能相关扩展在此合并为 `index.ts` 顺序注册 |
-| `questionnaire.ts` | 问卷工具 | 顶层单文件扩展，基于官方示例演化，可自由修改；typebox 为仓库 devDependency（运行时由 Pi 内部解析，仓库声明仅为 `pnpm check` 通过） |
+| `input/` | 输入域合并目录 | esc-hold（Esc 防误触）、editor-input-tweaks（编辑器增强）；`index.ts` 顺序注册 |
+| `context/` | 上下文注入域合并目录 | inline-context（环境摘要）、subdir-agents-md（子目录 AGENTS.md 懒加载）；import `../lib/` |
+| `aliases/` | 命令别名域合并目录 | command-aliases（斜杠命令别名 /clear、/exit） |
+| `tools/` | 命令与工具域合并目录 | questionnaire（问卷工具，官方示例演化可自由修改，typebox 为仓库 devDependency）、models-dev-import（async factory，入口 await） |
+| `skill-ext/` | 技能域扩展合并目录 | 技能相关扩展在此合并为 `index.ts` 顺序注册 |
 | `lib/` | 共享代码区 | **不被 Pi 自动发现**，仅被各扩展 import 复用；当前含 `inject-notice.ts`（统一注入提示渲染，见下文） |
+
+Pi 自动发现规则：顶层 `extensions/*.ts` 与一层子目录 `extensions/*/index.ts`；子目录内其他 `.ts` 仅作 import 模块。扩展文件必须 `export default function (pi)`，仅命名导出会加载报错。
 
 ## 新增与归组
 
-- 文件名含 `skill` 的扩展 → 放 `skill-ext/` 并在 `index.ts` 注册；主题归他域者留顶层
-- 模块间 import 用 `./xxx.ts` 写法（tsconfig 已开 `allowImportingTsExtensions`）；跨扩展共享逻辑放 `lib/`，勿放顶层（会被当作扩展加载）
-- 顶层扩展须实测加载：`pnpm check` 不查 default factory 契约，须 `pi -p -e <扩展> --no-session` 验证
+- 主题域规则：键盘/编辑器输入 → `input/`；LLM 上下文注入 → `context/`；命令别名 → `aliases/`；命令/工具 → `tools/`；技能相关 → `skill-ext/`；新主题建新目录并在 `index.ts` 注册
+- 模块间 import 用 `./xxx.ts` 写法（tsconfig 已开 `allowImportingTsExtensions`）；跨扩展共享逻辑放 `lib/`（不被自动发现）
+- 新增/移动扩展须实测加载：`pnpm check` 不查 default factory 契约，须 `pi -p -e <入口> --no-session` 验证（组目录传 `xxx/index.ts`）
 - 各文件头部注释即设计文档：改动前完整读取，改动后同步更新（含 lib/ 模块）
 
 ## 统一提示约定（LLM 注入且用户需知情）

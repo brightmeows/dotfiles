@@ -31,7 +31,7 @@ import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { basename, join } from "node:path";
 import { promisify } from "node:util";
-import { renderInjectNotice } from "./lib/inject-notice.ts";
+import { renderInjectNotice } from "../lib/inject-notice.ts";
 
 const execFileAsync = promisify(execFile);
 
