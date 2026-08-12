@@ -256,14 +256,14 @@ export default function questionnaire(pi: ExtensionAPI) {
             return;
           }
 
-          // Option navigation
+          // Option navigation（循环：首个按上跳末尾，末尾按下跳首个）
           if (matchesKey(data, Key.up)) {
-            optionIndex = Math.max(0, optionIndex - 1);
+            optionIndex = (optionIndex - 1 + opts.length) % opts.length;
             refresh();
             return;
           }
           if (matchesKey(data, Key.down)) {
-            optionIndex = Math.min(opts.length - 1, optionIndex + 1);
+            optionIndex = (optionIndex + 1) % opts.length;
             refresh();
             return;
           }
