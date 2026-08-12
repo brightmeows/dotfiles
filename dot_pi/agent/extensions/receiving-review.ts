@@ -7,13 +7,16 @@
  *   - "Verify each finding against current code"
  *
  * 注入方式：before_agent_start 中检测句式并预加载 skill，
- * context 事件中将内容直接添加至消息列表（LLM 首轮即见）。
+ * context 事件中将内容直接添加至消息列表（LLM 首轮即见）；
+ * 另投递一条 custom_message 通知（display:true），TUI 渲染统一走
+ * lib/inject-notice.ts 的 renderInjectNotice（默认外观，只显示提示）。
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { renderInjectNotice } from "./lib/inject-notice.ts";
 
 const TRIGGER_PATTERNS = [
   "Check if these issues are valid",
@@ -22,7 +25,13 @@ const TRIGGER_PATTERNS = [
 
 const SKILL_PATH = join(homedir(), ".agents_meow/skills/receiving-code-review/SKILL.md");
 
+/** 统一格式注入提示文案（collapsed 显示） */
+const NOTICE = "[自动注入] receiving-code-review skill：内容已注入 LLM 上下文";
+
 export default function (pi: ExtensionAPI) {
+  // 统一渲染（默认外观，collapsed 只显示提示）
+  pi.registerMessageRenderer("receiving-review", renderInjectNotice);
+
   let loaded = false;
   let skillContent: string | null = null;
   let pendingInject = false;
@@ -75,8 +84,9 @@ ${getSkillContent()}`;
     // 用户可见：简要通知，不重复全文
     pi.sendMessage(
       {
-        content: "✅ 已加载 `receiving-code-review` skill，内容已注入 LLM 上下文。",
+        content: NOTICE,
         customType: "receiving-review",
+        details: { notice: NOTICE },
         display: true,
       },
       { deliverAs: "steer" },

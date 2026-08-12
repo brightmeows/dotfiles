@@ -14,6 +14,15 @@ tags: [pi, extensions, typescript]
   source-labels / path-canon / render 三个纯函数模块；同日新增 subskill-hint：探测技能包的 skills/ 子技能结构并追加 XML 列表；
   ref-hint 改为目录枚举提示（整树递归、相对路径 + 基准注记、跳过隐藏与 skills/ 区））
 - `questionnaire.ts`：问卷工具（顶层单文件扩展）。基于官方示例 `examples/extensions/questionnaire.ts`（pi 0.84.1）演化，2026-08-11 由 official-clone 克隆区提升为顶层文件、可自由修改；typebox 为仓库 devDependency（运行时由 Pi 内部解析，仓库声明仅为 `pnpm check` 通过）
+- `lib/`：扩展共享代码区，**不被 Pi 自动发现**（自动发现只匹配顶层 `*.ts` 与 `*/index.ts`），
+  仅被各扩展 import 复用。当前含 `inject-notice.ts`：统一“LLM 注入且用户需知情”提示渲染
+  （复刻默认 custom_message 外观：collapsed 只显示 `[自动注入] <来源>：<说明>` 提示，
+  ctrl+o 展开工具输出后显示注入全文）
+- 统一提示约定（2026-08-12）：LLM 注入且用户需知情的操作一律 custom_message
+  （display:true）+ details.notice（`[自动注入] <来源>：<说明>`）+
+  `registerMessageRenderer(<customType>, renderInjectNotice)`；content 为注入全文
+  （进 LLM，expanded 显示）。消费方：subdir-agents-md / receiving-review /
+  inline-context / skill-ext（首轮摘要）
 - 归组标准：文件名含 `skill` 的扩展入 `skill-ext/`；主题归他域者（如 receiving-review 属评审工作流）留顶层
 - 新增技能相关扩展：文件放入 `skill-ext/` 并在 `index.ts` 注册；模块间 import 用 `./xxx.ts` 写法（tsconfig 已开 `allowImportingTsExtensions`）
 

@@ -10,10 +10,12 @@
  *   → src 与 src/memory），向上查找 AGENTS.md（含锚点，止于 cwd、不含根）。
  * - 注入（custom_message + steer）：context 事件对未注入的 AGENTS.md 用
  *   pi.sendMessage 投递 custom_message（display:true），完整内容下一轮进
- *   LLM context；registerMessageRenderer 让 TUI 只渲染“已注入”标记而非
- *   完整内容（display 只控 TUI 渲染，content 总进 LLM）。
+ *   LLM context；TUI 渲染统一走 lib/inject-notice.ts 的 renderInjectNotice
+ *   （复刻默认 custom_message 外观：collapsed 只显示“已注入”提示，ctrl+o 展开
+ *   工具输出后显示注入全文；display 只控 TUI 渲染，content 总进 LLM）。
  * - 去重靠查找（buildContextEntries）：用 compact-aware 的 buildContextEntries
- *   查找已注入的 customType（同文件去重）与 details.hash（同内容多子包去重）；
+ *   查找已注入的 customType（固定值）+ details.rel（同文件去重，旧格式回退
+ *   customType 后缀）与 details.hash（同内容多子包去重）；
  *   命中则跳过，compact 压缩后查不到则重新注入。哈希存 custom_message 的
  *   details（不进 LLM）。代理用 read 显式读取过的 AGENTS.md（explicitlyRead
  *   集合）亦跳过——内容已作为 tool_result 进 LLM；compact 后清空允许重注入。
@@ -26,15 +28,15 @@ import type { CustomMessageEntry, ExtensionAPI } from "@earendil-works/pi-coding
 import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { Text } from "@earendil-works/pi-tui";
+import { renderInjectNotice } from "./lib/inject-notice.ts";
 
-/** custom_message 的 customType 前缀，后接 AGENTS.md 相对路径（进 LLM + TUI 渲染查找键） */
-const CUSTOM_TYPE_PREFIX = "subdir-agents-md:";
+/** 注入消息的固定 customType（去重键 + TUI 渲染查找键，标签即默认外观的 [customType]） */
+const CUSTOM_TYPE = "subdir-agents-md";
 
 // ── 注入提示文案 ──
 
-/** 注入内容段的标记头 */
-const injectNotice = (rel: string): string => `[自动注入] ./${rel}`;
+/** 注入提示文案（统一格式 [自动注入] <来源>：<说明>；collapsed 显示，expanded 显示全文） */
+const injectNotice = (rel: string): string => `[自动注入] ./${rel}：子目录规则已注入`;
 
 // ── 内容哈希（品牌类型，同内容多子包去重） ──
 
@@ -154,6 +156,9 @@ function readContent(absPath: string): string | null {
 // ── Extension ──
 
 export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
+  // 统一渲染（复刻默认 custom_message 外观：collapsed 提示 / expanded 全文）
+  pi.registerMessageRenderer(CUSTOM_TYPE, renderInjectNotice);
+
   /** 待处理的相对路径（tool_call 收集，context 消费；Set 自动去重） */
   const pending = new Set<string>();
   /** 代理用 read 显式读取过的 AGENTS.md 相对路径（compact 后清空，允许重注入） */
@@ -198,10 +203,22 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
       .buildContextEntries()
       .filter(
         (e): e is CustomMessageEntry =>
-          e.type === "custom_message" && e.customType.startsWith(CUSTOM_TYPE_PREFIX),
+          e.type === "custom_message" &&
+          (e.customType === CUSTOM_TYPE || e.customType.startsWith(`${CUSTOM_TYPE}:`)),
       );
     const inContextRels = new Set(
-      existing.map((e) => e.customType.slice(CUSTOM_TYPE_PREFIX.length)),
+      existing
+        .map((e) => {
+          // 旧格式兼容（2026-08-12 前）：customType 带 rel 后缀（subdir-agents-md:./x）
+          const rel = (e.details as { rel?: string } | undefined)?.rel;
+          if (rel !== undefined) {
+            return rel;
+          }
+          return e.customType.startsWith(`${CUSTOM_TYPE}:`)
+            ? e.customType.slice(CUSTOM_TYPE.length + 1)
+            : undefined;
+        })
+        .filter((r): r is string => r !== undefined),
     );
     const inContextHashes = new Set(
       existing
@@ -228,19 +245,14 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
         continue; // 同内容已在上下文（别的子包）或本 turn 已注入，跳过
       }
       seenHashes.add(hash);
-      // display:true 让 TUI 渲染本条 message；registerMessageRenderer 只显示
-      // “已注入”标记，完整内容由 content 进 LLM（display 不影响 content 进
-      // LLM，只控 TUI 渲染）。per-rel 注册：getMessageRenderer 按 customType
-      // 精确匹配，动态 customType 需逐一注册
-      pi.registerMessageRenderer(
-        CUSTOM_TYPE_PREFIX + rel,
-        (_msg, _opts, t) => new Text(t.fg("dim", injectNotice(rel))),
-      );
+      // TUI 渲染由 renderInjectNotice 统一（collapsed 只显示提示，
+      // ctrl+o 展开显示全文）；content 总进 LLM，display 只控 TUI
+      const notice = injectNotice(rel);
       pi.sendMessage(
         {
-          customType: CUSTOM_TYPE_PREFIX + rel,
-          content: `${injectNotice(rel)}\n${content}`,
-          details: { hash },
+          customType: CUSTOM_TYPE,
+          content: `${notice}\n${content}`,
+          details: { notice, rel, hash },
           display: true,
         },
         { deliverAs: "steer" },

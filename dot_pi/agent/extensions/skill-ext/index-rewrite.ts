@@ -22,10 +22,15 @@
  * - source-labels.ts：技能来源标签解析（lock → host/owner/repo）
  * - path-canon.ts：展示路径规范化与项目技能目录收集
  * - render.ts：技能索引 XML 渲染
+ *
+ * 用户知情（2026-08-12）：首轮改写时投递一条 custom_message 通知
+ * （display:true），TUI 渲染统一走 ../lib/inject-notice.ts 的
+ * renderInjectNotice（默认外观，只显示提示）；compact 后重置可再次提示。
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { sep } from "node:path";
+import { renderInjectNotice } from "../lib/inject-notice.ts";
 import {
   LOCAL_LABEL,
   UNKNOWN_LABEL,
@@ -52,6 +57,15 @@ const PI_DEFAULT_BLOCK_RE =
   /\n\nThe following skills provide specialized instructions[\s\S]*?<\/available_skills>/;
 
 export function registerIndexRewrite(pi: ExtensionAPI) {
+  // 统一渲染（默认外观，collapsed 只显示注入提示）
+  pi.registerMessageRenderer("skill-ext", renderInjectNotice);
+
+  // 首轮是否已投递知情提示（compact 后重置，允许重新提示）
+  let notified = false;
+  pi.on("session_compact", async () => {
+    notified = false;
+  });
+
   pi.on("before_agent_start", async (event, ctx) => {
     const allSkills = (event.systemPromptOptions.skills ?? []) as SkillIndexEntry[];
     const skills = allSkills.filter((s) => !s.disableModelInvocation);
@@ -128,6 +142,21 @@ export function registerIndexRewrite(pi: ExtensionAPI) {
     }
 
     lines.push("</available_skills>");
+
+    // 首轮用户知情提示（不重复全文，只告知重写事实）
+    if (!notified) {
+      notified = true;
+      const notice = `[自动注入] 技能索引：已重写 ${skills.length} 个技能条目的激活规则`;
+      pi.sendMessage(
+        {
+          customType: "skill-ext",
+          content: notice,
+          details: { notice },
+          display: true,
+        },
+        { deliverAs: "steer" },
+      );
+    }
 
     return { systemPrompt: `${base}\n\n${lines.join("\n")}` };
   });
