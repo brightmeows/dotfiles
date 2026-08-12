@@ -10,12 +10,14 @@
  * ① UI 文案与 schema description 中文化；② 仓库严格 tsconfig
  * （`noUncheckedIndexedAccess` / `exactOptionalPropertyTypes`）下的最小类型
  * 修复；③ typebox 为仓库 devDependency（运行时由 Pi 内部解析，仓库声明仅为
- * `pnpm check` 通过）。功能特性与上游完全对齐。
+ * `pnpm check` 通过）；④ renderResult 支持 Ctrl+O（`app.tools.expand`）展开：
+ * 折叠态显示答案摘要 + 展开快捷键提示，展开态还原完整问答（prompt + 所有选项
+ * 含 description + ✓ 选中标记），复用问卷弹窗的排版风格。
  *
  * 上游：/var/home/brightmeows/.local/lib/node_modules/@earendil-works/pi-coding-agent/examples/extensions/questionnaire.ts
  */
 
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { keyHint, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import {
   Editor,
   type EditorTheme,
@@ -451,23 +453,68 @@ export default function questionnaire(pi: ExtensionAPI) {
       return new Text(text, 0, 0);
     },
 
-    renderResult(result, _options, theme, _context) {
+    renderResult(result, { expanded }, theme, _context) {
       const details = result.details as QuestionnaireResult | undefined;
       if (!details) {
         const text = result.content[0];
         return new Text(text?.type === "text" ? text.text : "", 0, 0);
       }
       if (details.cancelled) {
-        return new Text(theme.fg("warning", "已取消"), 0, 0);
-      }
-      const lines = details.answers.map((a) => {
-        if (a.wasCustom) {
-          return `${theme.fg("success", "✓ ")}${theme.fg("accent", a.id)}：${theme.fg("muted", "（自填）")}${a.label}`;
+        let text = theme.fg("warning", "已取消");
+        if (expanded && details.questions.length > 0) {
+          text += `\n${theme.fg("muted", `问卷含 ${details.questions.length} 个问题（用户未提交）`)}`;
         }
-        const display = a.index ? `${a.index}. ${a.label}` : a.label;
-        return `${theme.fg("success", "✓ ")}${theme.fg("accent", a.id)}：${display}`;
-      });
-      return new Text(lines.join("\n"), 0, 0);
+        return new Text(text, 0, 0);
+      }
+
+      // 折叠态：紧凑答案摘要 + 展开快捷键提示
+      if (!expanded) {
+        const lines = details.answers.map((a) => {
+          if (a.wasCustom) {
+            return `${theme.fg("success", "✓ ")}${theme.fg("accent", a.id)}：${theme.fg("muted", "（自填）")}${a.label}`;
+          }
+          const display = a.index ? `${a.index}. ${a.label}` : a.label;
+          return `${theme.fg("success", "✓ ")}${theme.fg("accent", a.id)}：${display}`;
+        });
+        lines.push(
+          `${theme.fg("dim", "(")}${keyHint("app.tools.expand", "展开查看完整问卷")}${theme.fg("dim", ")")}`,
+        );
+        return new Text(lines.join("\n"), 0, 0);
+      }
+
+      // 展开态：还原完整问答，复用问卷弹窗排版（prompt + 编号选项 + description + ✓ 选中标记）
+      // 选项顺序须与弹窗 currentOptions() 一致（allowOther 项追加在末尾），answer.index 才能正确匹配
+      const answersById = new Map(details.answers.map((a) => [a.id, a]));
+      const blocks: string[] = [];
+      for (const q of details.questions) {
+        const answer = answersById.get(q.id);
+        const lines: string[] = [
+          theme.fg("accent", theme.bold(q.label)),
+          theme.fg("text", q.prompt),
+        ];
+
+        const opts: RenderOption[] = [...q.options];
+        if (q.allowOther) {
+          opts.push({ value: "__other__", label: "输入其他内容…", isOther: true });
+        }
+        for (const [i, opt] of opts.entries()) {
+          const selectedRegular =
+            answer !== undefined && !answer.wasCustom && answer.index === i + 1;
+          const selectedOther = answer !== undefined && answer.wasCustom && opt.isOther === true;
+          const selected = selectedRegular || selectedOther;
+          const mark = selected ? theme.fg("success", "✓") : theme.fg("dim", "·");
+          const color = selected ? "text" : "muted";
+          lines.push(`  ${mark} ${theme.fg(color, `${i + 1}. ${opt.label}`)}`);
+          if (opt.description) {
+            lines.push(`      ${theme.fg("dim", opt.description)}`);
+          }
+          if (selectedOther && answer) {
+            lines.push(`      ${theme.fg("muted", "（自填）")} ${theme.fg("text", answer.label)}`);
+          }
+        }
+        blocks.push(lines.join("\n"));
+      }
+      return new Text(blocks.join("\n\n"), 0, 0);
     },
   });
 }
