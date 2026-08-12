@@ -18,11 +18,11 @@
  *   架构）——需要时 LLM 可自行用命令查询
  * - 完整信息走 systemPrompt（每轮重建，compact 后自动恢复，无状态），
  *   摘要 message 只用于 TUI 可见性，不承载关键信息；TUI 渲染统一走
- *   lib/inject-notice.ts 的 renderInjectNotice（默认外观，collapsed 只显示
- *   注入提示，ctrl+o 展开显示摘要行）
- * - 工具与 gh 状态：检测已安装的现代 CLI 替代（rg/fd/jq/bat/eza/delta/sd）
- *   与 gh 登录账号，让 LLM 写命令时优先用已装工具、知道 gh 可做认证操作；
- *   未安装 / 未登录自动省略，不占上下文
+ *   lib/inject-notice.ts 的 renderInjectNotice（默认外观，collapsed 显示
+ *   摘要行，ctrl+o 展开同内容）
+ * - 工具与 gh 状态：检测已安装的现代 CLI 替代（仅 fd/rg，2026-08-12
+ *   精简）与 gh 登录账号，让 LLM 写命令时优先用已装工具、知道 gh 可做
+ *   认证操作；未安装 / 未登录自动省略，不占上下文
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -286,15 +286,10 @@ export function formatGitLine(ctx: GitContext): string {
 
 // ---------- CLI 工具 ----------
 
-// 候选现代替代工具（仅注入已安装的，未装自动省略）
+// 候选现代替代工具（仅注入已安装的，未装自动省略；2026-08-12 精简为 fd/rg 两个高价值项）
 const TOOL_RECOMMENDATIONS = [
   { bin: "rg", replaces: "grep" },
   { bin: "fd", replaces: "find" },
-  { bin: "jq", replaces: "JSON处理" },
-  { bin: "bat", replaces: "cat" },
-  { bin: "eza", replaces: "ls" },
-  { bin: "delta", replaces: "diff" },
-  { bin: "sd", replaces: "sed" },
 ] as const;
 
 // 返回已安装的工具名列表（并行检测，--version 验证可执行性）
@@ -404,9 +399,6 @@ export function buildSummary(opts: {
 const CUSTOM_TYPE = "inline-context";
 const LEGACY_CUSTOM_TYPES = new Set(["inline-date", "inline-env", "inline-git-status"]);
 
-/** 统一格式注入提示文案（collapsed 显示；expanded 显示 content 摘要行） */
-const NOTICE = "[自动注入] 环境上下文：日期、系统环境、Git 状态、CLI 工具与 gh 摘要已注入";
-
 function realEnv(): EnvContext {
   return {
     platform: process.platform,
@@ -484,10 +476,12 @@ export default function (pi: ExtensionAPI) {
             (entry.customType === CUSTOM_TYPE || LEGACY_CUSTOM_TYPES.has(entry.customType)),
         );
       if (!hasInjected) {
+        // 提示内容即原摘要行（details.notice = content，collapsed/expanded 一致）
+        const summary = buildSummary({ env: envInfo, git: gitInfo, tools, gh });
         result.message = {
           customType: CUSTOM_TYPE,
-          content: buildSummary({ env: envInfo, git: gitInfo, tools, gh }),
-          details: { notice: NOTICE },
+          content: summary,
+          details: { notice: summary },
           display: true,
         };
       }
