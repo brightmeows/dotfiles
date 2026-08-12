@@ -46,7 +46,7 @@ export default function (pi: ExtensionAPI) {
   }
 
   function formatMessage(): string {
-    return `检测到审查验证请求。以下为 \`receiving-code-review\` skill 内容，严格遵循：
+    return `检测到代码审查验证请求。以下为 \`receiving-code-review\` skill 内容，严格遵循：
 
 ${getSkillContent()}`;
   }

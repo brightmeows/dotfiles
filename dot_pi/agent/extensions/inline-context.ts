@@ -276,7 +276,7 @@ export function formatGitLine(ctx: GitContext): string {
     text += " 处于 detached HEAD，由外部管理，收尾时需创建分支。";
   }
   if (ignoredWorktreeDir) {
-    text += ` 工作树目录 ${ignoredWorktreeDir} 已被 Git 忽略，建议在隔离分支上开发：\`git worktree add ${ignoredWorktreeDir}/<新分支> -b <新分支>\`，避免直改 ${branch ?? "HEAD"}。`;
+    text += ` 工作树目录 ${ignoredWorktreeDir} 已被 Git 忽略，建议在隔离分支上开发：\`git worktree add ${ignoredWorktreeDir}/<新分支> -b <新分支>\`，避免直接修改 ${branch ?? "HEAD"}。`;
   }
   return text;
 }

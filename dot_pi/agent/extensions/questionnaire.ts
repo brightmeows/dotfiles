@@ -98,7 +98,7 @@ export default function questionnaire(pi: ExtensionAPI) {
     name: "questionnaire",
     label: "Questionnaire",
     description:
-      "向用户提出一个或多个问题。用于澄清需求、获取偏好或确认决策。单问题显示为简单的选项列表；多问题显示为带 tab 切换的界面。建议：调用本工具前，先在对话正文里把各个选项的完整含义向用户解释清楚，让用户带着理解在界面里选择。",
+      "向用户提出一个或多个问题。用于澄清需求、获取偏好或确认决策。单个问题显示为简单的选项列表；多个问题显示为带 tab 切换的界面。建议：调用本工具前，先在对话正文里把各个选项的完整含义向用户解释清楚，让用户带着理解在界面里选择。",
     parameters: QuestionnaireParams,
 
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
