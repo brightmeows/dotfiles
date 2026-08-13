@@ -1,17 +1,17 @@
 /**
  * 技能索引 XML 渲染（skill-ext 拆分自原 skill-index-rewrite.ts）
  *
- * 格式（纯 XML，路径零歧义设计）：
- * - <group dir="..."> 标注 skills 目录（dir 明确是目录，非完整路径）。
- * - skill 只含 name+description；路径 = <group dir>/<skill name>/SKILL.md，
- *   路径链只有 group→skill 两层，推断无歧义。
+ * 格式（纯 XML，路径模板零歧义设计）：
+ * - <group path="..."> path 为完整路径模板（如 ~/.agents/skills/${name}/SKILL.md），
+ *   用 <name> 替换 ${name} 即得 SKILL.md 完整路径，无需拼接推断。
+ * - skill 只含 name+description（description 缺失时省略元素）。
  * - XML 转义与注释安全化行为与 Pi formatSkillsForPrompt 一致。
  */
 
 /** 技能索引条目所需的最小结构（Skill 类型的子集，避免依赖其类型导出） */
 export interface SkillIndexEntry {
   name: string;
-  description: string;
+  description?: string;
   filePath: string;
   disableModelInvocation?: boolean;
 }
@@ -31,14 +31,21 @@ export function sanitizeComment(s: string): string {
   return s.replace(/--/g, "- -").replace(/-$/, "- ");
 }
 
-/** 渲染单个 skill 为 XML 条目（仅 name+description，路径由 group dir 体现） */
+/** 渲染 group 开标签（单点定义 path 模板格式）：path 为完整路径模板，
+ * ${name} 为技能名变量，用 <name> 替换即得 SKILL.md 完整路径 */
+export function renderGroupOpen(pathTemplate: string): string {
+  return `<group path="${escapeXml(pathTemplate)}">`;
+}
+
+/** 渲染单个 skill 为 XML 条目（name + description，路径由 group path 模板
+ * 给出）；description 缺失时省略元素 */
 export function renderSkill(skill: SkillIndexEntry, indent = "  "): string[] {
-  return [
-    `${indent}<skill>`,
-    `${indent}  <name>${escapeXml(skill.name)}</name>`,
-    `${indent}  <description>${escapeXml(skill.description)}</description>`,
-    `${indent}</skill>`,
-  ];
+  const lines = [`${indent}<skill>`, `${indent}  <name>${escapeXml(skill.name)}</name>`];
+  if (skill.description) {
+    lines.push(`${indent}  <description>${escapeXml(skill.description)}</description>`);
+  }
+  lines.push(`${indent}</skill>`);
+  return lines;
 }
 
 /** 统计一个 dir 组内的技能总数（用于排序） */

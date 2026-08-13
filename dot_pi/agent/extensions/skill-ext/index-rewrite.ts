@@ -10,13 +10,13 @@
  *   安装来源仓库（~/.agents/.skill-lock.json + 项目 skills-lock.json）排序，
  *   模型自行按 description 判断加载。
  *
- * 格式（纯 XML，路径零歧义设计）：
- * - <group dir="..."> 标注 skills 目录（dir 明确是目录，非完整路径）。
+ * 格式（纯 XML，路径模板零歧义设计）：
+ * - <group path="..."> path 为完整路径模板（如 ~/.agents/skills/${name}/SKILL.md），
+ *   用 <name> 替换 ${name} 即得 SKILL.md 完整路径，无需拼接推断。
  * - 同一安装仓库的技能以 <!-- 来源仓库: ... --> 注释分段；注释是纯标注，
  *   不属于任何元素。注释内容为 host/owner/repo 形态（如
  *   github.com/larksuite/cli），域名打头不可能与本地路径混淆。
- * - skill 只含 name+description；路径 = <group dir>/<skill name>/SKILL.md，
- *   路径链只有 group→skill 两层，推断无歧义。
+ * - skill 只含 name+description，路径由 group path 模板给出。
  *
  * 不改 Pi 源码、不改技能文件；信息完整保留（name+description）。
  *
@@ -48,7 +48,7 @@ import {
 } from "./path-canon.ts";
 import {
   countGroup,
-  escapeXml,
+  renderGroupOpen,
   renderSkill,
   sanitizeComment,
   type SkillIndexEntry,
@@ -147,7 +147,6 @@ export function registerIndexRewrite(pi: ExtensionAPI) {
       "- 宁可多加载一个不需要的，也不要漏掉关键步骤；加载错的代价远小于漏掉的代价。",
       "- 这些技能含 API 端点、命令等预训练知识里没有的专有内容；即便觉得能用通用工具完成，也要先加载。",
       "- 只有确认无任何技能相关，才可不加载。",
-      "- 技能 SKILL.md 路径 = <group dir>/<skill name>/SKILL.md，加载时按此拼路径 read。",
       "- 加载 SKILL.md 后，若它引用 references/scripts 等相对路径文件，按指引一并读取，不要跳过。",
     ];
 
@@ -166,7 +165,7 @@ export function registerIndexRewrite(pi: ExtensionAPI) {
         a[0].localeCompare(b[0]),
     );
     for (const [dg, originGroup] of dirEntries) {
-      lines.push(`<group dir="${escapeXml(shortenHome(dg))}/">`);
+      lines.push(renderGroupOpen(`${shortenHome(dg)}/\${name}/SKILL.md`));
       // eslint-disable-next-line unicorn/no-array-sort -- [...展开] 已是新数组，sort 安全
       const originEntries = [...originGroup.entries()].sort(
         (a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]),

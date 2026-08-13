@@ -11,13 +11,14 @@
  * 进入系统提示词索引；本扩展补"按需发现"通道，与索引（index-rewrite）
  * 互补。
  *
- * 设计决策（2026-08-11 主人确认）：
+ * 设计决策（2026-08-11 主人确认；2026-08-13 渲染层单点化修订）：
  * - 一级探测：只列 <技能根>/skills/ 直接子目录中含 SKILL.md 的技能；
  *   子技能自身再有 skills/ 时，模型 read 它再触发一轮（自相似，不递归）
- * - 条目内容：name + description（仿系统提示词条目）；description 缺失
- *   省略元素，name 缺失回退子目录名；不设上限全列
- * - 格式：XML <group dir="..."> + <skill>，路径 = <group dir>/<skill
- *   name>/SKILL.md（与系统提示词索引的路径推断约定一致）
+ * - 条目内容：name + description（仿系统提示词条目）；name 固定用目录名
+ *   （frontmatter name 与目录名不一致时 path 模板替换会指错文件）；
+ *   description 缺失省略元素；不设上限全列
+ * - 格式：<group path=".../skills/${name}/SKILL.md"> + <skill>，渲染走
+ *   render.ts 共享函数，与系统提示词索引同源不会不同步
  * - 与 ref-hint 分工：ref-hint 枚举技能根全部文件（跳过 skills/ 区），
  *   本扩展列目录结构发现的子技能；两者独立段追加
  */
@@ -25,7 +26,7 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { escapeXml } from "./render.ts";
+import { renderGroupOpen, renderSkill } from "./render.ts";
 
 /** 从 read 工具参数中安全提取路径 */
 function extractPath(input: Record<string, unknown>): string | null {
@@ -33,23 +34,15 @@ function extractPath(input: Record<string, unknown>): string | null {
   return typeof p === "string" && p.length > 0 ? p : null;
 }
 
-/** 从 SKILL.md frontmatter 提取 name/description（单行字段；缺失省略键） */
-function parseFrontmatter(raw: string): { name?: string; description?: string } {
+/** 从 SKILL.md frontmatter 提取 description（单行字段；缺失省略键） */
+function parseFrontmatter(raw: string): { description?: string } {
   const m = raw.match(/^---\n([\s\S]*?)\n---/);
   const fm = m?.[1];
   if (!fm) {
     return {};
   }
-  const result: { name?: string; description?: string } = {};
-  const name = fm.match(/^name:\s*(.+?)\s*$/m)?.[1];
-  if (name) {
-    result.name = name;
-  }
   const description = fm.match(/^description:\s*(.+?)\s*$/m)?.[1];
-  if (description) {
-    result.description = description;
-  }
-  return result;
+  return description ? { description } : {};
 }
 
 /** 列出 skills 目录下的子技能（仅含 SKILL.md 的目录） */
@@ -73,22 +66,23 @@ function discoverSubSkills(skillsDir: string): { name: string; dir: string }[] {
   return subs;
 }
 
-/** 渲染子技能列表为 XML（仿系统提示词 available_skills 条目） */
+/** 渲染子技能列表为 XML（渲染走 render.ts 共享函数，与系统提示词索引同源） */
 function renderSubskills(skillsDir: string, subs: { name: string; dir: string }[]): string {
-  const lines = [`<group dir="${escapeXml(skillsDir)}/">`];
+  const lines = [renderGroupOpen(`${skillsDir}/\${name}/SKILL.md`)];
   for (const sub of subs) {
-    let meta: { name?: string; description?: string } = {};
+    let description: string | undefined;
     try {
-      meta = parseFrontmatter(readFileSync(join(sub.dir, "SKILL.md"), "utf8"));
+      description = parseFrontmatter(readFileSync(join(sub.dir, "SKILL.md"), "utf8")).description;
     } catch {
-      // 读取失败时按无 frontmatter 处理（name 回退目录名）
+      // 读取失败时省略 description
     }
-    lines.push("  <skill>");
-    lines.push(`    <name>${escapeXml(meta.name ?? sub.name)}</name>`);
-    if (meta.description) {
-      lines.push(`    <description>${escapeXml(meta.description)}</description>`);
-    }
-    lines.push("  </skill>");
+    lines.push(
+      ...renderSkill({
+        name: sub.name,
+        filePath: join(sub.dir, "SKILL.md"),
+        ...(description ? { description } : {}),
+      }),
+    );
   }
   lines.push("</group>");
   return lines.join("\n");
@@ -121,7 +115,7 @@ export function registerSubskillHint(pi: ExtensionAPI) {
       return;
     }
 
-    const hint = `\n\n---\n该技能管辖以下子技能（按需 read 加载，路径 = <group dir>/<skill name>/SKILL.md）：\n${renderSubskills(
+    const hint = `\n\n---\n该技能管辖以下子技能（按需 read 加载）：\n${renderSubskills(
       skillsDir,
       subs,
     )}`;
