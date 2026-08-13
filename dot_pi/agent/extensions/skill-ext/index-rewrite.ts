@@ -17,6 +17,11 @@
  *   不属于任何元素。注释内容为 host/owner/repo 形态（如
  *   github.com/larksuite/cli），域名打头不可能与本地路径混淆。
  * - skill 只含 name+description，路径由 group path 模板给出。
+ * - 组边界以 <!-- ===== 项目级技能 ===== --> / <!-- ===== 全局技能 ===== -->
+ *   分隔注释标注级别（纯标注，不影响加载规则）；某级无技能时不插对应注释。
+ * - 项目级判定：技能组目录位于 cwd 下（cwd 前缀，覆盖 --skill/settings 任意
+ *   路径形态）或位于祖先链 .agents/skills / cwd 的 .pi/skills 白名单（并集，
+ *   防 Pi 恢复默认项目扫描时漏判）；其余归全局。
  *
  * 不改 Pi 源码、不改技能文件；信息完整保留（name+description）。
  *
@@ -151,9 +156,11 @@ export function registerIndexRewrite(pi: ExtensionAPI) {
     ];
 
     // 按 dir → origin 嵌套排序，扁平渲染（group 下按 source 注释分段，skill 无 origin 属性）
-    // 项目级目录组（.pi/skills、祖先 .agents/skills）优先于全局；同级别内
+    // 项目级目录组（cwd 内 / 祖先 .agents/skills）优先于全局；同级别内
     // .agents/skills 组先于 .pi/skills 组，再按数量降序
     const isProjectDir = (dg: string) =>
+      dg === ctx.cwd ||
+      dg.startsWith(`${ctx.cwd}${sep}`) ||
       projectDirs.sort.some((p) => dg === p || dg.startsWith(`${p}${sep}`));
     const isAgentsDir = (dg: string) => canonDirs.includes(dg);
     // eslint-disable-next-line unicorn/no-array-sort -- [...展开] 已是新数组，sort 安全
@@ -164,7 +171,17 @@ export function registerIndexRewrite(pi: ExtensionAPI) {
         countGroup(b[1]) - countGroup(a[1]) ||
         a[0].localeCompare(b[0]),
     );
+    // 组边界插级别分隔注释（纯标注）：项目级组（cwd/祖先链）在前，全局组
+    // 在后；排序已保证同级别连续，仅边界切换时插入，某级无技能时不插
+    const PROJECT_SECTION_COMMENT = "<!-- ===== 项目级技能 ===== -->";
+    const GLOBAL_SECTION_COMMENT = "<!-- ===== 全局技能 ===== -->";
+    let prevIsProject: boolean | null = null;
     for (const [dg, originGroup] of dirEntries) {
+      const isProject = isProjectDir(dg);
+      if (prevIsProject !== isProject) {
+        lines.push(isProject ? PROJECT_SECTION_COMMENT : GLOBAL_SECTION_COMMENT);
+        prevIsProject = isProject;
+      }
       lines.push(renderGroupOpen(`${shortenHome(dg)}/\${name}/SKILL.md`));
       // eslint-disable-next-line unicorn/no-array-sort -- [...展开] 已是新数组，sort 安全
       const originEntries = [...originGroup.entries()].sort(

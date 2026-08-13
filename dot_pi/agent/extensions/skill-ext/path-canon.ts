@@ -11,8 +11,9 @@
  *   非规范目录：用户级与项目级统一以 .agents/skills 为规范优先。
  * - realpath 不一致（同名真冲突）或不可解析时保持 Pi 原路径，绝不
  *   把提示词路径指向别的文件内容。
- * - 分组排序：项目级目录（.pi/skills、祖先 .agents/skills）优先于全局，
- *   其中 .agents/skills 组先于 .pi/skills 组，再按技能数量降序。
+ * - 分组排序：项目级目录优先于全局（判定在 index-rewrite.ts 侧：cwd 前缀
+ *   为主、本模块收集的 .pi/skills / 祖先 .agents/skills 白名单作并集）；同级别
+ *   内 .agents/skills 组先于 .pi/skills 组，再按技能数量降序。
  */
 
 import { existsSync, realpathSync } from "node:fs";
