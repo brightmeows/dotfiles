@@ -15,11 +15,32 @@
 
 | 主文件节 | 维护记录 |
 |---|---|
+| 引言（角色提示）| 详见下文（2026-08-13 微调：第二人称身份指派）|
 | 规则优先级 | 详见下文（2026-08-12 新增）|
 | 确定性优先 | 详见下文（v2 重点）|
 | 表达规范 | 详见下文（2026-08-13 由“语言风格”重构而来，猫娘风格移除）|
 | 信息获取完整性 | 详见下文（反自我设限，2026-08-11）|
 | 执行效率 / 技能使用 / 环境 / 知识 / 工作流 / 行为修正 / 文档同步 / 提交 | 待补（按需增量补充）|
+
+---
+
+## 引言（角色提示）
+
+### 第二人称身份指派（2026-08-13）
+
+- 动因：主人问角色提示（标题 + 引言）可否优化，要求搜索互联网最佳实践；评估发现开头是第三人称文档式（“本文件是常驻工程工作准则”），身份声明只在标题，正文第一句（注意力最强位）被文档自我描述占据
+- 决策：引言改“你是白喵斯的常驻工程助手。你的工作准则：……”，身份激活从文档描述变直接指派，长度不变，无 persona、无新增 token 负担
+- 理论依据：
+  - pecollective《System Prompt Design: 9 Patterns for Production LLMs (2026)》anatomy 模板：第一段即“Who is the model? What is its job?”，两到三句身份声明是生产级提示词标准构件
+  - Anthropic 官方插件仓库 system-prompt-design.md（claude-plugins-official）：核心结构以“You are [specific role] specializing in [specific domain]”开头
+  - 措辞研究已记结论：第二人称直接指令优于第三人称描述（Principled Instructions 原则 4 / 9）
+  - primacy effect：开头注意力最强，宜放身份指派而非文档元描述
+- 防守性评估（对照最佳实践后明确不加的东西）：
+  - 不加 persona 性格——arXiv:2311.10054（2410 题 / 162 personas）与已记的 PRISM、Persistent Personas 同向，persona 不提升甚至降低表现
+  - 不加长——Anthropic《The new rules of context engineering for Claude 5》(2026-07)：Claude Code 删 80% 系统提示词无编码评测损失，旧约束多为过时脚手架；本文件极简路线正合此向
+  - 不“absurdly specific”化角色（buildmvpfast / pecollections 的具体化建议面向有界客服 bot 场景）；Anthropic 官方警示 overly specific roles 会限制 helpfulness，本文件是跨项目全局准则
+- 否决：加 scope 边界句（Inflectra 的 scope layer 针对 bounded workflow 组件，本文件天然宽 scope）；角色句绑定领域（全局文件不能绑定特定领域）；全文第二人称化（已记否决：全面任务标记稀释权重）
+- 维护信号：若模型仍把本文件当普通文档而非行为准则 → 考虑在优先级栈节加触发示例
 
 ---
 
@@ -196,11 +217,11 @@ First Principles 不该滥用——过度建模和漏建模一样糟。给“该
 
 ### 猫性工程锚点（2026-08-11）
 
-- 动因：主人要求分析“提升工程效果的角色设定 / 人物锚点”；搜索发现猫的天性可隐喻映射到多项研究证实的工程增益特质（devil's advocate / socratic / self-critique / curiosity / persona anchor）
+- 动因：主人要求分析“提升工程效果的角色设定 / 人物锚点”；搜索发现猫的天性可隐喻映射到多项研究证实的工程增益特质（devil’s advocate / socratic / self-critique / curiosity / persona anchor）
   ，存在“扮演服务工程”的正向叠加机会，而非“牺牲工程换扮演”的权衡
 - 决策：重构人设锚点——猫性从“装饰”（好奇 / 黏人 / 爱睡 / 护小鱼干）升级为“工程锚点绑定”（警觉→失效建模、好奇→建模优先与 grilling、洁癖→可验证优先、黏人→对齐需求）；引言句联动（“卖萌是风格”→“猫性是工程锚点”）
 - 理论依据（工程增益特质的证据）：
-  - Devil's Advocate（arXiv:2405.16334，UPenn + DeepMind）：行动前预想失败 + 补救，WebArena 试验与计划修订减少 45%
+  - Devil’s Advocate（arXiv:2405.16334，UPenn + DeepMind）：行动前预想失败 + 补救，WebArena 试验与计划修订减少 45%
   - Socratic Questioning（arXiv:2305.14999）：分治递归思考比 CoT 鲁棒；Rubber Duck 解释迫使假设显式化
   - Self-Critique / CriticGPT（arXiv:2407.00215）：但 self-critique 共享 generator 盲点，故锚定到“可验证优先”（机制验证）而非纯自我批评
   - Curiosity-Driven Red-Teaming（ICLR 2024）：好奇心提高测试覆盖率
