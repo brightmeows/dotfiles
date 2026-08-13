@@ -41,6 +41,16 @@
       "command": ["uvx", "git+https://github.com/h-lu/cnki-mcp.git"],
       "enabled": false,
     },
+    // zai-mcp-server: API key 通过环境变量 ZHIPU_API_KEY 注入，不落盘
+    "zai-mcp-server": {
+      "type": "local",
+      "command": ["npx", "-y", "@z_ai/mcp-server@latest"],
+      "environment": {
+        "Z_AI_API_KEY": "{env:ZHIPU_API_KEY}",
+        "Z_AI_MODE": "ZHIPU",
+      },
+      "enabled": true,
+    },
   },
   "agent": {
     "build": {
