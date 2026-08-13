@@ -26,7 +26,9 @@ export const CANONICAL_USER_DIRS = [join(homedir(), ".agents", "skills")];
 /** 项目级目录集合：sort 供排序判断，canon 供路径重映射 */
 export interface ProjectSkillDirs {
   /** 项目级目录全集（排序用）：<cwd>/.pi/skills + 祖先链 .agents/skills（排除
-   *  ~/.agents/skills，与 Pi collectAncestorAgentsSkillDirs 的过滤行为对称） */
+   *  ~/.agents/skills）。Pi 当前版本（2026-08-13 实测）不再扫描这些目录
+   *  （loadSkills 走 includeDefaults: false），收集仅作防御：Pi 若恢复祖先
+   *  扫描，白名单并集仍可正确归类 */
   sort: string[];
   /** 项目级规范目录（重映射目标）：仅祖先链 .agents/skills */
   canon: string[];
