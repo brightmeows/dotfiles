@@ -27,14 +27,15 @@ fi
 
 # Merge: for each key in the managed file, replace its values in the target.
 # Keys not present in managed (local-only additions) are preserved.
-git config --file "$MEOW" --list --name-only 2>/dev/null | while IFS= read -r key; do
+git config --file "$MEOW" --list --name-only | while IFS= read -r key; do
   [ -z "$key" ] && continue
 
   # Remove all existing values of this key in target
-  git config --file "$TARGET" --unset-all "$key" 2>/dev/null || true
+  # 目标无此键时退出码 5（local-only 键），为预期分支；真实错误由 pipefail 暴露
+  git config --file "$TARGET" --unset-all "$key" || true
 
   # Add all values from managed config (--null preserves empty values, e.g. empty helper =)
-  git config --null --file "$MEOW" --get-all "$key" 2>/dev/null | \
+  git config --null --file "$MEOW" --get-all "$key" | \
     while IFS= read -r -d '' value; do
       git config --file "$TARGET" --add "$key" "$value"
     done

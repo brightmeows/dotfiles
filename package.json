@@ -12,7 +12,7 @@
     "lint:fix": "oxlint --fix",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
-    "prepare": "chmod +x .githooks/pre-commit 2>/dev/null; git config core.hooksPath .githooks 2>/dev/null || true"
+    "prepare": "chmod +x .githooks/pre-commit && git config core.hooksPath .githooks"
   },
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "^0.84.0",
