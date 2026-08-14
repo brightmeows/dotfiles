@@ -153,4 +153,7 @@ url = "file://{{ .chezmoi.sourceDir }}/dot_config/nushell/env.nu"
 - **提交语言**：中文
 - **提交粒度**：按逻辑变更拆分提交。
 - **原生 git hook**：`git commit` 触发 `.githooks/pre-commit`（`pnpm format:check` / `pnpm lint` 全量 + markdownlint 仅暂存 md），只检查不写回。失败时先本地修复（`pnpm format` / `pnpm lint:fix`），再重新 `git add` 提交。
-- **hook 安装**（新机器/重新 clone 后跑一次）：`git config --local core.hooksPath "$(pwd)/.githooks"`（绝对路径，写入 `.git/config`；`.git/` 不入库，换机器需重跑；不经过 chezmoi）
+- **hook 安装**（自动）：`package.json` 的 `prepare` 脚本在 `pnpm install` 时执行
+  `git config core.hooksPath .githooks`，写入 `.git/config`（local、相对路径，仓库位置无关）；
+  不经过 chezmoi、无全局副作用，新机器 clone 后 `pnpm install` 即激活（手动可跑
+  `pnpm run prepare`）
