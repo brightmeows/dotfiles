@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# 仓库原生 git hook（core.hooksPath 指向本目录，安装命令见 AGENTS.md Git Workflow）
+# 与旧 .pre-commit-config.yaml 等价：format-check/lint 全量，markdownlint 仅暂存 md
+# 只检查不写回；失败时本地修复（pnpm format / pnpm lint:fix）后重新 git add 提交
+
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+# 合并/变基/还原进行中：跳过检查
+if git rev-parse -q --verify MERGE_HEAD >/dev/null 2>&1 ||
+  git rev-parse -q --verify CHERRY_PICK_HEAD >/dev/null 2>&1 ||
+  git rev-parse -q --verify REVERT_HEAD >/dev/null 2>&1; then
+  exit 0
+fi
+
+# 无暂存内容（--amend 等）：跳过
+if git diff --cached --quiet; then
+  exit 0
+fi
+
+echo "format-check: pnpm format:check"
+pnpm format:check
+
+echo "lint: pnpm lint"
+pnpm lint
+
+# markdownlint：仅暂存且存在的 md 文件（--diff-filter=ACM 排除已删除的）
+mapfile -t md_files < <(git diff --cached --name-only --diff-filter=ACM -- '*.md')
+if ((${#md_files[@]} > 0)); then
+  echo "markdownlint: ${md_files[*]}"
+  markdownlint --config .markdownlint.toml "${md_files[@]}"
+fi
