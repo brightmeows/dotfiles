@@ -12,9 +12,9 @@
 // locked      默认/纯输入              入口: Alt+i, Esc, Enter, i (任何模式)
 // normal      导航 (hjkl 移动焦点)     入口: Alt+i (locked), Esc(scroll/search)
 // pane        窗格管理                 入口: p (normal/resize/tab/scroll)
-// tab         标签管理                 入口: t
+// tab         标签管理 ([ / ] / b 拆窗格到新 tab) 入口: t
 // resize      调整窗格大小             入口: r
-// move        移动窗格                 入口: m
+// move        移动窗格 (H/L/B 拆到相邻 tab)      入口: m
 // scroll      浏览回滚缓冲区           入口: s
 // search      搜索回滚缓冲区           入口: f → entersearch → Enter
 // entersearch 搜索输入                 入口: f (输词后 Enter 进入 search)
@@ -115,6 +115,9 @@ keybinds clear-defaults=true {
         bind "down" { MovePane "down"; }
         bind "up" { MovePane "up"; }
         bind "right" { MovePane "right"; }
+        bind "B" { BreakPane; }
+        bind "H" { BreakPaneLeft; }
+        bind "L" { BreakPaneRight; }
         bind "h" { MovePane "left"; }
         bind "j" { MovePane "down"; }
         bind "k" { MovePane "up"; }
