@@ -91,6 +91,11 @@ const QuestionOptionSchema = Type.Object(
   { additionalProperties: false },
 );
 
+const QuestionModeSchema = Type.Union([Type.Literal("single"), Type.Literal("multiple")], {
+  description:
+    "选择模式：single=单选（默认，回车选中即跳下一题）；multiple=多选（空格勾选/取消、回车提交本题）",
+});
+
 const QuestionSchema = Type.Object(
   {
     id: Type.String({ description: "该问题的唯一标识" }),
@@ -104,12 +109,7 @@ const QuestionSchema = Type.Object(
     allowOther: Type.Optional(
       Type.Boolean({ description: "是否允许“输入其他内容”选项（默认 true）" }),
     ),
-    mode: Type.Optional(
-      Type.Union([Type.Literal("single"), Type.Literal("multiple")], {
-        description:
-          "选择模式：single=单选（默认，回车选中即跳下一题）；multiple=多选（空格勾选/取消、回车提交本题）",
-      }),
-    ),
+    mode: Type.Optional(QuestionModeSchema),
     minSelect: Type.Optional(
       Type.Integer({
         minimum: 0,
@@ -152,6 +152,7 @@ export default function questionnaire(pi: ExtensionAPI) {
       "向用户提出一个或多个问题。用于澄清需求、获取偏好或确认决策。单个问题显示为简单的选项列表；多个问题显示为带 tab 切换的界面。每个问题可设 mode：single（默认，单选，选中即跳）或 multiple（多选，空格勾选、回车提交本题）。建议：调用本工具前，先在对话正文里把各个选项的完整含义向用户解释清楚，让用户带着理解在界面里选择。",
     parameters: QuestionnaireParams,
 
+    // eslint-disable-next-line max-params -- Pi execute 回调固定签名
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
       if (ctx.mode !== "tui") {
         return errorResult("错误：UI 不可用（运行在非交互模式）");
@@ -175,6 +176,7 @@ export default function questionnaire(pi: ExtensionAPI) {
       const isMulti = questions.length > 1;
       const totalTabs = questions.length + 1; // Questions + Submit
 
+      // eslint-disable-next-line max-params -- Pi ui.custom 回调固定签名
       const result = await ctx.ui.custom<QuestionnaireResult>((tui, theme, _kb, done) => {
         // State
         let currentTab = 0;
@@ -691,6 +693,7 @@ export default function questionnaire(pi: ExtensionAPI) {
       return new Text(text, 0, 0);
     },
 
+    // eslint-disable-next-line max-params -- Pi renderResult 固定签名
     renderResult(result, { expanded }, theme, _context) {
       const details = result.details as QuestionnaireResult | undefined;
       if (!details) {

@@ -45,6 +45,16 @@ function parseFrontmatter(raw: string): { description?: string } {
   return description ? { description } : {};
 }
 
+/** 读取子技能 SKILL.md 的 description（读取失败或缺失时省略） */
+function readSubDescription(subDir: string): { description?: string } {
+  try {
+    return parseFrontmatter(readFileSync(join(subDir, "SKILL.md"), "utf8"));
+  } catch {
+    // 读取失败时省略 description
+    return {};
+  }
+}
+
 /** 列出 skills 目录下的子技能（仅含 SKILL.md 的目录） */
 function discoverSubSkills(skillsDir: string): { name: string; dir: string }[] {
   const subs: { name: string; dir: string }[] = [];
@@ -70,12 +80,7 @@ function discoverSubSkills(skillsDir: string): { name: string; dir: string }[] {
 function renderSubskills(skillsDir: string, subs: { name: string; dir: string }[]): string {
   const lines = [renderGroupOpen(`${skillsDir}/\${name}/SKILL.md`)];
   for (const sub of subs) {
-    let description: string | undefined;
-    try {
-      description = parseFrontmatter(readFileSync(join(sub.dir, "SKILL.md"), "utf8")).description;
-    } catch {
-      // 读取失败时省略 description
-    }
+    const { description } = readSubDescription(sub.dir);
     lines.push(
       ...renderSkill({
         name: sub.name,

@@ -173,7 +173,7 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
 
     // 代理用 read 显式读取了 AGENTS.md 本身 → 标记，context 阶段跳过注入：
     // 内容已作为 tool_result 进 LLM，重复注入纯浪费 token。仅限 read 工具——
-    // bash cat 等场景少，且 parseBashPath 难以区分“读全文”与“ls 列目录”
+    // Bash cat 等场景少，且 parseBashPath 难以区分“读全文”与“ls 列目录”
     if (event.toolName === "read" && path.basename(accessed) === "AGENTS.md") {
       explicitlyRead.add(accessed);
     }
@@ -246,7 +246,7 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
       }
       seenHashes.add(hash);
       // TUI 渲染由 renderInjectNotice 统一（collapsed 只显示提示，
-      // ctrl+o 展开显示全文）；content 总进 LLM，display 只控 TUI
+      // Ctrl+O 展开显示全文）；content 总进 LLM，display 只控 TUI
       const notice = injectNotice(rel);
       pi.sendMessage(
         {
@@ -260,7 +260,7 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
     }
   });
 
-  // compact 后 tool_result 被压缩、代理不再记得内容，允许重新注入
+  // Compact 后 tool_result 被压缩、代理不再记得内容，允许重新注入
   pi.on("session_compact", async () => {
     explicitlyRead.clear();
   });

@@ -22,7 +22,8 @@
     "init-declarations": "off",
     "prefer-named-capture-group": "off",
     "func-names": "off",
-    "sort-imports": "off"
+    "sort-imports": "off",
+    "new-cap": ["warn", { "properties": false }]
   },
   "ignorePatterns": ["node_modules"]
 }
