@@ -19,11 +19,12 @@
  * 防空串；schema 严格化（`additionalProperties: false`），多余属性直接校验失败。
  *
  * 2026-08-14 ⑥ 单选/多选支持：每个问题新增 `mode`（"single" 默认 / "multiple"），
- * 多选下空格勾选、回车提交本题（与单选"回车即选即走"分离）。配套 `minSelect`/
+ * 多选下空格勾选/撤回、回车提交本题（与单选"回车即选即走"分离）。配套 `minSelect`/
  * `maxSelect`（仅 multiple 生效，single 静默忽略）。状态由 `Map<id, Answer>`
  * 改为 `Map<id, Answer[]>`，`Answer` 结构零改动、`QuestionnaireResult.answers`
  * 仍为扁平 `Answer[]`（同 id 多次出现即多选），故外部消费契约不变。allowOther
- * 在多选下为"追加一个自定义值后回到列表、可反复追加"，单选下仍为覆盖。
+ * 在多选下：追加的自填值进入选项列表（带"☑ 自填："前缀，空格撤回=删除，禁止空
+ * 自填、允许重复）；单选下仍为覆盖，自填值不入列表（选了即走）。
  *
  * 上游：/var/home/brightmeows/.local/lib/node_modules/@earendil-works/pi-coding-agent/examples/extensions/questionnaire.ts
  */
@@ -46,7 +47,11 @@ interface QuestionOption {
   description?: string;
 }
 
-type RenderOption = QuestionOption & { isOther?: boolean };
+type RenderOption = QuestionOption & {
+  isOther?: boolean;
+  isCustom?: boolean;
+  customPos?: number;
+};
 
 type SelectionMode = "single" | "multiple";
 
@@ -176,6 +181,7 @@ export default function questionnaire(pi: ExtensionAPI) {
         let optionIndex = 0;
         let inputMode = false;
         let inputQuestionId: string | null = null;
+        let inputError: string | null = null;
         let cachedLines: string[] | undefined;
         // 多选支持：一个 id 对应多个 Answer（单选长度恒 1）
         const answers = new Map<string, Answer[]>();
@@ -214,6 +220,13 @@ export default function questionnaire(pi: ExtensionAPI) {
             return [];
           }
           const opts: RenderOption[] = [...q.options];
+          // 多选：已追加的自填值作为列表项（可空格撤回），插在 allowOther 入口前
+          if (q.mode === "multiple") {
+            const customs = getSelected(q.id).filter((a) => a.wasCustom);
+            for (const [pos, c] of customs.entries()) {
+              opts.push({ label: c.label, isCustom: true, customPos: pos });
+            }
+          }
           if (q.allowOther) {
             opts.push({ label: "输入其他内容…", isOther: true });
           }
@@ -290,6 +303,29 @@ export default function questionnaire(pi: ExtensionAPI) {
           refresh();
         }
 
+        // 多选：删除第 pos 个自填值（customPos 为自填子序列内的位置）
+        function removeCustom(q: Question, pos: number) {
+          const sel = getSelected(q.id);
+          let seen = 0;
+          const filtered = sel.filter((a) => {
+            if (a.wasCustom) {
+              if (seen === pos) {
+                seen++;
+                return false;
+              }
+              seen++;
+            }
+            return true;
+          });
+          answers.set(q.id, filtered);
+          // 选项列表重排后 optionIndex 可能越界，clamp 到合法范围
+          const newLen = currentOptions().length;
+          if (optionIndex >= newLen) {
+            optionIndex = Math.max(0, newLen - 1);
+          }
+          refresh();
+        }
+
         // Editor submit callback
         editor.onSubmit = (text) => {
           if (!inputQuestionId) {
@@ -299,16 +335,24 @@ export default function questionnaire(pi: ExtensionAPI) {
           if (!q) {
             return;
           }
-          const trimmed = text.trim() || "（未作答）";
+          const trimmed = text.trim();
           if (q.mode === "multiple") {
-            // 多选：追加后回到列表，可继续勾选/提交（不 advance）
+            // 多选：禁止空自填（避免垃圾值），留输入态提示
+            if (!trimmed) {
+              inputError = "请输入内容（留空不追加）";
+              refresh();
+              return;
+            }
+            // 追加后回到列表，可继续勾选/提交（不 advance）
             appendMulti({ id: inputQuestionId, label: trimmed, wasCustom: true });
+            inputError = null;
             inputMode = false;
             inputQuestionId = null;
             editor.setText("");
             refresh();
           } else {
-            setSingle({ id: inputQuestionId, label: trimmed, wasCustom: true });
+            setSingle({ id: inputQuestionId, label: trimmed || "（未作答）", wasCustom: true });
+            inputError = null;
             inputMode = false;
             inputQuestionId = null;
             editor.setText("");
@@ -322,9 +366,13 @@ export default function questionnaire(pi: ExtensionAPI) {
             if (matchesKey(data, Key.escape)) {
               inputMode = false;
               inputQuestionId = null;
+              inputError = null;
               editor.setText("");
               refresh();
               return;
+            }
+            if (inputError) {
+              inputError = null;
             }
             editor.handleInput(data);
             refresh();
@@ -372,12 +420,16 @@ export default function questionnaire(pi: ExtensionAPI) {
             return;
           }
 
-          // 空格：多选切换勾选固定选项；单选忽略
+          // 空格：多选切换勾选（固定项 toggle / 自填值删除）；单选忽略
           if (matchesKey(data, Key.space) && q) {
             if (q.mode === "multiple") {
               const opt = opts[optionIndex];
               if (opt && !opt.isOther) {
-                toggleFixed(q, optionIndex);
+                if (opt.isCustom && opt.customPos !== undefined) {
+                  removeCustom(q, opt.customPos);
+                } else {
+                  toggleFixed(q, optionIndex);
+                }
               }
             }
             return;
@@ -446,21 +498,6 @@ export default function questionnaire(pi: ExtensionAPI) {
           }
 
           // 多选已选摘要（固定项 + 自填值），顿号分隔
-          function renderSelectedSummary(question: Question) {
-            const sel = getSelected(question.id);
-            if (sel.length === 0) {
-              return;
-            }
-            const parts = sel.map((a) =>
-              a.wasCustom ? `自填：${a.label}` : `${a.index}. ${a.label}`,
-            );
-            lines.push("");
-            addWrappedWithPrefix(
-              " ",
-              `${theme.fg("muted", "已选：")}${theme.fg("text", parts.join("、"))}`,
-            );
-          }
-
           lines.push(theme.fg("accent", "─".repeat(renderWidth)));
 
           // Tab bar (multi-question only)
@@ -495,16 +532,21 @@ export default function questionnaire(pi: ExtensionAPI) {
             for (const [i, opt] of opts.entries()) {
               const cursor = i === optionIndex;
               const isOther = opt.isOther === true;
+              const isCustom = opt.isCustom === true;
               const prefix = cursor ? theme.fg("accent", "> ") : "  ";
               const num = `${i + 1}.`;
-              if (q && q.mode === "multiple" && !isOther) {
-                // 多选固定项：显示勾选框 ☑/☐
+              if (isCustom && q && q.mode === "multiple") {
+                // 自填值项：恒 ☑（存在即已选），空格撤回=删除，带“自填：”前缀
+                const color = cursor ? "accent" : "text";
+                addWrappedWithPrefix(prefix, theme.fg(color, `☑ 自填：${opt.label}`));
+              } else if (q && q.mode === "multiple" && !isOther) {
+                // 多选固定项：勾选框 ☑/☐
                 const checked = sel.some((a) => !a.wasCustom && a.index === i + 1);
                 const box = checked ? "☑" : "☐";
                 const color = cursor ? "accent" : "text";
                 addWrappedWithPrefix(prefix, theme.fg(color, `${box} ${num} ${opt.label}`));
               } else {
-                // 单选 / 多选 isOther 入口：原样（isOther 在多选下不显示勾选框）
+                // 单选固定项 / isOther 入口
                 const label = `${num} ${opt.label}${isOther && inputMode ? " ✎" : ""}`;
                 const color = cursor || (isOther && inputMode) ? "accent" : "text";
                 addWrappedWithPrefix(prefix, theme.fg(color, label));
@@ -521,9 +563,6 @@ export default function questionnaire(pi: ExtensionAPI) {
             lines.push("");
             // Show options for reference
             renderOptions();
-            if (q.mode === "multiple") {
-              renderSelectedSummary(q);
-            }
             lines.push("");
             addWrappedWithPrefix(
               " ",
@@ -540,6 +579,9 @@ export default function questionnaire(pi: ExtensionAPI) {
                 q.mode === "multiple" ? "回车追加 • Esc 取消" : "回车提交 • Esc 取消",
               ),
             );
+            if (inputError) {
+              addWrappedWithPrefix(" ", theme.fg("warning", inputError));
+            }
           } else if (currentTab === questions.length) {
             addWrappedWithPrefix(" ", theme.fg("accent", theme.bold("准备提交")));
             lines.push("");
@@ -571,9 +613,6 @@ export default function questionnaire(pi: ExtensionAPI) {
             addWrappedWithPrefix(" ", theme.fg("text", q.prompt));
             lines.push("");
             renderOptions();
-            if (q.mode === "multiple") {
-              renderSelectedSummary(q);
-            }
           }
 
           lines.push("");
@@ -581,11 +620,11 @@ export default function questionnaire(pi: ExtensionAPI) {
             const curMode = q?.mode;
             let help: string;
             if (isMulti && curMode === "multiple") {
-              help = "Tab/←→ 切换 • ↑↓ 移动 • 空格勾选 • 回车提交本题 • Esc 取消";
+              help = "Tab/←→ 切换 • ↑↓ 移动 • 空格勾选/撤回 • 回车提交本题 • Esc 取消";
             } else if (isMulti) {
               help = "Tab/←→ 切换 • ↑↓ 选择 • 回车确认 • Esc 取消";
             } else if (curMode === "multiple") {
-              help = "↑↓ 移动 • 空格勾选 • 回车提交 • Esc 取消";
+              help = "↑↓ 移动 • 空格勾选/撤回 • 回车提交 • Esc 取消";
             } else {
               help = "↑↓ 选择 • 回车选中 • Esc 取消";
             }
