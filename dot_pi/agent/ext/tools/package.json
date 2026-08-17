@@ -1,0 +1,12 @@
+{
+  "name": "bms-ext-tools",
+  "keywords": [
+    "pi-package"
+  ],
+  "type": "module",
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

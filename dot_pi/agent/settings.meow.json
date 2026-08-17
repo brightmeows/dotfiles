@@ -4,5 +4,12 @@
   "retry": { "enabled": true, "maxRetries": 3 },
   "skills": ["~/.agents_meow/skills/"],
   "enableSkillCommands": true,
-  "packages": ["npm:pi-mcp-adapter"]
+  "packages": [
+    "npm:pi-mcp-adapter",
+    "./ext/aliases",
+    "./ext/context",
+    "./ext/input",
+    "./ext/tools",
+    "./ext/skill-ext"
+  ]
 }

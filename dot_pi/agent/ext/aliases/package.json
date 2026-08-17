@@ -1,0 +1,12 @@
+{
+  "name": "bms-ext-aliases",
+  "keywords": [
+    "pi-package"
+  ],
+  "type": "module",
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

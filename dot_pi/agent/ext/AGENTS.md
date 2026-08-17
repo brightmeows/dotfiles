@@ -9,21 +9,36 @@ tags: [pi, extensions, typescript]
 
 ## 目录结构（现状）
 
-| 路径 | 角色 | 要点 |
-|------|------|------|
-| `input/` | 输入域合并目录 | esc-hold（Esc 防误触）、editor-input-tweaks（编辑器增强）；`index.ts` 顺序注册 |
-| `context/` | 上下文注入域合并目录 | inline-context（环境摘要）、subdir-agents-md（子目录 AGENTS.md 懒加载）；import `../lib/` |
-| `aliases/` | 命令别名域合并目录 | command-aliases（斜杠命令别名 /clear、/exit） |
-| `tools/` | 命令与工具域合并目录 | questionnaire（问卷工具，官方示例演化可自由修改，typebox 为仓库 devDependency）、models-dev-import（async factory，入口 await） |
-| `skill-ext/` | 技能域扩展合并目录 | 技能相关扩展在此合并为 `index.ts` 顺序注册 |
-| `lib/` | 共享代码区 | **不被 Pi 自动发现**，仅被各扩展 import 复用；当前含 `inject-notice.ts`（统一注入提示渲染，见下文） |
+本目录为独立扩展包集合，每个子目录是一个 Pi 包（`package.json` 声明 `pi.extensions`），通过 `settings.json` 的 `packages` 数组显式注册，不再依赖 Pi 自动发现。
 
-Pi 自动发现规则：顶层 `extensions/*.ts` 与一层子目录 `extensions/*/index.ts`；子目录内其他 `.ts` 仅作 import 模块。扩展文件必须 `export default function (pi)`，仅命名导出会加载报错。
+| 路径 | 包名 | 角色 | 要点 |
+|------|------|------|------|
+| `aliases/` | `bms-ext-aliases` | 命令别名域 | command-aliases（斜杠命令别名 /clear、/exit） |
+| `context/` | `bms-ext-context` | 上下文注入域 | inline-context（环境摘要）、subdir-agents-md（子目录 AGENTS.md 懒加载）；import `../lib/` |
+| `input/` | `bms-ext-input` | 输入域 | esc-hold（Esc 防误触）、editor-input-tweaks（编辑器增强） |
+| `tools/` | `bms-ext-tools` | 命令与工具域 | questionnaire（问卷工具，官方示例演化可自由修改，typebox 为仓库 devDependency）、models-dev-import（async factory，入口 await） |
+| `skill-ext/` | `bms-ext-skill-ext` | 技能域 | 技能相关扩展在此合并为 `index.ts` 顺序注册 |
+| `lib/` | （无 package.json） | 共享代码区 | **不被 Pi 加载**，仅被各包 import 复用；当前含 `inject-notice.ts`（统一注入提示渲染，见下文） |
+
+注册方式（`settings.meow.json`）：
+```json
+"packages": [
+  "npm:pi-mcp-adapter",
+  "./ext/aliases",
+  "./ext/context",
+  "./ext/input",
+  "./ext/tools",
+  "./ext/skill-ext"
+]
+```
+
+扩展文件必须 `export default function (pi)`，仅命名导出会加载报错。子目录内其他 `.ts` 仅作 import 模块。
 
 ## 新增与归组
 
-- 主题域规则：键盘/编辑器输入 → `input/`；LLM 上下文注入 → `context/`；命令别名 → `aliases/`；命令/工具 → `tools/`；技能相关 → `skill-ext/`；新主题建新目录并在 `index.ts` 注册
-- 模块间 import 用 `./xxx.ts` 写法（tsconfig 已开 `allowImportingTsExtensions`）；跨扩展共享逻辑放 `lib/`（不被自动发现）
+- 主题域规则：键盘/编辑器输入 → `input/`；LLM 上下文注入 → `context/`；命令别名 → `aliases/`；命令/工具 → `tools/`；技能相关 → `skill-ext/`；新主题建新包目录并在 `index.ts` 注册
+- 模块间 import 用 `./xxx.ts` 写法（tsconfig 已开 `allowImportingTsExtensions`）；跨包共享逻辑放 `lib/`（不被 Pi 加载）
+- 新增包须在 `settings.meow.json` 的 `packages` 数组注册路径
 - 新增/移动扩展须实测加载：`pnpm check` 不查 default factory 契约，须 `pi -p -e <入口> --no-session` 验证（组目录传 `xxx/index.ts`）
 - 各文件头部注释即设计文档：改动前完整读取，改动后同步更新（含 lib/ 模块）
 
@@ -50,18 +65,18 @@ LLM 注入且用户需知情的操作，用户提示显示一律统一（2026-08
 
 `pnpm check` 只保证类型正确，不验证运行时行为。Pi 无内置“dump 系统提示词”命令，验证 `before_agent_start` 类扩展的改写效果时：
 
-- `-e` 传入的扩展排在扩展链最前（先于 `~/.pi/agent/extensions/` 的全局扩展执行）；只传 dump 扩展会拿到改写前的提示词，误判“扩展未生效”。必须 `-e` 同时传入被测扩展源文件与 dump 扩展（dump 在后）：
+- `-e` 传入的扩展排在扩展链最前（先于 `settings.json` 注册的包执行）；只传 dump 扩展会拿到改写前的提示词，误判“扩展未生效”。必须 `-e` 同时传入被测扩展源文件与 dump 扩展（dump 在后）：
 
 ```bash
-pi -p -e dot_pi/agent/extensions/skill-ext/index.ts -e /tmp/dump-ext.ts --no-session "只回复：收到"
+pi -p -e dot_pi/agent/ext/skill-ext/index.ts -e /tmp/dump-ext.ts --no-session "只回复：收到"
 ```
 
-- 对比验证（行为回归）：从 git 检出旧版到 /tmp，两边分别 `pi -p -e <被测> -e <dump>` 跑，diff dump 落盘产物。对比前临时移走全局同源目录（`~/.pi/agent/extensions/skill-ext`），否则新旧双重改写，diff 失真
+- 对比验证（行为回归）：从 git 检出旧版到 /tmp，两边分别 `pi -p -e <被测> -e <dump>` 跑，diff dump 落盘产物。对比前临时移走同源目录（`~/.pi/agent/ext/skill-ext`），否则新旧双重改写，diff 失真
 - Pi 项目技能加载渠道（2026-08-13 实测）：`loadSkills` 走 `includeDefaults: false`，不自动扫 `cwd/.pi/skills` 与祖先 `.agents/skills`（放进去不生效，项目 `.pi/settings.json` 的 skills 数组也未生效）
   项目技能靠 `--skill` 或 settings/packages 进入，验证项目级排序/注释用 `--skill` 注入 cwd 内技能目录
 - 验证 `tool_result` 拦截类扩展（ref-hint）：`-p` 控制台不打印 tool_result 原文，须在 dump 扩展里监听 `tool_result` 并把 read SKILL.md 的 content 落盘（链尾拿到的是改写后内容）
 - dump 工具定义验证 schema：`pi.on("session_start")` 内调 `pi.getAllTools()`，`-e` dump 扩展 + `--no-session` 跑，`parameters` 即 typebox JSON Schema（含 `maxLength`，确认已传 LLM）
-- 断链清理：chezmoi apply 不清理孤儿 symlink——源文件删除后 `~/.pi/agent/extensions/` 残留断链 symlink 且 Pi 加载报错，手动 `rm` 处理
+- 断链清理：chezmoi apply 不清理孤儿 symlink——源文件删除后 `~/.pi/agent/ext/` 残留断链 symlink 且 Pi 加载报错，手动 `rm` 处理
 - `/reload`（pi 内键入）热重载扩展/技能/提示词/主题/上下文文件（非仅 keybindings，`interactive-mode.js` 重载文案含 `extensions`）；改源文件后用它加载新代码免重启。副作用：reload 后旧 `pi`/`ctx` 变 stale（`runner.js` 校验），勿跨 reload 复用
 - 验证 TUI 渲染（`renderResult`/`renderCall`/`ctx.ui.custom`）：`-p` headless 不走 TUI 渲染，须 `/reload` 后在交互会话触发该工具，人眼校验两态——如 `Ctrl+O`（`app.tools.expand`）由 `tool-execution` 重调 renderer 传 `{ expanded }` 触发展开态
 - 块注释内禁含 `*/` 序列（会提前终止注释，tsc 报 TS1443 / oxfmt 语法错；写路径如 `*/index.ts` 时改写避让，2026-08-12 lib/inject-notice.ts 踩坑）
