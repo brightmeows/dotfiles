@@ -34,7 +34,7 @@ LLM 注入且用户需知情的操作，用户提示显示一律统一（2026-08
 - 投递 custom_message（`display: true`），TUI 渲染注册 `lib/inject-notice.ts` 的 `renderInjectNotice`
 - `details.notice`：提示文案，统一格式 `[自动注入] <来源>：<说明>`，collapsed（默认）只显示它
 - `content`：注入全文（进 LLM；ctrl+o 展开工具输出后显示全文）
-- 消费方：subdir-agents-md（懒加载子目录 AGENTS.md）、inline-context（环境摘要）、skill-ext（首轮索引重写摘要）
+- 消费方：subdir-agents-md（懒加载子目录 AGENTS.md）、inline-context（环境摘要）、skill-ext（默认块移除断言告警；2026-08-17 移除常规重写提示，常规重写零提示）
 
 实现要点：renderer 按 customType 精确匹配（不支持前缀/通配）；不注册 renderer 时默认渲染直接显示 content 全文（无折叠）。
 

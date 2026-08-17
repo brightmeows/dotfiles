@@ -30,9 +30,9 @@
  * - path-canon.ts：展示路径规范化与项目技能目录收集
  * - render.ts：技能索引 XML 渲染
  *
- * 用户知情（2026-08-12）：首轮改写时投递一条 custom_message 通知
- * （display:true），TUI 渲染统一走 ../lib/inject-notice.ts 的
- * renderInjectNotice（默认外观，只显示提示）；compact 后重置可再次提示。
+ * 用户提示（2026-08-12 引入知情投递，2026-08-17 移除）：常规重写不再投递
+ * 任何提示（对用户与 LLM 均为杂讯）；仅断言告警保留（错误信号非杂讯），
+ * 渲染仍走 ../lib/inject-notice.ts 的 renderInjectNotice（默认外观）。
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -83,12 +83,9 @@ export function registerIndexRewrite(pi: ExtensionAPI) {
   // 统一渲染（默认外观，collapsed 只显示注入提示）
   pi.registerMessageRenderer("skill-ext", renderInjectNotice);
 
-  // 首轮是否已投递知情提示（compact 后重置，允许重新提示）
-  let notified = false;
   // 断言告警去重（compact 后重置）：默认块没被两层正则移除时，首轮告警一次
   let assertNotified = false;
   pi.on("session_compact", async () => {
-    notified = false;
     assertNotified = false;
   });
 
@@ -197,21 +194,6 @@ export function registerIndexRewrite(pi: ExtensionAPI) {
     }
 
     lines.push("</available_skills>");
-
-    // 首轮用户知情提示（不重复全文，只告知重写事实）
-    if (!notified) {
-      notified = true;
-      const notice = `[自动注入] 技能索引：已重写 ${skills.length} 个技能条目的激活规则`;
-      pi.sendMessage(
-        {
-          customType: "skill-ext",
-          content: notice,
-          details: { notice },
-          display: true,
-        },
-        { deliverAs: "steer" },
-      );
-    }
 
     return { systemPrompt: `${base}\n\n${lines.join("\n")}` };
   });
