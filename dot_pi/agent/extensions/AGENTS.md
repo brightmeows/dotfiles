@@ -29,14 +29,22 @@ Pi 自动发现规则：顶层 `extensions/*.ts` 与一层子目录 `extensions/
 
 ## 统一提示约定（LLM 注入且用户需知情）
 
-LLM 注入且用户需知情的操作，用户提示显示一律统一（2026-08-12）：
+LLM 注入且用户需知情的操作，用户提示显示一律统一（2026-08-12；2026-08-17 补 entry 通道）：
 
 - 投递 custom_message（`display: true`），TUI 渲染注册 `lib/inject-notice.ts` 的 `renderInjectNotice`
 - `details.notice`：提示文案，统一格式 `[自动注入] <来源>：<说明>`，collapsed（默认）只显示它
 - `content`：注入全文（进 LLM；ctrl+o 展开工具输出后显示全文）
 - 消费方：subdir-agents-md（懒加载子目录 AGENTS.md）、inline-context（环境摘要）、skill-ext（默认块移除断言告警；2026-08-17 移除常规重写提示，常规重写零提示）
 
-实现要点：renderer 按 customType 精确匹配（不支持前缀/通配）；不注册 renderer 时默认渲染直接显示 content 全文（无折叠）。
+### entry 通道（仅用户可见，不进 LLM）
+
+告知用户"已向 LLM 注入什么"但本身不注入内容的简短提示，走 appendEntry（2026-08-17）：
+
+- 投递 `pi.appendEntry(customType, { notice, lines? })`（CustomEntry，`buildSessionContext` 忽略，不进 LLM 上下文）
+- TUI 渲染注册 `lib/inject-notice.ts` 的 `renderInjectEntry`（外观与 message 版一致）：collapsed 只显示 `notice`，expanded 显示 `lines` 全文
+- 消费方：skill-ext 的 ref-hint（技能文件清单）与 subskill-hint（子技能清单），各自独立投递；customType 均为 `skill-ext`，renderer 在 index-rewrite.ts 统一注册
+
+实现要点：renderer 按 customType 精确匹配（不支持前缀/通配）；不注册 renderer 时默认渲染直接显示 content 全文（无折叠）。headless（`-p`）下 entry 不渲染也不报错。
 
 ## 踩坑点：运行时验证
 

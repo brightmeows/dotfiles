@@ -21,11 +21,16 @@
  *   render.ts 共享函数，与系统提示词索引同源不会不同步
  * - 与 ref-hint 分工：ref-hint 枚举技能根全部文件（跳过 skills/ 区），
  *   本扩展列目录结构发现的子技能；两者独立段追加
+ *
+ * 用户提示（2026-08-17）：注入子技能清单的同时 appendEntry 一条 TUI-only
+ * 简短提示（不进 LLM 上下文），与 ref-hint 的文件清单提示各自独立；
+ * 渲染走 ../lib/inject-notice.ts 的 renderInjectEntry（customType
+ * "skill-ext"，renderer 在 index-rewrite.ts 统一注册）。
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { renderGroupOpen, renderSkill } from "./render.ts";
 
 /** 从 read 工具参数中安全提取路径 */
@@ -124,6 +129,12 @@ export function registerSubskillHint(pi: ExtensionAPI) {
       skillsDir,
       subs,
     )}`;
+
+    // TUI-only 简短提示（不进 LLM 上下文）；与 ref-hint 的提示分开投递
+    pi.appendEntry("skill-ext", {
+      notice: `[自动注入] 子技能清单：${basename(baseDir)}（${subs.length} 个子技能）`,
+      lines: subs.map((s) => s.name),
+    });
 
     const rest = event.content.slice(1);
     return {

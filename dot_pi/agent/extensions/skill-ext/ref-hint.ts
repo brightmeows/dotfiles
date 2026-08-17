@@ -14,11 +14,16 @@
  * - 相对路径原因：正文链接解析已废弃——目录枚举天然覆盖正文引用；
  *   相对路径短、技能目录迁移后不变；基准绝对路径明示（read 工具按
  *   cwd 解析相对路径，模型需自行换算，基准注出则换算零歧义）
+ *
+ * 用户提示（2026-08-17）：注入清单的同时 appendEntry 一条 TUI-only 简短
+ * 提示（不进 LLM 上下文），与 subskill-hint 的子技能提示各自独立；
+ * 渲染走 ../lib/inject-notice.ts 的 renderInjectEntry（customType
+ * "skill-ext"，renderer 在 index-rewrite.ts 统一注册）。
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { readdirSync, statSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
+import { basename, dirname, join, relative } from "node:path";
 
 /** 从 read 工具参数中安全提取路径 */
 function extractPath(input: Record<string, unknown>): string | null {
@@ -102,6 +107,12 @@ export function registerRefHint(pi: ExtensionAPI) {
     const hint = `\n\n---\n该技能包含以下文件（相对路径，基准 = ${baseDir}/）：\n${hintFiles
       .map((f) => `  - ./${f}`)
       .join("\n")}`;
+
+    // TUI-only 简短提示（不进 LLM 上下文）；与 subskill-hint 的提示分开投递
+    pi.appendEntry("skill-ext", {
+      notice: `[自动注入] 技能文件清单：${basename(baseDir)}（${hintFiles.length} 个附属文件）`,
+      lines: hintFiles.map((f) => `./${f}`),
+    });
 
     const rest = event.content.slice(1);
     return {
