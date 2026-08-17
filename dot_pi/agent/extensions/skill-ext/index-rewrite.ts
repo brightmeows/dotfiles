@@ -84,7 +84,7 @@ const PI_TAGS_BLOCK_RE = /<available_skills>[\s\S]*?<\/available_skills>/;
 export function registerIndexRewrite(pi: ExtensionAPI) {
   // 统一渲染（默认外观，collapsed 只显示注入提示）
   pi.registerMessageRenderer("skill-ext", renderInjectNotice);
-  // ref-hint / subskill-hint 的 TUI-only 简短提示（appendEntry，不进 LLM
+  // Ref-hint / subskill-hint 的 TUI-only 简短提示（appendEntry，不进 LLM
   // 上下文；entry 与 message 的 customType 体系独立）
   pi.registerEntryRenderer("skill-ext", renderInjectEntry);
 

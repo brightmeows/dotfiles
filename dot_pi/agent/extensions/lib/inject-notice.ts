@@ -47,14 +47,14 @@ function contentText(content: string | readonly { type: string; text?: unknown }
   return parts.join("\n");
 }
 
-/** entry 版渲染数据：notice 必填，lines 为展开态全文（缺省回落 notice） */
+/** Entry 版渲染数据：notice 必填，lines 为展开态全文（缺省回落 notice） */
 export interface InjectEntryData {
   notice: string;
   lines?: string[];
 }
 
 /**
- * entry 版渲染（appendEntry 配套，不进 LLM 上下文）：
+ * Entry 版渲染（appendEntry 配套，不进 LLM 上下文）：
  * 外观与 renderInjectNotice 一致，collapsed 只显示 notice，expanded 显示
  * lines 全文
  */
