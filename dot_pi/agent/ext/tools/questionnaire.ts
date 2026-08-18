@@ -26,6 +26,13 @@
  * 在多选下：追加的自填值进入选项列表（带"☑ 自填："前缀，空格撤回=删除，禁止空
  * 自填、允许重复）；单选下仍为覆盖，自填值不入列表（选了即走）。
  *
+ * 2026-08-18 ⑦ 单选自填值进入选项列表：单选模式下已选的自填值同样作为列表项
+ * （"✓ 自填：xxx"，恒 ✓ 存在即已选）插在固定项与 allowOther 入口之间，回车=清除
+ * 自填（回到未作答），"输入其他内容…"再次进入=覆盖旧值；单选固定项增加 ✓ 已选
+ * 标记。修复多问题场景下单选自填/固定选项后切回本页看不到已选内容、误以为输入
+ * 丢失的问题。renderResult 展开态同步渲染自填值列表项（顺序与弹窗 currentOptions
+ * 一致，替换原 isOther 下方缩进展示）。
+ *
  * 上游：/var/home/brightmeows/.local/lib/node_modules/@earendil-works/pi-coding-agent/examples/extensions/questionnaire.ts
  */
 
@@ -222,12 +229,10 @@ export default function questionnaire(pi: ExtensionAPI) {
             return [];
           }
           const opts: RenderOption[] = [...q.options];
-          // 多选：已追加的自填值作为列表项（可空格撤回），插在 allowOther 入口前
-          if (q.mode === "multiple") {
-            const customs = getSelected(q.id).filter((a) => a.wasCustom);
-            for (const [pos, c] of customs.entries()) {
-              opts.push({ label: c.label, isCustom: true, customPos: pos });
-            }
+          // 已追加的自填值作为列表项（多选空格撤回 / 单选回车清除），插在 allowOther 入口前
+          const customs = getSelected(q.id).filter((a) => a.wasCustom);
+          for (const [pos, c] of customs.entries()) {
+            opts.push({ label: c.label, isCustom: true, customPos: pos });
           }
           if (q.allowOther) {
             opts.push({ label: "输入其他内容…", isOther: true });
@@ -451,6 +456,14 @@ export default function questionnaire(pi: ExtensionAPI) {
               refresh();
               return;
             }
+            if (opt.isCustom) {
+              if (q.mode === "single") {
+                // 单选：自填值项回车 = 清除自填（回到未作答）
+                removeCustom(q, opt.customPos ?? 0);
+                return;
+              }
+              // 多选：自填值项回车 = 提交本题，落入下方 multiple 分支
+            }
             if (q.mode === "multiple") {
               // 回车 = 提交本题（固定项已由空格勾选存入）
               if (isSatisfied(q)) {
@@ -537,20 +550,28 @@ export default function questionnaire(pi: ExtensionAPI) {
               const isCustom = opt.isCustom === true;
               const prefix = cursor ? theme.fg("accent", "> ") : "  ";
               const num = `${i + 1}.`;
-              if (isCustom && q && q.mode === "multiple") {
-                // 自填值项：恒 ☑（存在即已选），空格撤回=删除，带“自填：”前缀
+              if (isCustom && q) {
+                // 自填值项：存在即已选。多选 ☑（空格撤回=删除）；单选 ✓（回车撤回=清除）
+                const mark = q.mode === "multiple" ? "☑" : "✓";
                 const color = cursor ? "accent" : "text";
-                addWrappedWithPrefix(prefix, theme.fg(color, `☑ 自填：${opt.label}`));
+                addWrappedWithPrefix(prefix, theme.fg(color, `${mark} 自填：${opt.label}`));
               } else if (q && q.mode === "multiple" && !isOther) {
                 // 多选固定项：勾选框 ☑/☐
                 const checked = sel.some((a) => !a.wasCustom && a.index === i + 1);
                 const box = checked ? "☑" : "☐";
                 const color = cursor ? "accent" : "text";
                 addWrappedWithPrefix(prefix, theme.fg(color, `${box} ${num} ${opt.label}`));
+              } else if (q && q.mode === "single" && !isOther) {
+                // 单选固定项：已选 ✓ 标记
+                const checked = sel.some((a) => !a.wasCustom && a.index === i + 1);
+                const mark = checked ? theme.fg("success", "✓ ") : "";
+                const label = `${mark}${num} ${opt.label}`;
+                const color = cursor ? "accent" : "text";
+                addWrappedWithPrefix(prefix, theme.fg(color, label));
               } else {
-                // 单选固定项 / isOther 入口
-                const label = `${num} ${opt.label}${isOther && inputMode ? " ✎" : ""}`;
-                const color = cursor || (isOther && inputMode) ? "accent" : "text";
+                // 输入其他内容…入口（输入态中光标行带 ✎ 提示）
+                const label = `${num} ${opt.label}${inputMode ? " ✎" : ""}`;
+                const color = cursor || inputMode ? "accent" : "text";
                 addWrappedWithPrefix(prefix, theme.fg(color, label));
               }
               if (opt.description) {
@@ -624,11 +645,11 @@ export default function questionnaire(pi: ExtensionAPI) {
             if (isMulti && curMode === "multiple") {
               help = "Tab/←→ 切换 • ↑↓ 移动 • 空格勾选/撤回 • 回车提交本题 • Esc 取消";
             } else if (isMulti) {
-              help = "Tab/←→ 切换 • ↑↓ 选择 • 回车确认 • Esc 取消";
+              help = "Tab/←→ 切换 • ↑↓ 选择 • 回车确认（自填可回车撤回）• Esc 取消";
             } else if (curMode === "multiple") {
               help = "↑↓ 移动 • 空格勾选/撤回 • 回车提交 • Esc 取消";
             } else {
-              help = "↑↓ 选择 • 回车选中 • Esc 取消";
+              help = "↑↓ 选择 • 回车选中（自填可回车撤回）• Esc 取消";
             }
             addWrappedWithPrefix(" ", theme.fg("dim", help));
           }
@@ -745,33 +766,30 @@ export default function questionnaire(pi: ExtensionAPI) {
         ];
 
         const opts: RenderOption[] = [...q.options];
+        // 自填值项插在 allowOther 前（顺序与弹窗 currentOptions 一致，保证 index 匹配）
+        for (const [pos, c] of customs.entries()) {
+          opts.push({ label: c.label, isCustom: true, customPos: pos });
+        }
         if (q.allowOther) {
           opts.push({ label: "输入其他内容…", isOther: true });
         }
         for (const [i, opt] of opts.entries()) {
           const isOther = opt.isOther === true;
-          // 单选 isOther：有自填则标记；多选 isOther：恒不标记（自填值单独列于末尾）
-          const selected = isOther
-            ? q.mode === "single" && customs.length > 0
-            : sel.some((a) => !a.wasCustom && a.index === i + 1);
+          // 自填值项恒 ✓；isOther 恒不标记（自填值项自身可见）
+          let selected: boolean;
+          if (opt.isCustom) {
+            selected = true;
+          } else if (isOther) {
+            selected = false;
+          } else {
+            selected = sel.some((a) => !a.wasCustom && a.index === i + 1);
+          }
           const mark = selected ? theme.fg("success", "✓") : theme.fg("dim", "·");
           const color = selected ? "text" : "muted";
-          lines.push(`  ${mark} ${theme.fg(color, `${i + 1}. ${opt.label}`)}`);
+          const label = opt.isCustom ? `自填：${opt.label}` : `${i + 1}. ${opt.label}`;
+          lines.push(`  ${mark} ${theme.fg(color, label)}`);
           if (opt.description) {
             lines.push(`      ${theme.fg("dim", opt.description)}`);
-          }
-          // 单选自填：在 isOther 项下方展示自填值（保持原排版）
-          if (isOther && q.mode === "single" && customs.length > 0) {
-            const [c] = customs;
-            if (c) {
-              lines.push(`      ${theme.fg("muted", "（自填）")} ${theme.fg("text", c.label)}`);
-            }
-          }
-        }
-        // 多选自填：选项列表后单独列出每个自填值
-        if (q.mode === "multiple" && customs.length > 0) {
-          for (const c of customs) {
-            lines.push(`  ${theme.fg("success", "✓")} ${theme.fg("text", `自填：${c.label}`)}`);
           }
         }
         blocks.push(lines.join("\n"));
