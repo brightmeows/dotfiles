@@ -1,6 +1,6 @@
 ---
 name: querying-clippy-lints
-description: "在用户提及 Clippy lint（按名称、分组、级别、版本等条件）时使用。触发词：lint 名、‘clippy lint’、‘clippy 文档’。"
+description: 当用户提及 Clippy lint（按名称、分组、级别、版本等条件查询）时使用。触发词：lint 名、‘clippy lint’、‘clippy 文档’。即使只是顺带提到某个 lint 名，也先加载本技能。
 ---
 
 # 查询 Clippy Lint 信息
