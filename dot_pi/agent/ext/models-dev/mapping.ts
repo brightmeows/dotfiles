@@ -15,22 +15,31 @@
  * 2. npm=@ai-sdk/openai（官方）→ openai-responses，baseUrl 缺省官方默认
  * 3. npm 命中兼容白名单（openai-compatible/openrouter/azure）→ openai-completions，须有 api
  * 4. 其余未知 npm → 跳过不注册（避免把未知协议误注册为 openai-completions）
+ *
+ * 用户配置叠加（config.ts 读取，优先级：模型级 > provider 级 > 自动判定）：
+ * - provider.api/provider.baseUrl 覆盖判定结果；api+baseUrl 双写可救活
+ *   被跳过的 provider（Q6）；disabled 过滤（Q5）
+ * - 模型级 api/baseUrl/name 覆盖与 disabled 过滤同理
+ *
+ * 定价：cost.tiers 分级定价映射（D9）——models.dev `tiers`（阈值在
+ * tier.size）优先，旧形式 `context_over_200k` 转 inputTokensAbove: 200000
+ * 一档；pi tiers 项字段全必填，models.dev 缺省处补 0。
  */
 
 import type { ProviderModelConfig } from "@earendil-works/pi-coding-agent";
 import { normalizeBaseUrl, type RawModel, type RawProvider } from "./registry.ts";
 import { buildThinkingLevelMap, extractEffortValues } from "./thinking.ts";
+import type { ApiValue, ModelOverride, ProviderOverride } from "./config.ts";
 
-/** Pi 支持的协议子集（本扩展会注册到的） */
-export type Api =
-  | "anthropic-messages"
-  | "openai-completions"
-  | "openai-responses"
-  | "google-generative-ai"
-  | "google-vertex"
-  | "bedrock-converse-stream";
+/** pi 支持的协议子集（本扩展会注册到的；取值集与 config.ts 的校验枚举一致） */
+export type Api = ApiValue;
 
-/** Provider 层 npm → Pi 协议 的显式映射（非 openai 系，单一事实来源） */
+/** openai 族协议（模型层 shape 覆盖只对 openai 族生效）；导出供 index.ts 救活分支复用 */
+export function isOpenAiFamilyApi(api: ApiValue): boolean {
+  return api === "openai-completions" || api === "openai-responses";
+}
+
+/** provider 层 npm → pi 协议 的显式映射（非 openai 系，单一事实来源） */
 const NPM_API_MAP: Readonly<Record<string, Api>> = {
   "@ai-sdk/anthropic": "anthropic-messages",
   "@ai-sdk/google": "google-generative-ai",
@@ -52,15 +61,15 @@ const OPENAI_COMPAT_NPM = new Set([
 /** 协议判定结果：provider 级协议 + baseUrl + 是否 openai 族（shape 覆盖范围） */
 export interface ResolvedProvider {
   api: Api;
-  /** Provider 级 baseUrl（可为空串，由调用方决定是否回退） */
+  /** provider 级 baseUrl（可为空串，由调用方决定是否回退） */
   baseUrl: string | null;
   /** 是否 openai 族：模型层 shape 覆盖只对 openai 族生效 */
   isOpenAiFamily: boolean;
 }
 
 /**
- * 判定 provider 的协议与端点。返回 null 表示该 provider 不可注册
- * （npm 未知 / openai 兼容缺端点）。
+ * 判定 provider 的协议与端点。返回 null 表示该 provider 按数据不可注册
+ * （npm 未知 / openai 兼容缺端点）；用户配置可在其上救活或覆盖（见 index.ts）。
  */
 export function resolveProviderApi(provider: RawProvider): ResolvedProvider | null {
   const npm = provider.npm ?? "";
@@ -128,13 +137,56 @@ function applyShape(api: Api, shape: string | undefined, isOpenAiFamily: boolean
   return api;
 }
 
+/** models.dev 分级定价 → pi cost.tiers（pi tier 字段全必填，缺省补 0） */
+function mapCostTiers(raw: RawModel["cost"]): ProviderModelConfig["cost"]["tiers"] {
+  if (raw?.tiers && raw.tiers.length > 0) {
+    return raw.tiers.map((t) => ({
+      inputTokensAbove: t.tier?.size ?? 200_000,
+      input: t.input ?? 0,
+      output: t.output ?? 0,
+      cacheRead: t.cache_read ?? 0,
+      cacheWrite: t.cache_write ?? 0,
+    }));
+  }
+  if (raw?.context_over_200k) {
+    const c = raw.context_over_200k;
+    return [
+      {
+        inputTokensAbove: 200_000,
+        input: c.input ?? 0,
+        output: c.output ?? 0,
+        cacheRead: c.cache_read ?? 0,
+        cacheWrite: c.cache_write ?? 0,
+      },
+    ];
+  }
+  return undefined;
+}
+
+/** 配置覆盖入参：provider 级与模型级 override（index.ts 从 config 取好后传入） */
+export interface OverrideInput {
+  provider?: ProviderOverride | undefined;
+  model?: ModelOverride | undefined;
+}
+
 /**
  * 映射 models.dev 模型 → pi ProviderModelConfig。
- * 协议与端点：模型层 `provider.api`（含 ${ENV} 展开）优先，否则用 provider 级
- * baseUrl；`provider.shape` 覆盖协议（仅 openai 族）。
+ * 覆盖优先级（D12）：
+ * - 协议：模型配置 api > provider 配置 api > shape 判定 > npm 判定
+ * - 端点：模型配置 baseUrl > provider 配置 baseUrl > 数据模型级 api > 判定 baseUrl
+ * - 名称：模型配置 name > 数据 name > id
+ * 返回 null 表示该模型被禁用（disabled）或无 id。
  */
-export function mapModel(raw: RawModel, resolved: ResolvedProvider): ProviderModelConfig | null {
+export function mapModel(
+  raw: RawModel,
+  resolved: ResolvedProvider,
+  ov?: OverrideInput,
+): ProviderModelConfig | null {
   if (!raw.id) {
+    return null;
+  }
+  const modelOv = ov?.model;
+  if (modelOv?.disabled) {
     return null;
   }
 
@@ -147,12 +199,26 @@ export function mapModel(raw: RawModel, resolved: ResolvedProvider): ProviderMod
   const effortValues = extractEffortValues(raw);
   const thinkingLevelMap = buildThinkingLevelMap(effortValues);
 
-  // 模型级端点覆盖：provider.api（展开 ${ENV}）> Provider 级 baseUrl；占位符失败或空值回退 Provider 级
-  const { baseUrl: providerBaseUrl } = resolved;
-  const modelApiOverride = raw.provider?.api ? expandEnvVars(raw.provider.api) : null;
-  const baseUrl = modelApiOverride || providerBaseUrl;
+  // 协议：模型配置 > provider 配置 > shape 判定 > npm 判定
+  const api =
+    modelOv?.api ??
+    ov?.provider?.api ??
+    applyShape(resolved.api, raw.provider?.shape, resolved.isOpenAiFamily);
 
-  const api = applyShape(resolved.api, raw.provider?.shape, resolved.isOpenAiFamily);
+  // 端点：模型配置 > provider 配置 > 数据模型级 api（展开 ${ENV}）> 判定 baseUrl
+  let baseUrl: string | null = null;
+  if (modelOv?.baseUrl) {
+    baseUrl = modelOv.baseUrl;
+  } else if (ov?.provider?.baseUrl) {
+    baseUrl = ov.provider.baseUrl;
+  } else if (raw.provider?.api) {
+    baseUrl = expandEnvVars(raw.provider.api);
+  }
+  if (!baseUrl) {
+    baseUrl = resolved.baseUrl;
+  }
+
+  const tiers = mapCostTiers(raw.cost);
 
   return {
     contextWindow: raw.limit?.context ?? 128_000,
@@ -161,11 +227,12 @@ export function mapModel(raw: RawModel, resolved: ResolvedProvider): ProviderMod
       cacheWrite: raw.cost?.cache_write ?? 0,
       input: raw.cost?.input ?? 0,
       output: raw.cost?.output ?? 0,
+      ...(tiers ? { tiers } : {}),
     },
     id: raw.id,
     input,
     maxTokens: raw.limit?.output ?? 16_384,
-    name: raw.name ?? raw.id,
+    name: modelOv?.name ?? raw.name ?? raw.id,
     reasoning: raw.reasoning ?? false,
     api,
     ...(baseUrl ? { baseUrl: normalizeBaseUrl(baseUrl) } : {}),

@@ -26,6 +26,25 @@ export interface RawReasoningOption {
   values?: string[];
 }
 
+export interface RawCostTier {
+  input?: number;
+  output?: number;
+  cache_read?: number;
+  cache_write?: number;
+  /** 分级阈值描述：type 固定 context，size 即 inputTokensAbove */
+  tier?: { type?: string; size?: number };
+}
+
+export interface RawCost {
+  input?: number;
+  output?: number;
+  cache_read?: number;
+  cache_write?: number;
+  /** 旧形式分级定价（阈值固定 200000）；新数据用 tiers */
+  context_over_200k?: Omit<RawCost, "context_over_200k" | "tiers">;
+  tiers?: RawCostTier[];
+}
+
 export interface RawModel {
   id: string;
   name?: string;
@@ -33,12 +52,7 @@ export interface RawModel {
   reasoning_options?: RawReasoningOption[];
   modalities?: { input?: string[] };
   limit?: { context?: number; output?: number };
-  cost?: {
-    input?: number;
-    output?: number;
-    cache_read?: number;
-    cache_write?: number;
-  };
+  cost?: RawCost;
   /** 模型级 [provider] 覆盖段（协议判定与端点覆盖的单一事实来源） */
   provider?: {
     /** AI SDK 包名覆盖（pi 不消费，仅记录） */

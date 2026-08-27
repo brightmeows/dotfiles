@@ -17,7 +17,7 @@ tags: [pi, extensions, typescript]
 | `context/` | `bms-ext-context` | 上下文注入域 | inline-context（环境摘要）、subdir-agents-md（子目录 AGENTS.md 懒加载）；import `../lib/` |
 | `input/` | `bms-ext-input` | 输入域 | esc-hold（Esc 防误触）、editor-input-tweaks（编辑器增强） |
 | `tools/` | `bms-ext-tools` | 命令与工具域 | questionnaire（问卷工具，官方示例演化可自由修改，typebox 为仓库 devDependency） |
-| `models-dev/` | `bms-ext-models-dev` | 模型目录导入域 | models-dev-import（models.dev 注册表导入，async factory，入口 await） |
+| `models-dev/` | `bms-ext-models-dev` | 模型目录导入域 | models-dev-import（models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await）；配置 schema 见下文 |
 | `skill-ext/` | `bms-ext-skill-ext` | 技能域 | 技能相关扩展在此合并为 `index.ts` 顺序注册 |
 | `lib/` | （无 package.json） | 共享代码区 | **不被 Pi 加载**，仅被各包 import 复用；当前含 `inject-notice.ts`（统一注入提示渲染，见下文） |
 
@@ -36,6 +36,37 @@ tags: [pi, extensions, typescript]
 ```
 
 扩展文件必须 `export default function (pi)`，仅命名导出会加载报错。子目录内其他 `.ts` 仅作 import 模块。
+
+## models-dev 用户配置（~/.pi/agent/models-dev.json）
+
+models.dev 导入的用户配置，源文件 `dot_pi/agent/models-dev.json` 由 chezmoi 直接部署（独占文件无合并），扩展启动时读取一次，reload/重启生效。JSON 无注释，schema 以本节为准（typebox 严格校验，多余属性/未知协议值直接校验失败）。配置不存在或校验失败时按无配置运行（全量注册），不崩溃。
+
+```json
+{
+  "providers": {
+    "<provider-id>": {
+      "disabled": false,
+      "api": "openai-responses",
+      "baseUrl": "https://gw.example.com/v1",
+      "models": {
+        "<model-id>": {
+          "disabled": false,
+          "api": "openai-completions",
+          "baseUrl": "https://gw.example.com/v1",
+          "name": "显示名"
+        }
+      }
+    }
+  }
+}
+```
+
+- 全部字段可选；`api` 合法值：anthropic-messages / openai-completions / openai-responses / google-generative-ai / google-vertex / bedrock-converse-stream
+- `disabled: true` 过滤（provider 整体不注册 / 模型不进列表）；默认全注册（黑名单语义）
+- 覆盖优先级：模型级 > provider 级 > models.dev 自动判定（npm 映射 → shape → 官方默认）
+- provider 级 `api`+`baseUrl` 双写可救活被协议判定跳过的 provider（未知 npm 等），用户承担协议正确性；单写其一仅覆盖已注册者属性
+- 引用未知 provider/模型 id 时忽略；配置语法/校验失败时警告并按无配置运行
+- 配了 `api` 的 provider 视为显式表态：env 守卫缺失不阻止其注册
 
 ## 新增与归组
 
