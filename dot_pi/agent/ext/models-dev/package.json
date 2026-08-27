@@ -1,0 +1,12 @@
+{
+  "name": "bms-ext-models-dev",
+  "keywords": [
+    "pi-package"
+  ],
+  "type": "module",
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

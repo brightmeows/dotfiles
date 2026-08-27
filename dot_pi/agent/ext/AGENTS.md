@@ -16,11 +16,13 @@ tags: [pi, extensions, typescript]
 | `aliases/` | `bms-ext-aliases` | 命令别名域 | command-aliases（斜杠命令别名 /clear、/exit） |
 | `context/` | `bms-ext-context` | 上下文注入域 | inline-context（环境摘要）、subdir-agents-md（子目录 AGENTS.md 懒加载）；import `../lib/` |
 | `input/` | `bms-ext-input` | 输入域 | esc-hold（Esc 防误触）、editor-input-tweaks（编辑器增强） |
-| `tools/` | `bms-ext-tools` | 命令与工具域 | questionnaire（问卷工具，官方示例演化可自由修改，typebox 为仓库 devDependency）、models-dev-import（async factory，入口 await） |
+| `tools/` | `bms-ext-tools` | 命令与工具域 | questionnaire（问卷工具，官方示例演化可自由修改，typebox 为仓库 devDependency） |
+| `models-dev/` | `bms-ext-models-dev` | 模型目录导入域 | models-dev-import（models.dev 注册表导入，async factory，入口 await） |
 | `skill-ext/` | `bms-ext-skill-ext` | 技能域 | 技能相关扩展在此合并为 `index.ts` 顺序注册 |
 | `lib/` | （无 package.json） | 共享代码区 | **不被 Pi 加载**，仅被各包 import 复用；当前含 `inject-notice.ts`（统一注入提示渲染，见下文） |
 
 注册方式（`settings.meow.json`）：
+
 ```json
 "packages": [
   "npm:pi-mcp-adapter",

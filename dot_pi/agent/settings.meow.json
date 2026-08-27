@@ -10,6 +10,7 @@
     "./ext/context",
     "./ext/input",
     "./ext/tools",
+    "./ext/models-dev",
     "./ext/skill-ext"
   ]
 }
