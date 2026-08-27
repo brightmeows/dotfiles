@@ -30,6 +30,7 @@ tags: [pi, extensions, typescript]
   "./ext/context",
   "./ext/input",
   "./ext/tools",
+  "./ext/models-dev",
   "./ext/skill-ext"
 ]
 ```
@@ -38,7 +39,7 @@ tags: [pi, extensions, typescript]
 
 ## 新增与归组
 
-- 主题域规则：键盘/编辑器输入 → `input/`；LLM 上下文注入 → `context/`；命令别名 → `aliases/`；命令/工具 → `tools/`；技能相关 → `skill-ext/`；新主题建新包目录并在 `index.ts` 注册
+- 主题域规则：键盘/编辑器输入 → `input/`；LLM 上下文注入 → `context/`；命令别名 → `aliases/`；命令/工具 → `tools/`；模型目录导入 → `models-dev/`；技能相关 → `skill-ext/`；新主题建新包目录并在 `index.ts` 注册
 - 模块间 import 用 `./xxx.ts` 写法（tsconfig 已开 `allowImportingTsExtensions`）；跨包共享逻辑放 `lib/`（不被 Pi 加载）
 - 新增包须在 `settings.meow.json` 的 `packages` 数组注册路径
 - 新增/移动扩展须实测加载：`pnpm check` 不查 default factory 契约，须 `pi -p -e <入口> --no-session` 验证（组目录传 `xxx/index.ts`）
