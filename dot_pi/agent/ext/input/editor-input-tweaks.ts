@@ -51,6 +51,11 @@
  * - 只染标记符单字符（方案 C），不染整个 token——光标与颜色叠加只发生在
  *   “光标恰好停在 / 或 @ 上”这一种情况，处理简单稳妥
  * - 接受 private API + render 复制的维护代价，换取输入框着色能力
+ *
+ * private API 自检降级（2026-08-27）：session_start 实例化编辑器时探测 5 个
+ * private 成员（layoutText/lastWidth/scrollOffset/autocompleteState/
+ * autocompleteList），任一缺失（pi 升级后重构）则降级为原生 CustomEditor 并
+ * notify 提示，失效模式从“崩溃”变为“安静降级 + 可见提示”。
  */
 
 import { CustomEditor, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -322,8 +327,32 @@ export default function (pi: ExtensionAPI) {
     if (ctx.mode !== "tui") {
       return;
     }
-    ctx.ui.setEditorComponent(
-      (tui, theme, keybindings) => new SlashAtHighlightEditor(tui, theme, keybindings),
-    );
+    ctx.ui.setEditorComponent((tui, theme, keybindings) => {
+      const editor = new SlashAtHighlightEditor(tui, theme, keybindings);
+      // Private API 自检：缺失即降级原生编辑器，避免 pi 升级后扩展崩溃
+      if (!checkEditorInternals(editor)) {
+        ctx.ui.notify(
+          "editor-input-tweaks：pi-tui Editor private 成员缺失，已降级为原生编辑器（着色/补全停留停用）",
+          "warning",
+        );
+        return new CustomEditor(tui, theme, keybindings);
+      }
+      return editor;
+    });
   });
+}
+
+/**
+ * 探测 pi-tui Editor 的 5 个 private 成员是否存在（跨版本自检）。
+ * layoutText 为原型方法，其余为实例字段；任一缺失即判定 private API 已变更。
+ */
+function checkEditorInternals(editor: SlashAtHighlightEditor): boolean {
+  const self = editor as unknown as Record<string, unknown>;
+  return (
+    typeof self.layoutText === "function" &&
+    "lastWidth" in self &&
+    "scrollOffset" in self &&
+    "autocompleteState" in self &&
+    "autocompleteList" in self
+  );
 }
