@@ -349,7 +349,7 @@ export default function (pi: ExtensionAPI) {
 function checkEditorInternals(editor: SlashAtHighlightEditor): boolean {
   const self = editor as unknown as Record<string, unknown>;
   return (
-    typeof self.layoutText === "function" &&
+    typeof self["layoutText"] === "function" &&
     "lastWidth" in self &&
     "scrollOffset" in self &&
     "autocompleteState" in self &&
