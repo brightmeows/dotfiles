@@ -1,16 +1,9 @@
+# rime-ice（雾凇）flypy 方案键级适配。
+# 基座：/usr/share/rime-data/double_pinyin_flypy.schema.yaml（rime-ice-data 包）
+# 开关集为 rime-ice 全集（ascii_mode/ascii_punct/traditionalization/emoji/full_shape/search_single_char），
+# 只键级重置中英初始态，不整体替换 switches，保留雾凇全部开关。
 patch:
-  schema/name: 小鹤双拼
-  switches:
-    - name: ascii_mode
-      reset: 0 # 默认中文模式；中英切换由 fcitx5 Ctrl+Space 接管
-      states: [中文, 西文]
-    - name: full_shape
-      states: [半角, 全角]
-    - name: simplification
-      reset: 1 # 默认简体输出
-      states: [漢字, 汉字]
-    - name: ascii_punct
-      states: [。，, ．，]
+  switches/@0/reset: 0 # ascii_mode 初始为中文；中英切换由 fcitx5 Ctrl+Space 接管
   # 禁用 Rime 内部中英切换（由 fcitx5 控制）
   ascii_composer:
     switch_key:
@@ -22,5 +15,5 @@ patch:
   speller/auto_select: true # 顶字上屏
   speller/auto_select_unique_candidate: true # 无重码自动上屏
   # processors 使用方案默认链（ascii_composer/recognizer/key_binder/...）
-  translator/dictionary: custom      # 词库：聚合 luna_pinyin + rime_ice + zhwiki + moegirl + 补字（见 custom.dict.yaml）
+  translator/dictionary: custom      # 词库：聚合 cn_dicts + zhwiki + moegirl + 补字（见 custom.dict.yaml）
   translator/enable_user_dict: false # 关闭自学习：不记录用户词典、不自动调频，词序固定为词库原始权重

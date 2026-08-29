@@ -1,8 +1,7 @@
 patch:
-  # 方案列表（整体替换系统默认的 8 个方案）
+  # 方案列表（整体替换系统默认 rime-ice default.yaml 的方案列表）
   schema_list:
-    - schema: double_pinyin_flypy # 小鹤双拼
-    - schema: wubi98 # 五笔98
+    - schema: double_pinyin_flypy # 小鹤双拼（rime-ice 雾凇基座 + custom 聚合词库）
 
   # 中英切换由 fcitx5 Ctrl+Space 接管，Rime 内禁用所有切换键
   ascii_composer:
