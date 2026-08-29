@@ -1,3 +1,6 @@
+# Omarchy environment (OMARCHY_PATH + PATH), needed even for non-interactive shells
+[[ -r /usr/share/omarchy/default/bash/env-bootstrap ]] && source /usr/share/omarchy/default/bash/env-bootstrap
+
 # Load env file with += (append) and <= (prepend) support
 # Format: KEY=VALUE | KEY+=value (append with :) | KEY<=value (prepend with :)
 _load_env_file() {
@@ -23,6 +26,12 @@ _load_env_file() {
 
 _load_env_file "$HOME/.env_common"
 _load_env_file "$HOME/.env_self"
+
+# If not running interactively, don't do anything else
+[[ $- != *i* ]] && return
+
+# Omarchy default aliases and functions (only on Omarchy hosts)
+[[ -n "${OMARCHY_PATH:-}" ]] && source "$OMARCHY_PATH/default/bash/rc"
 
 alias k="kubectl"
 alias ze="zellij"
