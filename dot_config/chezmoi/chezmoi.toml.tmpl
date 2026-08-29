@@ -1,4 +1,6 @@
-mode = "symlink"
+# 复制模式（默认）：目标文件是源文件的副本，需要 chezmoi apply 同步。
+# 不用 symlink 模式：fcitx5 等运行时会回写自身配置文件，symlink 会让回写穿透到仓库源文件。
+mode = "file"
 
 {{ if and (eq .chezmoi.os "windows") (lookPath "bash") -}}
 [interpreters]
