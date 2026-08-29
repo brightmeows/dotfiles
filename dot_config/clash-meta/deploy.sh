@@ -3,15 +3,31 @@
 #
 # 这是“配置归仓库、服务归系统”分层中的系统侧桥梁：
 #   - 仓库（chezmoi）：渲染 config.yaml 到 ~/.config/clash-meta/
-#   - 本脚本（手动 sudo）：搬运到 /etc/clash-meta/ + 重载服务 + firewalld
-#   - systemd：clash-meta.service 运行
+#   - 本脚本（手动 sudo）：搬运到系统配置目录 + 重载服务 + firewalld
+#   - systemd：发行版对应的 mihomo 服务运行
+#
+# 支持两种发行版布局（自动探测）：
+#   - Arch (mihomo-bin/mihomo AUR 包)：/etc/mihomo + mihomo.service（-d /etc/mihomo）
+#   - Fedora (clash-meta COPR)：/etc/clash-meta + clash-meta.service（数据在 /var/lib/clash-meta）
 #
 # 用法：sudo bash ~/.config/clash-meta/deploy.sh
 set -euo pipefail
 
-DST="/etc/clash-meta/config.yaml"
-DATA_DIR="/var/lib/clash-meta"
 TUN_IF="mihomo"
+
+# 按发行版探测服务与路径布局
+if systemctl list-unit-files mihomo.service &>/dev/null && [ -d /etc/mihomo ]; then
+  SERVICE="mihomo"
+  DST="/etc/mihomo/config.yaml"
+  DATA_DIR="/etc/mihomo"        # Arch 上游 unit 用 -d /etc/mihomo，数据与配置同目录
+elif systemctl list-unit-files clash-meta.service &>/dev/null && [ -d /etc/clash-meta ]; then
+  SERVICE="clash-meta"
+  DST="/etc/clash-meta/config.yaml"
+  DATA_DIR="/var/lib/clash-meta"
+else
+  echo "✗ 未找到 mihomo/clash-meta 服务（需先安装对应包）"
+  exit 1
+fi
 
 # 推断真实用户家目录（避开 sudo 下 $HOME=/root）
 REAL_USER="${SUDO_USER:-}"
@@ -43,11 +59,11 @@ install -Dm644 "$SRC" "$DST"
 echo "✓ 已安装"
 
 # 启动 / 重启服务（首次启动时创建 tun 接口 mihomo）
-echo "▶ 启用并重启 clash-meta"
-systemctl enable clash-meta >/dev/null
-systemctl restart clash-meta
+echo "▶ 启用并重启 $SERVICE"
+systemctl enable "$SERVICE" >/dev/null
+systemctl restart "$SERVICE"
 sleep 1
-echo "✓ clash-meta 已 enable + restart"
+echo "✓ $SERVICE 已 enable + restart"
 
 # firewalld 放行 tun 接口（与 auto-redirect 共存，best-effort）
 if systemctl is-active --quiet firewalld; then
@@ -60,6 +76,6 @@ fi
 
 echo
 echo "完成。"
-echo "  查看状态：systemctl status clash-meta"
-echo "  实时日志：journalctl -u clash-meta -f"
+echo "  查看状态：systemctl status $SERVICE"
+echo "  实时日志：journalctl -u $SERVICE -f"
 echo "  管理面板：external-controller 监听 127.0.0.1:9090（可用 yacd / metacubexd 连接）"

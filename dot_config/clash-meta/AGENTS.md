@@ -14,10 +14,20 @@ tags: [mihomo, clash-meta, proxy, tun]
 | 层 | 载体 | 职责 |
 |---|---|---|
 | 配置源 | `config.yaml.tmpl` | chezmoi 模板 → 渲染到 `~/.config/clash-meta/config.yaml` |
-| 部署桥梁 | `deploy.sh` | 手动 sudo：渲染产物 → `/etc/clash-meta/` + 重载服务 |
-| 运行 | `clash-meta.service` | root + CAP_NET_ADMIN，读 `/etc/clash-meta/config.yaml` |
+| 部署桥梁 | `deploy.sh` | 手动 sudo：渲染产物 → 系统配置目录 + 重载服务（自动探测发行版布局） |
+| 运行 | `mihomo.service`（Arch）/ `clash-meta.service`（Fedora） | root + CAP_NET_ADMIN，读系统配置目录 |
 
 订阅明文仅落在 `$HOME`（渲染产物），**不进 git**。
+
+## 发行版布局（deploy.sh 自动探测）
+
+| | Arch（mihomo-bin AUR） | Fedora（clash-meta COPR） |
+|---|---|---|
+| 系统配置 | `/etc/mihomo/config.yaml` | `/etc/clash-meta/config.yaml` |
+| 数据目录（`-d`） | `/etc/mihomo` | `/var/lib/clash-meta` |
+| 服务名 | `mihomo.service` | `clash-meta.service` |
+
+下文凡提 `/var/lib/clash-meta`（如 `PUT /configs` path 模式安全限制），Arch 上对应 `/etc/mihomo`。
 
 ## 订阅注入：三处模板必须同步
 
