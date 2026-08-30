@@ -7,10 +7,12 @@
   "packages": [
     "npm:pi-mcp-adapter",
     "./ext/aliases",
-    "./ext/context",
-    "./ext/input",
-    "./ext/tools",
+    "./ext/editor-input-tweaks",
+    "./ext/esc-hold",
+    "./ext/inline-context",
     "./ext/models-dev",
-    "./ext/skill-ext"
+    "./ext/questionnaire",
+    "./ext/skill-ext",
+    "./ext/subdir-agents-md"
   ]
 }

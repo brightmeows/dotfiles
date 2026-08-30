@@ -11,15 +11,18 @@ tags: [pi, extensions, typescript]
 
 本目录为独立扩展包集合，每个子目录是一个 Pi 包（`package.json` 声明 `pi.extensions`），通过 `settings.json` 的 `packages` 数组显式注册，不再依赖 Pi 自动发现。
 
+组织原则（2026-08-30 定）：**各包完全自包含**——包间零 import、无共享目录，复用模块（如 `inject-notice.ts`）各包自备副本、无同步义务；目录名 = 扩展语义名，包名前缀 `pi-meow-`；例外：`skill-ext/` 为技能域合集包，新技能扩展默认入此包。历史域分组与 lib/ 均已拆解。
+
 | 路径 | 包名 | 角色 | 要点 |
 |------|------|------|------|
-| `aliases/` | `bms-ext-aliases` | 命令别名域 | command-aliases（斜杠命令别名 /clear、/exit） |
-| `context/` | `bms-ext-context` | 上下文注入域 | inline-context（环境摘要）、subdir-agents-md（子目录 AGENTS.md 懒加载）；import `../lib/` |
-| `input/` | `bms-ext-input` | 输入域 | esc-hold（Esc 防误触）、editor-input-tweaks（编辑器增强） |
-| `tools/` | `bms-ext-tools` | 命令与工具域 | questionnaire（问卷工具，官方示例演化可自由修改，typebox 为仓库 devDependency） |
-| `models-dev/` | `bms-ext-models-dev` | 模型目录导入域 | models-dev-import（models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await）；配置 schema 见下文 |
-| `skill-ext/` | `bms-ext-skill-ext` | 技能域 | 技能相关扩展在此合并为 `index.ts` 顺序注册 |
-| `lib/` | （无 package.json） | 共享代码区 | **不被 Pi 加载**，仅被各包 import 复用；当前含 `inject-notice.ts`（统一注入提示渲染，见下文） |
+| `aliases/` | `pi-meow-aliases` | 斜杠命令别名 | /clear → /new、/exit → /quit |
+| `inline-context/` | `pi-meow-inline-context` | 环境摘要注入 | 日期/系统环境/Git 状态/工具与 gh，systemPrompt 注入；含包内 `inject-notice.ts` |
+| `subdir-agents-md/` | `pi-meow-subdir-agents-md` | 子目录 AGENTS.md 懒加载 | 访问路径时按需注入；含包内 `inject-notice.ts` |
+| `esc-hold/` | `pi-meow-esc-hold` | Esc 防误触 | 单击提示不中断，双击/长按才中断；terminal 输入层，与编辑器槽位无关 |
+| `editor-input-tweaks/` | `pi-meow-editor-input-tweaks` | 编辑器输入增强 | /@ 标记符着色 + / 补全停留；独占编辑器槽位（`ctx.ui.setEditorComponent` 全局单例，后设覆盖先设，新增编辑器类扩展须链式包装或并入本包） |
+| `questionnaire/` | `pi-meow-questionnaire` | 问卷工具 | 官方示例演化可自由修改，typebox 为仓库 devDependency |
+| `models-dev/` | `pi-meow-models-dev` | 模型目录导入 | models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await；配置 schema 见下文 |
+| `skill-ext/` | `pi-meow-skill-ext` | 技能域（合集包） | index-rewrite / ref-hint / subskill-hint 合并为 `index.ts` 顺序注册；ref-hint 与 subskill-hint 共享 customType `skill-ext` 与 entry renderer，不拆分；含包内 `inject-notice.ts` |
 
 注册方式（`settings.meow.json`）：
 
@@ -27,13 +30,17 @@ tags: [pi, extensions, typescript]
 "packages": [
   "npm:pi-mcp-adapter",
   "./ext/aliases",
-  "./ext/context",
-  "./ext/input",
-  "./ext/tools",
+  "./ext/editor-input-tweaks",
+  "./ext/esc-hold",
+  "./ext/inline-context",
   "./ext/models-dev",
-  "./ext/skill-ext"
+  "./ext/questionnaire",
+  "./ext/skill-ext",
+  "./ext/subdir-agents-md"
 ]
 ```
+
+本地包按字母序排列（顺序无运行时语义，各扩展事件面互不重叠）；npm:pi-mcp-adapter 保持首位。
 
 扩展文件必须 `export default function (pi)`，仅命名导出会加载报错。子目录内其他 `.ts` 仅作 import 模块。
 
@@ -70,17 +77,19 @@ models.dev 导入的用户配置，源文件 `dot_pi/agent/models-dev.json` 由 
 
 ## 新增与归组
 
-- 主题域规则：键盘/编辑器输入 → `input/`；LLM 上下文注入 → `context/`；命令别名 → `aliases/`；命令/工具 → `tools/`；模型目录导入 → `models-dev/`；技能相关 → `skill-ext/`；新主题建新包目录并在 `index.ts` 注册
-- 模块间 import 用 `./xxx.ts` 写法（tsconfig 已开 `allowImportingTsExtensions`）；跨包共享逻辑放 `lib/`（不被 Pi 加载）
+- 一包一扩展（2026-08-30 定）：新扩展建新包目录（目录名 = 扩展语义名），包名 `pi-meow-<目录名>`，扩展文件改名 `index.ts` 直接作为入口；并在 `settings.meow.json` 注册
+- 技能域例外：技能相关扩展入 `skill-ext/` 合集包（合集入口顺序注册），不单独成包
+- 编辑器槽位例外：替换主编辑器的扩展（`ctx.ui.setEditorComponent` 全局单例）不可与 `editor-input-tweaks` 并存，新编辑器功能并入其 `SlashAtHighlightEditor` 或链式包装
+- 各包完全自包含（2026-08-30 定）：包间零 import、无 lib 类共享目录；包内模块用 `./xxx.ts` 写法（tsconfig 已开 `allowImportingTsExtensions`）；需复用的模块在各包自备副本，副本间无同步义务
 - 新增包须在 `settings.meow.json` 的 `packages` 数组注册路径
 - 新增/移动扩展须实测加载：`pnpm check` 不查 default factory 契约，须 `pi -p -e <入口> --no-session` 验证（组目录传 `xxx/index.ts`）
-- 各文件头部注释即设计文档：改动前完整读取，改动后同步更新（含 lib/ 模块）
+- 各文件头部注释即设计文档：改动前完整读取，改动后同步更新（含包内模块）
 
 ## 统一提示约定（LLM 注入且用户需知情）
 
 LLM 注入且用户需知情的操作，用户提示显示一律统一（2026-08-12；2026-08-17 补 entry 通道）：
 
-- 投递 custom_message（`display: true`），TUI 渲染注册 `lib/inject-notice.ts` 的 `renderInjectNotice`
+- 投递 custom_message（`display: true`），TUI 渲染注册包内 `inject-notice.ts` 的 `renderInjectNotice`
 - `details.notice`：提示文案，统一格式 `[自动注入] <来源>：<说明>`，collapsed（默认）只显示它
 - `content`：注入全文（进 LLM；ctrl+o 展开工具输出后显示全文）
 - 消费方：subdir-agents-md（懒加载子目录 AGENTS.md）、inline-context（环境摘要）、skill-ext（默认块移除断言告警；2026-08-17 移除常规重写提示，常规重写零提示）
@@ -90,7 +99,7 @@ LLM 注入且用户需知情的操作，用户提示显示一律统一（2026-08
 告知用户"已向 LLM 注入什么"但本身不注入内容的简短提示，走 appendEntry（2026-08-17）：
 
 - 投递 `pi.appendEntry(customType, { notice, lines? })`（CustomEntry，`buildSessionContext` 忽略，不进 LLM 上下文）
-- TUI 渲染注册 `lib/inject-notice.ts` 的 `renderInjectEntry`（外观与 message 版一致）：collapsed 只显示 `notice`，expanded 显示 `lines` 全文
+- TUI 渲染注册包内 `inject-notice.ts` 的 `renderInjectEntry`（外观与 message 版一致）：collapsed 只显示 `notice`，expanded 显示 `lines` 全文
 - 消费方：skill-ext 的 ref-hint（技能文件清单）与 subskill-hint（子技能清单），各自独立投递；customType 均为 `skill-ext`，renderer 在 index-rewrite.ts 统一注册
 
 实现要点：renderer 按 customType 精确匹配（不支持前缀/通配）；不注册 renderer 时默认渲染直接显示 content 全文（无折叠）。headless（`-p`）下 entry 不渲染也不报错。
@@ -110,8 +119,11 @@ pi -p -e dot_pi/agent/ext/skill-ext/index.ts -e /tmp/dump-ext.ts --no-session "�
   项目技能靠 `--skill` 或 settings/packages 进入，验证项目级排序/注释用 `--skill` 注入 cwd 内技能目录
 - 验证 `tool_result` 拦截类扩展（ref-hint）：`-p` 控制台不打印 tool_result 原文，须在 dump 扩展里监听 `tool_result` 并把 read SKILL.md 的 content 落盘（链尾拿到的是改写后内容）
 - dump 工具定义验证 schema：`pi.on("session_start")` 内调 `pi.getAllTools()`，`-e` dump 扩展 + `--no-session` 跑，`parameters` 即 typebox JSON Schema（含 `maxLength`，确认已传 LLM）
-- 断链清理：chezmoi apply 不清理孤儿 symlink——源文件删除后 `~/.pi/agent/ext/` 残留断链 symlink 且 Pi 加载报错，手动 `rm` 处理
+- 孤儿目录清理：ext 为 copy 模式分发，chezmoi apply 不清理部署区多余目录——源目录删除/改名后 `~/.pi/agent/ext/` 残留孤儿（不再被 settings 引用、无害但混乱），apply 后手动 `rm -rf` 处理
+- meow 合并脚本时序坑（2026-08-30 实测）：apply 时 `.chezmoiscripts`（字母序在前）先于 `dot_pi` 部署，脚本读到上一轮的 settings.meow.json 副本，改源后首次 apply 合并的是旧内容
+  - 必要时手动执行渲染脚本：`chezmoi -S . execute-template < .chezmoiscripts/run_onchange_merge-pi-settings.sh.tmpl | bash`
+  - packages 为并集语义，meow 源删除不传导，删包后手动从 settings.json 移除
 - `/reload`（pi 内键入）热重载扩展/技能/提示词/主题/上下文文件（非仅 keybindings，`interactive-mode.js` 重载文案含 `extensions`）；改源文件后用它加载新代码免重启。副作用：reload 后旧 `pi`/`ctx` 变 stale（`runner.js` 校验），勿跨 reload 复用
 - 验证 TUI 渲染（`renderResult`/`renderCall`/`ctx.ui.custom`）：`-p` headless 不走 TUI 渲染，须 `/reload` 后在交互会话触发该工具，人眼校验两态——如 `Ctrl+O`（`app.tools.expand`）由 `tool-execution` 重调 renderer 传 `{ expanded }` 触发展开态
-- 块注释内禁含 `*/` 序列（会提前终止注释，tsc 报 TS1443 / oxfmt 语法错；写路径如 `*/index.ts` 时改写避让，2026-08-12 lib/inject-notice.ts 踩坑）
+- 块注释内禁含 `*/` 序列（会提前终止注释，tsc 报 TS1443 / oxfmt 语法错；写路径如 `*/index.ts` 时改写避让，2026-08-12 inject-notice.ts 踩坑）
 - 本文件列表行宽 ≤200 字符（markdownlint MD013 豁免表格，列表不豁免）

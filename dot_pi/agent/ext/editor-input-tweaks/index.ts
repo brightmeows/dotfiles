@@ -56,6 +56,10 @@
  * private 成员（layoutText/lastWidth/scrollOffset/autocompleteState/
  * autocompleteList），任一缺失（pi 升级后重构）则降级为原生 CustomEditor 并
  * notify 提示，失效模式从“崩溃”变为“安静降级 + 可见提示”。
+ *
+ * 目录组织（2026-08-30 拆包）：由 input/ 拆出独立成包（一包一扩展），
+ * 本文件改名 index.ts 直接作为包入口。编辑器槽位（ctx.ui.setEditorComponent
+ * 全局单例）仍由本扩展独占，esc-hold 拆出不影响。
  */
 
 import { CustomEditor, type ExtensionAPI } from "@earendil-works/pi-coding-agent";

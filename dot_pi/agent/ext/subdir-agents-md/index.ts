@@ -10,7 +10,7 @@
  *   → src 与 src/memory），向上查找 AGENTS.md（含锚点，止于 cwd、不含根）。
  * - 注入（custom_message + steer）：context 事件对未注入的 AGENTS.md 用
  *   pi.sendMessage 投递 custom_message（display:true），完整内容下一轮进
- *   LLM context；TUI 渲染统一走 lib/inject-notice.ts 的 renderInjectNotice
+ *   LLM context；TUI 渲染统一走包内 inject-notice.ts 的 renderInjectNotice
  *   （复刻默认 custom_message 外观：collapsed 只显示“已注入”提示，ctrl+o 展开
  *   工具输出后显示注入全文；display 只控 TUI 渲染，content 总进 LLM）。
  * - 去重靠查找（buildContextEntries）：用 compact-aware 的 buildContextEntries
@@ -22,13 +22,16 @@
  *
  * 规则：仅注入 cwd 严格子目录（根 AGENTS.md 由 Pi 原生加载）；不截断、
  * 不过滤 git-ignore。
+ *
+ * 目录组织（2026-08-30 拆包）：由 context/ 拆出独立成包（一包一扩展），
+ * 本文件改名 index.ts 直接作为包入口。
  */
 
 import type { CustomMessageEntry, ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { renderInjectNotice } from "../lib/inject-notice.ts";
+import { renderInjectNotice } from "./inject-notice.ts";
 
 /** 注入消息的固定 customType（去重键 + TUI 渲染查找键，标签即默认外观的 [customType]） */
 const CUSTOM_TYPE = "subdir-agents-md";

@@ -24,7 +24,7 @@
  *
  * 用户提示（2026-08-17）：注入子技能清单的同时 appendEntry 一条 TUI-only
  * 简短提示（不进 LLM 上下文），与 ref-hint 的文件清单提示各自独立；
- * 渲染走 ../lib/inject-notice.ts 的 renderInjectEntry（customType
+ * 渲染走包内 inject-notice.ts 的 renderInjectEntry（customType
  * "skill-ext"，renderer 在 index-rewrite.ts 统一注册）。
  */
 

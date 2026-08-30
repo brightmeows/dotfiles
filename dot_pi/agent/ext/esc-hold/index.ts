@@ -39,6 +39,9 @@
  *   返回 { consume: true } 吞掉按键，返回 undefined 放行
  * - 状态机为纯函数 handleEscEvent()，便于单元测试
  * - 会话切换（/new、/tree 切换、reload）时重新注册监听器并重置状态
+ *
+ * 目录组织（2026-08-30 拆包）：由 input/ 拆出独立成包（一包一扩展），
+ * 本文件改名 index.ts 直接作为包入口。
  */
 
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";

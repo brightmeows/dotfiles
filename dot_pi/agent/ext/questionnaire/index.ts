@@ -34,6 +34,9 @@
  * 一致，替换原 isOther 下方缩进展示）。
  *
  * 上游：/var/home/brightmeows/.local/lib/node_modules/@earendil-works/pi-coding-agent/examples/extensions/questionnaire.ts
+ *
+ * 目录组织（2026-08-30 成包）：tools/ 改名 questionnaire/（包名与内容物一致），
+ * 本文件改名 index.ts 直接作为包入口。
  */
 
 import { keyHint, type ExtensionAPI } from "@earendil-works/pi-coding-agent";

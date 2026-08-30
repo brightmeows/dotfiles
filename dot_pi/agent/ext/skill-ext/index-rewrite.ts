@@ -32,14 +32,14 @@
  *
  * 用户提示（2026-08-12 引入知情投递，2026-08-17 移除）：常规重写不再投递
  * 任何提示（对用户与 LLM 均为杂讯）；仅断言告警保留（错误信号非杂讯），
- * 渲染仍走 ../lib/inject-notice.ts 的 renderInjectNotice（默认外观）。
+ * 渲染仍走包内 inject-notice.ts 的 renderInjectNotice（默认外观）。
  * 另：本模块作为 skill-ext 族主模块，统一注册族内 appendEntry 的
  * entry renderer（ref-hint / subskill-hint 的 TUI-only 简短提示消费）。
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { sep } from "node:path";
-import { renderInjectEntry, renderInjectNotice } from "../lib/inject-notice.ts";
+import { renderInjectEntry, renderInjectNotice } from "./inject-notice.ts";
 import {
   LOCAL_LABEL,
   UNKNOWN_LABEL,
