@@ -1,5 +1,5 @@
 /**
- * 技能索引 XML 渲染（skill-ext 拆分自原 skill-index-rewrite.ts）
+ * 技能索引 XML 渲染（better-skill 拆分自原 skill-index-rewrite.ts）
  *
  * 格式（纯 XML，路径模板零歧义设计）：
  * - <group path="..."> path 为完整路径模板（如 ~/.agents/skills/${name}/SKILL.md），

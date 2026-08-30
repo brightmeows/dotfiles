@@ -1,5 +1,5 @@
 /**
- * 技能来源标签解析（skill-ext 拆分自原 skill-index-rewrite.ts）
+ * 技能来源标签解析（better-skill 拆分自原 skill-index-rewrite.ts）
  *
  * 从技能安装清单（~/.agents/.skill-lock.json v3 / 项目 skills-lock.json v1）
  * 建立 name → 来源仓库显示标签（host/owner/repo 形态）：

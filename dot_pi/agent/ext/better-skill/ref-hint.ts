@@ -1,5 +1,5 @@
 /**
- * Skill Reference Hint（skill-ext 主模块，原 skill-ref-hint.ts）
+ * Skill Reference Hint（better-skill 主模块，原 skill-ref-hint.ts）
  *
  * 在模型 read 任意 SKILL.md 后，枚举其所在目录（技能根）下的全部文件，
  * 于同一 tool_result 末尾追加相对路径清单（基准 = SKILL.md 所在目录），

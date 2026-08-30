@@ -11,7 +11,7 @@ tags: [pi, extensions, typescript]
 
 本目录为独立扩展包集合，每个子目录是一个 Pi 包（`package.json` 声明 `pi.extensions`），通过 `settings.json` 的 `packages` 数组显式注册，不再依赖 Pi 自动发现。
 
-组织原则（2026-08-30 定）：**各包完全自包含**——包间零 import、无共享目录，复用模块（如 `inject-notice.ts`）各包自备副本、无同步义务；目录名 = 扩展语义名，包名前缀 `pi-meow-`；例外：`skill-ext/` 为技能域合集包，新技能扩展默认入此包。历史域分组与 lib/ 均已拆解。
+组织原则（2026-08-30 定）：**各包完全自包含**——包间零 import、无共享目录，复用模块（如 `inject-notice.ts`）各包自备副本、无同步义务；目录名 = 扩展语义名，包名前缀 `pi-meow-`；例外：`better-skill/` 为技能域合集包，新技能扩展默认入此包。历史域分组与 lib/ 均已拆解。
 
 | 路径 | 包名 | 角色 | 要点 |
 |------|------|------|------|
@@ -22,7 +22,7 @@ tags: [pi, extensions, typescript]
 | `editor-input-tweaks/` | `pi-meow-editor-input-tweaks` | 编辑器输入增强 | /@ 标记符着色 + / 补全停留；独占编辑器槽位（`ctx.ui.setEditorComponent` 全局单例，后设覆盖先设，新增编辑器类扩展须链式包装或并入本包） |
 | `questionnaire/` | `pi-meow-questionnaire` | 问卷工具 | 官方示例演化可自由修改，typebox 为仓库 devDependency |
 | `models-dev/` | `pi-meow-models-dev` | 模型目录导入 | models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await；配置 schema 见下文 |
-| `skill-ext/` | `pi-meow-skill-ext` | 技能域（合集包） | index-rewrite / ref-hint / subskill-hint 合并为 `index.ts` 顺序注册；ref-hint 与 subskill-hint 共享 customType `skill-ext` 与 entry renderer，不拆分；含包内 `inject-notice.ts` |
+| `better-skill/` | `pi-meow-better-skill` | 技能域（合集包） | index-rewrite / ref-hint / subskill-hint 合并为 `index.ts` 顺序注册；ref-hint 与 subskill-hint 共享 customType `skill-ext` 与 entry renderer，不拆分；含包内 `inject-notice.ts` |
 
 注册方式（`settings.meow.json`）：
 
@@ -35,7 +35,7 @@ tags: [pi, extensions, typescript]
   "./ext/inline-context",
   "./ext/models-dev",
   "./ext/questionnaire",
-  "./ext/skill-ext",
+  "./ext/better-skill",
   "./ext/subdir-agents-md"
 ]
 ```
@@ -78,7 +78,7 @@ models.dev 导入的用户配置，源文件 `dot_pi/agent/models-dev.json` 由 
 ## 新增与归组
 
 - 一包一扩展（2026-08-30 定）：新扩展建新包目录（目录名 = 扩展语义名），包名 `pi-meow-<目录名>`，扩展文件改名 `index.ts` 直接作为入口；并在 `settings.meow.json` 注册
-- 技能域例外：技能相关扩展入 `skill-ext/` 合集包（合集入口顺序注册），不单独成包
+- 技能域例外：技能相关扩展入 `better-skill/` 合集包（合集入口顺序注册），不单独成包
 - 编辑器槽位例外：替换主编辑器的扩展（`ctx.ui.setEditorComponent` 全局单例）不可与 `editor-input-tweaks` 并存，新编辑器功能并入其 `SlashAtHighlightEditor` 或链式包装
 - 各包完全自包含（2026-08-30 定）：包间零 import、无 lib 类共享目录；包内模块用 `./xxx.ts` 写法（tsconfig 已开 `allowImportingTsExtensions`）；需复用的模块在各包自备副本，副本间无同步义务
 - 新增包须在 `settings.meow.json` 的 `packages` 数组注册路径
@@ -92,7 +92,7 @@ LLM 注入且用户需知情的操作，用户提示显示一律统一（2026-08
 - 投递 custom_message（`display: true`），TUI 渲染注册包内 `inject-notice.ts` 的 `renderInjectNotice`
 - `details.notice`：提示文案，统一格式 `[自动注入] <来源>：<说明>`，collapsed（默认）只显示它
 - `content`：注入全文（进 LLM；ctrl+o 展开工具输出后显示全文）
-- 消费方：subdir-agents-md（懒加载子目录 AGENTS.md）、inline-context（环境摘要）、skill-ext（默认块移除断言告警；2026-08-17 移除常规重写提示，常规重写零提示）
+- 消费方：subdir-agents-md（懒加载子目录 AGENTS.md）、inline-context（环境摘要）、better-skill（默认块移除断言告警；2026-08-17 移除常规重写提示，常规重写零提示）
 
 ### entry 通道（仅用户可见，不进 LLM）
 
@@ -100,7 +100,7 @@ LLM 注入且用户需知情的操作，用户提示显示一律统一（2026-08
 
 - 投递 `pi.appendEntry(customType, { notice, lines? })`（CustomEntry，`buildSessionContext` 忽略，不进 LLM 上下文）
 - TUI 渲染注册包内 `inject-notice.ts` 的 `renderInjectEntry`（外观与 message 版一致）：collapsed 只显示 `notice`，expanded 显示 `lines` 全文
-- 消费方：skill-ext 的 ref-hint（技能文件清单）与 subskill-hint（子技能清单），各自独立投递；customType 均为 `skill-ext`，renderer 在 index-rewrite.ts 统一注册
+- 消费方：better-skill 的 ref-hint（技能文件清单）与 subskill-hint（子技能清单），各自独立投递；customType 均为 `skill-ext`（历史名，保持不变保历史会话渲染兼容），renderer 在 index-rewrite.ts 统一注册
 
 实现要点：renderer 按 customType 精确匹配（不支持前缀/通配）；不注册 renderer 时默认渲染直接显示 content 全文（无折叠）。headless（`-p`）下 entry 不渲染也不报错。
 
@@ -111,10 +111,10 @@ LLM 注入且用户需知情的操作，用户提示显示一律统一（2026-08
 - `-e` 传入的扩展排在扩展链最前（先于 `settings.json` 注册的包执行）；只传 dump 扩展会拿到改写前的提示词，误判“扩展未生效”。必须 `-e` 同时传入被测扩展源文件与 dump 扩展（dump 在后）：
 
 ```bash
-pi -p -e dot_pi/agent/ext/skill-ext/index.ts -e /tmp/dump-ext.ts --no-session "只回复：收到"
+pi -p -e dot_pi/agent/ext/better-skill/index.ts -e /tmp/dump-ext.ts --no-session "只回复：收到"
 ```
 
-- 对比验证（行为回归）：从 git 检出旧版到 /tmp，两边分别 `pi -p -e <被测> -e <dump>` 跑，diff dump 落盘产物。对比前临时移走同源目录（`~/.pi/agent/ext/skill-ext`），否则新旧双重改写，diff 失真
+- 对比验证（行为回归）：从 git 检出旧版到 /tmp，两边分别 `pi -p -e <被测> -e <dump>` 跑，diff dump 落盘产物。对比前临时移走同源目录（`~/.pi/agent/ext/better-skill`），否则新旧双重改写，diff 失真
 - Pi 项目技能加载渠道（2026-08-13 实测）：`loadSkills` 走 `includeDefaults: false`，不自动扫 `cwd/.pi/skills` 与祖先 `.agents/skills`（放进去不生效，项目 `.pi/settings.json` 的 skills 数组也未生效）
   项目技能靠 `--skill` 或 settings/packages 进入，验证项目级排序/注释用 `--skill` 注入 cwd 内技能目录
 - 验证 `tool_result` 拦截类扩展（ref-hint）：`-p` 控制台不打印 tool_result 原文，须在 dump 扩展里监听 `tool_result` 并把 read SKILL.md 的 content 落盘（链尾拿到的是改写后内容）

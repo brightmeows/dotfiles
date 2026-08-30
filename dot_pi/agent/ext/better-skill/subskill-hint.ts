@@ -1,5 +1,5 @@
 /**
- * Subskill Hint（skill-ext 子模块）
+ * Subskill Hint（better-skill 子模块）
  *
  * 在模型 read 任意 SKILL.md 后，探测其所在目录的 skills/ 子目录结构
  * （技能包形态：<技能根>/skills/<子技能名>/SKILL.md），若存在则于

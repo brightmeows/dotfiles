@@ -1,5 +1,5 @@
 /**
- * 技能路径规范化与目录收集（skill-ext 拆分自原 skill-index-rewrite.ts）
+ * 技能路径规范化与目录收集（better-skill 拆分自原 skill-index-rewrite.ts）
  *
  * 展示路径规范化（避免 symlink / 旧安装问题）：
  * - Pi 收集技能按 realpath 去重、先到先得：~/.pi/agent/skills 下的
