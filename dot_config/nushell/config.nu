@@ -25,8 +25,18 @@ if (which starship | is-not-empty) {
     }
 }
 
-# Aliases
+# Aliases（与 dot_bashrc 保持对齐）
 alias ze = zellij
 alias oc = opencode
 alias nv = nvim
+alias vi = nvim
+alias vim = nvim
 alias lg = lazygit
+alias k = kubectl
+alias urldecode = url decode
+alias urlencode = url encode
+
+# GitHub CLI token（与 dot_bashrc 语义一致）
+if (which gh | is-not-empty) {
+    try { $env.GITHUB_TOKEN = (gh auth token) }
+}
