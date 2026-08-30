@@ -19,7 +19,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 | 工具 | 版本 | 用途 |
 |---|---|---|
-| chezmoi | latest (system) | 点文件管理，`mode = "symlink"` |
+| chezmoi | latest (system) | 点文件管理，`mode = "file"`（copy 模式，见 `dot_config/chezmoi/chezmoi.toml.tmpl`） |
 | pnpm | latest (system) | TypeScript 扩展依赖管理 |
 | TypeScript | latest (system) | 扩展/插件类型检查 |
 | Node | latest (system) | JS 运行时 |
@@ -38,7 +38,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 ## Commands
 
 > **⚠️ 重要约定**： chezmoi 命令必须使用 `-S .` 指定源目录为当前仓库根目录（`~/Codes/dotfiles`）。这是本仓库的非标准目录结构要求，避免使用默认的 `~/.local/share/chezmoi`。
-> **ℹ️ Symlink 模式**：本仓库使用 `mode = "symlink"`，目标文件是源文件的符号链接而非副本。编辑源文件后目标文件已自动同步，`chezmoi -S . apply` 通常无额外操作（除非涉及模板渲染或 `run_onchange_` 脚本）。修改后直接 `git commit` 即可，不必每次 apply。
+> **ℹ️ Copy 模式**：本仓库使用 `mode = "file"`（复制模式），目标文件是源文件的副本，运行时回写（如 fcitx5）不会穿透 symlink 到仓库。编辑源文件后需 `chezmoi -S . apply` 同步至 `$HOME`（模板渲染与 `run_onchange_` 脚本也在此步生效）。
 > **⚠️ npx skills 作用域**：`npx skills` 不带 `--agent` 时对所有已检测 agent 生效
 > （含 pi 的 `~/.pi/agent/skills`、opencode 的 `~/.config/opencode/skills` 等）。
 > 2026-08-11 已移除 bash/nushell 的 `skills` wrapper（曾自动注入 `--agent codex`）；现在裸跑 `npx skills` 写命令前必须先确认作用域。
