@@ -1,12 +1,18 @@
 # 通用环境变量（bash 与 nushell 共享加载）
 # 格式：KEY=value | KEY+=value（以 : 追加）| KEY<=value（前插）
 NIXPKGS_ALLOW_UNFREE=1
+# 通用
 PATH+=~/bin
 PATH+=~/.local/bin
+# Go
 PATH+=~/go/bin
+# Rust
 PATH+=~/.cargo/bin
-PATH+=~/.opencode/bin
+# Node 生态
+PATH+=~/.node/bin
 PATH+=~/.bun/bin
+# 其它
+PATH+=~/.opencode/bin
 # AppImages (建议使用 Gear Lever 管理 AppImages)
 # flatpak install flathub it.mijorus.gearlever
 PATH+=~/AppImages
