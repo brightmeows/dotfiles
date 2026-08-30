@@ -142,10 +142,10 @@ sniffer:
 
 tun:
   enable: true
-  # mixed = system TCP 栈 + gvisor UDP 栈。本机实测（2026-08-30，Arch）system TCP 栈静默吞掉全部 TCP：
-  # SYN 进 tun（RX 计数器 +6）但 mihomo 不回 SYN-ACK、不建连接、无日志；同栈下 UDP/ICMP（gvisor）正常。
-  # 故全栈改用 gvisor（TCP/UDP 均用户态处理），桌面场景性能损耗无感
-  stack: gvisor
+  # system 栈：TCP 由 sing-tun NAT 回注、本机内核 TCP 栈终结（吞吐/CPU 优于 gvisor），UDP 直通写回不过 INPUT。
+  # 回注 SYN 以 iif=<tun> 过 INPUT 链：防火墙默认拒绝会静默掐死全部 TCP（含境内直连）——
+  # 放行由 deploy.sh 负责（ufw allow in on mihomo / firewalld trusted），换机部署必须跑 deploy.sh
+  stack: system
   auto-route: true
   auto-redirect: false  # Fedora nftables 冲突（netlink file exists），auto-route 纯路由表已足够
   auto-detect-interface: true
@@ -155,8 +155,8 @@ tun:
   device: mihomo
   mtu: 1500
   strict-route: true
-  # gso 仅对 system 栈生效，gvisor 下无意义，保持关闭
-  gso: false
+  # gso 仅 system 栈生效；2026-08-30 实验证 gso 与“回注被掐”故障无关（mixed+gso:false 同样掐），system 栈下保持开启
+  gso: true
   gso-max-size: 32768
   udp-timeout: 300
   iproute2-table-index: 2022

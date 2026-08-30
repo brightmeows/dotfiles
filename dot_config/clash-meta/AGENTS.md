@@ -81,19 +81,29 @@ mihomo 报 `Start TUN listening error: auto redirect: ...`，tun 接口**从未�
 
 诊断 TUN 未生效：`ip -br link | grep mihomo`（无）+ `ip route show table 2022`（空）+ `journalctl -u clash-meta | grep "auto redirect"`（file exists）。
 
-### system/mixed 栈 NAT 回注被 ufw INPUT 掐死（TCP 全静默，本机已改 gvisor）
+### system/mixed 栈 NAT 回注与 ufw INPUT（放行由 deploy.sh 保证）
 
 sing-tun `stack: system`/`mixed` 的 TCP 是 NAT 模式：tun 读到 SYN 后改写目的为 tun 接口地址 + 内核监听
 端口（`processIPv4TCP` → `writeBack`），交**本机内核 TCP 栈**完成握手。回注包以 `iif=mihomo`、
 conntrack NEW 过 netfilter INPUT 链；ufw（本机 Arch 是 ufw/iptables-nft，非 Fedora firewalld）
 INPUT 默认拒绝，目的为 LOCAL 的包经 `ufw-after-input → ufw-skip-to-policy-input` 丢弃：SYN 到不了内核
-监听 → 无 SYN-ACK → 全部 TCP 静默死亡（境内直连也死），`/connections` 无连接、无日志。UDP（mixed 走
-gvisor）与 ICMP（system 栈用户态应答）不经此路径故正常——故障面精确限定在 TCP。
+监听 → 无 SYN-ACK → 全部 TCP 静默死亡（境内直连也死），`/connections` 无连接、无日志。UDP 不过此
+路径（system 栈 UDP 直通写回、mixed 栈 UDP 走 gvisor），ICMP 同样用户态应答——故障面精确限定在 TCP。
 
 单变量实验闭环（2026-08-30，内核 7.1.9）：mixed 栈下 `ufw allow in on mihomo` → TCP 立即复活；
-`ufw delete` → 复死；gvisor 栈同机全程正常。本机决策：`stack: gvisor`（用户态终结 TCP，不过 INPUT），
-勿改回 mixed/system；Fedora firewalld 机器不受影响。诊断：TCP 全死 + `pkexec nft list chain ip filter
-ufw-skip-to-policy-input` 计数随探测增长即中招。
+`ufw delete` → 复死。官方 wiki 亦明示“开启防火墙则 system/mixed 不可用需放行”。
+
+本机决策：`stack: system` + deploy.sh 自动放行（ufw 分支 `allow in on mihomo`，幂等、持久化于
+`/etc/ufw/user.rules`；firewalld 机器走 trusted zone 分支），部署后自动 curl 验证数据路径。
+**勿绕过 deploy.sh 改防火墙或换防火墙**——放行缺失即静默复发。诊断：TCP 全死（境内直连也死）+
+`pkexec nft list chain ip filter ufw-skip-to-policy-input` 计数随探测增长即中招。
+
+### payload 热加载重建 tun 有竞态（device or resource busy）
+
+`PUT /configs?force=true` 会重建 tun 设备，实测偶发 `Start TUN listening error: configure tun
+interface: device or resource busy`——tun 消失、流量走直连，且用直连探测会得到“正常”假象（境内直连
+本就通）。需要验证 tun 行为时先 `PUT` 一份 `tun.enable: false` 的配置卸载，再 `PUT` 目标配置；
+或直接 `systemctl restart`。部署一律走 deploy.sh（systemctl restart），不受此影响。
 
 ### 开机竞态（本机 drop-in 已修）
 

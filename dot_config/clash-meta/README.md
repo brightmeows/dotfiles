@@ -72,7 +72,7 @@ metacubexd 由 mihomo `external-ui` 本地托管（首次启动自动从 GitHub 
 
 ### TUN 生效验证
 
-部署后确认 tun 真正接管流量（曾因 auto-redirect 冲突导致 tun 静默失败，mihomo 进程仍 active 极具迷惑性）：
+部署后确认 tun 真正接管流量（deploy.sh 末尾已自动验证，以下供人工复查；曾因 auto-redirect 冲突导致 tun 静默失败，mihomo 进程仍 active 极具迷惑性）：
 
 ```bash
 ip -br link | grep mihomo                      # 应出现 mihomo 接口
@@ -136,10 +136,11 @@ auto-redirect 用 nftables 在 output 链重定向流量，创建规则时 netli
 ### 防火墙（Arch/Omarchy：ufw）
 
 本机（Omarchy/Arch）防火墙是 ufw（iptables-nft 后端），INPUT 默认拒绝。sing-tun `system`/`mixed`
-栈的 TCP 走 NAT 回注（改写后经 INPUT 交内核 TCP 栈完成握手），会被 ufw 掐死：全部 TCP 静默超时
-（含境内直连），`/connections` 无连接、无日志。ufw 下**必须 `stack: gvisor`**（本模板已改，TCP
-在用户态终结、不经 INPUT）。Fedora firewalld 机器不受影响（trusted zone 已放行），deploy.sh 的
-firewalld 分支对 ufw 无效，属预期静默跳过。
+栈的 TCP 走 NAT 回注（改写后经 INPUT 交内核 TCP 栈完成握手），必须放行 tun 接口入站，否则全部 TCP
+静默超时（含境内直连）、`/connections` 无连接、无日志。放行由 `deploy.sh` 自动完成：ufw 分支
+`allow in on mihomo`（幂等，持久化于 `/etc/ufw/user.rules`），部署末尾并自动 curl 验证数据路径。
+Fedora firewalld 机器走 trusted zone 分支，行为对称。**绕过 deploy.sh 裸改防火墙规则是踩坑高发区**：
+ufw 重装/规则重置后必须重跑 deploy.sh。
 
 ### 开机竞态（Arch：mihomo.service drop-in）
 
