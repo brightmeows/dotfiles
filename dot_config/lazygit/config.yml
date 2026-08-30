@@ -11,22 +11,19 @@ gui:
   expandFocusedSidePanel: true
   # PgUp/PgDn 滚动行数（默认 2 行太少，设为 10 接近半页）
   scrollHeight: 10
-
 git:
   # 用 delta 渲染 diff（系统已装 /usr/bin/delta）
-  pagers:
+  diffRenderers:
     - name: delta
       colorArg: always
-      pager: delta --dark --paging=never --hunk-header-decoration-style=none
+      command: delta --dark --paging=never --hunk-header-decoration-style=none
   # gpgsign=true 时默认每次提交都挂起、显示 Press enter to return。
   # 此处 pinentry 经包装脚本解析为 pinentry-qt（GUI 弹窗），且 gpg-agent
   # 已缓存密码（最长 24h），故可安全跳过挂起，提交流程不再被打断。
   overrideGpg: true
-
 update:
   # 系统由 rpm-ostree 管理 lazygit，关闭其内置自更新检查
   method: never
-
 os:
   # 按 e 编辑文件 / reword 时直接调用 nvim
   editPreset: nvim
