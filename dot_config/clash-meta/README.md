@@ -133,6 +133,27 @@ auto-redirect 用 nftables 在 output 链重定向流量，创建规则时 netli
 
 `deploy.sh` 会把 `mihomo` tun 接口置入 `trusted` zone 放行流量（best-effort）。
 
+### 防火墙（Arch/Omarchy：ufw）
+
+本机（Omarchy/Arch）防火墙是 ufw（iptables-nft 后端），INPUT 默认拒绝。sing-tun `system`/`mixed`
+栈的 TCP 走 NAT 回注（改写后经 INPUT 交内核 TCP 栈完成握手），会被 ufw 掐死：全部 TCP 静默超时
+（含境内直连），`/connections` 无连接、无日志。ufw 下**必须 `stack: gvisor`**（本模板已改，TCP
+在用户态终结、不经 INPUT）。Fedora firewalld 机器不受影响（trusted zone 已放行），deploy.sh 的
+firewalld 分支对 ufw 无效，属预期静默跳过。
+
+### 开机竞态（Arch：mihomo.service drop-in）
+
+mihomo 早于 NetworkManager DHCP 约 3s 启动，TUN monitor 报 `default interface lost`，随后自愈。
+Omarchy mask 了 wait-online，unit 的 `After=network-online.target` 形同虚设。本机已加
+`/etc/systemd/system/mihomo.service.d/override.conf`（机器本地配置，不入仓库，换机需重建）：
+
+```ini
+[Service]
+ExecStartPre=/usr/bin/sh -c 'i=0; while [ -z "$(ip route show default)" ] && [ $i -lt 60 ]; do sleep 0.5; i=$((i+1)); done'
+```
+
+最长等 30s，超时照常启动（mihomo 自身 monitor 会自愈兑底）。
+
 ### SELinux
 
 mihomo 二进制为 `bin_t`、无专属 SELinux 策略，运行于 `unconfined_service_t`（放行域），正常情况下不会被拦截。若启动后功能异常，先查 AVC：

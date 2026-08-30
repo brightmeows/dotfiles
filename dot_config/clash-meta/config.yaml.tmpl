@@ -142,7 +142,10 @@ sniffer:
 
 tun:
   enable: true
-  stack: mixed
+  # mixed = system TCP 栈 + gvisor UDP 栈。本机实测（2026-08-30，Arch）system TCP 栈静默吞掉全部 TCP：
+  # SYN 进 tun（RX 计数器 +6）但 mihomo 不回 SYN-ACK、不建连接、无日志；同栈下 UDP/ICMP（gvisor）正常。
+  # 故全栈改用 gvisor（TCP/UDP 均用户态处理），桌面场景性能损耗无感
+  stack: gvisor
   auto-route: true
   auto-redirect: false  # Fedora nftables 冲突（netlink file exists），auto-route 纯路由表已足够
   auto-detect-interface: true
@@ -152,7 +155,8 @@ tun:
   device: mihomo
   mtu: 1500
   strict-route: true
-  gso: true
+  # gso 仅对 system 栈生效，gvisor 下无意义，保持关闭
+  gso: false
   gso-max-size: 32768
   udp-timeout: 300
   iproute2-table-index: 2022

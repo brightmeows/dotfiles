@@ -81,6 +81,27 @@ mihomo 报 `Start TUN listening error: auto redirect: ...`，tun 接口**从未�
 
 诊断 TUN 未生效：`ip -br link | grep mihomo`（无）+ `ip route show table 2022`（空）+ `journalctl -u clash-meta | grep "auto redirect"`（file exists）。
 
+### system/mixed 栈 NAT 回注被 ufw INPUT 掐死（TCP 全静默，本机已改 gvisor）
+
+sing-tun `stack: system`/`mixed` 的 TCP 是 NAT 模式：tun 读到 SYN 后改写目的为 tun 接口地址 + 内核监听
+端口（`processIPv4TCP` → `writeBack`），交**本机内核 TCP 栈**完成握手。回注包以 `iif=mihomo`、
+conntrack NEW 过 netfilter INPUT 链；ufw（本机 Arch 是 ufw/iptables-nft，非 Fedora firewalld）
+INPUT 默认拒绝，目的为 LOCAL 的包经 `ufw-after-input → ufw-skip-to-policy-input` 丢弃：SYN 到不了内核
+监听 → 无 SYN-ACK → 全部 TCP 静默死亡（境内直连也死），`/connections` 无连接、无日志。UDP（mixed 走
+gvisor）与 ICMP（system 栈用户态应答）不经此路径故正常——故障面精确限定在 TCP。
+
+单变量实验闭环（2026-08-30，内核 7.1.9）：mixed 栈下 `ufw allow in on mihomo` → TCP 立即复活；
+`ufw delete` → 复死；gvisor 栈同机全程正常。本机决策：`stack: gvisor`（用户态终结 TCP，不过 INPUT），
+勿改回 mixed/system；Fedora firewalld 机器不受影响。诊断：TCP 全死 + `pkexec nft list chain ip filter
+ufw-skip-to-policy-input` 计数随探测增长即中招。
+
+### 开机竞态（本机 drop-in 已修）
+
+Arch 上 mihomo 早于 NM 的 DHCP 约 3s，开机刷 `default interface lost` + `no such device`（monitor 自愈）。
+Omarchy mask 了 wait-online，`After=network-online.target` 无效。本机在
+`/etc/systemd/system/mihomo.service.d/override.conf` 用 ExecStartPre 等默认路由（最长 30s 超时放行）；
+机器本地配置不入仓库，换机部署需重建（内容见 README 开机竞态节）。
+
 ### external-controller 端口与 external-ui serve 启动时绑定
 
 `external-controller` 监听端口与 `external-ui` 的 HTTP serve 在 mihomo 启动时绑定。payload 热加载（`PUT /configs`）不重新绑定端口、不重新注册 ui serve——改这两项后必须 `deploy.sh` 重启验证。
