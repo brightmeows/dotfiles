@@ -1,8 +1,13 @@
 [general]
-import = ["themes/catppuccin-macchiato.toml"]
+# macchiato 打底；omarchy state 主题存在时按加载顺序覆盖（缺失则跳过）
+import = ["themes/catppuccin-macchiato.toml", "~/.local/state/omarchy/current/theme/alacritty.toml"]
+
+[env]
+TERM = "xterm-256color"
 
 [terminal]
 shell = "nu"
+osc52 = "CopyPaste"
 
 [cursor]
 style.blinking = "Always"
@@ -21,4 +26,12 @@ padding.x = 5
 padding.y = 3
 
 [keyboard]
-bindings = [{ key = "F1", action = "ToggleViMode" }]
+bindings = [
+  { key = "F1", action = "ToggleViMode" },
+  { key = "Insert", mods = "Shift", action = "Paste" },
+  { key = "Insert", mods = "Control", action = "Copy" },
+  # Send Shift+Return as CSI-u so TUIs can distinguish it from Return.
+  { key = "Return", mods = "Shift", chars = "\u001B[13;2u" },
+  # Legacy encoding sends Alt+Shift+Return the same as Alt+Return; send CSI-u so tmux can match M-S-Enter.
+  { key = "Return", mods = "Alt|Shift", chars = "\u001B[13;4u" },
+]
