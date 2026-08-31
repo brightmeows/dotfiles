@@ -22,7 +22,7 @@ tags: [pi, extensions, typescript]
 | `editor-input-tweaks/` | `pi-meow-editor-input-tweaks` | 编辑器输入增强 | /@ 标记符着色 + / 补全停留；独占编辑器槽位（`ctx.ui.setEditorComponent` 全局单例，后设覆盖先设，新增编辑器类扩展须链式包装或并入本包） |
 | `questionnaire/` | `pi-meow-questionnaire` | 问卷工具 | 官方示例演化可自由修改，typebox 为仓库 devDependency |
 | `models-dev/` | `pi-meow-models-dev` | 模型目录导入 | models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await；配置 schema 见下文 |
-| `better-skill/` | `pi-meow-better-skill` | 技能域（合集包） | index-rewrite / ref-hint / subskill-hint / agent-browser-notice 合并为 `index.ts` 顺序注册；ref-hint 与 subskill-hint 共享 customType `skill-ext` 与 entry renderer，不拆分；含包内 `inject-notice.ts` |
+| `better-skill/` | `pi-meow-better-skill` | 技能域（合集包） | index-rewrite / ref-hint / nested-skill-hint / agent-browser-notice 合并为 `index.ts` 顺序注册；ref-hint 与 nested-skill-hint 共享 customType `skill-ext` 与 entry renderer，不拆分；含包内 `inject-notice.ts` |
 
 注册方式（`settings.meow.json`）：
 
@@ -100,7 +100,7 @@ LLM 注入且用户需知情的操作，用户提示显示一律统一（2026-08
 
 - 投递 `pi.appendEntry(customType, { notice, lines? })`（CustomEntry，`buildSessionContext` 忽略，不进 LLM 上下文）
 - TUI 渲染注册包内 `inject-notice.ts` 的 `renderInjectEntry`（外观与 message 版一致）：collapsed 只显示 `notice`，expanded 显示 `lines` 全文
-- 消费方：better-skill 的 ref-hint（技能文件清单）、subskill-hint（子技能清单）与 agent-browser-notice（agent-browser 专项提醒），各自独立投递；customType 均为 `skill-ext`（历史名，保持不变保历史会话渲染兼容），renderer 在 index-rewrite.ts 统一注册
+- 消费方：better-skill 的 ref-hint（技能文件清单）、nested-skill-hint（嵌套技能清单）与 agent-browser-notice（agent-browser 专项提醒），各自独立投递；customType 均为 `skill-ext`（历史名，保持不变保历史会话渲染兼容），renderer 在 index-rewrite.ts 统一注册
 
 实现要点：renderer 按 customType 精确匹配（不支持前缀/通配）；不注册 renderer 时默认渲染直接显示 content 全文（无折叠）。headless（`-p`）下 entry 不渲染也不报错。
 
