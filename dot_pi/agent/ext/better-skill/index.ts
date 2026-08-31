@@ -5,6 +5,9 @@
  * 扩展合并为一个扩展实例顺序注册：
  * - index-rewrite.ts：技能索引重写（before_agent_start 改写系统提示词技能索引段）
  * - ref-hint.ts：技能文件枚举提示（tool_result 拦截，SKILL.md 读后追加目录文件清单）
+ * - subskill-hint.ts：子技能发现提示（tool_result 拦截，技能包形态时追加子技能清单）
+ * - agent-browser-notice.ts：agent-browser 技能专属提醒（tool_result 拦截，
+ *   SKILL.md 读后追加 skills get 全文读取与默认 --headed 两条提醒）
  *
  * 目录组织（2026-08-11 归组）：由 extensions/ 根目录平铺的 skill-index-rewrite.ts /
  * skill-ref-hint.ts 迁入；index-rewrite 内部拆出 source-labels / path-canon / render
@@ -13,6 +16,7 @@
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { registerAgentBrowserNotice } from "./agent-browser-notice.ts";
 import { registerIndexRewrite } from "./index-rewrite.ts";
 import { registerRefHint } from "./ref-hint.ts";
 import { registerSubskillHint } from "./subskill-hint.ts";
@@ -21,4 +25,5 @@ export default function (pi: ExtensionAPI) {
   registerIndexRewrite(pi);
   registerRefHint(pi);
   registerSubskillHint(pi);
+  registerAgentBrowserNotice(pi);
 }
