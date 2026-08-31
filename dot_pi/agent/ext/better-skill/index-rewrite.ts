@@ -25,7 +25,7 @@
  *
  * 不改 Pi 源码、不改技能文件；信息完整保留（name+description）。
  *
- * 辅助模块（本目录内，2026-08-11 拆分）：
+ * 辅助模块（internal/，2026-08-11 拆分；2026-08-31 移入 internal/ 子目录）：
  * - source-labels.ts：技能来源标签解析（lock → host/owner/repo）
  * - path-canon.ts：展示路径规范化与项目技能目录收集
  * - render.ts：技能索引 XML 渲染
@@ -39,27 +39,27 @@
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { sep } from "node:path";
-import { renderInjectEntry, renderInjectNotice } from "./inject-notice.ts";
+import { renderInjectEntry, renderInjectNotice } from "./internal/inject-notice.ts";
 import {
   LOCAL_LABEL,
   UNKNOWN_LABEL,
   loadProjectSourceMap,
   loadSourceMap,
-} from "./source-labels.ts";
+} from "./internal/source-labels.ts";
 import {
   CANONICAL_USER_DIRS,
   canonicalSkillFilePath,
   collectProjectSkillDirs,
   pathGroupKey,
   shortenHome,
-} from "./path-canon.ts";
+} from "./internal/path-canon.ts";
 import {
   countGroup,
   renderGroupOpen,
   renderSkill,
   sanitizeComment,
   type SkillIndexEntry,
-} from "./render.ts";
+} from "./internal/render.ts";
 
 /**
  * Pi 默认技能索引块的移除策略（R5：措辞精确为主，标签兜底，断言守门）。

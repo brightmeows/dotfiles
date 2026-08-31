@@ -42,8 +42,8 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { closeSync, existsSync, openSync, readdirSync, readSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
-import { expandHome } from "./path-canon.ts";
-import { renderGroupOpen, renderSkill } from "./render.ts";
+import { expandHome } from "./internal/path-canon.ts";
+import { renderGroupOpen, renderSkill } from "./internal/render.ts";
 
 /** 从 read 工具参数中安全提取路径 */
 function extractPath(input: Record<string, unknown>): string | null {

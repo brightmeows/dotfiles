@@ -24,7 +24,7 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { readdirSync, statSync } from "node:fs";
 import { basename, dirname, join, relative } from "node:path";
-import { expandHome } from "./path-canon.ts";
+import { expandHome } from "./internal/path-canon.ts";
 
 /** 从 read 工具参数中安全提取路径 */
 function extractPath(input: Record<string, unknown>): string | null {
@@ -85,7 +85,7 @@ export function registerRefHint(pi: ExtensionAPI) {
       return;
     }
 
-    // ~ 前缀展开：技能索引模板以 ~ 形式展示，模型会照抄发起 read，
+    // 展开 ~ 前缀：技能索引模板以 ~ 形式展示，模型会照抄发起 read，
     // node fs 不展开 ~，不展开则 readdirSync ENOENT 静默失效
     const filePath = expandHome(rawPath);
 

@@ -11,7 +11,10 @@ tags: [pi, extensions, typescript]
 
 本目录为独立扩展包集合，每个子目录是一个 Pi 包（`package.json` 声明 `pi.extensions`），通过 `settings.json` 的 `packages` 数组显式注册，不再依赖 Pi 自动发现。
 
-组织原则（2026-08-30 定）：**各包完全自包含**——包间零 import、无共享目录，复用模块（如 `inject-notice.ts`）各包自备副本、无同步义务；目录名 = 扩展语义名，包名前缀 `pi-meow-`；例外：`better-skill/` 为技能域合集包，新技能扩展默认入此包。历史域分组与 lib/ 均已拆解。
+组织原则（2026-08-30 定）：**各包完全自包含**——包间零 import、无共享目录，复用模块（如
+`inject-notice.ts`）各包自备副本、无同步义务；目录名 = 扩展语义名，包名前缀 `pi-meow-`；例外：`better-skill/`
+为技能域合集包，新技能扩展默认入此包。历史域分组与 lib/ 均已拆解（跨包共享库）。
+2026-08-31 better-skill 内部新增 `internal/` 子目录归组包内纯库，与历史 lib/ 拆解性质不同（不跨包）。
 
 | 路径 | 包名 | 角色 | 要点 |
 |------|------|------|------|
@@ -22,7 +25,7 @@ tags: [pi, extensions, typescript]
 | `editor-input-tweaks/` | `pi-meow-editor-input-tweaks` | 编辑器输入增强 | /@ 标记符着色 + / 补全停留；独占编辑器槽位（`ctx.ui.setEditorComponent` 全局单例，后设覆盖先设，新增编辑器类扩展须链式包装或并入本包） |
 | `questionnaire/` | `pi-meow-questionnaire` | 问卷工具 | 官方示例演化可自由修改，typebox 为仓库 devDependency |
 | `models-dev/` | `pi-meow-models-dev` | 模型目录导入 | models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await；配置 schema 见下文 |
-| `better-skill/` | `pi-meow-better-skill` | 技能域（合集包） | index-rewrite / ref-hint / nested-skill-hint / agent-browser-notice 合并为 `index.ts` 顺序注册；ref-hint 与 nested-skill-hint 共享 customType `skill-ext` 与 entry renderer，不拆分；含包内 `inject-notice.ts` |
+| `better-skill/` | `pi-meow-better-skill` | 技能域（合集包） | 注册模块（index-rewrite / ref-hint / nested-skill-hint / agent-browser-notice）合并为 `index.ts` 顺序注册；纯库模块归 `internal/` 子目录（inject-notice / path-canon / render / source-labels，仅被注册模块 import，不注册扩展）；ref-hint 与 nested-skill-hint 共享 customType `skill-ext` 与 entry renderer，不拆分 |
 
 注册方式（`settings.meow.json`）：
 
