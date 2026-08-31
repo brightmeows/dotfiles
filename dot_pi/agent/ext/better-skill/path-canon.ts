@@ -66,6 +66,19 @@ export function shortenHome(p: string): string {
   return p.startsWith(home) ? `~${p.slice(home.length)}` : p;
 }
 
+/** ~ 前缀展开（shortenHome 的逆操作）：技能索引 group path 模板以 ~ 形式
+ * 展示，模型可能照抄该形式发起 read，而 node fs 不展开 ~（readdirSync/
+ * openSync 直接 ENOENT）；tool_result 拦截类模块在 fs 调用前展开 */
+export function expandHome(p: string): string {
+  if (p === "~") {
+    return homedir();
+  }
+  if (p.startsWith("~/")) {
+    return join(homedir(), p.slice(2));
+  }
+  return p;
+}
+
 /** 路径分组键：skills 目录（技能目录的上一层，绝对路径） */
 export function pathGroupKey(filePath: string): string {
   return dirname(dirname(filePath));

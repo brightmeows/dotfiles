@@ -41,26 +41,14 @@
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { closeSync, existsSync, openSync, readdirSync, readSync } from "node:fs";
-import { homedir } from "node:os";
 import { basename, dirname, join } from "node:path";
+import { expandHome } from "./path-canon.ts";
 import { renderGroupOpen, renderSkill } from "./render.ts";
 
 /** 从 read 工具参数中安全提取路径 */
 function extractPath(input: Record<string, unknown>): string | null {
   const p = input["path"];
   return typeof p === "string" && p.length > 0 ? p : null;
-}
-
-/** 展开 ~ 前缀（node fs 不展开 ~；技能索引 group path 模板以 ~ 形式展示，
- * 模型可能照抄该形式发起 read） */
-function expandHome(p: string): string {
-  if (p === "~") {
-    return homedir();
-  }
-  if (p.startsWith("~/")) {
-    return join(homedir(), p.slice(2));
-  }
-  return p;
 }
 
 /** 头部读取字节数：足够覆盖现网最长 description 的 frontmatter 块 */
