@@ -24,7 +24,7 @@ tags: [pi, extensions, typescript]
 | `esc-hold/` | `pi-meow-esc-hold` | Esc 防误触 | 单击提示不中断，双击/长按才中断；terminal 输入层，与编辑器槽位无关 |
 | `editor-input-tweaks/` | `pi-meow-editor-input-tweaks` | 编辑器输入增强 | /@ 标记符着色 + / 补全停留；独占编辑器槽位（`ctx.ui.setEditorComponent` 全局单例，后设覆盖先设，新增编辑器类扩展须链式包装或并入本包） |
 | `questionnaire/` | `pi-meow-questionnaire` | 问卷工具 | 官方示例演化可自由修改，typebox 为仓库 devDependency |
-| `models-dev/` | `pi-meow-models-dev` | 模型目录导入 | models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await；配置 schema 见下文 |
+| `models-dev/` | `pi-meow-models-dev` | 模型目录导入 | models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await；纯库模块（registry / config / mapping / thinking）归 `internal/` 子目录；配置 schema 见下文 |
 | `better-skill/` | `pi-meow-better-skill` | 技能域（合集包） | 注册模块（index-rewrite / ref-hint / nested-skill-hint / agent-browser-notice）合并为 `index.ts` 顺序注册；纯库模块归 `internal/` 子目录（inject-notice / path-canon / render / source-labels，仅被注册模块 import，不注册扩展）；ref-hint 与 nested-skill-hint 共享 customType `skill-ext` 与 entry renderer，不拆分 |
 
 注册方式（`settings.meow.json`）：

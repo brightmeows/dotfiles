@@ -17,14 +17,14 @@
  */
 
 import type { ExtensionAPI, ProviderModelConfig } from "@earendil-works/pi-coding-agent";
-import { fetchWithCache, type RawModel } from "./registry.ts";
-import { loadConfig } from "./config.ts";
+import { fetchWithCache, type RawModel } from "./internal/registry.ts";
+import { loadConfig } from "./internal/config.ts";
 import {
   isOpenAiFamilyApi,
   mapModel,
   resolveProviderApi,
   type ResolvedProvider,
-} from "./mapping.ts";
+} from "./internal/mapping.ts";
 
 export default async function (pi: ExtensionAPI) {
   const registry = await fetchWithCache();
