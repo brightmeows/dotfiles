@@ -1,65 +1,50 @@
 /**
  * Skill Index Rewrite（better-skill 主模块，原 skill-index-rewrite.ts）
  *
- * 重写系统提示词中的技能索引段，解决技能激活可靠性 + 组织清晰度：
- * - 移除 Pi 默认建议式激活指令（Seleznov 650 次试验：建议式默认激活
- *   约五成），改为指令式 + 负向约束 + 偏向加载规则（同试验 100%）。
- * - 默认块移除走 R5 策略（措辞精确为主 + 纯标签兜底 + 断言守门），抗 Pi
- *   版本措辞漂移，杜绝“默认块残留 + 新块 = 重复”，详见下方正则注释。
- * - 不做关键词检索凸显（token 重叠粗糙、易误判）；所有技能统一按
- *   安装来源仓库（~/.agents/.skill-lock.json + 项目 skills-lock.json）排序，
- *   模型自行按 description 判断加载。
+ * 重写系统提示词中的技能索引段，并维护技能名空间。两层职责：
  *
- * 格式（纯 XML，路径模板零歧义设计）：
- * - <group path="..."> path 为完整路径模板（如 ~/.agents/skills/${name}/SKILL.md），
- *   用 <name> 替换 ${name} 即得 SKILL.md 完整路径，无需拼接推断。
- * - 同一安装仓库的技能以 <!-- 来源仓库: ... --> 注释分段；注释是纯标注，
- *   不属于任何元素。注释内容为 host/owner/repo 形态（如
- *   github.com/larksuite/cli），域名打头不可能与本地路径混淆。
- * - skill 只含 name+description，路径由 group path 模板给出。
- * - 组边界以 <!-- ===== 项目级技能 ===== --> / <!-- ===== 全局技能 ===== -->
- *   分隔注释标注级别（纯标注，不影响加载规则）；某级无技能时不插对应注释。
- * - 项目级判定：技能组目录位于 cwd 下（cwd 前缀，覆盖 --skill/settings 任意
- *   路径形态）或位于祖先链 .agents/skills / cwd 的 .pi/skills 白名单（并集，
- *   防 Pi 恢复默认项目扫描时漏判）；其余归全局。
+ * 索引重写：移除 Pi 默认技能块（建议式激活指令 + XML 索引），换成指令式
+ * 紧凑索引。Seleznov 650 次试验：建议式默认激活约五成，指令式 + 负向约束
+ * + 偏向加载规则 100%，激活规则区全文保留（仅加载动作随工具化改写）。
  *
- * 不改 Pi 源码、不改技能文件；信息完整保留（name+description）。
+ * 索引格式（2026-09-01 主人确认定稿，替换原 XML 分组形态）：
+ * - <available_skills> 容器保留（Agent Skills 标准的模型预训练锚点；R5
+ *   移除断言只检查移除后的 base，新块复用同标签无自吞风险）
+ * - 规则区 6 条：第 1 条加载动作改为“调用 skill 工具按名加载”（skill 工
+ *   具为主通道，skill-tool.ts）；第 2-4 条原样；第 5 条去 SKILL.md 文件名
+ *   绑定；第 6 条新增别名语义说明（防模型自行去后缀调到冲突的另一技能）
+ * - 条目区：每技能一行 “- 名字: 描述”，按显示名字母序平铺，无分组无注
+ *   释（Q2 纯平铺：group path 模板、来源仓库注释、项目级/全局级分隔注释
+ *   全部废止——按名加载后路径模板失去意义，来源信息仍在 lock 文件可查）；
+ *   description 全文保留不截断（Q3，激活可靠性优先），换行折叠为空格
+ * - 条目名字列即可调用名：无冲突显示原名，重名消歧者显示别名（D13），
+ *   模型照抄必可调用；名字解析走 internal/namespace.ts
  *
- * 辅助模块（internal/，2026-08-11 拆分；2026-08-31 移入 internal/ 子目录）：
- * - source-labels.ts：技能来源标签解析（lock → host/owner/repo）
- * - path-canon.ts：展示路径规范化与项目技能目录收集
- * - render.ts：技能索引 XML 渲染
+ * 名空间维护：before_agent_start 时调 ensureNamespace（diff 缓存，变化才
+ * 全量预扫描，Q7）；消歧记录以 appendEntry 投递 TUI 通知（D12，不进 LLM
+ * 上下文）；session_start（含 /reload）清缓存。加载动作与消歧通知的详细
+ * 规则见 internal/namespace.ts 头注释。
  *
- * 用户提示（2026-08-12 引入知情投递，2026-08-17 移除）：常规重写不再投递
- * 任何提示（对用户与 LLM 均为杂讯）；仅断言告警保留（错误信号非杂讯），
- * 渲染仍走包内 inject-notice.ts 的 renderInjectNotice（默认外观）。
- * 另：本模块作为 better-skill 族主模块，统一注册族内 appendEntry 的
- * entry renderer（ref-hint / subskill-hint 的 TUI-only 简短提示消费）。
+ * R5 默认块移除策略（原样保留）：措辞正则为主 + 纯标签兜底 + 断言守门，
+ * 抗 Pi 版本措辞漂移，杜绝“默认块残留 + 新块 = 重复”，见下方正则注释。
+ *
+ * 退役记录（2026-09-01）：internal/render.ts（XML 条目渲染）、internal/
+ * source-labels.ts（来源标签，消费方为已废止的来源注释）、internal/
+ * path-canon.ts 的规范化/分组/收集函数（消费方为已废止的分组渲染）随之
+ * 删除；path-canon.ts 仅存 expandHome（read 拦截消费）。
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { sep } from "node:path";
 import { renderInjectEntry, renderInjectNotice } from "./internal/inject-notice.ts";
-import {
-  LOCAL_LABEL,
-  UNKNOWN_LABEL,
-  loadProjectSourceMap,
-  loadSourceMap,
-} from "./internal/source-labels.ts";
-import {
-  CANONICAL_USER_DIRS,
-  canonicalSkillFilePath,
-  collectProjectSkillDirs,
-  pathGroupKey,
-  shortenHome,
-} from "./internal/path-canon.ts";
-import {
-  countGroup,
-  renderGroupOpen,
-  renderSkill,
-  sanitizeComment,
-  type SkillIndexEntry,
-} from "./internal/render.ts";
+import { ensureNamespace, resetNamespaceCache, resolveDisplayName } from "./internal/namespace.ts";
+
+/** 技能索引条目所需的最小结构（Pi Skill 类型的子集，避免依赖其类型导出） */
+interface SkillIndexEntry {
+  name: string;
+  description?: string;
+  filePath: string;
+  disableModelInvocation?: boolean;
+}
 
 /**
  * Pi 默认技能索引块的移除策略（R5：措辞精确为主，标签兜底，断言守门）。
@@ -81,10 +66,15 @@ const PI_INTRO_BLOCK_RE =
   /\n\nThe following skills provide specialized instructions[\s\S]*?<\/available_skills>/;
 const PI_TAGS_BLOCK_RE = /<available_skills>[\s\S]*?<\/available_skills>/;
 
+/** description 换行折叠为单个空格（一行式条目保行结构，D3） */
+function collapseDescription(d: string): string {
+  return d.replace(/\s*\n\s*/g, " ").trim();
+}
+
 export function registerIndexRewrite(pi: ExtensionAPI) {
   // 统一渲染（默认外观，collapsed 只显示注入提示）
   pi.registerMessageRenderer("skill-ext", renderInjectNotice);
-  // Ref-hint / subskill-hint 的 TUI-only 简短提示（appendEntry，不进 LLM
+  // read-hint / skill-tool 的 TUI-only 简短提示（appendEntry，不进 LLM
   // 上下文；entry 与 message 的 customType 体系独立）
   pi.registerEntryRenderer("skill-ext", renderInjectEntry);
 
@@ -93,10 +83,24 @@ export function registerIndexRewrite(pi: ExtensionAPI) {
   pi.on("session_compact", async () => {
     assertNotified = false;
   });
+  // 名空间缓存随会话生命周期重建（/reload 后技能集合可能变化）
+  pi.on("session_start", async () => {
+    resetNamespaceCache();
+  });
 
   pi.on("before_agent_start", async (event, ctx) => {
     const allSkills = (event.systemPromptOptions.skills ?? []) as SkillIndexEntry[];
     const skills = allSkills.filter((s) => !s.disableModelInvocation);
+
+    // 名空间就绪（先于索引渲染与 skill 工具消费；空集合也重建，卸载全部
+    // 技能后映射同步清空）；消歧记录投递 TUI 通知，主人可改名根治
+    const { conflicts } = ensureNamespace(skills, ctx.cwd);
+    for (const c of conflicts) {
+      pi.appendEntry("skill-ext", {
+        notice: `[自动注入] 技能名冲突：${c.name} 同时存在于 ${c.winnerDir} 与 ${c.loserDir}，后者消歧为 ${c.alias}`,
+      });
+    }
+
     if (skills.length === 0) {
       return;
     }
@@ -120,84 +124,31 @@ export function registerIndexRewrite(pi: ExtensionAPI) {
         { deliverAs: "steer" },
       );
     }
-    const projectDirs = collectProjectSkillDirs(ctx.cwd);
-    const canonDirs = [...projectDirs.canon, ...CANONICAL_USER_DIRS];
-    const { map: globalMap, ok: globalOk } = loadSourceMap();
-    // 项目 lock 优先于全局 lock（就近优先，与 AGENTS.md 层级语义一致）
-    const projectMap = loadProjectSourceMap(ctx.cwd);
-    const sourceMap = new Map([...globalMap, ...projectMap]);
-    const lockOk = globalOk || projectMap.size > 0;
 
-    // 按 dir → origin 双层分组（用于排序，渲染时扁平——不嵌套 origin 标签）
-    const dirMap = new Map<string, Map<string, SkillIndexEntry[]>>();
-    for (const skill of skills) {
-      const dg = pathGroupKey(canonicalSkillFilePath(skill.filePath, canonDirs));
-      let originGroup = dirMap.get(dg);
-      if (!originGroup) {
-        originGroup = new Map();
-        dirMap.set(dg, originGroup);
-      }
-      const og = lockOk ? (sourceMap.get(skill.name) ?? LOCAL_LABEL) : UNKNOWN_LABEL;
-      let arr = originGroup.get(og);
-      if (!arr) {
-        arr = [];
-        originGroup.set(og, arr);
-      }
-      arr.push(skill);
-    }
-
+    // 索引段（2026-09-01 定稿文本）：规则区 6 条 + 空行 + 平铺条目
     const lines: string[] = [
       "",
       "<available_skills>",
       "可用技能。激活规则（强制）：",
-      "- 任何任务，只要与某技能描述部分相关，MUST 先用 read 加载该 SKILL.md，再开始工作。",
+      "- 任何任务，只要与某技能描述部分相关，MUST 先调用 skill 工具按名加载该技能，再开始工作。",
       "- 宁可多加载一个不需要的，也不要漏掉关键步骤；加载错的代价远小于漏掉的代价。",
       "- 这些技能含 API 端点、命令等预训练知识里没有的专有内容；即便觉得能用通用工具完成，也要先加载。",
       "- 只有确认无任何技能相关，才可不加载。",
-      "- 加载 SKILL.md 后，若它引用 references/scripts 等相对路径文件，以 SKILL.md 所在目录为基准解析路径后一并读取，不要跳过。",
+      "- 技能加载后，若其内容引用 references/scripts 等相对路径文件，以该技能目录为基准解析路径后一并读取，不要跳过。",
+      "- 技能名全局唯一。名字含 @ 的是重名消歧别名（原名@宿主标识），照抄调用，不要去掉后缀。",
+      "",
     ];
-
-    // 按 dir → origin 嵌套排序，扁平渲染（group 下按 source 注释分段，skill 无 origin 属性）
-    // 项目级目录组（cwd 内 / 祖先 .agents/skills）优先于全局；同级别内
-    // .agents/skills 组先于 .pi/skills 组，再按数量降序
-    const isProjectDir = (dg: string) =>
-      dg === ctx.cwd ||
-      dg.startsWith(`${ctx.cwd}${sep}`) ||
-      projectDirs.sort.some((p) => dg === p || dg.startsWith(`${p}${sep}`));
-    const isAgentsDir = (dg: string) => canonDirs.includes(dg);
-    // eslint-disable-next-line unicorn/no-array-sort -- [...展开] 已是新数组，sort 安全
-    const dirEntries = [...dirMap.entries()].sort(
-      (a, b) =>
-        Number(isProjectDir(b[0])) - Number(isProjectDir(a[0])) ||
-        Number(isAgentsDir(b[0])) - Number(isAgentsDir(a[0])) ||
-        countGroup(b[1]) - countGroup(a[1]) ||
-        a[0].localeCompare(b[0]),
-    );
-    // 组边界插级别分隔注释（纯标注）：项目级组（cwd/祖先链）在前，全局组
-    // 在后；排序已保证同级别连续，仅边界切换时插入，某级无技能时不插
-    const PROJECT_SECTION_COMMENT = "<!-- ===== 项目级技能 ===== -->";
-    const GLOBAL_SECTION_COMMENT = "<!-- ===== 全局技能 ===== -->";
-    let prevIsProject: boolean | null = null;
-    for (const [dg, originGroup] of dirEntries) {
-      const isProject = isProjectDir(dg);
-      if (prevIsProject !== isProject) {
-        lines.push(isProject ? PROJECT_SECTION_COMMENT : GLOBAL_SECTION_COMMENT);
-        prevIsProject = isProject;
-      }
-      lines.push(renderGroupOpen(`${shortenHome(dg)}/\${name}/SKILL.md`));
-      // eslint-disable-next-line unicorn/no-array-sort -- [...展开] 已是新数组，sort 安全
-      const originEntries = [...originGroup.entries()].sort(
-        (a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]),
-      );
-      for (const [og, groupSkills] of originEntries) {
-        lines.push(`  <!-- 来源仓库: ${sanitizeComment(og)} -->`);
-        for (const skill of groupSkills) {
-          lines.push(...renderSkill(skill));
-        }
-      }
-      lines.push(`</group>`);
+    // 按显示名（可调用名）字母序平铺（D5/D13）：无冲突显示原名，消歧者
+    // 显示别名，照抄必可调用
+    const entries = [...skills].sort((a, b) => {
+      const da = resolveDisplayName(a.filePath, a.name);
+      const db = resolveDisplayName(b.filePath, b.name);
+      return da.localeCompare(db);
+    });
+    for (const s of entries) {
+      const display = resolveDisplayName(s.filePath, s.name);
+      lines.push(`- ${display}${s.description ? `: ${collapseDescription(s.description)}` : ""}`);
     }
-
     lines.push("</available_skills>");
 
     return { systemPrompt: `${base}\n\n${lines.join("\n")}` };
