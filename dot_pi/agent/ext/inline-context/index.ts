@@ -479,7 +479,7 @@ export default function (pi: ExtensionAPI) {
             (entry.customType === CUSTOM_TYPE || LEGACY_CUSTOM_TYPES.has(entry.customType)),
         );
       if (!hasInjected) {
-        // 提示内容即原摘要行（details.notice = content，collapsed/expanded 一致）
+        // 提示内容即原摘要行（details.notice = content；渲染层折叠截断单行，展开显示全文）
         const summary = buildSummary({ env: envInfo, git: gitInfo, tools, gh });
         result.message = {
           customType: CUSTOM_TYPE,
