@@ -25,7 +25,7 @@ tags: [pi, extensions, typescript]
 | `editor-input-tweaks/` | `pi-meow-editor-input-tweaks` | 编辑器输入增强 | /@ 标记符着色 + / 补全停留；独占编辑器槽位（`ctx.ui.setEditorComponent` 全局单例，后设覆盖先设，新增编辑器类扩展须链式包装或并入本包） |
 | `questionnaire/` | `pi-meow-questionnaire` | 问卷工具 | 官方示例演化可自由修改，typebox 为仓库 devDependency |
 | `models-dev/` | `pi-meow-models-dev` | 模型目录导入 | models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await；纯库模块（registry / config / mapping / thinking）归 `internal/` 子目录；配置 schema 见下文 |
-| `better-skill/` | `pi-meow-better-skill` | 技能域（合集包） | 注册模块（index-rewrite / ref-hint / nested-skill-hint / agent-browser-notice）合并为 `index.ts` 顺序注册；纯库模块归 `internal/` 子目录（inject-notice / path-canon / render / source-labels，仅被注册模块 import，不注册扩展）；ref-hint 与 nested-skill-hint 共享 customType `skill-ext` 与 entry renderer，不拆分 |
+| `better-skill/` | `pi-meow-better-skill` | 技能域（合集包） | 注册模块（index-rewrite / read-hint / skill-tool）合并为 `index.ts` 顺序注册；skill 工具按名加载为主通道（全局唯一名空间 + 重名消歧别名），read 拦截为兜底，两通道共用增强段组装；纯库归 `internal/` 子目录（skill-content / namespace / inject-notice / path-canon）；customType `skill-ext` 历史名保持 |
 
 注册方式（`settings.meow.json`）：
 
@@ -103,7 +103,7 @@ LLM 注入且用户需知情的操作，用户提示显示一律统一（2026-08
 
 - 投递 `pi.appendEntry(customType, { notice, lines? })`（CustomEntry，`buildSessionContext` 忽略，不进 LLM 上下文）
 - TUI 渲染注册包内 `inject-notice.ts` 的 `renderInjectEntry`（外观与 message 版一致）：collapsed 只显示 `notice`，expanded 显示 `lines` 全文
-- 消费方：better-skill 的 ref-hint（技能文件清单）、nested-skill-hint（嵌套技能清单）与 agent-browser-notice（agent-browser 专项提醒），各自独立投递；customType 均为 `skill-ext`（历史名，保持不变保历史会话渲染兼容），renderer 在 index-rewrite.ts 统一注册
+- 消费方：better-skill 的 read-hint（read 技能文件时的增强通知）与 skill-tool（加载时同套通知 + 名空间消歧通知，2026-09-01），各自独立投递；customType 均为 `skill-ext`（历史名，保历史会话渲染兼容），renderer 在 index-rewrite.ts 统一注册
 
 实现要点：renderer 按 customType 精确匹配（不支持前缀/通配）；不注册 renderer 时默认渲染直接显示 content 全文（无折叠）。headless（`-p`）下 entry 不渲染也不报错。
 
@@ -119,8 +119,8 @@ pi -p -e dot_pi/agent/ext/better-skill/index.ts -e /tmp/dump-ext.ts --no-session
 
 - 对比验证（行为回归）：从 git 检出旧版到 /tmp，两边分别 `pi -p -e <被测> -e <dump>` 跑，diff dump 落盘产物。对比前临时移走同源目录（`~/.pi/agent/ext/better-skill`），否则新旧双重改写，diff 失真
 - Pi 项目技能加载渠道（2026-08-13 实测）：`loadSkills` 走 `includeDefaults: false`，不自动扫 `cwd/.pi/skills` 与祖先 `.agents/skills`（放进去不生效，项目 `.pi/settings.json` 的 skills 数组也未生效）
-  项目技能靠 `--skill` 或 settings/packages 进入，验证项目级排序/注释用 `--skill` 注入 cwd 内技能目录
-- 验证 `tool_result` 拦截类扩展（ref-hint）：`-p` 控制台不打印 tool_result 原文，须在 dump 扩展里监听 `tool_result` 并把 read SKILL.md 的 content 落盘（链尾拿到的是改写后内容）
+  项目技能靠 `--skill` 或 settings/packages 进入，验证注入路径技能与名空间消歧用 `--skill` 传 fixture 目录
+- 验证 `tool_result` 拦截类扩展（read-hint）：`-p` 控制台不打印 tool_result 原文，须在 dump 扩展里监听 `tool_result` 并把 read SKILL.md 的 content 落盘（链尾拿到的是改写后内容）
 - dump 工具定义验证 schema：`pi.on("session_start")` 内调 `pi.getAllTools()`，`-e` dump 扩展 + `--no-session` 跑，`parameters` 即 typebox JSON Schema（含 `maxLength`，确认已传 LLM）
 - 孤儿目录清理：ext 为 copy 模式分发，chezmoi apply 不清理部署区多余目录——源目录删除/改名后 `~/.pi/agent/ext/` 残留孤儿（不再被 settings 引用、无害但混乱），apply 后手动 `rm -rf` 处理
 - meow 合并脚本时序坑（2026-08-30 实测）：apply 时 `.chezmoiscripts`（字母序在前）先于 `dot_pi` 部署，脚本读到上一轮的 settings.meow.json 副本，改源后首次 apply 合并的是旧内容
