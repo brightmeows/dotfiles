@@ -1,5 +1,7 @@
 /**
- * 技能扩展合并入口（better-skill，2026-08-30 由 skill-ext 改名）
+ * 技能扩展合并入口（better-skill，2026-08-30 由 skill-ext 改名；
+ * 2026-09-01 customType 由 skill-ext 改为 better-skill，放弃旧会话
+ * 渲染兼容）
  *
  * Pi 扩展发现只支持一层子目录 + 单一入口（index.ts），本目录将全部技能域
  * 扩展合并为一个扩展实例顺序注册：

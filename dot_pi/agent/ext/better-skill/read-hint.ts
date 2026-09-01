@@ -21,8 +21,8 @@
  *   read 子技能散布文件后继续发现其嵌套资源）
  *
  * 通知约定：appendEntry 走包内 inject-notice.ts 的 renderInjectEntry
- * （customType "skill-ext"，历史名保持），notice 由 skill-content 统一
- * 产出，与拆分前三模块独立投递的形态一致。
+ * （customType "better-skill"，2026-09-01 由 skill-ext 改名），notice 由
+ * skill-content 统一产出，与拆分前三模块独立投递的形态一致。
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -86,7 +86,7 @@ export function registerReadHint(pi: ExtensionAPI) {
 
     // TUI-only 用户提示（不进 LLM 上下文），各通知独立投递
     for (const n of notices) {
-      pi.appendEntry("skill-ext", n);
+      pi.appendEntry("better-skill", n);
     }
 
     const rest = event.content.slice(1);

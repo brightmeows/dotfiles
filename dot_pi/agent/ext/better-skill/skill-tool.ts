@@ -100,7 +100,7 @@ export function registerSkillTool(pi: ExtensionAPI) {
       // 增强段与 TUI 通知（与 read 拦截共用组装，信息面一致）
       const { sections, notices } = collectEnhancements(entry.filePath, resolveDisplayName);
       for (const n of notices) {
-        pi.appendEntry("skill-ext", n);
+        pi.appendEntry("better-skill", n);
       }
       if (sections.length > 0) {
         text += `\n\n---\n${sections.join("\n\n---\n")}`;

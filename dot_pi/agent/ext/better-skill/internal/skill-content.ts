@@ -250,7 +250,7 @@ const BROWSER_NOTICE = [
   "2. 启动浏览器默认一律加 `--headed` 全局 flag（如 `agent-browser --headed open <url>`）：headless 特征（UA 含 HeadlessChrome、navigator.webdriver=true）会被风控站点识别拒绝；仅当任务明确为无风控的抓取、截图时才可省略。",
 ].join("\n");
 
-/** TUI-only 通知载荷（appendEntry customType "skill-ext"，不进 LLM 上下文） */
+/** TUI-only 通知载荷（appendEntry customType "better-skill"，不进 LLM 上下文） */
 export interface SkillNotice {
   notice: string;
   lines?: string[];

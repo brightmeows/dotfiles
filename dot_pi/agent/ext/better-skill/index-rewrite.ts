@@ -73,10 +73,10 @@ function collapseDescription(d: string): string {
 
 export function registerIndexRewrite(pi: ExtensionAPI) {
   // 统一渲染（默认外观，collapsed 只显示注入提示）
-  pi.registerMessageRenderer("skill-ext", renderInjectNotice);
+  pi.registerMessageRenderer("better-skill", renderInjectNotice);
   // read-hint / skill-tool 的 TUI-only 简短提示（appendEntry，不进 LLM
   // 上下文；entry 与 message 的 customType 体系独立）
-  pi.registerEntryRenderer("skill-ext", renderInjectEntry);
+  pi.registerEntryRenderer("better-skill", renderInjectEntry);
 
   // 断言告警去重（compact 后重置）：默认块没被两层正则移除时，首轮告警一次
   let assertNotified = false;
@@ -96,7 +96,7 @@ export function registerIndexRewrite(pi: ExtensionAPI) {
     // 技能后映射同步清空）；消歧记录投递 TUI 通知，主人可改名根治
     const { conflicts } = ensureNamespace(skills, ctx.cwd);
     for (const c of conflicts) {
-      pi.appendEntry("skill-ext", {
+      pi.appendEntry("better-skill", {
         notice: `[自动注入] 技能名冲突：${c.name} 同时存在于 ${c.winnerDir} 与 ${c.loserDir}，后者消歧为 ${c.alias}`,
       });
     }
@@ -115,9 +115,9 @@ export function registerIndexRewrite(pi: ExtensionAPI) {
       assertNotified = true;
       pi.sendMessage(
         {
-          customType: "skill-ext",
+          customType: "better-skill",
           content: "[自动注入] 技能索引：默认技能块移除失败，检查 index-rewrite.ts 正则",
-          details: { notice: "skill-ext 默认块移除断言失败" },
+          details: { notice: "better-skill 默认块移除断言失败" },
           display: true,
         },
         { deliverAs: "steer" },
