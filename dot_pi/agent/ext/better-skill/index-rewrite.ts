@@ -116,8 +116,7 @@ export function registerIndexRewrite(pi: ExtensionAPI) {
       pi.sendMessage(
         {
           customType: "skill-ext",
-          content:
-            "[自动注入] 技能索引：警告——未能移除 Pi 默认技能块（两层正则均失配，疑似 Pi 结构变更），可能出现重复块，请检查 index-rewrite.ts 正则",
+          content: "[自动注入] 技能索引：默认技能块移除失败，检查 index-rewrite.ts 正则",
           details: { notice: "skill-ext 默认块移除断言失败" },
           display: true,
         },

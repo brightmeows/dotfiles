@@ -21,6 +21,9 @@
  *
  * 文本定稿（2026-09-01 主人确认）：description、参数描述、三类错误信息
  * 见下方常量与 schema。
+ * renderResult 折叠态（2026-09-01 主人确认）：成功零显示（截断/落盘信息
+ * 在展开态与 LLM 上下文）；错误单行摘要（含「」取技能名，否则取首行）；
+ * 展开态全文 Markdown。
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -117,14 +120,23 @@ export function registerSkillTool(pi: ExtensionAPI) {
       return new Text(theme.fg("toolTitle", theme.bold("skill ")) + theme.fg("muted", name), 0, 0);
     },
     renderResult(result, { expanded }, theme) {
-      const detail = result.details as { skill?: string; truncated?: boolean } | undefined;
-      if (!expanded) {
-        const flag = detail?.truncated ? "（已截断，转读落盘文件）" : "";
-        return new Text(theme.fg("success", `已加载 ${detail?.skill ?? ""}${flag}`), 0, 0);
+      if (expanded) {
+        return new Markdown(contentText(result.content), 0, 0, getMarkdownTheme(), {
+          color: (s: string) => theme.fg("customMessageText", s),
+        });
       }
-      return new Markdown(contentText(result.content), 0, 0, getMarkdownTheme(), {
-        color: (s: string) => theme.fg("customMessageText", s),
-      });
+      // 折叠态：成功零显示；错误单行摘要。错误检测契约：execute 成功路径
+      // 必带 details.skill，throw 错误结果无该字段（AgentToolResult 类型未
+      // 建模 isError，运行时信号不可依赖）
+      const detail = result.details as { skill?: string } | undefined;
+      if (detail?.skill) {
+        return new Text("", 0, 0);
+      }
+      const text = contentText(result.content);
+      const named = text.match(/「([^」]+)」/);
+      const firstLine = (text.split("\n")[0] ?? "").slice(0, 60);
+      const summary = named ? `加载失败：未知技能名「${named[1]}」` : firstLine;
+      return new Text(theme.fg("error", summary), 0, 0);
     },
   });
 }
