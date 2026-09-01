@@ -58,9 +58,14 @@ export function readHead(file: string): string | null {
   }
 }
 
+/** YAML 块标量指示符：`>`/`|` 加可选缩进数字与 chomping（+-），两种顺序 */
+const BLOCK_INDICATOR_RE = /^[>|](?:\d[+-]?|[+-]?\d?)$/;
+
 /** 解析头部 frontmatter 的 name 与 description（超集字段忽略；缺失省略键）。
+ * name 单行锚定；description 单行或块标量（`>`/`|` 及 chomping 变体，后续
+ * 缩进行按空格合并为单行，遇下一顶层键行停止，与索引侧折叠行为对齐）。
  * 行锚定正则不受 available-agents 等多行字段干扰；头部截断只影响末尾
- * 半个多字节字符，不破坏前面完整行的匹配 */
+ * 半个多字节字符，超长多行块尾部缺失时仅显示降级 */
 export function parseHeadFrontmatter(head: string): { name?: string; description?: string } {
   const m = head.match(/^---\n([\s\S]*?)\n---/);
   const fm = m?.[1];
@@ -68,7 +73,27 @@ export function parseHeadFrontmatter(head: string): { name?: string; description
     return {};
   }
   const name = fm.match(/^name:\s*(.+?)\s*$/m)?.[1];
-  const description = fm.match(/^description:\s*(.+?)\s*$/m)?.[1];
+  const single = fm.match(/^description:\s*(.+?)\s*$/m)?.[1];
+  let description = single;
+  if (single && BLOCK_INDICATOR_RE.test(single)) {
+    const lines = fm.split("\n");
+    const start = lines.findIndex((l) => l.startsWith("description:"));
+    const collected: string[] = [];
+    for (let i = start + 1; i < lines.length; i += 1) {
+      const line = lines[i];
+      if (line === undefined) {
+        break;
+      }
+      if (line.trim() === "") {
+        continue;
+      }
+      if (!/^\s/.test(line)) {
+        break;
+      }
+      collected.push(line.trim());
+    }
+    description = collected.filter(Boolean).join(" ") || undefined;
+  }
   return {
     ...(name ? { name } : {}),
     ...(description ? { description } : {}),
@@ -146,25 +171,30 @@ function discoverSubskillDirs(skillsDir: string): string[] {
 }
 
 /**
- * 整树递归扫描嵌套技能（跳隐藏项与 skills/ 目录递归，selfFile 排除）：
- * - skills/ 目录形态：一级子目录中含 SKILL.md 的视为子技能，name 取头部
+ * 整树递归扫描嵌套技能（跳隐藏项，selfFile 排除；散布扫描不进 skills/
+ * 目录，子技能目录当新根递归）：
+ * - skills/ 目录形态：子目录中含 SKILL.md 的视为子技能，全深度递归收集
+ *   （孙技能一并注册，保证增强段广告的名字皆可调），name 取头部
  *   frontmatter name 优先、目录名回落（2026-09-01 主人确认）
  * - frontmatter 散布形态：带 name+description 齐全 frontmatter 的 .md，
  *   name 取 frontmatter（收录条件已要求齐全，路径锚 stem 仅为类型兜底）
  */
 export function walkNestedSkills(dir: string, selfFile: string, out: NestedSkillEntry[]): void {
-  // skills/ 目录形态：一级子目录中含 SKILL.md 的视为子技能
+  // skills/ 目录形态：子目录中含 SKILL.md 的视为子技能，子技能目录当新根
+  // 继续递归（孙技能 skills/ 形态与散布形态一并收集）
   const skillsDir = join(dir, "skills");
   if (existsSync(skillsDir)) {
     for (const subDir of discoverSubskillDirs(skillsDir)) {
-      const head = readHead(join(subDir, "SKILL.md"));
+      const self = join(subDir, "SKILL.md");
+      const head = readHead(self);
       const fm = head ? parseHeadFrontmatter(head) : {};
       out.push({
         // frontmatter name 优先，缺失回落目录名（D14）
         name: fm.name ?? basename(subDir),
         ...(fm.description ? { description: fm.description } : {}),
-        filePath: join(subDir, "SKILL.md"),
+        filePath: self,
       });
+      walkNestedSkills(subDir, self, out);
     }
   }
 
