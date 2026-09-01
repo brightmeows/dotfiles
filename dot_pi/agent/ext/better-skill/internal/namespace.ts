@@ -87,7 +87,8 @@ function levelOf(dir: string, cwd: string): number {
 
 /** 主技能消歧宿主标识：路径去 home 前缀与末尾 skills 段，剩余段连字符
  * 连接；空回落 local（D11）。例：~/.agents/skills → .agents；
- * ~/.pi/agent/skills → .pi-agent；<cwd>/.pi/skills → <项目名>-.pi */
+ * ~/.pi/agent/skills → .pi-agent；~/Codes/dotfiles/.pi/skills →
+ * Codes-dotfiles-.pi（home 后全路径段连接） */
 function dirAlias(dir: string): string {
   const home = homedir();
   const withoutHome = dir.startsWith(home) ? dir.slice(home.length) : dir;
@@ -161,9 +162,13 @@ export function ensureNamespace(
     }
     byName.set(alias, { callableName: alias, filePath, kind });
     byPath.set(filePath, alias);
+    // 目录粒度按条目类型：root 取技能目录（SKILL.md 上两级），nested 取
+    // 文件所在目录（上一级），与 loserDir 同构
     conflicts.push({
       name,
-      winnerDir: shortenHome(dirname(dirname(existing.filePath))),
+      winnerDir: shortenHome(
+        existing.kind === "root" ? dirname(dirname(existing.filePath)) : dirname(existing.filePath),
+      ),
       loserDir: shortenHome(dirForNotice),
       alias,
     });

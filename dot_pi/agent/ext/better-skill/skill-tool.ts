@@ -2,9 +2,10 @@
  * Skill Tool（better-skill 注册模块，2026-09-01 新增）
  *
  * 按名加载技能的主通道：LLM 调用 skill 工具，参数为全局名空间内的技能名
- * （含消歧别名），返回技能 SKILL.md 全文加增强段（附属文件清单、嵌套技能
- * 清单、agent-browser 提醒），与 read 技能文件的信息面完全一致（完整等效，
- * 共用 internal/skill-content.ts 组装）。
+ * （含消歧别名），返回技能文件全文（根技能为 SKILL.md，嵌套技能为其散布
+ * md）加增强段（附属文件清单、嵌套技能清单、agent-browser 提醒），与
+ * read 技能文件的信息面完全一致（完整等效，共用 internal/skill-content.ts
+ * 组装）。
  *
  * 设计要点（2026-09-01 主人确认）：
  * - 只接受技能名（不接受路径、无附加动作参数）：名字精确查名空间映射，
@@ -55,7 +56,7 @@ export function registerSkillTool(pi: ExtensionAPI) {
     name: "skill",
     label: "Skill",
     description:
-      "按名加载技能：返回该技能 SKILL.md 全文、附属文件清单与嵌套技能清单。name 必须照抄 <available_skills> 索引或嵌套技能清单中的名字（含 @ 别名），不接受路径。",
+      "按名加载技能：返回该技能文件全文（根技能为 SKILL.md，嵌套技能为其散布 md）与附属文件、嵌套技能两份清单。name 必须照抄 <available_skills> 索引或嵌套技能清单中的名字（含 @ 别名），不接受路径。",
     parameters: Type.Object({
       name: Type.String({ description: "技能名，照抄技能索引或嵌套清单（含 @ 别名）" }),
     }),
