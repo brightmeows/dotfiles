@@ -7,8 +7,8 @@
  *   索引段，维护技能名空间缓存与消歧通知）
  * - read-hint.ts：技能 read 兜底增强（tool_result 拦截，read 技能文件后追
  *   加附属文件清单 / 嵌套技能清单 / agent-browser 提醒；2026-09-01 由
- *   ref-hint / nested-skill-hint / agent-browser-notice 三拦截合并；同批
- *   将新增 skill-tool.ts 作为按名加载主通道）
+ *   ref-hint / nested-skill-hint / agent-browser-notice 三拦截合并）
+ * - skill-tool.ts：skill 工具（按名加载技能的主通道，2026-09-01 新增）
  *
  * 加载通道分工（2026-09-01 主人确认）：skill 工具为主通道（索引激活规则
  * 指向它），read 拦截为兜底通道（resume 旧会话、模型绕过工具、read 子技
@@ -29,8 +29,10 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { registerIndexRewrite } from "./index-rewrite.ts";
 import { registerReadHint } from "./read-hint.ts";
+import { registerSkillTool } from "./skill-tool.ts";
 
 export default function (pi: ExtensionAPI) {
   registerIndexRewrite(pi);
   registerReadHint(pi);
+  registerSkillTool(pi);
 }
