@@ -14,13 +14,13 @@ tags: [pi, extensions, typescript]
 组织原则（2026-08-30 定）：**各包完全自包含**——包间零 import、无共享目录，复用模块（如
 `inject-notice.ts`）各包自备副本、无同步义务；目录名 = 扩展语义名，包名前缀 `pi-meow-`；例外：`better-skill/`
 为技能域合集包，新技能扩展默认入此包。历史域分组与 lib/ 均已拆解（跨包共享库）。
-2026-08-31 better-skill 内部新增 `internal/` 子目录归组包内纯库，与历史 lib/ 拆解性质不同（不跨包）。
+包内纯库归包内 `internal/` 子目录（不跨包，与历史 lib/ 拆解性质不同）：better-skill 2026-08-31 起，subdir-agents-md 2026-09-08 起。
 
 | 路径 | 包名 | 角色 | 要点 |
 |------|------|------|------|
 | `aliases/` | `pi-meow-aliases` | 斜杠命令别名 | /clear → /new、/exit → /quit |
 | `inline-context/` | `pi-meow-inline-context` | 环境摘要注入 | 日期/系统环境/Git 状态/工具与 gh，systemPrompt 注入；含包内 `inject-notice.ts` |
-| `subdir-agents-md/` | `pi-meow-subdir-agents-md` | 子目录 AGENTS.md 懒加载 | 访问路径时按需注入；含包内 `inject-notice.ts` |
+| `subdir-agents-md/` | `pi-meow-subdir-agents-md` | 子目录规则懒加载 | 结构化路径 + bash 全 token 提取触发；启动注入规则索引；含包内 `inject-notice.ts` 与 `internal/path-extract.ts` |
 | `esc-hold/` | `pi-meow-esc-hold` | Esc 防误触 | 单击提示不中断，双击/长按才中断；terminal 输入层，与编辑器槽位无关 |
 | `editor-input-tweaks/` | `pi-meow-editor-input-tweaks` | 编辑器输入增强 | /@ 标记符着色 + / 补全停留；独占编辑器槽位（`ctx.ui.setEditorComponent` 全局单例，后设覆盖先设，新增编辑器类扩展须链式包装或并入本包） |
 | `questionnaire/` | `pi-meow-questionnaire` | 问卷工具 | 官方示例演化可自由修改，typebox 为仓库 devDependency |
@@ -95,7 +95,7 @@ LLM 注入且用户需知情的操作，用户提示显示一律统一（2026-08
 - 投递 custom_message（`display: true`），TUI 渲染注册包内 `inject-notice.ts` 的 `renderInjectNotice`
 - `details.notice`：提示文案，统一格式 `[自动注入] <来源>：<说明>`，collapsed（默认）只显示它
 - `content`：注入全文（进 LLM；ctrl+o 展开工具输出后显示全文）
-- 消费方：subdir-agents-md（懒加载子目录 AGENTS.md）、inline-context（环境摘要）、better-skill（默认块移除断言告警；2026-08-17 移除常规重写提示，常规重写零提示）
+- 消费方：subdir-agents-md（懒加载子目录规则 + 启动索引）、inline-context（环境摘要）、better-skill（默认块移除断言告警；2026-08-17 移除常规重写提示，常规重写零提示）
 
 ### entry 通道（仅用户可见，不进 LLM）
 
