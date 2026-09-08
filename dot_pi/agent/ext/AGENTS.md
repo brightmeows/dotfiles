@@ -24,7 +24,7 @@ tags: [pi, extensions, typescript]
 | `esc-hold/` | `pi-meow-esc-hold` | Esc 防误触 | 单击提示不中断，双击/长按才中断；terminal 输入层，与编辑器槽位无关 |
 | `editor-input-tweaks/` | `pi-meow-editor-input-tweaks` | 编辑器输入增强 | /@ 标记符着色 + / 补全停留；独占编辑器槽位（`ctx.ui.setEditorComponent` 全局单例，后设覆盖先设，新增编辑器类扩展须链式包装或并入本包） |
 | `questionnaire/` | `pi-meow-questionnaire` | 问卷工具 | 官方示例演化可自由修改，typebox 为仓库 devDependency |
-| `models-dev/` | `pi-meow-models-dev` | 模型目录导入 | models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await；纯库模块（registry / config / mapping / thinking）归 `internal/` 子目录；配置 schema 见下文 |
+| `models-dev/` | `pi-meow-models-dev` | 模型目录导入 | models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await；纯库模块（registry / config / mapping / thinking / custom-models）归 `internal/` 子目录；配置 schema 见下文 |
 | `better-skill/` | `pi-meow-better-skill` | 技能域（合集包） | 注册模块（index-rewrite / read-hint / skill-tool）合并为 `index.ts` 顺序注册；skill 工具按名加载为主通道（全局唯一名空间 + 重名消歧别名），read 拦截为兜底，两通道共用增强段组装；纯库归 `internal/` 子目录（skill-content / namespace / inject-notice / path-canon）；customType `better-skill`（2026-09-01 由 skill-ext 改名） |
 
 注册方式（`settings.meow.json`）：
@@ -78,6 +78,10 @@ models.dev 导入的用户配置，源文件 `dot_pi/agent/models-dev.json` 由 
 - 引用未知 provider/模型 id 时忽略；配置语法/校验失败时警告并按无配置运行
 - 配了 `api` 的 provider 视为显式表态：env 守卫缺失不阻止其注册
 
+## 与 models.json 的关系（优先级：models.json > models-dev 扩展 > pi 内置目录）
+
+pi 原生自定义模型文件 `~/.pi/agent/models.json`（chezmoi 源 `dot_pi/agent/models.json`）中显式声明的 provider 进入保护名单，本扩展注册时跳过（2026-09-08 定，修复 registerProvider 带 models 整体替换导致的自定义失效）。扩展启动时读一次名单，reload/重启生效。
+
 ## 新增与归组
 
 - 一包一扩展（2026-08-30 定）：新扩展建新包目录（目录名 = 扩展语义名），包名 `pi-meow-<目录名>`，扩展文件改名 `index.ts` 直接作为入口；并在 `settings.meow.json` 注册
@@ -99,7 +103,7 @@ LLM 注入且用户需知情的操作，用户提示显示一律统一（2026-08
 
 ### entry 通道（仅用户可见，不进 LLM）
 
-告知用户"已向 LLM 注入什么"但本身不注入内容的简短提示，走 appendEntry（2026-08-17）：
+告知用户“已向 LLM 注入什么”但本身不注入内容的简短提示，走 appendEntry（2026-08-17）：
 
 - 投递 `pi.appendEntry(customType, { notice, lines? })`（CustomEntry，`buildSessionContext` 忽略，不进 LLM 上下文）
 - TUI 渲染注册包内 `inject-notice.ts` 的 `renderInjectEntry`（外观与 message 版一致）：collapsed 只显示 `notice`，expanded 显示 `lines` 全文

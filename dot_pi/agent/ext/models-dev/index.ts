@@ -14,11 +14,16 @@
  *
  * 目录组织（2026-08-27 拆包）：由 tools/ 拆出独立成域并做协议感知改造；
  * 同日接入用户配置（黑名单过滤 / 协议端点覆盖 / 救活被跳过 provider）。
+ *
+ * 优先级（2026-09-08 修订）：配置文件 models.json > models-dev 扩展 > pi 内置
+ * 目录。models.json 显式声明的 provider 进入保护名单，扩展跳过注册，避免
+ * registerProvider 带 models 整体替换 pi 已合成的模型列表（覆盖自定义）。
  */
 
 import type { ExtensionAPI, ProviderModelConfig } from "@earendil-works/pi-coding-agent";
 import { fetchWithCache, type RawModel } from "./internal/registry.ts";
 import { loadConfig } from "./internal/config.ts";
+import { loadCustomProviderIds } from "./internal/custom-models.ts";
 import {
   isOpenAiFamilyApi,
   mapModel,
@@ -38,9 +43,23 @@ export default async function (pi: ExtensionAPI) {
     console.error(`[models-dev] ${warning}`);
   }
 
+  // models.json 保护名单：显式声明的 provider 交还 pi 合成，扩展不注册
+  // （优先级：配置文件 > models-dev 扩展 > pi 内置目录，2026-09-08）
+  const { ids: protectedProviders, warning: modelsWarning } = loadCustomProviderIds();
+  if (modelsWarning) {
+    console.error(`[models-dev] ${modelsWarning}`);
+  }
+
   const registeredNames: string[] = [];
+  const skippedProtected: string[] = [];
   for (const [pid, provider] of Object.entries(registry)) {
     const providerOv = config?.providers?.[pid];
+
+    // 配置文件优先：models.json 已声明的 provider 跳过，不覆写
+    if (protectedProviders.has(pid)) {
+      skippedProtected.push(pid);
+      continue;
+    }
 
     // 配置过滤（Q5 黑名单）：provider 级 disabled 直接跳过
     if (providerOv?.disabled) {
@@ -105,11 +124,14 @@ export default async function (pi: ExtensionAPI) {
   }
 
   // ── 启动后发一条汇总提示 ──
-  if (registeredNames.length > 0) {
+  if (registeredNames.length > 0 || skippedProtected.length > 0) {
     pi.on("session_start", async (event, ctx) => {
       if (event.reason === "startup") {
         ctx.ui.notify(
-          `已注册 ${registeredNames.length} 个 models.dev 提供商：${registeredNames.join(", ")}`,
+          `已注册 ${registeredNames.length} 个 models.dev 提供商：${registeredNames.join(", ")}` +
+            (skippedProtected.length > 0
+              ? `；跳过 ${skippedProtected.length} 个 models.json 已声明：${skippedProtected.join(", ")}`
+              : ""),
           "info",
         );
       }
