@@ -32,13 +32,19 @@
  *   LLM context；TUI 渲染统一走包内 inject-notice.ts 的 renderInjectNotice
  *   （复刻默认 custom_message 外观：collapsed 只显示“已注入”提示，ctrl+o
  *   展开后显示注入全文；display 只控 TUI 渲染，content 总进 LLM）。
- * - 去重靠查找（buildContextEntries）：用 compact-aware 的 buildContextEntries
- *   查找已注入的 customType（固定值）+ details.rel（同文件去重，旧格式回退
- *   customType 后缀）与 details.hash（同内容多子包去重）；命中则跳过，
- *   compact 压缩后查不到则重新注入。哈希存 custom_message 的 details（不进
- *   LLM）。代理用 read 显式读取过的规则文件（explicitlyRead 集合，含
+ * - 去重状态机（2026-09-08 补在途登记）：投递生效是最终一致的——steer 消息
+ *   入队后要经 runLoop drain 才落库，窗口期内 buildContextEntries 查不到已
+ *   投递内容；只查库会把“在途”误判为“未投递”而重复投递（实测：pi 0.85.1
+ *   长 run 多轮触达同子树时同 rel 多次 SEND）。故三态建模：未投递 → 已投递
+ *   （sentRels/sentHashes 实例级登记，权威）→ 已落库（buildContextEntries
+ *   可见）。判定命中“已投递 ∪ 已落库”即跳过；确认落库后从登记摘除（后续
+ *   由库查询兜底）；compact 清空登记允许重注入。库查询本身 compact-aware
+ *   （压缩后条目消失自然回到可注入态）。哈希存 custom_message 的 details
+ *   （不进 LLM）。代理用 read 显式读取过的规则文件（explicitlyRead 集合，含
  *   override/CLAUDE 命名）亦跳过——内容已作为 tool_result 进 LLM；compact
- *   后清空允许重注入。
+ *   后清空允许重注入。索引消息靠 indexInjected 布尔（同为实例级在途登记）。
+ *   已知限制：pi 0.85.1 存在把单次 steer 投递重复落库的运行时问题（上游
+ *   issue 跟进中），本登记只能消除扩展侧重复投递，无法消除运行时双写。
  *
  * 规则：仅注入 cwd 严格子目录（根规则文件由 Pi 原生加载）；不截断、
  * 不做 git-ignore 过滤。
@@ -161,6 +167,10 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
   const pending = new Set<string>();
   /** 代理用 read 显式读取过的规则文件相对路径（compact 后清空，允许重注入） */
   const explicitlyRead = new Set<string>();
+  /** 已投递待落库的 rel（在途登记：落库前防重复投递；确认落库后摘除） */
+  const sentRels = new Set<string>();
+  /** 已投递待落库的内容哈希（同上，同内容多 rel 场景；品牌类型防任意串冒充） */
+  const sentHashes = new Set<Hash>();
   /** 启动索引是否已投递（compact 后清空允许重注入；resume 场景另靠 rel 去重挡） */
   let indexInjected = false;
   /** 索引扫描结果（session_start 发起，首个 context 消费） */
@@ -231,14 +241,22 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
         })
         .filter((r): r is string => r !== undefined),
     );
-    const inContextHashes = new Set(
+    const inContextHashes = new Set<Hash>(
       existing
         .map((e) => (e.details as { hash?: string } | undefined)?.hash)
-        .filter((h): h is string => typeof h === "string"),
+        .filter((h): h is string => typeof h === "string")
+        .map((h) => h as Hash),
     );
 
-    // 同 turn 内已投递的哈希（steer 延迟到下 turn drain，本 turn 多个 pending 靠它去重）
-    const seenHashes = new Set<string>();
+    // 在途登记 reconciliation：已确认落库（出现在上下文）的 rel/hash 从登记
+    // 摘除，此后由 inContext* 集合兜底；compact 后条目从库查询消失、登记也
+    // 已清空，自然回到可注入态
+    for (const rel of inContextRels) {
+      sentRels.delete(rel);
+    }
+    for (const hash of inContextHashes) {
+      sentHashes.delete(hash);
+    }
 
     // 启动索引：每会话一次；compact 后重注入；resume 时旧条目仍在上下文，
     // 靠 rel 去重挡
@@ -262,8 +280,8 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
     }
 
     for (const rel of toProcess) {
-      if (inContextRels.has(rel)) {
-        continue; // 同文件已在上下文
+      if (sentRels.has(rel) || inContextRels.has(rel)) {
+        continue; // 本实例已投递（在途或已落库），不重复投递
       }
       if (explicitlyRead.has(rel)) {
         continue; // 代理已显式读取，内容已作为 tool_result 进 LLM
@@ -273,10 +291,9 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
         continue; // 文件读取失败，允许下次重试
       }
       const hash = hashOf(content);
-      if (inContextHashes.has(hash) || seenHashes.has(hash)) {
-        continue; // 同内容已在上下文（别的子包）或本 turn 已投递，跳过
+      if (sentHashes.has(hash) || inContextHashes.has(hash)) {
+        continue; // 同内容已投递/已在上下文（别的子包），跳过
       }
-      seenHashes.add(hash);
       // TUI 渲染由 renderInjectNotice 统一（collapsed 只显示提示，
       // Ctrl+O 展开显示全文）；content 总进 LLM，display 只控 TUI
       const notice = injectNotice(rel);
@@ -289,12 +306,19 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
         },
         { deliverAs: "steer" },
       );
+      // 投递后登记（与 sendMessage 同一同步块，无窗口）：即使消息尚未落库，
+      // 后续 context 事件也不会重复投递同一 rel/hash；投递失败（罕见）时
+      // 挂起到 compact 才可重试，宁缺毋滥
+      sentRels.add(rel);
+      sentHashes.add(hash);
     }
   });
 
-  // Compact 后 tool_result 被压缩、代理不再记得内容，允许重新注入（索引同理）
+  // Compact 后 tool_result 被压缩、代理不再记得内容，允许重新注入（索引与在途登记同理）
   pi.on("session_compact", async () => {
     explicitlyRead.clear();
+    sentRels.clear();
+    sentHashes.clear();
     indexInjected = false;
   });
 }
