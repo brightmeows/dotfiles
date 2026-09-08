@@ -55,9 +55,16 @@ export default async function (pi: ExtensionAPI) {
   for (const [pid, provider] of Object.entries(registry)) {
     const providerOv = config?.providers?.[pid];
 
-    // 配置文件优先：models.json 已声明的 provider 跳过，不覆写
+    // 配置文件优先：models.json 已声明的 provider 跳过，不覆写。
+    // 代价：models-dev.json 对受保护 provider 的覆盖（disabled / api /
+    // baseUrl）随之失效，配置存在时打警告，避免无声漂移
     if (protectedProviders.has(pid)) {
       skippedProtected.push(pid);
+      if (providerOv) {
+        console.error(
+          `[models-dev] provider ${pid} 在 models.json 已声明，models-dev.json 中的覆盖配置不生效（优先级：models.json > models-dev.json）`,
+        );
+      }
       continue;
     }
 

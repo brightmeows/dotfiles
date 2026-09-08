@@ -11,8 +11,10 @@
  * （内置目录模型保留 + models.json upsert/替换）生效，达成优先级
  * “配置文件 models.json > models-dev 扩展 > pi 内置目录”。
  *
- * 失效模式：文件不存在 → 空名单（无保护，行为与历史一致）；JSON 语法错或
- * providers 非对象 → 警告 + 空名单，不崩溃（对齐 config.ts 的 D16 降级）。
+ * 失效模式：文件不存在 → 空名单（无保护，行为与历史一致）；providers 键
+ * 缺失 → 空名单（文件存在但未声明自定义模型，正常路径）；JSON 语法错或
+ * providers 非对象（数组/标量）→ 警告 + 空名单，不崩溃（对齐 config.ts
+ * 的 D16 降级）。
  */
 
 import { readFileSync } from "node:fs";
@@ -24,7 +26,7 @@ const MODELS_FILE = join(homedir(), ".pi", "agent", "models.json");
 export interface LoadCustomProvidersResult {
   /** 受保护 provider id 集合（models.json 顶层声明过）；异常路径为空集 */
   ids: Set<string>;
-  /** 文件存在但解析失败时的警告文案（调用方打日志用） */
+  /** 文件存在但结构损坏（语法错 / providers 非对象）时的警告文案（调用方打日志用） */
   warning?: string;
 }
 
@@ -40,8 +42,17 @@ export function loadCustomProviderIds(): LoadCustomProvidersResult {
   try {
     const data = JSON.parse(raw) as { providers?: unknown };
     const providers = data?.providers;
-    if (!providers || typeof providers !== "object" || Array.isArray(providers)) {
+    if (providers === undefined || providers === null) {
+      // 无 providers 键：文件存在但未声明自定义模型，正常路径
       return { ids: new Set() };
+    }
+    if (typeof providers !== "object" || Array.isArray(providers)) {
+      // providers 非对象（数组/标量）：结构损坏，按无名单降级并警告
+      const kind = Array.isArray(providers) ? "array" : typeof providers;
+      return {
+        ids: new Set(),
+        warning: `models.json providers 非对象（${kind}），models-dev 不设保护名单`,
+      };
     }
     return { ids: new Set(Object.keys(providers)) };
   } catch (error) {
