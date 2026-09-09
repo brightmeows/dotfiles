@@ -1,10 +1,10 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "categories": {
-    "correctness": "error",
-    "suspicious": "warn",
-    "perf": "warn",
-    "style": "warn",
+    "correctness": "deny",
+    "suspicious": "deny",
+    "perf": "deny",
+    "style": "deny",
     "pedantic": "off"
   },
   "plugins": ["typescript", "oxc", "unicorn"],
@@ -23,7 +23,12 @@
     "prefer-named-capture-group": "off",
     "func-names": "off",
     "sort-imports": "off",
-    "new-cap": ["warn", { "properties": false }]
+    "new-cap": [
+      "deny",
+      {
+        "properties": false
+      }
+    ]
   },
   "ignorePatterns": ["node_modules"]
 }
