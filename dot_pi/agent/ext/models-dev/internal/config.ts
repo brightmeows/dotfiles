@@ -21,7 +21,7 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { Type } from "typebox";
-import { Check } from "typebox/value";
+import { Check as checkSchema } from "typebox/value";
 
 const CONFIG_FILE = join(homedir(), ".pi", "agent", "models-dev.json");
 
@@ -47,19 +47,23 @@ const ModelOverrideSchema = Type.Object(
   { additionalProperties: false },
 );
 
+const ModelOverrideRecordSchema = Type.Record(Type.String(), ModelOverrideSchema);
+
 const ProviderOverrideSchema = Type.Object(
   {
     disabled: Type.Optional(Type.Boolean()),
     api: Type.Optional(ApiSchema),
     baseUrl: Type.Optional(Type.String({ minLength: 1 })),
-    models: Type.Optional(Type.Record(Type.String(), ModelOverrideSchema)),
+    models: Type.Optional(ModelOverrideRecordSchema),
   },
   { additionalProperties: false },
 );
 
+const ProvidersRecordSchema = Type.Record(Type.String(), ProviderOverrideSchema);
+
 const ModelsDevConfigSchema = Type.Object(
   {
-    providers: Type.Optional(Type.Record(Type.String(), ProviderOverrideSchema)),
+    providers: Type.Optional(ProvidersRecordSchema),
   },
   { additionalProperties: false },
 );
@@ -74,7 +78,7 @@ export interface ModelOverride {
   name?: string;
 }
 
-/** provider 级覆盖 */
+/** 用户配置中的 provider 级覆盖 */
 export interface ProviderOverride {
   disabled?: boolean;
   api?: ApiValue;
@@ -111,7 +115,7 @@ export function loadConfig(): LoadConfigResult {
       warning: `models-dev 配置 JSON 解析失败，按无配置运行：${error instanceof Error ? error.message : error}`,
     };
   }
-  if (!Check(ModelsDevConfigSchema, data)) {
+  if (!checkSchema(ModelsDevConfigSchema, data)) {
     return {
       config: null,
       warning: "models-dev 配置 schema 校验失败（见 AGENTS.md 的 schema 说明），按无配置运行",

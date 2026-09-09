@@ -31,15 +31,15 @@ import { normalizeBaseUrl, type RawModel, type RawProvider } from "./registry.ts
 import { buildThinkingLevelMap, extractEffortValues } from "./thinking.ts";
 import type { ApiValue, ModelOverride, ProviderOverride } from "./config.ts";
 
-/** pi 支持的协议子集（本扩展会注册到的；取值集与 config.ts 的校验枚举一致） */
+/** 协议子集（pi 支持的、本扩展会注册到的；取值集与 config.ts 的校验枚举一致） */
 export type Api = ApiValue;
 
-/** openai 族协议（模型层 shape 覆盖只对 openai 族生效）；导出供 index.ts 救活分支复用 */
+/** OpenAI 族协议（模型层 shape 覆盖只对 OpenAI 族生效）；导出供 index.ts 救活分支复用 */
 export function isOpenAiFamilyApi(api: ApiValue): boolean {
   return api === "openai-completions" || api === "openai-responses";
 }
 
-/** provider 层 npm → pi 协议 的显式映射（非 openai 系，单一事实来源） */
+/** Provider 层 npm → pi 协议 的显式映射（非 OpenAI 系，单一事实来源） */
 const NPM_API_MAP: Readonly<Record<string, Api>> = {
   "@ai-sdk/anthropic": "anthropic-messages",
   "@ai-sdk/google": "google-generative-ai",
@@ -61,7 +61,7 @@ const OPENAI_COMPAT_NPM = new Set([
 /** 协议判定结果：provider 级协议 + baseUrl + 是否 openai 族（shape 覆盖范围） */
 export interface ResolvedProvider {
   api: Api;
-  /** provider 级 baseUrl（可为空串，由调用方决定是否回退） */
+  /** 覆盖后的 provider 级 baseUrl（可为空串，由调用方决定是否回退） */
   baseUrl: string | null;
   /** 是否 openai 族：模型层 shape 覆盖只对 openai 族生效 */
   isOpenAiFamily: boolean;
@@ -137,7 +137,7 @@ function applyShape(api: Api, shape: string | undefined, isOpenAiFamily: boolean
   return api;
 }
 
-/** models.dev 分级定价 → pi cost.tiers（pi tier 字段全必填，缺省补 0） */
+/** 将 models.dev 分级定价映射为 pi cost.tiers（pi tier 字段全必填，缺省补 0） */
 function mapCostTiers(raw: RawModel["cost"]): ProviderModelConfig["cost"]["tiers"] {
   if (raw?.tiers && raw.tiers.length > 0) {
     return raw.tiers.map((t) => ({
@@ -206,17 +206,12 @@ export function mapModel(
     applyShape(resolved.api, raw.provider?.shape, resolved.isOpenAiFamily);
 
   // 端点：模型配置 > provider 配置 > 数据模型级 api（展开 ${ENV}）> 判定 baseUrl
-  let baseUrl: string | null = null;
-  if (modelOv?.baseUrl) {
-    baseUrl = modelOv.baseUrl;
-  } else if (ov?.provider?.baseUrl) {
-    baseUrl = ov.provider.baseUrl;
-  } else if (raw.provider?.api) {
-    baseUrl = expandEnvVars(raw.provider.api);
-  }
-  if (!baseUrl) {
-    baseUrl = resolved.baseUrl;
-  }
+  // （沿用真值判断语义：空串与 null 均回落下一级）
+  const baseUrl =
+    modelOv?.baseUrl ||
+    ov?.provider?.baseUrl ||
+    (raw.provider?.api ? expandEnvVars(raw.provider.api) : null) ||
+    resolved.baseUrl;
 
   const tiers = mapCostTiers(raw.cost);
 

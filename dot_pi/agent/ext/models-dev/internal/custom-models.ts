@@ -1,5 +1,5 @@
 /**
- * models.json 自定义 provider 名单读取（custom-models 子模块）
+ * 读 models.json 自定义 provider 名单（custom-models 子模块）
  *
  * 职责：读取 ~/.pi/agent/models.json（pi 官方自定义模型文件，chezmoi 从
  * dot_pi/agent/models.json 直接部署）的顶层 providers 键集合。该文件由 pi
@@ -47,7 +47,7 @@ export function loadCustomProviderIds(): LoadCustomProvidersResult {
       return { ids: new Set() };
     }
     if (typeof providers !== "object" || Array.isArray(providers)) {
-      // providers 非对象（数组/标量）：结构损坏，按无名单降级并警告
+      // 当 providers 为数组或标量（非对象）：结构损坏，按无名单降级并警告
       const kind = Array.isArray(providers) ? "array" : typeof providers;
       return {
         ids: new Set(),

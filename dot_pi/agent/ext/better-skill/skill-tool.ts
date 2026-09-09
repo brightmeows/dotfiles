@@ -26,8 +26,8 @@
  * 展开态全文 Markdown。
  */
 
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import {
+  type ExtensionAPI,
   DEFAULT_MAX_BYTES,
   DEFAULT_MAX_LINES,
   formatSize,
@@ -78,13 +78,14 @@ export function registerSkillTool(pi: ExtensionAPI) {
       let raw: string;
       try {
         raw = readFileSync(entry.filePath, "utf8");
-      } catch (e) {
+      } catch (error) {
         throw new Error(
-          `技能文件读取失败：${entry.filePath}（${e instanceof Error ? e.message : String(e)}）`,
+          `技能文件读取失败：${entry.filePath}（${error instanceof Error ? error.message : String(error)}）`,
+          { cause: error },
         );
       }
 
-      // read 等效截断（2000 行/50KB，先到先停）；截断时完整内容落盘临时
+      // Read 等效截断（2000 行/50KB，先到先停）；截断时完整内容落盘临时
       // 文件，提示中给出路径
       const truncation = truncateHead(raw, {
         maxLines: DEFAULT_MAX_LINES,

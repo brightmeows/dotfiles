@@ -128,7 +128,7 @@ export function ensureNamespace(
 ): { conflicts: NameConflict[] } {
   const key = skills
     .map((s) => s.filePath)
-    .sort()
+    .toSorted()
     .join("\n");
   if (cacheKey === key) {
     return { conflicts: [] };
@@ -138,14 +138,17 @@ export function ensureNamespace(
   byPath = new Map();
   const conflicts: NameConflict[] = [];
 
+  /** 登记参数（对象收拢，避免超长参数列表） */
+  interface RegisterArgs {
+    name: string;
+    filePath: string;
+    kind: NamespaceEntry["kind"];
+    hostBase: string;
+    dirForNotice: string;
+  }
+
   /** 登记一个名字；冲突时生成别名并记录消歧（先到者保名，D11） */
-  const register = (
-    name: string,
-    filePath: string,
-    kind: NamespaceEntry["kind"],
-    hostBase: string,
-    dirForNotice: string,
-  ): void => {
+  const register = ({ name, filePath, kind, hostBase, dirForNotice }: RegisterArgs): void => {
     const existing = byName.get(name);
     if (!existing) {
       byName.set(name, { callableName: name, filePath, kind });
@@ -164,25 +167,31 @@ export function ensureNamespace(
     byPath.set(filePath, alias);
     // 目录粒度按条目类型：root 取技能目录（SKILL.md 上两级），nested 取
     // 文件所在目录（上一级），与 loserDir 同构
+    const winnerDirPath =
+      existing.kind === "root" ? dirname(dirname(existing.filePath)) : dirname(existing.filePath);
     conflicts.push({
       name,
-      winnerDir: shortenHome(
-        existing.kind === "root" ? dirname(dirname(existing.filePath)) : dirname(existing.filePath),
-      ),
+      winnerDir: shortenHome(winnerDirPath),
       loserDir: shortenHome(dirForNotice),
       alias,
     });
   };
 
   // 主技能：注册序排序后登记（级别，路径字母序）
-  const roots = [...skills].sort(
+  const roots = [...skills].toSorted(
     (a, b) =>
       levelOf(dirname(dirname(a.filePath)), cwd) - levelOf(dirname(dirname(b.filePath)), cwd) ||
       a.filePath.localeCompare(b.filePath),
   );
   for (const s of roots) {
     const dir = dirname(dirname(s.filePath));
-    register(s.name, s.filePath, "root", dirAlias(dir), dir);
+    register({
+      name: s.name,
+      filePath: s.filePath,
+      kind: "root",
+      hostBase: dirAlias(dir),
+      dirForNotice: dir,
+    });
   }
 
   // 子技能：宿主序逐根整树扫描，宿主标识 = 宿主主技能原名（D11）
@@ -190,7 +199,13 @@ export function ensureNamespace(
     const list: NestedSkillEntry[] = [];
     walkNestedSkills(dirname(s.filePath), s.filePath, list);
     for (const e of list) {
-      register(e.name, e.filePath, "nested", s.name, dirname(e.filePath));
+      register({
+        name: e.name,
+        filePath: e.filePath,
+        kind: "nested",
+        hostBase: s.name,
+        dirForNotice: dirname(e.filePath),
+      });
     }
   }
 
@@ -209,5 +224,5 @@ export function lookupName(name: string): NamespaceEntry | undefined {
 
 /** 全量可调用名（字母序；skill 工具错误信息自纠用） */
 export function listCallableNames(): string[] {
-  return [...byName.keys()].sort((a, b) => a.localeCompare(b));
+  return [...byName.keys()].toSorted((a, b) => a.localeCompare(b));
 }

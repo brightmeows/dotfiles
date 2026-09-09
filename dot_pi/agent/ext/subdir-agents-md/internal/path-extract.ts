@@ -30,12 +30,16 @@ export function isContextFilename(basename: string): boolean {
 
 /** 展开 ~ 与 ~/ 前缀（path.resolve 不处理波浪号） */
 export function expandHome(p: string): string {
-  if (p === "~") return os.homedir();
-  if (p.startsWith("~/")) return path.join(os.homedir(), p.slice(2));
+  if (p === "~") {
+    return os.homedir();
+  }
+  if (p.startsWith("~/")) {
+    return path.join(os.homedir(), p.slice(2));
+  }
   return p;
 }
 
-/** realpath 归一（symlink 解析到真实树）；目标不存在时回落原路径（write 目标场景） */
+/** 用 realpath 归一（symlink 解析到真实树）；目标不存在时回落原路径（write 目标场景） */
 export function realpathOr(p: string): string {
   try {
     return fs.realpathSync(p);
@@ -44,7 +48,7 @@ export function realpathOr(p: string): string {
   }
 }
 
-/** token 分隔符：空白与 shell 结构符（管道、链、后台、子 shell、重定向、命令替换反引号） */
+/** Token 分隔符：空白与 shell 结构符（管道、链、后台、子 shell、重定向、命令替换反引号） */
 const SEPARATORS = new Set([" ", "\t", "\n", "\r", "|", "&", ";", "(", ")", "<", ">", "`"]);
 
 /** 简易 shell 词法切分：引号内保留空格与分隔符；不做变量/命令替换展开 */
@@ -54,8 +58,11 @@ export function tokenizeCommand(cmd: string): string[] {
   let quote: '"' | "'" | null = null;
   for (const ch of cmd) {
     if (quote !== null) {
-      if (ch === quote) quote = null;
-      else current += ch;
+      if (ch === quote) {
+        quote = null;
+      } else {
+        current += ch;
+      }
       continue;
     }
     if (ch === '"' || ch === "'") {
@@ -63,35 +70,47 @@ export function tokenizeCommand(cmd: string): string[] {
       continue;
     }
     if (SEPARATORS.has(ch)) {
-      if (current !== "") tokens.push(current);
+      if (current !== "") {
+        tokens.push(current);
+      }
       current = "";
       continue;
     }
     current += ch;
   }
-  if (current !== "") tokens.push(current);
+  if (current !== "") {
+    tokens.push(current);
+  }
   return tokens;
 }
 
-/** rel 是否落在 root 内（非空、非向上、非绝对；".." 前缀检查防 "..weird" 误伤） */
+/** 判断 rel 是否落在 root 内（非空、非向上、非绝对；".." 前缀检查防 "..weird" 误伤） */
 function withinRootRel(rel: string): boolean {
   return rel !== "" && rel !== ".." && !rel.startsWith("../") && !path.isAbsolute(rel);
 }
 
 /**
- * bash 命令 → 路径候选（相对 root）。flag（-x / --xx）与纯数字丢弃；
+ * Bash 命令 → 路径候选（相对 root）。flag（-x / --xx）与纯数字丢弃；
  * 含 / 的 token 直接保留，无 / 的 token 仅磁盘真实存在才保留。
  * root 外（含 symlink 逃逸）丢弃。
  */
 export function bashPathCandidates(cmd: string, root: string): string[] {
   const results = new Set<string>();
   for (const token of tokenizeCommand(cmd)) {
-    if (token.startsWith("-") && token.length > 1) continue;
-    if (/^\d+$/.test(token)) continue;
+    if (token.startsWith("-") && token.length > 1) {
+      continue;
+    }
+    if (/^\d+$/.test(token)) {
+      continue;
+    }
     const resolved = realpathOr(path.resolve(root, expandHome(token)));
     const rel = path.relative(root, resolved);
-    if (!withinRootRel(rel)) continue;
-    if (token.includes("/") || fs.existsSync(resolved)) results.add(rel);
+    if (!withinRootRel(rel)) {
+      continue;
+    }
+    if (token.includes("/") || fs.existsSync(resolved)) {
+      results.add(rel);
+    }
   }
   return [...results];
 }
@@ -109,13 +128,17 @@ function withinRoot(current: string, root: string): boolean {
 export function anchorDirs(absPath: string): string[] {
   const trimmed = absPath.replace(/\/+$/, "");
   try {
-    if (fs.statSync(trimmed).isDirectory()) return [trimmed];
+    if (fs.statSync(trimmed).isDirectory()) {
+      return [trimmed];
+    }
   } catch {
     // 不存在 → 按文件处理
   }
   const ext = path.extname(trimmed);
   const dir = path.dirname(trimmed);
-  if (!ext) return [dir];
+  if (!ext) {
+    return [dir];
+  }
   const coLocated = trimmed.slice(0, -ext.length);
   return coLocated && coLocated !== dir ? [dir, coLocated] : [dir];
 }
@@ -125,7 +148,9 @@ export function pickContextFile(dir: string): string | null {
   for (const name of CONTEXT_FILENAMES) {
     const candidate = path.join(dir, name);
     try {
-      if (fs.statSync(candidate).isFile()) return candidate;
+      if (fs.statSync(candidate).isFile()) {
+        return candidate;
+      }
     } catch {
       // 下一候选
     }
@@ -157,11 +182,21 @@ export function scanContextFiles(root: string, maxDepth: number, maxFiles: numbe
       } catch {
         continue; // 无权限/已消失，跳过
       }
-      entries.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+      entries.sort((a, b) => {
+        if (a.name < b.name) {
+          return -1;
+        }
+        if (a.name > b.name) {
+          return 1;
+        }
+        return 0;
+      });
       for (const entry of entries) {
         const abs = path.join(dir, entry.name);
         if (isContextFilename(entry.name)) {
-          if (entry.isFile()) results.push(path.relative(root, abs));
+          if (entry.isFile()) {
+            results.push(path.relative(root, abs));
+          }
         } else if (entry.isDirectory() && !skip.has(entry.name) && !entry.isSymbolicLink()) {
           next.push(abs);
         }
@@ -181,16 +216,22 @@ export function scanContextFiles(root: string, maxDepth: number, maxFiles: numbe
  */
 export function findAncestorContextFiles(absDir: string, absRoot: string): string[] {
   const results: string[] = [];
-  if (!withinRoot(absDir, absRoot)) return results;
+  if (!withinRoot(absDir, absRoot)) {
+    return results;
+  }
   let current = absDir;
   let guard = 0;
   while (withinRoot(current, absRoot) && guard++ < 64) {
     if (current !== absRoot) {
       const picked = pickContextFile(current);
-      if (picked) results.push(path.relative(absRoot, picked));
+      if (picked) {
+        results.push(path.relative(absRoot, picked));
+      }
     }
     const parent = path.dirname(current);
-    if (parent === current) break; // 文件系统根
+    if (parent === current) {
+      break;
+    } // 文件系统根
     current = parent;
   }
   return results;

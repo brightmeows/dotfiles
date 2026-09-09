@@ -43,7 +43,7 @@ export default async function (pi: ExtensionAPI) {
     console.error(`[models-dev] ${warning}`);
   }
 
-  // models.json 保护名单：显式声明的 provider 交还 pi 合成，扩展不注册
+  // Models.json 保护名单：显式声明的 provider 交还 pi 合成，扩展不注册
   // （优先级：配置文件 > models-dev 扩展 > pi 内置目录，2026-09-08）
   const { ids: protectedProviders, warning: modelsWarning } = loadCustomProviderIds();
   if (modelsWarning) {
@@ -57,7 +57,7 @@ export default async function (pi: ExtensionAPI) {
 
     // 配置文件优先：models.json 已声明的 provider 跳过，不覆写。
     // 代价：models-dev.json 对受保护 provider 的覆盖（disabled / api /
-    // baseUrl）随之失效，配置存在时打警告，避免无声漂移
+    // BaseUrl）随之失效，配置存在时打警告，避免无声漂移
     if (protectedProviders.has(pid)) {
       skippedProtected.push(pid);
       if (providerOv) {
@@ -134,11 +134,12 @@ export default async function (pi: ExtensionAPI) {
   if (registeredNames.length > 0 || skippedProtected.length > 0) {
     pi.on("session_start", async (event, ctx) => {
       if (event.reason === "startup") {
+        const skippedNote =
+          skippedProtected.length > 0
+            ? `；跳过 ${skippedProtected.length} 个 models.json 已声明：${skippedProtected.join(", ")}`
+            : "";
         ctx.ui.notify(
-          `已注册 ${registeredNames.length} 个 models.dev 提供商：${registeredNames.join(", ")}` +
-            (skippedProtected.length > 0
-              ? `；跳过 ${skippedProtected.length} 个 models.json 已声明：${skippedProtected.join(", ")}`
-              : ""),
+          `已注册 ${registeredNames.length} 个 models.dev 提供商：${registeredNames.join(", ")}${skippedNote}`,
           "info",
         );
       }

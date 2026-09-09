@@ -154,7 +154,7 @@ function selectIndexFiles(root: string, files: string[]): string[] {
       picked.push(path.relative(root, file));
     }
   }
-  return picked.sort();
+  return picked.toSorted();
 }
 
 // ── Extension ──

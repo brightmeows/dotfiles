@@ -66,7 +66,7 @@ const PI_INTRO_BLOCK_RE =
   /\n\nThe following skills provide specialized instructions[\s\S]*?<\/available_skills>/;
 const PI_TAGS_BLOCK_RE = /<available_skills>[\s\S]*?<\/available_skills>/;
 
-/** description 换行折叠为单个空格（一行式条目保行结构，D3） */
+/** 将 description 换行折叠为单个空格（一行式条目保行结构，D3） */
 function collapseDescription(d: string): string {
   return d.replace(/\s*\n\s*/g, " ").trim();
 }
@@ -74,7 +74,7 @@ function collapseDescription(d: string): string {
 export function registerIndexRewrite(pi: ExtensionAPI) {
   // 统一渲染（默认外观，collapsed 只显示注入提示）
   pi.registerMessageRenderer("better-skill", renderInjectNotice);
-  // read-hint / skill-tool 的 TUI-only 简短提示（appendEntry，不进 LLM
+  // 供 read-hint / skill-tool 投递的 TUI-only 简短提示（appendEntry，不进 LLM
   // 上下文；entry 与 message 的 customType 体系独立）
   pi.registerEntryRenderer("better-skill", renderInjectEntry);
 
@@ -139,7 +139,7 @@ export function registerIndexRewrite(pi: ExtensionAPI) {
     ];
     // 按显示名（可调用名）字母序平铺（D5/D13）：无冲突显示原名，消歧者
     // 显示别名，照抄必可调用
-    const entries = [...skills].sort((a, b) => {
+    const entries = [...skills].toSorted((a, b) => {
       const da = resolveDisplayName(a.filePath, a.name);
       const db = resolveDisplayName(b.filePath, b.name);
       return da.localeCompare(db);

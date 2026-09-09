@@ -180,7 +180,7 @@ function discoverSubskillDirs(skillsDir: string): string[] {
  *   name 取 frontmatter（收录条件已要求齐全，路径锚 stem 仅为类型兜底）
  */
 export function walkNestedSkills(dir: string, selfFile: string, out: NestedSkillEntry[]): void {
-  // skills/ 目录形态：子目录中含 SKILL.md 的视为子技能，子技能目录当新根
+  // 识别 skills/ 目录形态：子目录中含 SKILL.md 的视为子技能，子技能目录当新根
   // 继续递归（孙技能 skills/ 形态与散布形态一并收集）
   const skillsDir = join(dir, "skills");
   if (existsSync(skillsDir)) {
@@ -189,7 +189,7 @@ export function walkNestedSkills(dir: string, selfFile: string, out: NestedSkill
       const head = readHead(self);
       const fm = head ? parseHeadFrontmatter(head) : {};
       out.push({
-        // frontmatter name 优先，缺失回落目录名（D14）
+        // 名字以 frontmatter name 优先，缺失回落目录名（D14）
         name: fm.name ?? basename(subDir),
         ...(fm.description ? { description: fm.description } : {}),
         filePath: self,
@@ -243,7 +243,7 @@ export function isAgentBrowserSkill(filePath: string): boolean {
   return parts.at(-1) === "SKILL.md" && parts.includes("agent-browser");
 }
 
-/** agent-browser 专项提醒正文（进 LLM 上下文；段间分隔由组装方统一加） */
+/** 给 agent-browser 的专项提醒正文（进 LLM 上下文；段间分隔由组装方统一加） */
 const BROWSER_NOTICE = [
   "**agent-browser 专项提醒（自动注入，须遵守）**：",
   "1. 本文件只是发现桩：后续运行 `agent-browser skills get <name>` 获取实际工作流内容时，终端输出必须完整读取；输出被截断（超过 2000 行或 50KB）时，改为完整读取截断提示中给出的落盘临时文件，禁止基于部分内容开工。",
