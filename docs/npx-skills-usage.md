@@ -43,7 +43,7 @@ remove 逻辑（`dist/cli.mjs` 5958 行附近）：
 ### `--all` 的危险
 
 `remove --all` = `--skill '*' --agent '*'`，会把 **opencode symlink 区（`~/.agents_meow/skills`）中的本地技能**
-（grilling、humanizing-text、querying-clippy-lints）也纳入删除清单，rm 顺着 symlink 删除真实文件 → 2026-08-10 事故重演。**永远不要用 `--all`。**
+（grilling、querying-clippy-lints）也纳入删除清单，rm 顺着 symlink 删除真实文件 → 2026-08-10 事故重演。**永远不要用 `--all`。**
 
 ### add 的行为
 
@@ -80,7 +80,7 @@ find ~ -maxdepth 4 -type d -name "<技能名>" 2>/dev/null | grep -v "\.npm\|nod
 ### 铁律
 
 1. **永远不要 `npx skills remove --all`**（会波及 opencode symlink 区）
-2. 删除前确认技能名不与 `~/.agents_meow/skills` 下的本地技能重名（grilling、humanizing-text、querying-clippy-lints）
+2. 删除前确认技能名不与 `~/.agents_meow/skills` 下的本地技能重名（grilling、querying-clippy-lints）
 3. 每次操作后检查 canonical 目录和 lock 文件确认实际效果，不信任 CLI 的 success 报告
 4. 本机不再提供 `skills` wrapper（2026-08-11 移除），裸跑 `npx skills` 需自己确认作用域
 

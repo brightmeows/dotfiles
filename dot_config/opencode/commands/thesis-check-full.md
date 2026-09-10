@@ -12,8 +12,7 @@ description: 论文总检（全量）
 2. 启用 `cnki-aigc-rewrite` 检查 AI 痕迹。
 3. 启用 `thesis-writer` 并读取其中的 AI 痕迹消除部分，分析可优化点。
 4. 启用 `thesis-writer` 读取参考文献，审查学术严谨性。
-5. 启用 `humanizing-text` 检查 AI 痕迹，分析可改进点并确保事实准确。
-6. 事实核查：每个子 Agent 各检查一个方面。
+5. 事实核查：每个子 Agent 各检查一个方面。
 
 ### 注
 
