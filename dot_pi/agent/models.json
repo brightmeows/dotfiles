@@ -80,7 +80,7 @@
             "cacheWrite": 0.0
           },
           "thinkingLevelMap": {
-            "minimal": "minimal",
+            "minimal": null,
             "low": "low",
             "medium": "medium",
             "high": "high",
@@ -102,7 +102,7 @@
             "cacheWrite": 0.0
           },
           "thinkingLevelMap": {
-            "minimal": "minimal",
+            "minimal": null,
             "low": "low",
             "medium": "medium",
             "high": "high",
@@ -364,7 +364,7 @@
             "cacheWrite": 0.0
           },
           "thinkingLevelMap": {
-            "minimal": "minimal",
+            "minimal": null,
             "low": "low",
             "medium": "medium",
             "high": "high",
@@ -386,7 +386,7 @@
             "cacheWrite": 0.0
           },
           "thinkingLevelMap": {
-            "minimal": "minimal",
+            "minimal": null,
             "low": "low",
             "medium": "medium",
             "high": "high",
@@ -424,9 +424,9 @@
           "contextWindow": 1000000,
           "maxTokens": 384000,
           "cost": {
-            "input": 0.22,
-            "output": 0.66,
-            "cacheRead": 0.007,
+            "input": 0.15,
+            "output": 0.6,
+            "cacheRead": 0.003,
             "cacheWrite": 0.0
           },
           "thinkingLevelMap": {
