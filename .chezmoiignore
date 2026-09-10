@@ -5,6 +5,8 @@ LICENSE
 
 # Project Specific
 AGENTS.md
+# Pi 全局指令路径：仅供仓库内子目录规则注入，不部署
+.pi/agent/AGENTS.md
 
 # Node
 package.json
