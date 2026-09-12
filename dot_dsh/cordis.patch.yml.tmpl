@@ -1,0 +1,49 @@
+# DeepSeek Harness home 级 patch（部署为 $DSH_HOME/cordis.patch.yml），对全部 profile 生效。
+# 源文件：dot_dsh/cordis.patch.yml.tmpl。模型 route 由
+# dot_agents_meow/scripts/gen-dsh-llm-route.py 从 dot_pi/agent/models.json 生成，
+# 经末尾 include 合并；改 models.json 后跑生成器并提交生成物。
+# 凭据来自启动环境（如从终端启动，~/.env_self 已加载）。
+
+- insert:
+    - id: mcp-exa
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: exa
+        transport: streamable-http
+        url: https://mcp.exa.ai/mcp
+
+    - id: mcp-anysearch
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: anysearch
+        transport: streamable-http
+        url: https://api.anysearch.com/mcp
+        headers:
+          Authorization: !!js "`Bearer ${process.env.ANYSEARCH_API_KEY}`"
+
+    - id: mcp-context7
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: context7
+        transport: streamable-http
+        url: https://mcp.context7.com/mcp
+
+    - id: mcp-cratesio
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: cratesio-mcp
+        transport: stdio
+        command: cratesio-mcp
+
+    - id: mcp-zai
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: zai-mcp-server
+        transport: stdio
+        command: npx
+        args: ['-y', '@z_ai/mcp-server@latest']
+        env:
+          Z_AI_API_KEY: !!js process.env.ZHIPU_API_KEY
+          Z_AI_MODE: ZHIPU
+
+{{ include "dot_dsh/generated/llm-pi-ai.route.yml" -}}

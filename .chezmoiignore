@@ -8,6 +8,10 @@ AGENTS.md
 # Pi 全局指令路径：仅供仓库内子目录规则注入，不部署
 .pi/agent/AGENTS.md
 
+# dsh 生成物：由 dot_agents_meow/scripts/gen-dsh-llm-route.py 从 models.json 生成，
+# 仅被 dot_dsh/cordis.patch.yml.tmpl include，不直接部署（.chezmoiignore 用目标路径）
+.dsh/generated
+
 # Node
 package.json
 pnpm-lock.yaml

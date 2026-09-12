@@ -8,5 +8,5 @@
   "trailingComma": "all",
   "arrowParens": "always",
   "endOfLine": "lf",
-  "ignorePatterns": ["**/*.md", "**/fcitx5/rime/**"],
+  "ignorePatterns": ["**/*.md", "**/fcitx5/rime/**", "dot_dsh/generated/**"],
 }

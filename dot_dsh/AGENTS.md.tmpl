@@ -1,0 +1,4 @@
+{{- /* dsh 用户级指令：与 Pi/opencode 共用 dot_agents_meow/AGENTS.main.md 单一源 */ -}}
+**系统**: {{ with .chezmoi.osRelease }}{{ .prettyName }}{{ else }}Windows{{ end }} ({{ .chezmoi.arch }})
+
+{{ include "dot_agents_meow/AGENTS.main.md" -}}
