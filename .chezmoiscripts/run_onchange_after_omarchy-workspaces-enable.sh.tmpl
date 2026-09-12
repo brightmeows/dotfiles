@@ -14,7 +14,10 @@ set -euo pipefail
 omarchy_path="${OMARCHY_PATH:-/usr/share/omarchy}"
 [ -d "$omarchy_path/shell" ] || exit 0
 
-plugin_dir=$(find "$HOME/.config/omarchy/plugins" -mindepth 1 -maxdepth 1 -type d ! -name '.*' -name '*.workspaces' 2>/dev/null | sort | head -n1)
+# Read the clone id from the source tree, not the deployed directory: chezmoi
+# runs scripts before it deploys the files they sort before, so on a fresh
+# machine the plugin directory does not exist yet.
+plugin_dir=$(find "{{ .chezmoi.sourceDir }}/dot_config/omarchy/plugins" -mindepth 1 -maxdepth 1 -type d -name '*.workspaces' 2>/dev/null | sort | head -n1)
 [ -n "$plugin_dir" ] || exit 0
 clone_id=$(basename "$plugin_dir")
 config="${HOME}/.config/omarchy/shell.json"
