@@ -7,9 +7,9 @@
   "packages": [
     "npm:pi-mcp-adapter",
     "npm:@juicesharp/rpiv-ask-user-question",
-    "npm:pi-vim",
     "./ext/aliases",
     "./ext/better-skill",
+    "./ext/editor-input-tweaks",
     "./ext/esc-hold",
     "./ext/inline-context",
     "./ext/models-dev",
