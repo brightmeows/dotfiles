@@ -21,8 +21,6 @@ tags: [pi, extensions, typescript]
 | `aliases/` | `pi-meow-aliases` | 斜杠命令别名 | /clear → /new、/exit → /quit |
 | `inline-context/` | `pi-meow-inline-context` | 环境摘要注入 | 日期/系统环境/Git 状态/工具与 gh，systemPrompt 注入；含包内 `inject-notice.ts` |
 | `subdir-agents-md/` | `pi-meow-subdir-agents-md` | 子目录规则懒加载 | 结构化路径 + bash 全 token 提取触发；启动注入规则索引；含包内 `inject-notice.ts` 与 `internal/path-extract.ts` |
-| `esc-hold/` | `pi-meow-esc-hold` | Esc 防误触 | 单击提示不中断，双击/长按才中断；terminal 输入层，与编辑器槽位无关 |
-| `editor-input-tweaks/` | `pi-meow-editor-input-tweaks` | 编辑器输入增强 | /@ 标记符着色 + / 补全停留；独占编辑器槽位（`ctx.ui.setEditorComponent` 全局单例，后设覆盖先设，新增编辑器类扩展须链式包装或并入本包） |
 | `models-dev/` | `pi-meow-models-dev` | 模型目录导入 | models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await；纯库模块（registry / config / mapping / thinking / custom-models）归 `internal/` 子目录；配置 schema 见下文 |
 | `better-skill/` | `pi-meow-better-skill` | 技能域（合集包） | 注册模块（index-rewrite / read-hint / skill-tool）合并为 `index.ts` 顺序注册；skill 工具按名加载为主通道（全局唯一名空间 + 重名消歧别名），read 拦截为兜底，两通道共用增强段组装；纯库归 `internal/` 子目录（skill-content / namespace / inject-notice / path-canon）；customType `better-skill`（2026-09-01 由 skill-ext 改名） |
 
@@ -31,9 +29,9 @@ tags: [pi, extensions, typescript]
 ```json
 "packages": [
   "npm:pi-mcp-adapter",
+  "npm:@juicesharp/rpiv-ask-user-question",
+  "npm:pi-vim",
   "./ext/aliases",
-  "./ext/editor-input-tweaks",
-  "./ext/esc-hold",
   "./ext/inline-context",
   "./ext/models-dev",
   "./ext/better-skill",
@@ -84,7 +82,8 @@ pi 原生自定义模型文件 `~/.pi/agent/models.json`（chezmoi 源 `dot_pi/a
 
 - 一包一扩展（2026-08-30 定）：新扩展建新包目录（目录名 = 扩展语义名），包名 `pi-meow-<目录名>`，扩展文件改名 `index.ts` 直接作为入口；并在 `settings.meow.json` 注册
 - 技能域例外：技能相关扩展入 `better-skill/` 合集包（合集入口顺序注册），不单独成包
-- 编辑器槽位例外：替换主编辑器的扩展（`ctx.ui.setEditorComponent` 全局单例）不可与 `editor-input-tweaks` 并存，新编辑器功能并入其 `SlashAtHighlightEditor` 或链式包装
+- 编辑器槽位占用：主编辑器槽位（`ctx.ui.setEditorComponent` 全局单例）现由市场包 `npm:pi-vim` 占用（2026-09-12 换入，同批退役 `editor-input-tweaks` 与 `esc-hold`，
+  后者防误触目标由 vim 模式语义达成：单击 Esc 进 normal 模式而非打断）；新增编辑器类扩展须以 `ctx.ui.getEditorComponent()` 链式包装 pi-vim，或明确取代它
 - 各包完全自包含（2026-08-30 定）：包间零 import、无 lib 类共享目录；包内模块用 `./xxx.ts` 写法（tsconfig 已开 `allowImportingTsExtensions`）；需复用的模块在各包自备副本，副本间无同步义务
 - 新增包须在 `settings.meow.json` 的 `packages` 数组注册路径
 - 新增/移动扩展须实测加载：`pnpm check` 不查 default factory 契约，须 `pi -p -e <入口> --no-session` 验证（组目录传 `xxx/index.ts`）
