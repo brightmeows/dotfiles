@@ -1,7 +1,7 @@
 # DeepSeek Harness home 级 patch（部署为 $DSH_HOME/cordis.patch.yml），对全部 profile 生效。
-# 源文件：dot_dsh/cordis.patch.yml.tmpl。模型 route 由
-# dot_agents_meow/scripts/gen-dsh-llm-route.py 从 dot_pi/agent/models.json 生成，
-# 经末尾 include 合并；改 models.json 后跑生成器并提交生成物。
+# 源文件：dot_dsh/cordis.patch.yml.tmpl。
+# 模型配置不在此层：models-dev 插件在运行时抓取外部目录、叠加
+# ~/.agents_meow/models/models.toml 的用户配置，写入各 profile 的 cordis.patch.yml 生成块。
 # 凭据来自启动环境（如从终端启动，~/.env_self 已加载）。
 
 - insert:
@@ -46,4 +46,8 @@
           Z_AI_API_KEY: !!js process.env.ZHIPU_API_KEY
           Z_AI_MODE: ZHIPU
 
-{{ include "dot_dsh/generated/llm-pi-ai.route.yml" -}}
+    - id: models-dev
+      name: '{{ .chezmoi.homeDir }}/.agents_meow/models/plugin.mts'
+      config:
+        resolvedPath: '{{ .chezmoi.homeDir }}/.agents_meow/models/resolved.json'
+        cachePath: '{{ .chezmoi.homeDir }}/.dsh/cache/models-dev.json'

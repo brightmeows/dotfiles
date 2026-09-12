@@ -8,10 +8,6 @@ AGENTS.md
 # Pi 全局指令路径：仅供仓库内子目录规则注入，不部署
 .pi/agent/AGENTS.md
 
-# dsh 生成物：由 dot_agents_meow/scripts/gen-dsh-llm-route.py 从 models.json 生成，
-# 仅被 dot_dsh/cordis.patch.yml.tmpl include，不直接部署（.chezmoiignore 用目标路径）
-.dsh/generated
-
 # Node
 package.json
 pnpm-lock.yaml
@@ -36,4 +32,6 @@ merge-gitconfig.ps1*
 {{ if eq .chezmoi.os "windows" -}}
 .pi/agent/merge-pi-settings.sh*
 merge-gitconfig.sh*
+# 模型配置生成依赖 python3，Windows 不运行（使用仓库中已提交的生成物）
+.chezmoiscripts/gen-pi-models.sh
 {{ end -}}
