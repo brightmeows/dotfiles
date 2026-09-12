@@ -14,10 +14,8 @@ pnpm-lock.yaml
 node_modules
 tsconfig.json
 
-# Omarchy/Arch: hypr 配置由 Omarchy Lua 模块管理，旧 Fedora hyprland.conf 不部署
-{{ if and (eq .chezmoi.os "linux") (or (eq .chezmoi.osRelease.id "omarchy") (eq .chezmoi.osRelease.id "arch")) -}}
-.config/hypr
-{{- end }}
+# ~/.config/hypr 由 Omarchy 管理（Lua 模块 + 升级迁移会就地修补），本仓库不再部署
+# （旧 Fedora 的 hyprland.conf/hyprpaper.conf 已移除）
 
 # Omarchy 用户插件只在 Omarchy 机器部署，其它平台不产生 ~/.config/omarchy
 {{ if not (and (eq .chezmoi.os "linux") (or (eq .chezmoi.osRelease.id "omarchy") (eq .chezmoi.osRelease.id "arch"))) -}}
