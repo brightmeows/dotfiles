@@ -32,9 +32,16 @@ if ((${#md_files[@]} > 0)); then
   markdownlint --config .markdownlint.toml "${md_files[@]}"
 fi
 
-# dsh 模型 route 生成物：源（models.json）或生成物被暂存时校验一致性
+# 模型域：models.toml、生成器或生成物被暂存时校验仓库产物一致性
 if git diff --cached --name-only --diff-filter=ACM -- \
-  dot_pi/agent/models.json dot_dsh/generated/llm-pi-ai.route.yml | grep -q .; then
-  echo "check: dsh 模型 route 生成物与 models.json 一致"
-  python3 dot_agents_meow/scripts/gen-dsh-llm-route.py --check
+  dot_agents_meow/models/models.toml dot_agents_meow/models/gen-models.py \
+  dot_pi/agent/models.json dot_pi/agent/models-dev.json | grep -q .; then
+  echo "check: Pi 模型生成物与 models.toml 一致"
+  python3 dot_agents_meow/models/gen-models.py --check
+fi
+
+# 模型域插件变更：跑 patch-writer 单测
+if git diff --cached --name-only --diff-filter=ACM -- dot_agents_meow/models | grep -q .; then
+  echo "test: 模型域单测"
+  node --test dot_agents_meow/models/*.test.mts >/dev/null
 fi

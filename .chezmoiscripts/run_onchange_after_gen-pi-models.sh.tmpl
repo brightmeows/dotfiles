@@ -1,0 +1,18 @@
+#!/bin/bash
+# 生成模型域产物：Pi 的两个 JSON（部署副本）与 dsh 插件消费的 resolved.json。
+# 仓库产物由 dot_agents_meow/models/gen-models.py 生成并随提交（供 Windows 等处使用）；
+# 本脚本在 apply 之后把同一结果同步到部署位置，并覆盖未提交的 TOML 改动。
+# Trigger: models.toml 或生成器内容变化时重跑。
+# models.toml hash: {{ include "dot_agents_meow/models/models.toml" | sha256sum }}
+# gen-models.py hash: {{ include "dot_agents_meow/models/gen-models.py" | sha256sum }}
+set -euo pipefail
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "Warning: python3 缺失，跳过模型配置生成（使用仓库中的已提交生成物）" >&2
+  exit 0
+fi
+
+python3 "{{ .chezmoi.sourceDir }}/dot_agents_meow/models/gen-models.py" \
+  --toml "${HOME}/.agents_meow/models/models.toml" \
+  --pi-out "${HOME}/.pi/agent" \
+  --models-out "${HOME}/.agents_meow/models"

@@ -1,1 +1,10 @@
-{}
+{
+  "providers": {
+    "openrouter": {
+      "disabled": true
+    },
+    "opencode": {
+      "disabled": true
+    }
+  }
+}

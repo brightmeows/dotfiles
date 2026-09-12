@@ -8,5 +8,10 @@
   "trailingComma": "all",
   "arrowParens": "always",
   "endOfLine": "lf",
-  "ignorePatterns": ["**/*.md", "**/fcitx5/rime/**", "dot_dsh/generated/**"],
+  "ignorePatterns": [
+    "**/*.md",
+    "**/fcitx5/rime/**",
+    "dot_pi/agent/models.json",
+    "dot_pi/agent/models-dev.json",
+  ],
 }
