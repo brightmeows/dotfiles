@@ -35,7 +35,8 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | [`docs/audio-acp3x-es83xx-headphone.md`](docs/audio-acp3x-es83xx-headphone.md) | AMD ACP3x 音频耳机问题处理 |
 | [`docs/fedora-kinoite-obs-vaapi-encode.md`](docs/fedora-kinoite-obs-vaapi-encode.md) | OBS Studio VAAPI 硬件编码配置、VCN 单元监控方法 |
 | [`docs/npx-skills-usage.md`](docs/npx-skills-usage.md) | npx skills 作用域机制、remove 假成功 bug、安全操作姿势与验证方法 |
-| [`docs/deepseek-harness-config.md`](docs/deepseek-harness-config.md) | DeepSeek Harness 配置托管、模型 route 生成与校验、已知差异 |
+| [`docs/deepseek-harness-config.md`](docs/deepseek-harness-config.md) | DeepSeek Harness 配置托管、技能与 MCP 迁移、凭据与沙箱差异 |
+| [`docs/model-config-pipeline.md`](docs/model-config-pipeline.md) | 模型配置流水线：TOML 单一源、双消费者生成物、models.dev 刷新与映射规则 |
 
 ## Commands
 
@@ -56,6 +57,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | `chezmoi -S . diff` | 预览差异 |
 | `chezmoi -S . apply` | 应用至 `$HOME` |
 | `chezmoi -S . add <path>` | 纳新文件入 chezmoi 管理 |
+| `python3 dot_agents_meow/models/gen-models.py` | 生成 Pi 模型 JSON 与 dsh resolved.json（`--check` 校验） |
 | `pnpm check` | `tsc --noEmit` 类型检查（最小验证 gate） |
 
 ## 自动同步机制
@@ -66,7 +68,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 |---------|--------|---------|---------|
 | Git config | `dot_gitconfig.meow` | `~/.gitconfig` | .meow 覆盖同名键，保留 local-only 键 |
 | Pi settings | `dot_pi/agent/settings.meow.json` | `~/.pi/agent/settings.json` | .meow 覆盖同名键，packages 数组并集合并（去重排序；meow 源删除不传导，删包后须手动从 settings.json 移除），Pi 管理键保留 |
-| Pi models | `dot_pi/agent/models.json` | `~/.pi/agent/models.json` | copy 模式直接部署，无合并（自定义模型来源文件，收录 command-code GOAT 计划当前可用模型，数量以 models.json 为准；API key 走 `COMMAND_CODE_API_KEY` 环境变量，未设置时模型隐藏） |
+| 模型配置 | `dot_agents_meow/models/models.toml` | `dot_pi/agent/models.json`、`dot_pi/agent/models-dev.json`（生成物，随仓库提交）与 `~/.agents_meow/models/resolved.json`（本机） | `gen-models.py` 从 TOML 生成；pre-commit 用 `--check` 校验仓库产物；apply 后 `.chezmoiscripts/run_onchange_after_gen-pi-models.sh.tmpl` 把同一结果同步到 `~/.pi/agent`。规则见 [dot_agents_meow/models/AGENTS.md](dot_agents_meow/models/AGENTS.md) |
 | Environment.d | `dot_env_common` | `~/.config/environment.d/50-meow.conf` | awk 翻译 `+=`（追加）/`<=`（前插）为 environment.d 的 `${KEY:+...}` 守卫语法，多操作合并为一行赋值 |
 | Omarchy 工作区组件启用 | `dot_config/omarchy/plugins/brightmeows.workspaces/manifest.json`（hash 触发） | `~/.config/omarchy/shell.json` | 仅替换 `bar.layout` 里的组件 id（内置 `omarchy.workspaces` 换为克隆 id）；幂等、尊重手动删除、文件缺失时从 Omarchy 默认初始化、非 Omarchy 平台跳过。shell.json 不纳入 chezmoi 管理（Omarchy CLI、栏拖拽与升级迁移会就地改写它） |
 
@@ -81,11 +83,11 @@ dsh 的用户级配置同样由本仓库托管，落在 `~/.dsh`：
 | 源文件 | 目标 | 说明 |
 |--------|------|------|
 | `dot_dsh/AGENTS.md.tmpl` | `~/.dsh/AGENTS.md` | 用户级指令，渲染 `dot_agents_meow/AGENTS.main.md` |
-| `dot_dsh/cordis.patch.yml.tmpl` | `~/.dsh/cordis.patch.yml` | home 级 patch：5 个 MCP server 行，include 模型 route 生成物 |
+| `dot_dsh/cordis.patch.yml.tmpl` | `~/.dsh/cordis.patch.yml` | home 级 patch：5 个 MCP server 行与 models-dev 插件挂载行 |
 | `dot_dsh/symlink_skills.tmpl` | `~/.dsh/skills` | 符号链接到 `~/.agents_meow/skills` |
-| `dot_dsh/generated/llm-pi-ai.route.yml` | 不部署 | 由 `dot_agents_meow/scripts/gen-dsh-llm-route.py` 从 `dot_pi/agent/models.json` 生成，被 patch 模板 include（`.chezmoiignore` 排除） |
+| `dot_agents_meow/models/plugin.mts` 等 | `~/.agents_meow/models/` | 模型域插件：抓取 models.dev、叠加 `models.toml`、写各 profile 的模型配置生成块（含 `/models-refresh` 命令） |
 
-改 `models.json` 后运行生成器并提交生成物；pre-commit 在相关文件变更时跑 `--check`。`settings.yaml` 与 `.credentials.yaml` 由 dsh 运行时持有，不入仓库。细节见 [docs/deepseek-harness-config.md](docs/deepseek-harness-config.md)。
+模型配置的唯一编辑入口是 `dot_agents_meow/models/models.toml`（流水线见 [docs/model-config-pipeline.md](docs/model-config-pipeline.md)）；`settings.yaml` 与 `.credentials.yaml` 由 dsh 运行时持有，不入仓库。细节见 [docs/deepseek-harness-config.md](docs/deepseek-harness-config.md)。
 
 ## 跨平台路径映射
 
