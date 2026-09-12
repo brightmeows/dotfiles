@@ -10,6 +10,7 @@
     "npm:pi-vim",
     "./ext/aliases",
     "./ext/better-skill",
+    "./ext/esc-hold",
     "./ext/inline-context",
     "./ext/models-dev",
     "./ext/subdir-agents-md"
