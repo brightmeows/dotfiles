@@ -37,9 +37,10 @@ extract 类工具会把官方模型表压平（列粘连、部分列丢失），
 1. `curl` 官方页并解析载荷，取全量数据；
 2. 与现有条目做集合比对，确定增删（含全量价格核验）；
 3. 编辑 `models.json`；证据写进提交信息（JSON 无注释）；
-4. `chezmoi -S . apply ~/.pi/agent/models.json`；
-5. 校验：JSON 解析与集合一致；`pi --list-models` 确认注册；可疑字段用 API 实测；
-6. Pi 内 `/reload` 生效。
+4. 同步 dsh 派生配置：`python3 dot_agents_meow/scripts/gen-dsh-llm-route.py` 并提交生成物（pre-commit 会用 `--check` 拦截漂移，映射规则见 [docs/deepseek-harness-config.md](../../docs/deepseek-harness-config.md)）；
+5. `chezmoi -S . apply ~/.pi/agent/models.json`；
+6. 校验：JSON 解析与集合一致；`pi --list-models` 确认注册；可疑字段用 API 实测；
+7. Pi 内 `/reload` 生效。
 
 探测请求（`max_tokens`、`reasoning_effort` 换成待验证值）：
 

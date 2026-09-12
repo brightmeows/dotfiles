@@ -6,12 +6,12 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 ## 全局代理文件说明
 
-`dot_agents_meow/AGENTS.main.md` 是 opencode/Pi 工具使用的**全局代理指令文件**，本仓库仅负责托管它（通过 chezmoi 分发至 `agents/default.md.tmpl` / `APPEND_SYSTEM.md.tmpl` 等入口）。
+`dot_agents_meow/AGENTS.main.md` 是 opencode/Pi/dsh 工具使用的**全局代理指令文件**，本仓库仅负责托管它（通过 chezmoi 分发至 `agents/default.md.tmpl` / `APPEND_SYSTEM.md.tmpl` / `dot_dsh/AGENTS.md.tmpl` 等入口）。
 
-| 文件 | 内容 | 加载到 opencode 的方式 | 加载到 Pi 的方式 |
-|------|------|----------------------|-----------------|
-| `AGENTS.main.md` | 工程质量准则 + 自主决策协议 | `agents/default.md.tmpl` → `{{ include }}`（主代理系统提示词） | `APPEND_SYSTEM.md.tmpl` → `{{ include }}`（追加至系统提示词） |
-| `AGENTS.main.ref.md` | 维护参考（设计决策 / 理论出处 / 否决方案） | 不加载（仅 chezmoi 分发到 `~/.agents_meow/`） | 不加载 |
+| 文件 | 内容 | 加载到 opencode 的方式 | 加载到 Pi 的方式 | 加载到 dsh 的方式 |
+|------|------|----------------------|-----------------|------------------|
+| `AGENTS.main.md` | 工程质量准则 + 自主决策协议 | `agents/default.md.tmpl` → `{{ include }}`（主代理系统提示词） | `APPEND_SYSTEM.md.tmpl` → `{{ include }}`（追加至系统提示词） | `dot_dsh/AGENTS.md.tmpl` 的 `{{ include }}`（用户级指令文件） |
+| `AGENTS.main.ref.md` | 维护参考（设计决策 / 理论出处 / 否决方案） | 不加载（仅 chezmoi 分发到 `~/.agents_meow/`） | 不加载 | 不加载 |
 
 修改 `AGENTS.main.md` 前先读 `AGENTS.main.ref.md` 理解决策脉络；ref.md 不被任何模板 include，不进系统提示词。
 
@@ -23,6 +23,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | pnpm | latest (system) | TypeScript 扩展依赖管理 |
 | TypeScript | latest (system) | 扩展/插件类型检查 |
 | Node | latest (system) | JS 运行时 |
+| dsh | npm 全局（`@deepseek-ai/dsh`，rc） | DeepSeek Harness 代理，浏览器界面 |
 
 ## 系统配置记录
 
@@ -34,6 +35,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | [`docs/audio-acp3x-es83xx-headphone.md`](docs/audio-acp3x-es83xx-headphone.md) | AMD ACP3x 音频耳机问题处理 |
 | [`docs/fedora-kinoite-obs-vaapi-encode.md`](docs/fedora-kinoite-obs-vaapi-encode.md) | OBS Studio VAAPI 硬件编码配置、VCN 单元监控方法 |
 | [`docs/npx-skills-usage.md`](docs/npx-skills-usage.md) | npx skills 作用域机制、remove 假成功 bug、安全操作姿势与验证方法 |
+| [`docs/deepseek-harness-config.md`](docs/deepseek-harness-config.md) | DeepSeek Harness 配置托管、模型 route 生成与校验、已知差异 |
 
 ## Commands
 
@@ -70,6 +72,19 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 **使用方式**：修改源文件后运行 `chezmoi -S . apply`，脚本自动执行并同步配置。
 
 **实现机制**：合并脚本位于 `.chezmoiscripts/` 目录，使用 `run_onchange_` 前缀（内容变化才运行）和模板 hash 监听源文件变化，自动触发合并。
+
+## DeepSeek Harness 配置
+
+dsh 的用户级配置同样由本仓库托管，落在 `~/.dsh`：
+
+| 源文件 | 目标 | 说明 |
+|--------|------|------|
+| `dot_dsh/AGENTS.md.tmpl` | `~/.dsh/AGENTS.md` | 用户级指令，渲染 `dot_agents_meow/AGENTS.main.md` |
+| `dot_dsh/cordis.patch.yml.tmpl` | `~/.dsh/cordis.patch.yml` | home 级 patch：5 个 MCP server 行，include 模型 route 生成物 |
+| `dot_dsh/symlink_skills.tmpl` | `~/.dsh/skills` | 符号链接到 `~/.agents_meow/skills` |
+| `dot_dsh/generated/llm-pi-ai.route.yml` | 不部署 | 由 `dot_agents_meow/scripts/gen-dsh-llm-route.py` 从 `dot_pi/agent/models.json` 生成，被 patch 模板 include（`.chezmoiignore` 排除） |
+
+改 `models.json` 后运行生成器并提交生成物；pre-commit 在相关文件变更时跑 `--check`。`settings.yaml` 与 `.credentials.yaml` 由 dsh 运行时持有，不入仓库。细节见 [docs/deepseek-harness-config.md](docs/deepseek-harness-config.md)。
 
 ## 跨平台路径映射
 
