@@ -1,0 +1,57 @@
+#!/bin/bash
+# Point the bar's workspace widget at the user clone of omarchy.workspaces.
+#
+# shell.json is deliberately not managed by chezmoi: Omarchy's CLI, the bar's
+# own drag gestures and its update migrations all rewrite it in place. This
+# script only swaps the layout entry, leaves everything else alone, and is a
+# no-op once the clone is in use. An entry the user removed on purpose stays
+# removed.
+#
+# Trigger: reruns when the plugin manifest changes.
+# plugin manifest hash: {{ include "dot_config/omarchy/plugins/brightmeows.workspaces/manifest.json" | sha256sum }}
+set -euo pipefail
+
+omarchy_path="${OMARCHY_PATH:-/usr/share/omarchy}"
+[ -d "$omarchy_path/shell" ] || exit 0
+
+plugin_dir=$(find "$HOME/.config/omarchy/plugins" -mindepth 1 -maxdepth 1 -type d ! -name '.*' -name '*.workspaces' 2>/dev/null | sort | head -n1)
+[ -n "$plugin_dir" ] || exit 0
+clone_id=$(basename "$plugin_dir")
+config="${HOME}/.config/omarchy/shell.json"
+
+if [ ! -s "$config" ]; then
+  default="${omarchy_path}/config/omarchy/shell.json"
+  [ -f "$default" ] || exit 0
+  mkdir -p "$(dirname "$config")"
+  cp "$default" "$config"
+fi
+
+tmp=$(mktemp)
+jq --arg builtin "omarchy.workspaces" --arg clone "$clone_id" '
+  def swap:
+    if type == "string" then
+      if . == $builtin then $clone else . end
+    elif type == "object" and (.id // "") == $builtin then
+      .id = $clone
+    else
+      .
+    end;
+
+  .bar.layout |= (
+    if type == "object" then
+      with_entries(
+        .value |= (
+          if type == "array" then map(swap) else . end
+        )
+      )
+    else
+      .
+    end
+  )
+' "$config" >"$tmp"
+
+if cmp -s "$tmp" "$config"; then
+  rm -f "$tmp"
+  exit 0
+fi
+mv "$tmp" "$config"

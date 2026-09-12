@@ -23,6 +23,11 @@ tsconfig.json
 .config/hypr
 {{- end }}
 
+# Omarchy 用户插件只在 Omarchy 机器部署，其它平台不产生 ~/.config/omarchy
+{{ if not (and (eq .chezmoi.os "linux") (or (eq .chezmoi.osRelease.id "omarchy") (eq .chezmoi.osRelease.id "arch"))) -}}
+.config/omarchy
+{{- end }}
+
 # Platform-specific: only run the right script per platform
 {{ if ne .chezmoi.os "windows" -}}
 .pi/agent/merge-pi-settings.ps1*
