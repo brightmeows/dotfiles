@@ -1,0 +1,17 @@
+# 解压：zip 一律走 unar（自动检测文件名编码，GBK 中文名不乱码）
+# 内置 extract 走 7zz，对 Windows 中文环境生成的 GBK zip 会解出乱码文件名
+[opener]
+unar = [{ run = 'unar -q -force-rename %s', desc = "Extract with unar (CJK-safe)", for = "unix" }]
+
+[open]
+prepend_rules = [{ mime = "application/zip", use = "unar" }]
+
+# 预览：压缩包内容改用 lsar 列表，对 CJK 文件名的识别比内置 7zz 预览可靠
+# （官方 lsar.yazi 插件的推荐配置，依赖 unarchiver 包提供的 lsar）
+[[plugin.prepend_previewers]]
+mime = "application/{,g}zip"
+run = "lsar"
+
+[[plugin.prepend_previewers]]
+mime = "application/{tar,bzip*,7z*,xz,rar}"
+run = "lsar"

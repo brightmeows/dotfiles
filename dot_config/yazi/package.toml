@@ -1,0 +1,7 @@
+[[plugin.deps]]
+use = "yazi-rs/plugins:lsar"
+rev = "58c4f4e"
+hash = "c1c66e28145e28e581e74e2d6da4fdf1"
+
+[flavor]
+deps = []
