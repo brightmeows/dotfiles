@@ -31,3 +31,10 @@ if ((${#md_files[@]} > 0)); then
   echo "markdownlint: ${md_files[*]}"
   markdownlint --config .markdownlint.toml "${md_files[@]}"
 fi
+
+# dsh 模型 route 生成物：源（models.json）或生成物被暂存时校验一致性
+if git diff --cached --name-only --diff-filter=ACM -- \
+  dot_pi/agent/models.json dot_dsh/generated/llm-pi-ai.route.yml | grep -q .; then
+  echo "check: dsh 模型 route 生成物与 models.json 一致"
+  python3 dot_agents_meow/scripts/gen-dsh-llm-route.py --check
+fi
