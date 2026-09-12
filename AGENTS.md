@@ -68,6 +68,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | Pi settings | `dot_pi/agent/settings.meow.json` | `~/.pi/agent/settings.json` | .meow 覆盖同名键，packages 数组并集合并（去重排序；meow 源删除不传导，删包后须手动从 settings.json 移除），Pi 管理键保留 |
 | Pi models | `dot_pi/agent/models.json` | `~/.pi/agent/models.json` | copy 模式直接部署，无合并（自定义模型来源文件，收录 command-code GOAT 计划当前可用模型，数量以 models.json 为准；API key 走 `COMMAND_CODE_API_KEY` 环境变量，未设置时模型隐藏） |
 | Environment.d | `dot_env_common` | `~/.config/environment.d/50-meow.conf` | awk 翻译 `+=`（追加）/`<=`（前插）为 environment.d 的 `${KEY:+...}` 守卫语法，多操作合并为一行赋值 |
+| Omarchy 工作区组件启用 | `dot_config/omarchy/plugins/brightmeows.workspaces/manifest.json`（hash 触发） | `~/.config/omarchy/shell.json` | 仅替换 `bar.layout` 里的组件 id（内置 `omarchy.workspaces` 换为克隆 id）；幂等、尊重手动删除、文件缺失时从 Omarchy 默认初始化、非 Omarchy 平台跳过。shell.json 不纳入 chezmoi 管理（Omarchy CLI、栏拖拽与升级迁移会就地改写它） |
 
 **使用方式**：修改源文件后运行 `chezmoi -S . apply`，脚本自动执行并同步配置。
 
