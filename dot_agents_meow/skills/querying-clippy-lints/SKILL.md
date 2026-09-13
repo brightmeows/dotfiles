@@ -1,6 +1,6 @@
 ---
 name: querying-clippy-lints
-description: 当用户提及 Clippy lint（按名称、分组、级别、版本等条件查询）时使用。触发词：lint 名、‘clippy lint’、‘clippy 文档’。即使只是顺带提到某个 lint 名，也先加载本技能。
+description: 当用户查询 Clippy lint 的含义、分组、级别、适用性或版本时使用；顺带提及 lint 名而任务与 lint 信息无关时不加载。
 ---
 
 # 查询 Clippy Lint 信息
@@ -75,7 +75,7 @@ python3 clippy-lint-query.py --version 1.80 --search vec_box
 
 ### 方式二（备用）：手动获取页面后搜索
 
-当 Python 不可用时，用 `webfetch` 或 `anysearch_extract` 获取页面，在返回文本中搜索：
+当 Python 不可用时，用环境的网页提取工具（如 `anysearch_extract`）获取页面，在返回文本中搜索：
 
 - 按名称：搜索 `"lint_name"`（lint 名前有 `¶` 标记）
 - 按分组+级别：搜索 `"group level"`（如 `restriction allow`、`correctness deny`）
