@@ -1,15 +1,10 @@
 /**
- * 纯路径/命令解析库（包内模块，仅被本包入口 import；不依赖 pi 运行时，
+ * 纯路径解析库（包内模块，仅被本包入口 import；不依赖 pi 运行时，
  * 可用 node 独立单测）
  *
- * bash 提取策略（2026-09-08 重构，替代旧“命令白名单 + 首操作数”正则）：
- * 旧正则对 rg/grep 等模式优先的命令会把模式当路径、对 fd 等未白名单命令
- * 完全失配、对带独立值的 flag 会把值当路径——扩展触发不稳定的主因。现改
- * 为全 token 扫描 + 存在性过滤：简易 shell 词法切分整条命令，丢弃 flag 与
- * 纯数字，保留“含 / 的 token（覆盖 glob、重定向目标、深层新建文件）”与
- * “磁盘真实存在的 token”。已知取舍：不做变量展开（$DIR/x 提取不到）；
- * 误报（如 --exclude node_modules）锚点向上通常只达已被排除的根，代价仅
- * 几次 stat 调用，注入另有 hash 去重兜底。
+ * bash 命令提取通道已移除（2026-09-14）：此前的全 token 扫描 + 存在性
+ * 过滤对 rg/grep 等搜索命令会把模式与参数误当访问路径，触发无关注入；
+ * 扩展触发面收敛为仅结构化工具的 input.path（业界同款基线）。
  *
  * 本库只用 node 内建模块（fs/os/path），不 spawn 外部命令、零 npm 运行时
  * 依赖：本地包经 chezmoi copy 分发，部署区无 node_modules，npm 依赖在
@@ -46,73 +41,6 @@ export function realpathOr(p: string): string {
   } catch {
     return p;
   }
-}
-
-/** Token 分隔符：空白与 shell 结构符（管道、链、后台、子 shell、重定向、命令替换反引号） */
-const SEPARATORS = new Set([" ", "\t", "\n", "\r", "|", "&", ";", "(", ")", "<", ">", "`"]);
-
-/** 简易 shell 词法切分：引号内保留空格与分隔符；不做变量/命令替换展开 */
-export function tokenizeCommand(cmd: string): string[] {
-  const tokens: string[] = [];
-  let current = "";
-  let quote: '"' | "'" | null = null;
-  for (const ch of cmd) {
-    if (quote !== null) {
-      if (ch === quote) {
-        quote = null;
-      } else {
-        current += ch;
-      }
-      continue;
-    }
-    if (ch === '"' || ch === "'") {
-      quote = ch;
-      continue;
-    }
-    if (SEPARATORS.has(ch)) {
-      if (current !== "") {
-        tokens.push(current);
-      }
-      current = "";
-      continue;
-    }
-    current += ch;
-  }
-  if (current !== "") {
-    tokens.push(current);
-  }
-  return tokens;
-}
-
-/** 判断 rel 是否落在 root 内（非空、非向上、非绝对；".." 前缀检查防 "..weird" 误伤） */
-function withinRootRel(rel: string): boolean {
-  return rel !== "" && rel !== ".." && !rel.startsWith("../") && !path.isAbsolute(rel);
-}
-
-/**
- * Bash 命令 → 路径候选（相对 root）。flag（-x / --xx）与纯数字丢弃；
- * 含 / 的 token 直接保留，无 / 的 token 仅磁盘真实存在才保留。
- * root 外（含 symlink 逃逸）丢弃。
- */
-export function bashPathCandidates(cmd: string, root: string): string[] {
-  const results = new Set<string>();
-  for (const token of tokenizeCommand(cmd)) {
-    if (token.startsWith("-") && token.length > 1) {
-      continue;
-    }
-    if (/^\d+$/.test(token)) {
-      continue;
-    }
-    const resolved = realpathOr(path.resolve(root, expandHome(token)));
-    const rel = path.relative(root, resolved);
-    if (!withinRootRel(rel)) {
-      continue;
-    }
-    if (token.includes("/") || fs.existsSync(resolved)) {
-      results.add(rel);
-    }
-  }
-  return [...results];
 }
 
 /** Current 是否等于 root 或位于其下（严格前缀匹配，避免 /proj-x 误判 /proj） */
@@ -156,58 +84,6 @@ export function pickContextFile(dir: string): string | null {
     }
   }
   return null;
-}
-
-/**
- * 受限 BFS 扫描 root 下的规则文件候选（含根目录自身层级，是否算“子目录”
- * 由调用方过滤）：限深 maxDepth（按路径段计）、限量 maxFiles（软上限），
- * 目录内按名字排序保证确定性；跳过 node_modules/.git 与 symlink 目录
- * （防环/防逃逸，与 realpath 归一策略一致），不跳隐藏目录（dotfiles 仓库
- * 规则常在 dot_* 下）。
- */
-export function scanContextFiles(root: string, maxDepth: number, maxFiles: number): string[] {
-  const skip = new Set(["node_modules", ".git"]);
-  const results: string[] = [];
-  let frontier = [root];
-  let visited = 0;
-  for (let depth = 1; depth <= maxDepth && frontier.length > 0; depth++) {
-    const next: string[] = [];
-    for (const dir of frontier) {
-      if (visited++ > 500) {
-        return results;
-      }
-      let entries: fs.Dirent[];
-      try {
-        entries = fs.readdirSync(dir, { withFileTypes: true });
-      } catch {
-        continue; // 无权限/已消失，跳过
-      }
-      entries.sort((a, b) => {
-        if (a.name < b.name) {
-          return -1;
-        }
-        if (a.name > b.name) {
-          return 1;
-        }
-        return 0;
-      });
-      for (const entry of entries) {
-        const abs = path.join(dir, entry.name);
-        if (isContextFilename(entry.name)) {
-          if (entry.isFile()) {
-            results.push(path.relative(root, abs));
-          }
-        } else if (entry.isDirectory() && !skip.has(entry.name) && !entry.isSymbolicLink()) {
-          next.push(abs);
-        }
-      }
-      if (results.length >= maxFiles) {
-        return results;
-      }
-    }
-    frontier = next;
-  }
-  return results;
 }
 
 /**

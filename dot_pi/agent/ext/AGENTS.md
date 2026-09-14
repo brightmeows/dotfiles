@@ -22,7 +22,7 @@ tags: [pi, extensions, typescript]
 | `esc-hold/` | `pi-meow-esc-hold` | Esc 防误触 | 单击提示不中断，双击/长按才中断；terminal 输入层；以 `ctx.isIdle()` 分场景：生成中守卫、空闲全放行 |
 | `editor-input-tweaks/` | `pi-meow-editor-input-tweaks` | 编辑器输入增强 | /@ 标记符着色 + / 补全停留；独占编辑器槽位（`ctx.ui.setEditorComponent` 全局单例，后设覆盖先设，新增编辑器类扩展须链式包装或并入本包）；2026-09-12 曾换市场包 pi-vim，同日回退 |
 | `inline-context/` | `pi-meow-inline-context` | 环境摘要注入 | 日期/系统环境/Git 状态/工具与 gh，systemPrompt 注入；含包内 `inject-notice.ts` |
-| `subdir-agents-md/` | `pi-meow-subdir-agents-md` | 子目录规则懒加载 | 结构化路径 + bash 全 token 提取触发；启动注入规则索引；含包内 `inject-notice.ts` 与 `internal/path-extract.ts` |
+| `subdir-agents-md/` | `pi-meow-subdir-agents-md` | 子目录规则懒加载 | 仅结构化工具路径触发（bash 通道已移除）；已注入规则文件被 read 时追加提示；含包内 `inject-notice.ts` 与 `internal/path-extract.ts` |
 | `models-dev/` | `pi-meow-models-dev` | 模型目录导入 | models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await；纯库模块（registry / config / mapping / thinking / custom-models）归 `internal/` 子目录；配置 schema 见下文 |
 | `better-skill/` | `pi-meow-better-skill` | 技能域（合集包） | 注册模块（index-rewrite / read-hint / skill-tool）合并为 `index.ts` 顺序注册；skill 工具按名加载为主通道（全局唯一名空间 + 重名消歧别名），read 拦截为兜底，两通道共用增强段组装；纯库归 `internal/` 子目录（skill-content / namespace / inject-notice / path-canon）；customType `better-skill`（2026-09-01 由 skill-ext 改名） |
 
@@ -99,7 +99,7 @@ LLM 注入且用户需知情的操作，用户提示显示一律统一（2026-08
 - 投递 custom_message（`display: true`），TUI 渲染注册包内 `inject-notice.ts` 的 `renderInjectNotice`
 - `details.notice`：提示文案，统一格式 `[自动注入] <来源>：<说明>`，collapsed（默认）只显示它
 - `content`：注入全文（进 LLM；ctrl+o 展开工具输出后显示全文）
-- 消费方：subdir-agents-md（懒加载子目录规则 + 启动索引）、inline-context（环境摘要）、better-skill（默认块移除断言告警；2026-08-17 移除常规重写提示，常规重写零提示）
+- 消费方：subdir-agents-md（懒加载子目录规则）、inline-context（环境摘要）、better-skill（默认块移除断言告警；2026-08-17 移除常规重写提示，常规重写零提示）
 
 ### entry 通道（仅用户可见，不进 LLM）
 

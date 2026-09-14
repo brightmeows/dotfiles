@@ -6,27 +6,19 @@
  * #4834 已确认不进核心，扩展是官方认可的实现位置，用户消息通道注入不伤
  * provider 端 prompt cache）。
  *
- * 设计要点（2026-09-08 重构）：
- * - 触发：tool_call 时提取被访问路径。结构化工具（read/edit/write）直接取
- *   input.path；bash 不再用“命令白名单 + 首操作数”正则（对 rg/grep 等
- *   模式优先命令会把模式当路径、fd 等未白名单命令完全失配、带独立值的
- *   flag 会把值当路径——旧版触发不稳定的主因），改为 internal/path-extract.ts
- *   的全 token 扫描 + 存在性过滤：shell 词法切分整条命令，丢弃 flag 与纯
- *   数字，保留含 / 的 token 与磁盘真实存在的 token。业界同款功能（opencode
- *   v2、Claude Code、pi-subdir-context）均只信结构化路径、不解析 shell
- *   文本；bash 通道是本扩展超出业界基线的增强，存在性过滤把不确定性压到
- *   “几次多余的 stat 调用”量级。
+ * 设计要点（2026-09-14 重构）：
+ * - 触发：tool_call 时提取被访问路径，仅信结构化工具（read/write/edit）
+ *   的 input.path（三者路径参数名统一为 path，2026-09-14 dump schema 实测
+ *   确认）。bash 全 token 扫描通道已移除：rg/grep 等搜索命令的模式与参数
+ *   会被存在性过滤放行、误当访问路径触发无关注入（本次重构主因）；业界
+ *   同款功能（opencode v2、Claude Code、pi-subdir-context）本就只信结构化
+ *   路径。代价：bash 文件操作不再触发注入，兜底只剩模型自发 read 规则
+ *   文件。启动索引（session_start BFS 扫描 + 索引消息）一并移除。
  * - 锚点与查找：文件路径算锚点目录（所在目录 + 去扩展名 co-located 目录，
  *   如 src/memory.rs → src 与 src/memory），向上逐目录选定规则文件
  *   （AGENTS.override.md > AGENTS.md > CLAUDE.md，override 语义同 Pi 核心
  *   启动加载），止于 cwd（不含：根规则文件由 Pi 原生加载）。路径统一展开
  *   ~ 前缀并 realpath 归一（symlink 指向 cwd 外时放弃注入）。
- * - 启动索引：session_start 用纯 node:fs 受限 BFS 扫描（限深 4、限 32 个、
- *   跳过 node_modules/.git 与 symlink 目录；不用 fd 等外部命令、零 npm
- *   运行时依赖——本地包经 chezmoi copy 分发，部署区无 node_modules，npm
- *   依赖在运行时无法解析），首个 context 事件注入一行一条的索引
- *   custom_message，让模型始终知道哪些子树有规则可依（懒触发失灵的兜底）。
- *   每会话一次，compact 后重注入。
  * - 注入（custom_message + steer）：context 事件对未注入的规则文件用
  *   pi.sendMessage 投递 custom_message（display:true），完整内容下一轮进
  *   LLM context；TUI 渲染统一走包内 inject-notice.ts 的 renderInjectNotice
@@ -42,15 +34,21 @@
  *   （压缩后条目消失自然回到可注入态）。哈希存 custom_message 的 details
  *   （不进 LLM）。代理用 read 显式读取过的规则文件（explicitlyRead 集合，含
  *   override/CLAUDE 命名）亦跳过——内容已作为 tool_result 进 LLM；compact
- *   后清空允许重注入。索引消息靠 indexInjected 布尔（同为实例级在途登记）。
- *   已知限制：pi 0.85.1 存在把单次 steer 投递重复落库的运行时问题（上游
- *   issue 跟进中），本登记只能消除扩展侧重复投递，无法消除运行时双写。
+ *   后清空允许重注入。已知限制：pi 0.85.1 存在把单次 steer 投递重复落库的
+ *   运行时问题（上游 issue 跟进中），本登记只能消除扩展侧重复投递，无法
+ *   消除运行时双写。
+ * - read 重复防护（2026-09-14 新增）：注入消息下一轮才进上下文，模型当轮
+ *   read 已注入的规则文件时并不知情，可能再读一遍（内容两份进上下文）。
+ *   tool_result 拦截：read 命中已注入（在途登记 ∪ 已落库）的规则文件时，
+ *   在结果尾部追加“已注入勿重复读”提示——内容仍真实返回，判定出错无损失；
+ *   拦截模式与 better-skill read-hint 同款（tool_result 链式中间件，各自
+ *   patch 不同内容，互不冲突）。
  *
  * 规则：仅注入 cwd 严格子目录（根规则文件由 Pi 原生加载）；不截断、
  * 不做 git-ignore 过滤。
  *
- * 目录组织：一包一扩展（2026-08-30 拆包），index.ts 为包入口；纯路径/命令
- * 解析与索引扫描归 internal/path-extract.ts（可用 node 独立测试）；TUI
+ * 目录组织：一包一扩展（2026-08-30 拆包），index.ts 为包入口；纯路径
+ * 解析归 internal/path-extract.ts（可用 node 独立测试）；TUI
  * 渲染为包内副本 inject-notice.ts。
  */
 
@@ -61,29 +59,38 @@ import * as path from "node:path";
 import { renderInjectNotice } from "./inject-notice.ts";
 import {
   anchorDirs,
-  bashPathCandidates,
   expandHome,
   findAncestorContextFiles,
   isContextFilename,
-  pickContextFile,
   realpathOr,
-  scanContextFiles,
 } from "./internal/path-extract.ts";
 
 /** 注入消息的固定 customType（去重键 + TUI 渲染查找键，标签即默认外观的 [customType]） */
 const CUSTOM_TYPE = "subdir-agents-md";
 
-/** 启动索引消息的 details.rel（去重键；非真实路径，不与规则文件 rel 冲突） */
-const INDEX_REL = ".subdir-agents-index";
-
-/** 索引扫描边界：深度按路径段计（dot_pi/agent/ext/AGENTS.md 为 4），文件数为软上限 */
-const INDEX_MAX_DEPTH = 4;
-const INDEX_MAX_FILES = 32;
-
 // ── 注入提示文案 ──
 
 /** 懒注入提示（统一格式 [自动注入] <来源>：<说明>；collapsed 显示，expanded 显示全文） */
 const injectNotice = (rel: string): string => `[自动注入] ./${rel}：子目录规则已注入`;
+
+/** 已注入规则文件被 read 时的 tool_result 追加提示（统一 [自动注入] 格式） */
+const readHint = (rel: string): string => `[自动注入] ./${rel}：内容已自动注入上下文，无需重复读取`;
+
+/** 是否本扩展注入的 custom_message 条目（customType 精确或旧格式带 rel 后缀） */
+function isInjectEntry(e: CustomMessageEntry): boolean {
+  return e.customType === CUSTOM_TYPE || e.customType.startsWith(`${CUSTOM_TYPE}:`);
+}
+
+/** 从注入条目提取 rel（details.rel 优先；旧格式回落 customType 后缀） */
+function entryRel(e: CustomMessageEntry): string | undefined {
+  const rel = (e.details as { rel?: string } | undefined)?.rel;
+  if (rel !== undefined) {
+    return rel;
+  }
+  return e.customType.startsWith(`${CUSTOM_TYPE}:`)
+    ? e.customType.slice(CUSTOM_TYPE.length + 1)
+    : undefined;
+}
 
 // ── 内容哈希（品牌类型，同内容多子包去重） ──
 
@@ -99,21 +106,15 @@ function hashOf(content: string): Hash {
 
 /**
  * 从工具调用参数提取被访问路径（相对 root；~ 展开与 realpath 归一后）。
- * 结构化工具取 input.path；bash 整条命令交 bashPathCandidates 全 token 扫描。
+ * 仅信结构化工具的 input.path（read/write/edit 路径参数名统一为 path）。
  * 返回空数组表示无可提取路径；root 外（含 symlink 逃逸）丢弃。
  */
 function extractAccessedPaths(
-  toolName: string,
   input: Record<string, unknown> | undefined | null,
   root: string,
 ): string[] {
   if (!input) {
     return [];
-  }
-
-  if (toolName === "bash") {
-    const cmd = input["command"];
-    return typeof cmd === "string" ? bashPathCandidates(cmd, root) : [];
   }
 
   const p = input["path"];
@@ -139,24 +140,6 @@ function readContent(absPath: string): string | null {
   }
 }
 
-// ── 启动索引 ──
-
-/**
- * 每目录按优先级选定一个规则文件后返回排序的相对路径列表（override >
- * AGENTS.md > CLAUDE.md）。
- */
-function selectIndexFiles(root: string, files: string[]): string[] {
-  const dirs = new Set(files.map((rel) => path.dirname(path.resolve(root, rel))));
-  const picked: string[] = [];
-  for (const dir of dirs) {
-    const file = pickContextFile(dir);
-    if (file) {
-      picked.push(path.relative(root, file));
-    }
-  }
-  return picked.toSorted();
-}
-
 // ── Extension ──
 
 export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
@@ -171,26 +154,17 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
   const sentRels = new Set<string>();
   /** 已投递待落库的内容哈希（同上，同内容多 rel 场景；品牌类型防任意串冒充） */
   const sentHashes = new Set<Hash>();
-  /** 启动索引是否已投递（compact 后清空允许重注入；resume 场景另靠 rel 去重挡） */
-  let indexInjected = false;
-  /** 索引扫描结果（session_start 发起，首个 context 消费） */
-  let indexFiles: string[] | null = null;
-
-  pi.on("session_start", async (_event, ctx) => {
-    indexFiles = scanContextFiles(realpathOr(ctx.cwd), INDEX_MAX_DEPTH, INDEX_MAX_FILES);
-  });
-
   // 工具调用时按访问路径发现待注入的规则文件（仅收集相对路径，不读内容）
   pi.on("tool_call", async (event, ctx) => {
     const root = realpathOr(ctx.cwd);
-    const accessed = extractAccessedPaths(event.toolName, event.input, root);
+    const accessed = extractAccessedPaths(event.input, root);
     if (accessed.length === 0) {
       return;
     }
 
     // 代理用 read 显式读取了规则文件本身 → 标记，context 阶段跳过注入：
-    // 内容已作为 tool_result 进 LLM，重复注入纯浪费 token。仅限 read 工具——
-    // Bash cat 等场景少，且 token 扫描难区分“读全文”与“列目录”
+    // 内容已作为 tool_result 进 LLM，重复注入纯浪费 token。仅限 read 工具
+    // ——bash 通道已移除，其余工具不会读到规则文件全文
     if (event.toolName === "read") {
       for (const rel of accessed) {
         if (isContextFilename(path.basename(rel))) {
@@ -208,11 +182,51 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
     }
   });
 
+  // 已注入的规则文件被 read 时，结果尾部追加提示，防代理不知情重复读取：注入
+  // 消息下一轮才进上下文，模型当轮 read 时并不知道规则已在上下文里
+  pi.on("tool_result", async (event, ctx) => {
+    if (event.toolName !== "read" || event.isError) {
+      return;
+    }
+    const raw = event.input?.["path"];
+    if (typeof raw !== "string" || raw.length === 0) {
+      return;
+    }
+    const root = realpathOr(ctx.cwd);
+    const resolved = realpathOr(path.resolve(root, expandHome(raw)));
+    const rel = path.relative(root, resolved);
+    if (rel === "" || rel === ".." || rel.startsWith("../") || path.isAbsolute(rel)) {
+      return;
+    }
+    if (!isContextFilename(path.basename(rel))) {
+      return;
+    }
+    // 已注入判定：在途登记（本轮刚投递）∪ 已落库（查库，compact-aware）
+    const injected =
+      sentRels.has(rel) ||
+      ctx.sessionManager
+        .buildContextEntries()
+        .some((e) => e.type === "custom_message" && isInjectEntry(e) && entryRel(e) === rel);
+    if (!injected) {
+      return;
+    }
+    const first = event.content.at(0);
+    if (!first || first.type !== "text") {
+      return;
+    }
+    return {
+      content: [
+        { type: "text" as const, text: `${first.text}\n\n---\n${readHint(rel)}` },
+        ...event.content.slice(1),
+      ],
+    };
+  });
+
   // 下一轮 LLM 调用前：查找去重，未注入的用 custom_message 投递（steer）
   pi.on("context", async (_event, ctx) => {
     const toProcess = [...pending];
     pending.clear();
-    if (toProcess.length === 0 && (indexInjected || !indexFiles)) {
+    if (toProcess.length === 0) {
       return;
     }
 
@@ -222,24 +236,9 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
     // 返回，自然允许重新注入）
     const existing = ctx.sessionManager
       .buildContextEntries()
-      .filter(
-        (e): e is CustomMessageEntry =>
-          e.type === "custom_message" &&
-          (e.customType === CUSTOM_TYPE || e.customType.startsWith(`${CUSTOM_TYPE}:`)),
-      );
+      .filter((e): e is CustomMessageEntry => e.type === "custom_message" && isInjectEntry(e));
     const inContextRels = new Set(
-      existing
-        .map((e) => {
-          // 旧格式兼容（2026-08-12 前）：customType 带 rel 后缀（subdir-agents-md:./x）
-          const rel = (e.details as { rel?: string } | undefined)?.rel;
-          if (rel !== undefined) {
-            return rel;
-          }
-          return e.customType.startsWith(`${CUSTOM_TYPE}:`)
-            ? e.customType.slice(CUSTOM_TYPE.length + 1)
-            : undefined;
-        })
-        .filter((r): r is string => r !== undefined),
+      existing.map(entryRel).filter((r): r is string => r !== undefined),
     );
     const inContextHashes = new Set<Hash>(
       existing
@@ -256,27 +255,6 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
     }
     for (const hash of inContextHashes) {
       sentHashes.delete(hash);
-    }
-
-    // 启动索引：每会话一次；compact 后重注入；resume 时旧条目仍在上下文，
-    // 靠 rel 去重挡
-    if (indexFiles && !indexInjected && !inContextRels.has(INDEX_REL)) {
-      const subFiles = indexFiles.filter((rel) => rel.includes(path.sep));
-      const files = selectIndexFiles(root, subFiles);
-      if (files.length > 0) {
-        const notice = `[自动注入] 子目录规则索引：${files.length} 个子目录有规则文件`;
-        const content = `以下子目录存在规则文件（进入对应区域操作时全文会自动注入，也可直接 read）：\n${files.map((rel) => `./${rel}`).join("\n")}`;
-        pi.sendMessage(
-          {
-            customType: CUSTOM_TYPE,
-            content: `${notice}\n${content}`,
-            details: { notice, rel: INDEX_REL },
-            display: true,
-          },
-          { deliverAs: "steer" },
-        );
-      }
-      indexInjected = true;
     }
 
     for (const rel of toProcess) {
@@ -314,11 +292,10 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
     }
   });
 
-  // Compact 后 tool_result 被压缩、代理不再记得内容，允许重新注入（索引与在途登记同理）
+  // Compact 后 tool_result 被压缩、代理不再记得内容，允许重新注入（在途登记同理）
   pi.on("session_compact", async () => {
     explicitlyRead.clear();
     sentRels.clear();
     sentHashes.clear();
-    indexInjected = false;
   });
 }
