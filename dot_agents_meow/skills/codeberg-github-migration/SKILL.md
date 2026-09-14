@@ -143,8 +143,8 @@ jobs:
 ```
 
 - Forgejo 侧镜像仓库的 workflow 适配：`.forgejo/workflows/` 里 `GIT_DEFAULT_HASH` 环境变量与实际格式不符时必须移除（checkout 会报 mismatched algorithms）。
-- **[待实测] Codeberg 仓库级 Actions 需启用**（API：`PATCH /repos/{owner}/{repo}` 带 `has_actions: true`），push 事件早于启用会被错过且不补跑，需手动触发。
-- **[待实测] workflow_dispatch 触发**：`POST /repos/{owner}/{repo}/actions/workflows/<workflow_id>/dispatches`。
+- **[已实测] Codeberg 仓库级 Actions 开关**：`PATCH /repos/{owner}/{repo}` 带 `has_actions` 可用（2026-09-14）；注意 **API 新建仓库默认 `has_actions: false`**——需要部署的站点项目必须显式开启，纯代码镜像仓则保持关闭以防 workflow 误触发。push 事件早于启用会被错过且不补跑，需手动触发。
+- **[待实测] workflow_dispatch 触发**：`POST /repos/{owner}/{repo}/actions/workflows/<workflow_id>/dispatches`（bmsrs 无站点无部署目标未涉及；首个带 Pages 的镜像项目继续校准）。
 - 首次部署验证：镜像站内容应以构建产物的新 URL 判定新鲜度，HTTP 200 可能只是旧部署残留。
 
 ### 8. 收尾验证清单
@@ -159,9 +159,19 @@ jobs:
 - 首个项目选**最简单**的（无签名、无特殊数据管线），作为 API 命令与流程的校准载体；[待实测] 项逐条验证并回填本技能。
 - 每项目固定验证：第 8 步收尾清单，一项不落。
 - 失败项目排队记录原因，不阻塞后续项目；同因失败不重试，先诊断。
-- token 按项目单独生成或一token多用由用户定，默认建议用完即吊销。
+- token 按项目单独生成或一token多用由用户定，默认建议用完即吊销。**scope 提示：纯 repository scope 建不了仓**——`POST /user/repos` 需 token 含 user 读写（2026-09-14 实测），批量场景建议 token 一次带 user + repository 双 scope，避免二次索要。
 
-## 案例附录：pages 项目迁移快照（2026-09-14）
+## 案例附录：bmsrs 项目迁移快照（2026-09-14，纯代码库形态）
+
+- 源仓库 sha256、322 提交、284 个 `gpgsig-sha256` 签名；转换后签名字节逐字节保留，GitHub 全数接受。
+- 与 pages 的差异点（纯代码仓库形态）：
+  - 无站点：跳过全部 Pages 章节；**Codeberg 镜像仓 Actions 保持 false**（API 新建默认即 false），`.forgejo/workflows` 直接从主分支删除，防止 release-plz 在镜像侧误触发。
+  - **GitHub 新建仓库的 GITHUB_TOKEN 默认只读**（workflow 内 `permissions:` 只能降不能升）：需要 Actions 写 API 的自动化必须改仓库设置，见下条命令。
+  - 设置命令：`PUT /repos/{owner}/{repo}/actions/permissions/workflow`，body 设 `default_workflow_permissions: write`；需要 Actions **创建 PR**（如 release-plz）还须 `can_approve_pull_request_reviews: true`（设置名虽叫 approve，实际控制创建与批准两件事）。
+  - workflow YAML 同一 step 出现两个 `env` 键会被 GitHub 解析即败（0 秒红，报“workflow file issue”而非运行时错误）——移植 workflow 时注意平台 YAML 解析器严格性差异。
+  - release-plz 适配要点：`--forge gitea` 改 `--forge github`；GitHub runner 无 Rust 工具链与 cargo-binstall，需补 `dtolnay/rust-toolchain@stable` 与 binstall 安装脚本步。
+
+## 案例附录：pages 项目迁移快照（2026-09-14，静态站形态）
 
 - 源仓库 sha256 + 114 个 `gpgsig-sha256` 签名提交；fast-export/import 转 sha1 后签名字节逐字节保留，GitHub 全数接受。
 - 用户决策：签名原样保留（不重签）；分支保护 enforce_admins 不豁免 + 0 必需批准；ci 恢复旧三 job 结构；dependabot 周频。
