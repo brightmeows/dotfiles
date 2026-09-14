@@ -74,7 +74,12 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 **使用方式**：修改源文件后运行 `chezmoi -S . apply`，脚本自动执行并同步配置。
 
-**实现机制**：合并脚本位于 `.chezmoiscripts/` 目录，使用 `run_onchange_` 前缀（内容变化才运行）和模板 hash 监听源文件变化，自动触发合并。
+**实现机制**：合并脚本位于 `.chezmoiscripts/` 目录，统一使用 `run_onchange_after_` 前缀，自动触发合并。
+
+- 时序背景：chezmoi 按 entry 名字母序应用条目，`.chezmoiscripts/`（c）排在 `.gitconfig.meow`、`.pi`、`.env_common`
+  等数据源之前，脚本不加 `after_` 会先于数据文件运行、读到上一轮旧值，且触发 hash 被消耗后不再重跑，
+  合并永久滞后（2026-09-14 修复，参照 b52aefc 同款坑；三个脚本已同步改名）
+- 触发方式：`after_` 保证脚本在数据文件部署后执行；`onchange` 配合模板 hash（内容变化才运行）
 
 ## DeepSeek Harness 配置
 
@@ -117,7 +122,7 @@ url = "file://{{ .chezmoi.sourceDir }}/dot_config/nushell/env.nu"
 | 路径 | 消费者 | 影响范围 | 读取源 |
 |---|---|---|---|
 | ① Shell | `dot_bashrc`（`_load_env_file`）、`dot_config/nushell/env.nu`（`load-env-file`） | TTY/SSH 登录的交互式 shell | `.env_common` + `.env_self` |
-| ② systemd environment.d | `run_onchange_gen-environmentd.sh.tmpl` → `~/.config/environment.d/50-meow.conf` | systemd user manager 及图形会话（Hyprland/niri） | 仅 `.env_common` |
+| ② systemd environment.d | `run_onchange_after_gen-environmentd.sh.tmpl` → `~/.config/environment.d/50-meow.conf` | systemd user manager 及图形会话（Hyprland/niri） | 仅 `.env_common` |
 
 **踩坑点**：
 
