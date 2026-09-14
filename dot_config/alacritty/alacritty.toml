@@ -20,6 +20,12 @@ normal.family = "ComicShannsMono Nerd Font"
 [scrolling]
 history = 100000
 
+[bell]
+# 终端响铃（如 pi 问卷等待输入）时把响铃窗口所在工作区交给
+# brightmeows.workspaces 插件标记状态栏圆点；焦点抢占由 Hyprland 的
+# focus_on_activate = false 窗口规则拦截。
+command = "/home/brightmeows/.config/omarchy/plugins/brightmeows.workspaces/bell-flag.sh"
+
 [window]
 opacity = 0.9
 padding.x = 5
