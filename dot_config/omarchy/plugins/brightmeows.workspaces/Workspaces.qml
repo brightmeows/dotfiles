@@ -16,6 +16,9 @@ import qs.Ui
 //   * New-window dot: a workspace that received a window while it was not
 //     visible on any monitor shows a small dot under its number until the
 //     workspace becomes visible.
+//   * Bell dot: an Alacritty bell (e.g. pi's questionnaire waiting for input)
+//     runs bell-flag.sh, which records the bell window's workspace; the dot
+//     uses the bar's urgent color until the workspace becomes visible.
 //
 // See README.md for the excludeClasses setting and the manual re-enable step
 // after `omarchy refresh shell`.
@@ -117,6 +120,66 @@ BarWidget {
     for (var i = 0; i < current.length; i++) {
       if (workspaceVisible(current[i])) unflagWorkspace(current[i])
     }
+
+    var bells = bellFlagged
+    for (var j = 0; j < bells.length; j++) {
+      if (workspaceVisible(bells[j])) unflagBell(bells[j])
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Bell flag state.
+  // ---------------------------------------------------------------------
+
+  // Workspaces whose alacritty window rang (bell-flag.sh event files).
+  // Kept separate from new-window flags so the dot can pick a color.
+  property var bellFlagged: []
+  // Event files older than this are consumed without flagging (stale bells).
+  readonly property int bellMaxAgeSec: 600
+
+  function isBellFlagged(id) {
+    return bellFlagged.indexOf(id) !== -1
+  }
+
+  function flagBell(id) {
+    if (!id || isBellFlagged(id)) return
+    var next = bellFlagged.slice()
+    next.push(id)
+    bellFlagged = next
+  }
+
+  function unflagBell(id) {
+    var index = bellFlagged.indexOf(id)
+    if (index === -1) return
+    var next = bellFlagged.slice()
+    next.splice(index, 1)
+    bellFlagged = next
+  }
+
+  // Consume one poll of "<path> <workspace> <mtime>" lines: flag fresh
+  // events, drop stale ones, and let a single bar surface delete the files
+  // so the other bars keep their flags without racing on rm.
+  function consumeBellEvents(raw) {
+    var lines = String(raw || "").split("\n")
+    var consumed = []
+    var nowSec = Date.now() / 1000
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i]
+      if (!line) continue
+      var parts = line.split(" ")
+      if (parts.length < 3) continue
+      var id = Number(parts[1])
+      if (!id) continue
+      var ageSec = nowSec - Number(parts[2])
+      if (isNaN(ageSec) || ageSec > root.bellMaxAgeSec) {
+        consumed.push(parts[0])
+        continue
+      }
+      flagBell(id)
+      consumed.push(parts[0])
+    }
+    if (consumed.length === 0 || !isMoveExecutor()) return
+    Quickshell.execDetached(["rm", "-f"].concat(consumed))
   }
 
   // ---------------------------------------------------------------------
@@ -267,6 +330,24 @@ BarWidget {
     }
   }
 
+  // Bell event files from bell-flag.sh, polled once a second.
+  Process {
+    id: bellScan
+    command: ["sh", "-c", "for f in \"$1\"/*; do [ -f \"$f\" ] || continue; printf '%s %s %s\\n' \"$f\" \"$(cat \"$f\")\" \"$(stat -c %Y \"$f\")\"; done", "sh", (Quickshell.env("XDG_CACHE_HOME") || (Quickshell.env("HOME") + "/.cache")) + "/omarchy/bell-flags"]
+
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: root.consumeBellEvents(text)
+    }
+  }
+
+  Timer {
+    interval: 1000
+    running: true
+    repeat: true
+    onTriggered: if (!bellScan.running) bellScan.running = true
+  }
+
   // The moved window can steal focus on its way out; hand it back to whatever
   // the user was on. An app that asks for attention afterwards is left alone.
   Timer {
@@ -339,10 +420,11 @@ BarWidget {
         fixedHeight: root.barSize
         onPressed: function() { root.focusWorkspace(modelData) }
 
-        // New-window dot, drawn inside the slot so it never shifts layout.
+        // New-window/bell dot, drawn inside the slot so it never shifts
+        // layout. Bell takes the urgent color; new window keeps the accent.
         Rectangle {
-          visible: root.isFlagged(modelData)
-          color: Color.accent
+          visible: root.isFlagged(modelData) || root.isBellFlagged(modelData)
+          color: root.isBellFlagged(modelData) && root.bar ? root.bar.urgent : Color.accent
           width: Style.space(2)
           height: width
           radius: width / 2
