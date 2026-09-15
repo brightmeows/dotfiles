@@ -97,12 +97,19 @@ gh api -X PATCH repos/<user>/<repo> -f allow_auto_merge=true
 
 > **必知差异**：`required_approving_review_count: 0` 对单人仓库是防死锁关键——要求审批会因无法自批而永久卡住 PR。`bypass_actors: []` 意味着任何人（含管理员）都受规则约束，直推被拒、一切走 PR。是否合意由用户在盘问中决定，勿默认。
 >
-> > **迁移期红线**：ruleset 会拦住首次/批量推送（报错 `push declined due to repository rule violations`，**`git push --dry-run` 不报此错，必须以真实推送为准**）。迁移推送的合法路径有三，按优选顺序：① 单次推送走 PR + 规则允许的合并方式（若仅允许 squash 而需保留多提交历史，
+> **迁移期红线**：ruleset 会拦住首次/批量推送（报错 `push declined due to repository rule violations`，**`git push --dry-run` 不报此错，必须以真实推送为准**）。迁移推送的合法路径有三，按优选顺序：① 单次推送走 PR + 规则允许的合并方式（若仅允许 squash 而需保留多提交历史，
 > 此路不通）；② 临时把规则集 `enforcement` 置为 `disabled`（先 GET 备份全文，推完立即 PUT 恢复 `active`，并用一次试推验证拒绝恢复）；③ 加临时 bypass_actor（不推荐，勿留后患）。
 >
-> > **GITHUB_TOKEN 事件抑制**：用 `secrets.GITHUB_TOKEN` 完成的推送/合并**不会触发后续 workflow**（典型场景：dependabot 的 auto-merge workflow 用 GITHUB_TOKEN 合并 PR，其 push 不会触发 mirror/CI）。影响：镜像同步只对“人推动的提交”即时生效，
+> **dependabot 运行的三重陷阱**（恢复 CI 时逐条核对，否则 auto-merge 会永远卡死）：
+> ① clippy/测试在新工具链下的新 lint 会让 check 变红；② dependabot 触发的运行**读不到 Actions secrets**，
+> 依赖 token 的步骤（codecov 上传等）必失败——token 需另行存入 **Dependabot secrets** 存储；
+> ③ 第三方审查 App（如 AI reviewer）会发结论为 `neutral` 的 check，而 `poseidon/wait-for-status-checks`
+> 只接受 `success`/`skipped`，门禁因此恒败——用 `ignore_pattern` 把审查类 check 从等待列表剔除。
+> 另注：`pull_request` 事件的 workflow 取自 PR head 提交，修复要等 dependabot rebase/recreate 分支后才生效。
+>
+> **GITHUB_TOKEN 事件抑制**：用 `secrets.GITHUB_TOKEN` 完成的推送/合并**不会触发后续 workflow**（典型场景：dependabot 的 auto-merge workflow 用 GITHUB_TOKEN 合并 PR，其 push 不会触发 mirror/CI）。影响：镜像同步只对“人推动的提交”即时生效，
 > bot 合并需靠 cron 兜底。两条对策：镜像 cron 加密（日频，绑定漂移≤ 天）或把 auto-merge 的凭据换成 PAT（即时，但多一份凭据轮换）。
-
+>
 ### 6. Codeberg 镜像侧重构
 
 ```bash
