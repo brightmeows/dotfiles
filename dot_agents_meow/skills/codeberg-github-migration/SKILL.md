@@ -135,7 +135,7 @@ curl -s -X POST "https://codeberg.org/api/v1/repos/<user>/<repo>/keys" \
 gh secret set CODEBERG_DEPLOY_KEY -R <user>/<repo>.github.io < /tmp/cb-deploy && rm /tmp/cb-deploy
 ```
 
-同步 workflow（push main 即同步 + 每周 cron 兜底收敛漂移窗口）：
+同步 workflow（push main 即同步 + 每日 cron 兜底；日频而非周频的原因见第 5 步的 GITHUB_TOKEN 事件抑制说明——bot 合并只能靠 cron 收敛）：
 
 ```yaml
 name: Mirror to Codeberg
@@ -144,7 +144,8 @@ on:
   push:
     branches: "main"
   schedule:
-    - cron: "30 4 * * 1"
+    # 每日兜底：bot（GITHUB_TOKEN）合并不触发本 workflow，漂移由 cron 收敛
+    - cron: "30 4 * * *"
 jobs:
   mirror:
     runs-on: ubuntu-latest
