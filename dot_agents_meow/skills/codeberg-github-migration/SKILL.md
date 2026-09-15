@@ -65,23 +65,43 @@ gh api repos/<user>/<repo>/pages --jq '{build_type, source}'
 
 ### 5. 分支保护与 PR 流程
 
+**优先用 rulesets（仓库规则集），不要用经典 branch protection**（`/branches/main/protection`）。创建规则集：
+
 ```bash
-gh api -X PATCH repos/<user>/<repo> -f allow_auto_merge=true
-gh api -X PUT repos/<user>/<repo>/branches/main/protection --input - <<'EOF'
+gh api -X PUT repos/<user>/<repo>/actions/permissions/workflow --input - <<'EOF'
+{"default_workflow_permissions": "write", "can_approve_pull_request_reviews": true}
+EOF
+gh api -X POST repos/<user>/<repo>/rulesets --input - <<'EOF'
 {
-  "required_status_checks": {"strict": false, "contexts": ["<ci 各 job 名>"]},
-  "enforce_admins": true,
-  "required_pull_request_reviews": {"required_approving_review_count": 0},
-  "restrictions": null,
-  "allow_force_pushes": false,
-  "allow_deletions": false
+  "name": "main",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {"ref_name": {"include": ["~DEFAULT_BRANCH"], "exclude": []}},
+  "bypass_actors": [],
+  "rules": [
+    {"type": "deletion"},
+    {"type": "non_fast_forward"},
+    {"type": "pull_request", "parameters": {
+      "required_approving_review_count": 0,
+      "dismiss_stale_reviews_on_push": false,
+      "require_code_owner_review": false,
+      "require_last_push_approval": false,
+      "required_review_thread_resolution": false,
+      "allowed_merge_methods": ["squash"]
+    }}
+  ]
 }
 EOF
+gh api -X PATCH repos/<user>/<repo> -f allow_auto_merge=true
 ```
 
-> **必知差异**：`required_approving_review_count: 0` 对单人仓库是防死锁关键——要求审批会因无法自批而永久卡住 PR。`enforce_admins: true` 意味着管理员也受保护规则约束（直推被拒），一切改动走 PR。此配置是否合意由用户在盘问中决定，勿默认。
+> **必知差异**：`required_approving_review_count: 0` 对单人仓库是防死锁关键——要求审批会因无法自批而永久卡住 PR。`bypass_actors: []` 意味着任何人（含管理员）都受规则约束，直推被拒、一切走 PR。是否合意由用户在盘问中决定，勿默认。
 >
-> **时序红线**：保护规则必须在首次 push 之后启用，否则首推被挡。
+> > **迁移期红线**：ruleset 会拦住首次/批量推送（报错 `push declined due to repository rule violations`，**`git push --dry-run` 不报此错，必须以真实推送为准**）。迁移推送的合法路径有三，按优选顺序：① 单次推送走 PR + 规则允许的合并方式（若仅允许 squash 而需保留多提交历史，
+> 此路不通）；② 临时把规则集 `enforcement` 置为 `disabled`（先 GET 备份全文，推完立即 PUT 恢复 `active`，并用一次试推验证拒绝恢复）；③ 加临时 bypass_actor（不推荐，勿留后患）。
+>
+> > **GITHUB_TOKEN 事件抑制**：用 `secrets.GITHUB_TOKEN` 完成的推送/合并**不会触发后续 workflow**（典型场景：dependabot 的 auto-merge workflow 用 GITHUB_TOKEN 合并 PR，其 push 不会触发 mirror/CI）。影响：镜像同步只对“人推动的提交”即时生效，
+> bot 合并需靠 cron 兜底。两条对策：镜像 cron 加密（日频，绑定漂移≤ 天）或把 auto-merge 的凭据换成 PAT（即时，但多一份凭据轮换）。
 
 ### 6. Codeberg 镜像侧重构
 
@@ -97,7 +117,8 @@ curl -s -X POST 'https://codeberg.org/api/v1/user/repos' \
   -d '{"name": "<repo>"}'                                            # 默认 sha1 即目标格式
 ```
 
-> **必知差异**：Codeberg 现役 Pages 是 git-pages（旧 pages-server 维护模式）。部署域名与仓库名绑定：根域名 `<user>.codeberg.page` 要求发起部署的仓库命名为 `pages`；子路径站点要求仓库名匹配 `{user}.codeberg.page/{repo}`；名字不匹配需 PAT。改名到新建 `pages` 之间，镜像站内容短暂空窗（旧静态部署仍在服务，内容为旧构建）。
+> > **必知差异**：Codeberg 现役 Pages 是 git-pages（旧 pages-server 维护模式）。部署域名与仓库名绑定：根域名 `<user>.codeberg.page` 要求发起部署的仓库命名为 `pages`；子路径站点要求仓库名匹配 `{user}.codeberg.page/{repo}`；
+> 名字不匹配需 PAT。改名到新建 `pages` 之间，镜像站内容短暂空窗（旧静态部署仍在服务，内容为旧构建）。
 
 ### 7. 镜像同步
 
