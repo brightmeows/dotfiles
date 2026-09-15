@@ -110,6 +110,13 @@ gh api -X PATCH repos/<user>/<repo> -f allow_auto_merge=true
 > **GITHUB_TOKEN 事件抑制**：用 `secrets.GITHUB_TOKEN` 完成的推送/合并**不会触发后续 workflow**（典型场景：dependabot 的 auto-merge workflow 用 GITHUB_TOKEN 合并 PR，其 push 不会触发 mirror/CI）。影响：镜像同步只对“人推动的提交”即时生效，
 > bot 合并需靠 cron 兜底。两条对策：镜像 cron 加密（日频，绑定漂移≤ 天）或把 auto-merge 的凭据换成 PAT（即时，但多一份凭据轮换）。
 >
+> **已有经典分支保护的仓库：转换而非叠加**。仓库若已在用经典保护（`/branches/main/protection` 可读到），不要叠加新 ruleset，而是等价转换后删除经典配置。
+> 映射关系：`enforce_admins: true` → ruleset 的 `bypass_actors: []`（空即无人豁免）；`required_status_checks.contexts` → `required_status_checks` 规则（`strict` → `strict_required_status_checks_policy`）；
+> `allow_force_pushes` / `allow_deletions` 的 false → `non_fast_forward` / `deletion` 规则；`required_approving_review_count` 等 → `pull_request` 规则参数，
+> `allowed_merge_methods` 需与仓库设置的合并方式一致（`allow_squash_merge` 等，别写出仓库不允许的合并方式）。转换顺序：先建 ruleset 并读回核对，再
+> `gh api -X DELETE repos/{owner}/{repo}/branches/main/protection`，最后用一次试推验证拒绝仍然生效。
+> 若仓库已有他人建的 ruleset（例如用户自己迁移过），先 GET 读全量规则核对是否已覆盖，避免重复建规则互相打架。
+>
 ### 6. Codeberg 镜像侧重构
 
 ```bash
@@ -175,6 +182,13 @@ jobs:
 - **[已实测] Codeberg 仓库级 Actions 开关**：`PATCH /repos/{owner}/{repo}` 带 `has_actions` 可用（2026-09-14）；注意 **API 新建仓库默认 `has_actions: false`**——需要部署的站点项目必须显式开启，纯代码镜像仓则保持关闭以防 workflow 误触发。push 事件早于启用会被错过且不补跑，需手动触发。
 - **[待实测] workflow_dispatch 触发**：`POST /repos/{owner}/{repo}/actions/workflows/<workflow_id>/dispatches`（bmsrs 无站点无部署目标未涉及；首个带 Pages 的镜像项目继续校准）。
 - 首次部署验证：镜像站内容应以构建产物的新 URL 判定新鲜度，HTTP 200 可能只是旧部署残留。
+
+### 7.5 遗留 PR 的处置（归档仓库复活后常见）
+
+归档前留下的开放 PR（release-plz 发布 PR、dependabot 依赖 PR）在取消归档后**会被各自的 bot 重新接管并刷新**——判断是否“陈旧”必须看最后提交时间，而不是最初创建时间：
+`gh pr view <n> --json updatedAt,commits --jq '...'`，再用 `gh api repos/{o}/{r}/compare/main...<head sha>` 看 ahead/behind。
+两条实测教训：① release-plz 的 release PR 是“待你合并的发布”而非遗留物，关掉它是错的（它每天被刷新）；② dependabot 的依赖 PR 关闭前先确认该依赖
+是否仍在 `Cargo.toml`/lockfile 里——项目删掉的依赖，其 bump PR 才是真陈旧。用户本人的历史 PR（author 不是 bot）关闭前更要先读 diff，里面可能有未合入的真实工作。
 
 ### 8. 收尾验证清单
 
