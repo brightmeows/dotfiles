@@ -137,7 +137,10 @@ curl -s -X POST 'https://codeberg.org/api/v1/user/repos' \
   -d '{"name": "<repo>"}'                                            # 默认 sha1 即目标格式
 ```
 
-> > **必知差异**：Codeberg 现役 Pages 是 git-pages（旧 pages-server 维护模式）。部署域名与仓库名绑定：根域名 `<user>.codeberg.page` 要求发起部署的仓库命名为 `pages`；子路径站点要求仓库名匹配 `{user}.codeberg.page/{repo}`；
+> > **归档仓的生命周期**：`<repo>-archive` 保留原始哈希历史（原始 OID 与平台侧 issue/PR/release 记录），是迁移期的安全网。长期保留或稳定后删除由用户定：
+> 删除前确认镜像已多日同步正常、且没有仍在使用原始 OID 的引用；删除后旧仓库名通常已被新镜像仓占据，历史链接会指向镜像（内容一致、OID 不同）。
+>
+> **必知差异**：Codeberg 现役 Pages 是 git-pages（旧 pages-server 维护模式）。部署域名与仓库名绑定：根域名 `<user>.codeberg.page` 要求发起部署的仓库命名为 `pages`；子路径站点要求仓库名匹配 `{user}.codeberg.page/{repo}`；
 > 名字不匹配需 PAT。改名到新建 `pages` 之间，镜像站内容短暂空窗（旧静态部署仍在服务，内容为旧构建）。
 
 ### 7. 镜像同步
