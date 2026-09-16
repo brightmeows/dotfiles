@@ -133,4 +133,9 @@ pi -p -e dot_pi/agent/ext/better-skill/index.ts -e /tmp/dump-ext.ts --no-session
 - `/reload`（pi 内键入）热重载扩展/技能/提示词/主题/上下文文件（非仅 keybindings，`interactive-mode.js` 重载文案含 `extensions`）；改源文件后用它加载新代码免重启。副作用：reload 后旧 `pi`/`ctx` 变 stale（`runner.js` 校验），勿跨 reload 复用
 - 验证 TUI 渲染（`renderResult`/`renderCall`/`ctx.ui.custom`）：`-p` headless 不走 TUI 渲染，须 `/reload` 后在交互会话触发该工具，人眼校验两态——如 `Ctrl+O`（`app.tools.expand`）由 `tool-execution` 重调 renderer 传 `{ expanded }` 触发展开态
 - 块注释内禁含 `*/` 序列（会提前终止注释，tsc 报 TS1443 / oxfmt 语法错；写路径如 `*/index.ts` 时改写避让，2026-08-12 inject-notice.ts 踩坑）
+- pi 二进制的运行时结构与 npm 发布物可能不同：bun 打包把类字段降级为构造期赋值，未初始化的字段声明直接丢弃——用 `in` 探测实例属性会误报缺失。
+  0.85.1 的 `Editor.autocompleteList`（d.ts 可选成员）即此类：仅补全菜单显示时才赋值，构造后不存在（2026-09-16 editor-input-tweaks 实测 probe：`autocompleteList: false`，其余成员全部存在）。
+  探测扩展依赖的 private 成员时，以 d.ts 可选性 + 运行时守卫读取为准，勿把可选成员纳入硬性自检
+- 验证 TUI 着色/渲染类扩展的真实画面：`tmux new-session -d -s <name> -x 140 -y 42 "bash -lc '<cmd>'"` 跑交互 pi，`tmux capture-pane -p -e` 捕获带 ANSI 的画面，
+  grep 颜色序列（如 `\x1b[33m`）与降级通知文本；源文件改动须先 `chezmoi -S . apply` 部署再测（`-e` 传入的扩展排最前、会被 settings 包覆盖，测不到目标版本）
 - 本文件列表行宽 ≤200 字符（markdownlint MD013 豁免表格，列表不豁免）
