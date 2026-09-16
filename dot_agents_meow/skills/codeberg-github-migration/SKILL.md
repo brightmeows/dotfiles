@@ -57,6 +57,10 @@ git push -u origin main
   workflow 躺在 `.forgejo/`（在 GitHub 上不运行）与 Forgejo 风格（codeberg-medium runner、data.forgejo.org 的 cache、`forge.*` 上下文、
   `GIT_DEFAULT_HASH`）躺在 `.github/`。按目标平台重排目录，别按目录名假设平台。
 - 从源仓库历史挖旧 workflow（`git log --all -- .github/workflows/`），逐个核对数据源与版本是否过时（数据源变更、pnpm/action 大版本），不能直接复用。
+- **CI 壳子仓库可并入主仓**（只承载一条流水线的仓，如定时抓取+同步脚本仓）：迁入配置文件与 workflow 时注意三个坑——
+  ① 触发条件加**路径过滤**（壳子仓内容只有配置，原样的 every-push 触发挪进内容仓后会随任意提交跑全量任务）；
+  ② 流水线引用的制品 URL 若指向已迁移仓库的 release，需先把资产**转存**到新平台 release（迁移只带 tags、不带资产）；
+  ③ **secrets 无法迁移**，需在新仓重填（凭据值只在原仓可写不可读）。
 - 查各 action 当前主版本：`gh api repos/<owner>/<action>/releases/latest --jq .tag_name`，不凭记忆写版本号。
 - 触发器对应迁移：Forgejo 的 `schedule`/`push` 语义与 GitHub 相同；部署用 `actions/upload-pages-artifact` + `actions/deploy-pages@v5`。
 
