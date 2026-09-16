@@ -53,6 +53,9 @@ git push -u origin main
 
 ### 3. GitHub Actions 恢复与适配
 
+- **两个 workflow 目录都要翻**：`.github/workflows/` 与 `.forgejo/workflows/` 里都可能有内容，且未必匹配所在平台——实测见过 GitHub 风格的
+  workflow 躺在 `.forgejo/`（在 GitHub 上不运行）与 Forgejo 风格（codeberg-medium runner、data.forgejo.org 的 cache、`forge.*` 上下文、
+  `GIT_DEFAULT_HASH`）躺在 `.github/`。按目标平台重排目录，别按目录名假设平台。
 - 从源仓库历史挖旧 workflow（`git log --all -- .github/workflows/`），逐个核对数据源与版本是否过时（数据源变更、pnpm/action 大版本），不能直接复用。
 - 查各 action 当前主版本：`gh api repos/<owner>/<action>/releases/latest --jq .tag_name`，不凭记忆写版本号。
 - 触发器对应迁移：Forgejo 的 `schedule`/`push` 语义与 GitHub 相同；部署用 `actions/upload-pages-artifact` + `actions/deploy-pages@v5`。
@@ -100,6 +103,9 @@ gh api -X PATCH repos/<user>/<repo> -f allow_auto_merge=true
 ```
 
 > **必知差异**：`required_approving_review_count: 0` 对单人仓库是防死锁关键——要求审批会因无法自批而永久卡住 PR。`bypass_actors: []` 意味着任何人（含管理员）都受规则约束，直推被拒、一切走 PR。是否合意由用户在盘问中决定，勿默认。
+>
+> **私有仓的现实约束**（免费账户实测）：私有仓**无法启用 ruleset 或经典分支保护**（API 返回 403 `Upgrade to GitHub Pro or make this repository public`）；
+> 私有仓的 Actions 消耗计费分钟；私有 Codeberg 仓匿名 API 读不到内容，同步核验需带 token。迁移私有仓前把这三条告知用户。
 >
 > **纯文档仓的保护变体**：无 CI、无评审需求、且作者高频迭代的文档/技能仓，ruleset 用 `deletion` + `non_fast_forward` 两条即可——拿到防误删与禁强推的安全网，不引入单人协作无收益的 PR 门槛。是否加 `pull_request` 规则取决于用户，别默认全套。
 >
