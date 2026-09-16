@@ -46,6 +46,10 @@ git push -u origin main
 ```
 
 - 硬编码了旧平台 URL 的构建脚本（prebuild/jq、站点内绝对 URL）先改再推，避免首次部署就产出错误内容。
+- **功能性自引用**（纯文档仓与技能仓高发）同样先改再推：插件清单（`.claude-plugin/plugin.json` 的 homepage/repository）、
+  发现索引（`.well-known/agent-skills/index.json` 的技能文件 URL）、README 里的安装命令都会固化旧域名，改名归档后即失效或绕远。
+  码仓 raw 链接的形态换算：`https://<forge>/<owner>/<repo>/raw/branch/<branch>/<path>` 对应 `https://raw.githubusercontent.com/<owner>/<repo>/<branch>/<path>`；
+  先替换 raw 形态再替换通用域名形态（顺序反了会把前者拆坏）。镜像 workflow 里的旧域名引用是有意为之，勿改。
 
 ### 3. GitHub Actions 恢复与适配
 
@@ -96,6 +100,8 @@ gh api -X PATCH repos/<user>/<repo> -f allow_auto_merge=true
 ```
 
 > **必知差异**：`required_approving_review_count: 0` 对单人仓库是防死锁关键——要求审批会因无法自批而永久卡住 PR。`bypass_actors: []` 意味着任何人（含管理员）都受规则约束，直推被拒、一切走 PR。是否合意由用户在盘问中决定，勿默认。
+>
+> **纯文档仓的保护变体**：无 CI、无评审需求、且作者高频迭代的文档/技能仓，ruleset 用 `deletion` + `non_fast_forward` 两条即可——拿到防误删与禁强推的安全网，不引入单人协作无收益的 PR 门槛。是否加 `pull_request` 规则取决于用户，别默认全套。
 >
 > **迁移期红线**：ruleset 会拦住首次/批量推送（报错 `push declined due to repository rule violations`，**`git push --dry-run` 不报此错，必须以真实推送为准**）。迁移推送的合法路径有三，按优选顺序：① 单次推送走 PR + 规则允许的合并方式（若仅允许 squash 而需保留多提交历史，
 > 此路不通）；② 临时把规则集 `enforcement` 置为 `disabled`（先 GET 备份全文，推完立即 PUT 恢复 `active`，并用一次试推验证拒绝恢复）；③ 加临时 bypass_actor（不推荐，勿留后患）。
@@ -187,6 +193,7 @@ jobs:
 
 归档前留下的开放 PR（release-plz 发布 PR、dependabot 依赖 PR）在取消归档后**会被各自的 bot 重新接管并刷新**——判断是否“陈旧”必须看最后提交时间，而不是最初创建时间：
 `gh pr view <n> --json updatedAt,commits --jq '...'`，再用 `gh api repos/{o}/{r}/compare/main...<head sha>` 看 ahead/behind。
+补充一类批量清理：**休眠仓**（数月无提交）里 renovate/dependabot 的陈旧 bump PR——仓库不活跃时 bot 不再刷新它们，若依赖写法是 semver 范围（只需更新锁文件）则可整批关闭，仓库恢复活动后 bot 会重建。
 两条实测教训：① release-plz 的 release PR 是“待你合并的发布”而非遗留物，关掉它是错的（它每天被刷新）；② dependabot 的依赖 PR 关闭前先确认该依赖
 是否仍在 `Cargo.toml`/lockfile 里——项目删掉的依赖，其 bump PR 才是真陈旧。用户本人的历史 PR（author 不是 bot）关闭前更要先读 diff，里面可能有未合入的真实工作。
 
