@@ -21,7 +21,8 @@ description: 将纯 Codeberg 仓库迁移为“GitHub 主仓库 + Codeberg 镜�
 
 ## 安全红线
 
-> 本技能中标注 **[待实测]** 的 API 命令来自 Gitea/Forgejo 官方文档，未在 Codeberg 实测过。Codeberg 的 Forgejo 版本可能与文档版本有出入，首个项目迁移时逐条实测并回填结果（校准方式见“批量使用”节）。
+> 本技能里的 Codeberg API 命令多数已在 2026-09 的批量迁移（14 仓）中实测通过（见第 6、7 步的 [已实测] 标注）；仍未验证的只剩 workflow_dispatch 触发（当时项目均无部署目标）。
+> 标注 **[待实测]** 的条目来自 Gitea/Forgejo 官方文档、未在 Codeberg 实测，遇及时先小步验证。
 >
 > 标注 **[时效性]** 的事实随平台演化，执行时先按参考资料链接复核：GitHub 对 sha256 的支持现状、GitHub 对 `gpgsig-sha256` 提交头的接受性。
 
@@ -140,15 +141,17 @@ gh api -X PATCH repos/<user>/<repo> -f allow_auto_merge=true
 curl -s -X PATCH 'https://codeberg.org/api/v1/repos/<user>/<旧仓>' \
   -H "Authorization: token $CODEBERG_TOKEN" \
   -H 'Content-Type: application/json' \
-  -d '{"name": "<repo>-archive"}'                                    # [待实测] rename
+  -d '{"name": "<repo>-archive"}'                                    # [已实测] rename，repository scope 即可
 curl -s -X POST 'https://codeberg.org/api/v1/user/repos' \
   -H "Authorization: token $CODEBERG_TOKEN" \
   -H 'Content-Type: application/json' \
-  -d '{"name": "<repo>"}'                                            # 默认 sha1 即目标格式
+  -d '{"name": "<repo>"}'                                            # [已实测] 需 token 含 user 读写 scope；新建默认 sha1 且 has_actions=false
+# 私有仓在 body 里加 "private": true（归档仓与镜像仓同可见性）
 ```
 
 > > **归档仓的生命周期**：`<repo>-archive` 保留原始哈希历史（原始 OID 与平台侧 issue/PR/release 记录），是迁移期的安全网。长期保留或稳定后删除由用户定：
-> 删除前确认镜像已多日同步正常、且没有仍在使用原始 OID 的引用；删除后旧仓库名通常已被新镜像仓占据，历史链接会指向镜像（内容一致、OID 不同）。
+> 删除前确认三件事：①镜像已多日同步正常、无仍在使用原始 OID 的引用；②归档仓里**独有的 release 资产**已转存到新平台
+> （迁移只带 tags 不带资产，若目标平台缺资产则从旧平台下载后用 `gh release create --verify-tag` 重建并核对 sha256）；③清楚删除后旧仓库名通常已被新镜像仓占据，历史链接会指向镜像（内容一致、OID 不同）。
 >
 > **必知差异**：Codeberg 现役 Pages 是 git-pages（旧 pages-server 维护模式）。部署域名与仓库名绑定：根域名 `<user>.codeberg.page` 要求发起部署的仓库命名为 `pages`；子路径站点要求仓库名匹配 `{user}.codeberg.page/{repo}`；
 > 名字不匹配需 PAT。改名到新建 `pages` 之间，镜像站内容短暂空窗（旧静态部署仍在服务，内容为旧构建）。
@@ -198,7 +201,8 @@ jobs:
 ```
 
 - Forgejo 侧镜像仓库的 workflow 适配：`.forgejo/workflows/` 里 `GIT_DEFAULT_HASH` 环境变量与实际格式不符时必须移除（checkout 会报 mismatched algorithms）。
-- **[已实测] Codeberg 仓库级 Actions 开关**：`PATCH /repos/{owner}/{repo}` 带 `has_actions` 可用（2026-09-14）；注意 **API 新建仓库默认 `has_actions: false`**——需要部署的站点项目必须显式开启，纯代码镜像仓则保持关闭以防 workflow 误触发。push 事件早于启用会被错过且不补跑，需手动触发。
+- **[已实测] Codeberg 仓库级 Actions 开关**：`PATCH /repos/{owner}/{repo}` 带 `has_actions` 可用（2026-09-14）；注意 **API 新建仓库默认 `has_actions: false`**——需要部署的站点项目必须显式开启，
+纯代码镜像仓则保持关闭以防 workflow 误触发。push 事件早于启用会被错过且不补跑，需手动触发。
 - **[待实测] workflow_dispatch 触发**：`POST /repos/{owner}/{repo}/actions/workflows/<workflow_id>/dispatches`（bmsrs 无站点无部署目标未涉及；首个带 Pages 的镜像项目继续校准）。
 - 首次部署验证：镜像站内容应以构建产物的新 URL 判定新鲜度，HTTP 200 可能只是旧部署残留。
 
@@ -215,6 +219,9 @@ jobs:
 - GitHub：远端 HEAD 与本地一致、提交 Verified（新提交）、Pages 200、保护规则生效（试推被拒）
 - Codeberg：镜像 main HEAD 与 GitHub 一致、镜像站 200 且内容新鲜、旧归档仓库原史完整
 - 双侧 tables/构建产物 URL 指向约定域名（主站域名）
+- 发布资产：目标平台的 release 资产与源平台一致（缺失则按第 6 步的转存路径补齐）
+- 本地工作副本：用户若有本地克隆，对象格式与 origin 需重接——sha256 克隆推不了 sha1 主仓，就地替换为 GitHub 克隆（旧克隆改名保留或删除）；
+  chezmoi 之类按路径解析的工具不受替换影响，但 `.github/` 等点开头目录在其源状态里属元数据、不会被部署
 - 提醒用户吊销第 0 步的 Codeberg token
 
 ## 批量使用
@@ -224,13 +231,20 @@ jobs:
 - 失败项目排队记录原因，不阻塞后续项目；同因失败不重试，先诊断。
 - token 按项目单独生成或一token多用由用户定，默认建议用完即吊销。**scope 提示：纯 repository scope 建不了仓**——`POST /user/repos` 需 token 含 user 读写（2026-09-14 实测），批量场景建议 token 一次带 user + repository 双 scope，避免二次索要。
 
+## 批量迁移实况（2026-09）
+
+两批共 14 仓完成迁移，覆盖五种形态（静态站、纯代码库、纯文档/技能仓、私有仓、CI 壳子仓）；另有 6 仓原地归档、12 个归档仓按期清理。
+共性数据：单仓 41–767 提交，签名逐字节验证全过；镜像 deploy key 一仓一钥、cron 错峰。最大的时间成本不在转换本身，而在依赖自动化（dependabot 门禁的三重陷阱）
+与本地克隆的重接；错误率最高的两处是“按目录名假设平台”（.forgejo/.github 用反）与“迁移只带 tags 不带 release 资产”，已分别固化为第 3、6 步的红线。
+
 ## 案例附录：bmsrs 项目迁移快照（2026-09-14，纯代码库形态）
 
 - 源仓库 sha256、322 提交、284 个 `gpgsig-sha256` 签名；转换后签名字节逐字节保留，GitHub 全数接受。
 - 与 pages 的差异点（纯代码仓库形态）：
   - 无站点：跳过全部 Pages 章节；**Codeberg 镜像仓 Actions 保持 false**（API 新建默认即 false），`.forgejo/workflows` 直接从主分支删除，防止 release-plz 在镜像侧误触发。
   - **GitHub 新建仓库的 GITHUB_TOKEN 默认只读**（workflow 内 `permissions:` 只能降不能升）：需要 Actions 写 API 的自动化必须改仓库设置，见下条命令。
-  - 设置命令：`PUT /repos/{owner}/{repo}/actions/permissions/workflow`，body 设 `default_workflow_permissions: write`；需要 Actions **创建 PR**（如 release-plz）还须 `can_approve_pull_request_reviews: true`（设置名虽叫 approve，实际控制创建与批准两件事）。
+  - 设置命令：`PUT /repos/{owner}/{repo}/actions/permissions/workflow`，body 设 `default_workflow_permissions: write`；
+需要 Actions **创建 PR**（如 release-plz）还须 `can_approve_pull_request_reviews: true`（设置名虽叫 approve，实际控制创建与批准两件事）。
   - workflow YAML 同一 step 出现两个 `env` 键会被 GitHub 解析即败（0 秒红，报“workflow file issue”而非运行时错误）——移植 workflow 时注意平台 YAML 解析器严格性差异。
   - release-plz 适配要点：`--forge gitea` 改 `--forge github`；GitHub runner 无 Rust 工具链与 cargo-binstall，需补 `dtolnay/rust-toolchain@stable` 与 binstall 安装脚本步。
 
@@ -256,6 +270,7 @@ jobs:
 - GitHub branch protection API：<https://docs.github.com/rest/branches/branch-protection>
 - GitHub workflow dispatch API：<https://docs.github.com/rest/actions/workflows>
 - Codeberg Actions 限额与 fair-use：<https://codeberg.org/actions/meta>
+- Codeberg API swagger（实测端点与 scope 报错以此为据）：<https://codeberg.org/api/swagger>
 
 关键社区实证：
 
