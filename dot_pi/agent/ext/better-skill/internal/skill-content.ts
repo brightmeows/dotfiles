@@ -1,6 +1,7 @@
 /**
  * 技能内容增强段组装（better-skill 包内纯库，2026-09-01 由 ref-hint /
- * nested-skill-hint / agent-browser-notice 三拦截模块的公共逻辑拆出）
+ * nested-skill-hint / agent-browser-notice 三拦截模块的公共逻辑拆出；
+ * 2026-09-19 agent-browser 专项提醒迁往独立 skill-reminders 包）
  *
  * 给定技能文件路径（SKILL.md 或带 name+description frontmatter 的 .md），
  * 收集加载该文件时应附带的增强段与 TUI 通知。两个消费方共用，保证“工具
@@ -8,7 +9,7 @@
  * - read-hint.ts：read 工具的 tool_result 拦截（直接 read 技能文件的兜底通道）
  * - skill-tool.ts：skill 工具（按名加载的主通道）
  *
- * 三类增强段（组装顺序固定，与拆分前 tool_result 链的追加顺序一致）：
+ * 两类增强段（组装顺序固定，与拆分前 tool_result 链的追加顺序一致）：
  * - 附属文件清单：仅 SKILL.md 触发（原 ref-hint）；技能根整树枚举，跳隐藏
  *   项与名为 skills 的目录（子技能区归嵌套清单），相对路径 + 基准绝对路径
  * - 嵌套技能清单：SKILL.md 与 frontmatter md 都触发（原 nested-skill-hint）；
@@ -16,8 +17,6 @@
  *   “- 名字: 描述”，与主索引同格式，2026-09-01 主人确认），前导语指明用
  *   skill 工具按名加载——嵌套技能按全局名空间唯一名解析，read 路径模板
  *   已废（2026-09-01 主人确认）
- * - agent-browser 专项提醒：路径组件含 agent-browser 的 SKILL.md（不锁绝对
- *   路径，技能目录受 npx skills 管理重装迁移后仍生效）
  *
  * 名字解析（2026-09-01 主人确认）：条目名 frontmatter name 优先、路径锚
  * 回落（子技能目录名 / 散布文件 stem）；清单显示名经 resolveName 回调转换
@@ -236,19 +235,6 @@ export function walkNestedSkills(dir: string, selfFile: string, out: NestedSkill
   }
 }
 
-/** 判断是否 agent-browser 技能的 SKILL.md：basename 为 SKILL.md 且路径
- * 组件含 agent-browser（兼容 / 与 \ 分隔符，不锁绝对路径） */
-export function isAgentBrowserSkill(filePath: string): boolean {
-  const parts = filePath.split(/[\\/]/);
-  return parts.at(-1) === "SKILL.md" && parts.includes("agent-browser");
-}
-
-/** 给 agent-browser 的专项提醒正文（进 LLM 上下文；段间分隔由组装方统一加） */
-const BROWSER_NOTICE = [
-  "**agent-browser 专项提醒（自动注入，须遵守）**：",
-  "1. 本文件只是发现桩：后续运行 `agent-browser skills get <name>` 获取实际工作流内容时，终端输出必须完整读取；输出被截断（超过 2000 行或 50KB）时，改为完整读取截断提示中给出的落盘临时文件，禁止基于部分内容开工。",
-].join("\n");
-
 /** TUI-only 通知载荷（appendEntry customType "better-skill"，不进 LLM 上下文） */
 export interface SkillNotice {
   notice: string;
@@ -310,14 +296,6 @@ export function collectEnhancements(
     notices.push({
       notice: `[自动注入] 嵌套技能清单：${basename(baseDir)}（${list.length} 个嵌套技能）`,
       lines: list.map((e) => displayName(e)),
-    });
-  }
-
-  if (isSkillMd && isAgentBrowserSkill(skillFilePath)) {
-    sections.push(BROWSER_NOTICE);
-    notices.push({
-      notice: "[自动注入] agent-browser 提醒：skills get 全文读取",
-      lines: ["skills get 输出完整读取，截断时转读落盘临时文件"],
     });
   }
 

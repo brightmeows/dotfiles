@@ -1,12 +1,13 @@
 /**
  * Read Hint（better-skill 注册模块，2026-09-01 由 ref-hint / nested-skill-hint /
- * agent-browser-notice 三拦截合并）
+ * agent-browser-notice 三拦截合并；2026-09-19 agent-browser 提醒迁往
+ * skill-reminders 包）
  *
  * read 工具的 tool_result 拦截：read 技能文件（SKILL.md 或带 name+description
- * frontmatter 的 .md）后，于结果末尾追加增强段。三段逻辑（附属文件清单 /
- * 嵌套技能清单 / agent-browser 提醒）已抽至 internal/skill-content.ts，本
- * 模块只负责触发面判断与结果拼装；skill 工具加载同一文件时走同一组装函数，
- * 两通道信息面完全一致（完整等效，2026-09-01 主人确认）。
+ * frontmatter 的 .md）后，于结果末尾追加增强段。两段逻辑（附属文件清单 /
+ * 嵌套技能清单）已抽至 internal/skill-content.ts，本模块只负责触发面判断
+ * 与结果拼装；skill 工具加载同一文件时走同一组装函数，两通道信息面完全
+ * 一致（完整等效，2026-09-01 主人确认）。
  *
  * 定位（2026-09-01）：skill 工具成为技能加载主通道后，本拦截降为兜底通道
  * ——resume 旧会话凭历史路径直接 read、模型绕过工具、嵌套子技能文件加载

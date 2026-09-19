@@ -8,8 +8,9 @@
  * - index-rewrite.ts：技能索引重写（before_agent_start 改写系统提示词技能
  *   索引段，维护技能名空间缓存与消歧通知）
  * - read-hint.ts：技能 read 兜底增强（tool_result 拦截，read 技能文件后追
- *   加附属文件清单 / 嵌套技能清单 / agent-browser 提醒；2026-09-01 由
- *   ref-hint / nested-skill-hint / agent-browser-notice 三拦截合并）
+ *   加附属文件清单 / 嵌套技能清单；2026-09-01 由 ref-hint /
+ *   nested-skill-hint / agent-browser-notice 三拦截合并，2026-09-19
+ *   agent-browser 提醒迁往独立 skill-reminders 包）
  * - skill-tool.ts：skill 工具（按名加载技能的主通道，2026-09-01 新增）
  *
  * 加载通道分工（2026-09-01 主人确认）：skill 工具为主通道（索引激活规则
@@ -18,8 +19,8 @@
  * 全一致。
  *
  * 包内纯库（internal/，2026-08-31 归组）：
- * - skill-content.ts：技能文件增强段组装（附属清单 / 嵌套名单 / browser
- *   提醒），read 拦截与 skill 工具共用
+ * - skill-content.ts：技能文件增强段组装（附属清单 / 嵌套名单），read 拦截
+ *   与 skill 工具共用
  * - namespace.ts：全局唯一技能名空间（预扫描构建、重名消歧别名、按名查询）
  * - inject-notice.ts：统一“LLM 注入且用户需知情”提示渲染（包内副本）
  * - path-canon.ts：~ 前缀展开（expandHome，read 拦截消费）
