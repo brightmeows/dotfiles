@@ -247,7 +247,6 @@ export function isAgentBrowserSkill(filePath: string): boolean {
 const BROWSER_NOTICE = [
   "**agent-browser 专项提醒（自动注入，须遵守）**：",
   "1. 本文件只是发现桩：后续运行 `agent-browser skills get <name>` 获取实际工作流内容时，终端输出必须完整读取；输出被截断（超过 2000 行或 50KB）时，改为完整读取截断提示中给出的落盘临时文件，禁止基于部分内容开工。",
-  "2. 启动浏览器默认一律加 `--headed` 全局 flag（如 `agent-browser --headed open <url>`）：headless 特征（UA 含 HeadlessChrome、navigator.webdriver=true）会被风控站点识别拒绝；仅当任务明确为无风控的抓取、截图时才可省略。",
 ].join("\n");
 
 /** TUI-only 通知载荷（appendEntry customType "better-skill"，不进 LLM 上下文） */
@@ -317,11 +316,8 @@ export function collectEnhancements(
   if (isSkillMd && isAgentBrowserSkill(skillFilePath)) {
     sections.push(BROWSER_NOTICE);
     notices.push({
-      notice: "[自动注入] agent-browser 提醒：skills get 全文读取 + 默认 --headed",
-      lines: [
-        "1. skills get 输出完整读取，截断时转读落盘临时文件",
-        "2. 浏览器操作默认 --headed，仅明确无风控的抓取/截图可省略",
-      ],
+      notice: "[自动注入] agent-browser 提醒：skills get 全文读取",
+      lines: ["skills get 输出完整读取，截断时转读落盘临时文件"],
     });
   }
 
