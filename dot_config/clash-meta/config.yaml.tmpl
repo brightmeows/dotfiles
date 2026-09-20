@@ -86,7 +86,7 @@ dns:
   fallback:
     - https://dns.google/dns-query
     - https://dns.twnic.tw/dns-query
-    - tls://8.8.4.4:853
+    # 已移除：DoT 直连 IP 在接口空窗期高频重试并刷 TUN 探测警告（续航分析结论，保留两个 DoH fallback）
   fallback-filter:
     geoip: true
     geoip-code: CN
