@@ -1,0 +1,8 @@
+[Unit]
+Description=Power sampling for battery baseline (power-log)
+[Service]
+ExecStart=%h/.local/bin/power-log.sh
+Restart=on-failure
+RestartSec=10
+[Install]
+WantedBy=default.target
