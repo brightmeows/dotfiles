@@ -1,0 +1,3 @@
+# 电池时关 CPU boost；插电恢复。独立落点，omarchy 更新不覆盖。
+ACTION=="add|change", SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="0", RUN+="/usr/bin/systemd-run --no-block --collect /usr/local/bin/battery-boost.sh off"
+ACTION=="add|change", SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="1", RUN+="/usr/bin/systemd-run --no-block --collect /usr/local/bin/battery-boost.sh on"
