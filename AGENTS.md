@@ -37,6 +37,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | [`docs/npx-skills-usage.md`](docs/npx-skills-usage.md) | npx skills 作用域机制、remove 假成功 bug、安全操作姿势与验证方法 |
 | [`docs/deepseek-harness-config.md`](docs/deepseek-harness-config.md) | DeepSeek Harness 配置托管、技能与 MCP 迁移、凭据与沙箱差异 |
 | [`docs/model-config-pipeline.md`](docs/model-config-pipeline.md) | 模型配置流水线：TOML 单一源、双消费者生成物、models.dev 刷新与映射规则 |
+| [`docs/matebook-battery-optimization.md`](docs/matebook-battery-optimization.md) | MateBook 续航优化：放电数据对比、battery-boost/power-log 改动、mihomo DoT 探测风暴处置 |
 
 ## Commands
 
