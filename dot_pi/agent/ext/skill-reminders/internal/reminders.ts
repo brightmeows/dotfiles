@@ -3,7 +3,8 @@
  * internal/skill-content.ts 迁出并组件化）
  *
  * 一条提醒 = 一个注册项：命中判断 + 条目正文。新增提醒只需在 SKILL_REMINDERS
- * 追加一条，不改投递管线（index.ts）。渲染器保证 LLM 注入段与 TUI 通知展开
+ * 追加一条，不改投递管线（index.ts）；同一技能的多条提醒并入该条目的 items
+ * （渲染为编号列表），不新开注册项。渲染器保证 LLM 注入段与 TUI 通知展开
  * 态共用同一份条目正文（单一来源，改条目即两处同步）。
  *
  * 命中判断入参为技能文件路径：read 通道为 input.path 原样值（可能带 ~ 前缀），
@@ -35,6 +36,7 @@ export const SKILL_REMINDERS: readonly SkillReminder[] = [
     matches: isAgentBrowserSkill,
     items: [
       "本文件只是发现桩：后续运行 `agent-browser skills get <name>` 获取实际工作流内容时，终端输出必须完整读取；输出被截断（超过 2000 行或 50KB）时，改为完整读取截断提示中给出的落盘临时文件，禁止基于部分内容开工。",
+      "涉及登录的会话，用 `--session <名> --restore` 自动保存/恢复登录态，或登录后 `state save <路径>` 导出快照；供后续复用，避免重复登录。",
     ],
   },
 ];
