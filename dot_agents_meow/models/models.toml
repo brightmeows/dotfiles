@@ -11,6 +11,84 @@ base_url = "https://api.commandcode.ai/provider/v1"
 api_key = "COMMAND_CODE_API_KEY"
 compat = { supports_developer_role = false }
 
+[providers.command-code.models."gpt-6-luna"]
+name = "GPT-6 Luna"
+reasoning = true
+input = ["text", "image"]
+context_window = 1050000
+max_tokens = 128000
+cost = { input = 0.1, output = 0.5, cache_read = 0.01, cache_write = 0.125 }
+thinking_levels = ["low", "medium", "high", "xhigh", "max"]
+
+[providers.command-code.models."stealth/space-bunny-alpha"]
+name = "Space Bunny Alpha"
+reasoning = true
+input = ["text", "image"]
+context_window = 1000000
+max_tokens = 524288
+cost = { input = 0.0, output = 0.0, cache_read = 0.0, cache_write = 0.0 }
+thinking_levels = ["low", "medium", "high"]
+
+[providers.command-code.models."xiaomi/mimo-v2.6-flash"]
+name = "MiMo V2.6 Flash"
+reasoning = false
+input = ["text", "image"]
+context_window = 1048576
+max_tokens = 131072
+cost = { input = 0.14, output = 0.28, cache_read = 0.0028, cache_write = 0.0 }
+
+[providers.command-code.models."xiaomi/mimo-v2.6-pro"]
+name = "MiMo V2.6 Pro"
+reasoning = false
+input = ["text", "image"]
+context_window = 1048576
+max_tokens = 131072
+cost = { input = 0.435, output = 0.87, cache_read = 0.0036, cache_write = 0.0 }
+
+[providers.command-code.models."xiaomi/mimo-v2.6-pro-ultraspeed"]
+name = "MiMo V2.6 Pro UltraSpeed"
+reasoning = false
+input = ["text", "image"]
+context_window = 1048576
+max_tokens = 131072
+cost = { input = 4.35, output = 8.7, cache_read = 0.036, cache_write = 0.0 }
+
+[providers.command-code.models."xai/grok-4.7"]
+name = "Grok 4.7"
+reasoning = true
+input = ["text", "image"]
+context_window = 500000
+max_tokens = 500000
+cost = { input = 1.2, output = 3.6, cache_read = 0.3, cache_write = 0.0 }
+thinking_levels = ["low", "medium", "high", "xhigh"]
+
+[providers.command-code.models."stepfun/Step-5-Preview"]
+name = "Step 5 Preview"
+reasoning = true
+input = ["text", "image"]
+context_window = 1000000
+max_tokens = 256000
+cost = { input = 1.0, output = 2.7, cache_read = 0.05, cache_write = 0.0 }
+thinking_levels = ["low", "medium", "high"]
+
+[providers.command-code.models."z-ai/glm-5.3-flashx"]
+name = "GLM-5.3 FlashX"
+reasoning = true
+input = ["text", "image"]
+context_window = 1000000
+max_tokens = 131072
+cost = { input = 0.37, output = 1.25, cache_read = 0.075, cache_write = 0.0 }
+thinking_levels = ["low", "high", "max"]
+
+[providers.command-code.models."Qwen/Qwen3.8-Omni-Flash"]
+name = "Qwen 3.8 Omni Flash"
+reasoning = true
+input = ["text", "image"]
+context_window = 1000000
+max_tokens = 131072
+cost = { input = 0.15, output = 0.47, cache_read = 0.016, cache_write = 0.0 }
+thinking_levels = ["low", "medium", "xhigh"]
+
 [providers.command-code.models."deepseek/deepseek-v4.1-flash"]
 name = "DeepSeek V4.1 Flash"
 reasoning = true
@@ -81,13 +159,13 @@ max_tokens = 131072
 cost = { input = 0.15, output = 0.5, cache_read = 0.03, cache_write = 0.0 }
 thinking_levels = ["low", "high", "max"]
 
-[providers.command-code.models."meituan/LongCat-2.0:free"]
+[providers.command-code.models."meituan/LongCat-2.0"]
 name = "LongCat 2.0"
 reasoning = true
 input = ["text"]
 context_window = 1048576
 max_tokens = 131072
-cost = { input = 0.0, output = 0.0, cache_read = 0.0, cache_write = 0.0 }
+cost = { input = 0.3, output = 1.2, cache_read = 0.006, cache_write = 0.0 }
 
 [providers.command-code.models."Qwen/Qwen3.8-Flash"]
 name = "Qwen 3.8 Flash"
@@ -112,7 +190,7 @@ reasoning = true
 input = ["text", "image"]
 context_window = 1000000
 max_tokens = 384000
-cost = { input = 0.22, output = 0.66, cache_read = 0.007, cache_write = 0.0 }
+cost = { input = 0.15, output = 0.6, cache_read = 0.003, cache_write = 0.0 }
 thinking_levels = ["low", "high", "max"]
 
 [providers.command-code.models."zai-org/GLM-5.3"]
