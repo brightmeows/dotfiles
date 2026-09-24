@@ -5,14 +5,13 @@ tags: [pi, extensions, typescript]
 
 # Pi 扩展（面向代理）
 
-本目录的 `*.ts` 为 Pi 扩展（ExtensionAPI）。约定优先级：本文件 > 各文件头部注释（即设计文档，修改前完整读取）> 仓库根 [AGENTS.md](../../../AGENTS.md)（chezmoi、`pnpm check`、提交规范）> 官方文档 `~/.local/lib/node_modules/@earendil-works/pi-coding-agent/docs/extensions.md`。
+本目录的 `*.ts` 为 Pi 扩展（ExtensionAPI）。约定优先级：本文件 > 各文件头部注释（即设计文档，修改前完整读取）> 仓库根 [AGENTS.md](../../../AGENTS.md)（chezmoi、`pnpm check`、提交规范）> 官方文档 `/usr/lib/pi-coding-agent/docs/extensions.md`。
 
 ## 目录结构（现状）
 
 本目录为独立扩展包集合，每个子目录是一个 Pi 包（`package.json` 声明 `pi.extensions`），通过 `settings.json` 的 `packages` 数组显式注册，不再依赖 Pi 自动发现。
 
-组织原则（2026-08-30 定）：**各包完全自包含**——包间零 import、无共享目录，复用模块（如
-`inject-notice.ts`）各包自备副本、无同步义务；目录名 = 扩展语义名，包名前缀 `pi-meow-`；例外：`better-skill/`
+组织原则（2026-08-30 定）：**各包完全自包含**——包间零 import、无共享目录，需复用的模块各包自备副本、无同步义务；目录名 = 扩展语义名，包名前缀 `pi-meow-`；例外：`better-skill/`
 为技能域合集包，新技能扩展默认入此包；`skill-reminders/` 为独立的技能专项提醒注入包（2026-09-19 自 better-skill
 拆出，跨包契约：skill 工具结果 `details.path`）。历史域分组与 lib/ 均已拆解（跨包共享库）。
 包内纯库归包内 `internal/` 子目录（不跨包，与历史 lib/ 拆解性质不同）：better-skill 2026-08-31 起，subdir-agents-md 2026-09-08 起。
@@ -22,11 +21,11 @@ tags: [pi, extensions, typescript]
 | `aliases/` | `pi-meow-aliases` | 斜杠命令别名 | /clear → /new、/exit → /quit |
 | `esc-hold/` | `pi-meow-esc-hold` | Esc 防误触 | 单击提示不中断，双击/长按才中断；terminal 输入层；以 `ctx.isIdle()` 分场景：生成中守卫、空闲全放行 |
 | `editor-input-tweaks/` | `pi-meow-editor-input-tweaks` | 编辑器输入增强 | /@ 标记符着色 + / 补全停留；独占编辑器槽位（`ctx.ui.setEditorComponent` 全局单例，后设覆盖先设，新增编辑器类扩展须链式包装或并入本包）；2026-09-12 曾换市场包 pi-vim，同日回退 |
-| `inline-context/` | `pi-meow-inline-context` | 环境摘要注入 | 日期/系统环境/Git 状态/工具与 gh，systemPrompt 注入；含包内 `inject-notice.ts` |
-| `subdir-agents-md/` | `pi-meow-subdir-agents-md` | 子目录规则懒加载 | 仅结构化工具路径触发（bash 通道已移除）；已注入规则文件被 read 时追加提示；含包内 `inject-notice.ts` 与 `internal/path-extract.ts` |
+| `inline-context/` | `pi-meow-inline-context` | 环境摘要注入 | 日期/系统环境/Git 状态/工具与 gh，systemPrompt 注入；首条摘要消息走默认渲染 |
+| `subdir-agents-md/` | `pi-meow-subdir-agents-md` | 子目录规则懒加载 | 仅结构化工具路径触发（bash 通道已移除）；已注入规则文件被 read 时追加提示；双消息通知（提示条 + display:false 全文条）；含包内 `internal/path-extract.ts` |
 | `models-dev/` | `pi-meow-models-dev` | 模型目录导入 | models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await；纯库模块（registry / config / mapping / thinking / custom-models）归 `internal/` 子目录；配置 schema 见下文 |
 | `better-skill/` | `pi-meow-better-skill` | 技能域（合集包） | 注册模块（index-rewrite / read-hint / skill-tool）合并为 `index.ts` 顺序注册；skill 工具按名加载为主通道（全局唯一名空间 + 重名消歧别名），read 拦截为兜底，两通道共用增强段组装；纯库归 `internal/` 子目录（skill-content / namespace / inject-notice / path-canon）；customType `better-skill`（2026-09-01 由 skill-ext 改名） |
-| `skill-reminders/` | `pi-meow-skill-reminders` | 技能专项提醒注入 | 按技能文件路径命中提醒（read 通道 `input.path` / skill 工具 `details.path`），命中后在 tool_result 段尾注入提醒段并投递 TUI 通知；注册表（数据驱动）归 `internal/reminders.ts`，新增提醒只加注册项；customType `skill-reminders`；2026-09-19 自 better-skill 拆出 |
+| `skill-reminders/` | `pi-meow-skill-reminders` | 技能专项提醒注入 | 按技能文件路径命中提醒（read 通道 `input.path`），命中后在 tool_result 段尾注入提醒段；注册表（数据驱动）归 `internal/reminders.ts`，新增提醒只加注册项；2026-09-19 自 better-skill 拆出 |
 
 注册方式（`settings.meow.json`）：
 
@@ -95,24 +94,19 @@ pi 原生自定义模型文件 `~/.pi/agent/models.json`（chezmoi 源 `dot_pi/a
 - 新增/移动扩展须实测加载：`pnpm check` 不查 default factory 契约，须 `pi -p -e <入口> --no-session` 验证（组目录传 `xxx/index.ts`）
 - 各文件头部注释即设计文档：改动前完整读取，改动后同步更新（含包内模块）
 
-## 统一提示约定（LLM 注入且用户需知情）
+## 通知约定（LLM 注入且用户需知情）
 
-LLM 注入且用户需知情的操作，用户提示显示一律统一（2026-08-12；2026-08-17 补 entry 通道）：
+LLM 注入且用户需知情的操作，通知通道约定如下（2026-09-24 重定：移除各包
+`inject-notice.ts` 渲染器覆写，回落 Pi 默认渲染）：
 
-- 投递 custom_message（`display: true`），TUI 渲染注册包内 `inject-notice.ts` 的 `renderInjectNotice`
-- `details.notice`：提示文案，统一格式 `[自动注入] <来源>：<说明>`，collapsed（默认）只显示它
-- `content`：注入全文（进 LLM；ctrl+o 展开工具输出后显示全文）
-- 消费方：subdir-agents-md（懒加载子目录规则）、inline-context（环境摘要）、better-skill（默认块移除断言告警；2026-08-17 移除常规重写提示，常规重写零提示）
-
-### entry 通道（仅用户可见，不进 LLM）
-
-告知用户“已向 LLM 注入什么”但本身不注入内容的简短提示，走 appendEntry（2026-08-17）：
-
-- 投递 `pi.appendEntry(customType, { notice, lines? })`（CustomEntry，`buildSessionContext` 忽略，不进 LLM 上下文）
-- TUI 渲染注册包内 `inject-notice.ts` 的 `renderInjectEntry`（外观与 message 版一致）：collapsed 只显示 `notice`，expanded 显示 `lines` 全文
-- 消费方：better-skill 的 read-hint 与 skill-tool（customType `better-skill`，2026-09-01 由 skill-ext 改名，renderer 在 index-rewrite.ts 注册）；skill-reminders 的 tool_result 拦截（customType `skill-reminders`，renderer 在包入口注册，2026-09-19）
-
-实现要点：renderer 按 customType 精确匹配（不支持前缀/通配）；不注册 renderer 时默认渲染直接显示 content 全文（无折叠）。headless（`-p`）下 entry 不渲染也不报错。
+- 知情面：投递短 custom_message（`display: true`，content 即单行提示，统一格式
+  `[自动注入] <来源>：<说明>`），Pi 默认渲染显示 `[customType]` 标签 + 全文
+- 注入全文：另投一条 `display: false` 的 custom_message（content 总进 LLM，
+  TUI 不渲染，实测确认）；两条均携去重所需 details 字段
+- Pi 对 entry 无默认渲染：`appendEntry` 数据未注册 renderer 时不在转录显示
+  （2026-09-24 实测），故不注册 renderer 的扩展不再用 entry 传知情面
+- 消费方：subdir-agents-md（双消息变体）、inline-context（摘要单条消息，
+  content 即全文无独立全文条）
 
 ## 踩坑点：运行时验证
 

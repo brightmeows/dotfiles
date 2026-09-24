@@ -17,9 +17,9 @@
  *   桌面 / 容器），删除低价值项（shell / node / pnpm 版本、内核版本、
  *   架构）——需要时 LLM 可自行用命令查询
  * - 完整信息走 systemPrompt（每轮重建，compact 后自动恢复，无状态），
- *   摘要 message 只用于 TUI 可见性，不承载关键信息；TUI 渲染统一走
- *   包内 inject-notice.ts 的 renderInjectNotice（默认外观，collapsed 显示
- *   摘要行，ctrl+o 展开同内容）
+ *   摘要 message 只用于 TUI 可见性，不承载关键信息；渲染走 Pi 默认
+ *   custom_message 外观（2026-09-24 起移除包内渲染器，无折叠，content 即
+ *   单行摘要，默认渲染直接显示）
  * - 工具与 gh 状态：检测已安装的现代 CLI 替代（仅 fd/rg，2026-08-12
  *   精简）与 gh 登录账号，让 LLM 写命令时优先用已装工具、知道 gh 可做
  *   认证操作；未安装 / 未登录自动省略，不占上下文
@@ -34,7 +34,6 @@ import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { basename, join } from "node:path";
 import { promisify } from "node:util";
-import { renderInjectNotice } from "./inject-notice.ts";
 
 const execFileAsync = promisify(execFile);
 
@@ -418,9 +417,6 @@ function realEnv(): EnvContext {
 }
 
 export default function (pi: ExtensionAPI) {
-  // 统一渲染（默认外观，collapsed 只显示注入提示）
-  pi.registerMessageRenderer(CUSTOM_TYPE, renderInjectNotice);
-
   // 首条消息是否已注入摘要（compact 后重置，允许重新展示）
   let injectedMessage = false;
   // Session_start 时启动的异步预计算（不阻塞事件循环）

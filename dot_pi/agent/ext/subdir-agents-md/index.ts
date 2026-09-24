@@ -19,11 +19,13 @@
  *   （AGENTS.override.md > AGENTS.md > CLAUDE.md，override 语义同 Pi 核心
  *   启动加载），止于 cwd（不含：根规则文件由 Pi 原生加载）。路径统一展开
  *   ~ 前缀并 realpath 归一（symlink 指向 cwd 外时放弃注入）。
- * - 注入（custom_message + steer）：context 事件对未注入的规则文件用
- *   pi.sendMessage 投递 custom_message（display:true），完整内容下一轮进
- *   LLM context；TUI 渲染统一走包内 inject-notice.ts 的 renderInjectNotice
- *   （复刻默认 custom_message 外观：collapsed 只显示“已注入”提示，ctrl+o
- *   展开后显示注入全文；display 只控 TUI 渲染，content 总进 LLM）。
+ * - 注入（双消息 + steer，2026-09-24 起）：context 事件对未注入的规则文件投
+ *   两条 custom_message——提示条（content 为单行“[自动注入]”文案，display:
+ *   true，Pi 默认渲染恰好显示这一行）+ 全文条（content 为规则全文，display:
+ *   false，进 LLM 上下文、TUI 静默，实测确认）。两条均携 details.rel/hash
+ *   供去重状态机查库；用户知情面由提示条承担，无需自定义渲染器。
+ *   （2026-09-24 前为单条 display:true 消息 + 包内 inject-notice.ts 渲染器
+ *   折叠，随覆写模式移除废止。）
  * - 去重状态机（2026-09-08 补在途登记）：投递生效是最终一致的——steer 消息
  *   入队后要经 runLoop drain 才落库，窗口期内 buildContextEntries 查不到已
  *   投递内容；只查库会把“在途”误判为“未投递”而重复投递（实测：pi 0.85.1
@@ -48,15 +50,13 @@
  * 不做 git-ignore 过滤。
  *
  * 目录组织：一包一扩展（2026-08-30 拆包），index.ts 为包入口；纯路径
- * 解析归 internal/path-extract.ts（可用 node 独立测试）；TUI
- * 渲染为包内副本 inject-notice.ts。
+ * 解析归 internal/path-extract.ts（可用 node 独立测试）。
  */
 
 import type { CustomMessageEntry, ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { renderInjectNotice } from "./inject-notice.ts";
 import {
   anchorDirs,
   expandHome,
@@ -65,12 +65,12 @@ import {
   realpathOr,
 } from "./internal/path-extract.ts";
 
-/** 注入消息的固定 customType（去重键 + TUI 渲染查找键，标签即默认外观的 [customType]） */
+/** 注入消息的固定 customType（去重键 + 提示条标签，Pi 默认渲染按它显示 [标签]） */
 const CUSTOM_TYPE = "subdir-agents-md";
 
 // ── 注入提示文案 ──
 
-/** 懒注入提示（统一格式 [自动注入] <来源>：<说明>；collapsed 显示，expanded 显示全文） */
+/** 懒注入提示（统一格式 [自动注入] <来源>：<说明>；提示条 content 与 details.notice） */
 const injectNotice = (rel: string): string => `[自动注入] ./${rel}：子目录规则已注入`;
 
 /** 已注入规则文件被 read 时的 tool_result 追加提示（统一 [自动注入] 格式） */
@@ -143,9 +143,6 @@ function readContent(absPath: string): string | null {
 // ── Extension ──
 
 export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
-  // 统一渲染（复刻默认 custom_message 外观：collapsed 提示 / expanded 全文）
-  pi.registerMessageRenderer(CUSTOM_TYPE, renderInjectNotice);
-
   /** 待处理的相对路径（tool_call 收集，context 消费；Set 自动去重） */
   const pending = new Set<string>();
   /** 代理用 read 显式读取过的规则文件相对路径（compact 后清空，允许重注入） */
@@ -272,16 +269,17 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
       if (sentHashes.has(hash) || inContextHashes.has(hash)) {
         continue; // 同内容已投递/已在上下文（别的子包），跳过
       }
-      // TUI 渲染由 renderInjectNotice 统一（collapsed 只显示提示，
-      // Ctrl+O 展开显示全文）；content 总进 LLM，display 只控 TUI
+      // 双消息投递（2026-09-24）：提示条 display:true 承担知情面（Pi 默认渲染
+      // 显示单行），全文条 display:false 进 LLM、TUI 静默；两条均携 rel/hash
+      // 供去重状态机查库（2026-09-24 前为单条消息 + 渲染器折叠，已废止）
       const notice = injectNotice(rel);
+      const details = { notice, rel, hash };
       pi.sendMessage(
-        {
-          customType: CUSTOM_TYPE,
-          content: `${notice}\n${content}`,
-          details: { notice, rel, hash },
-          display: true,
-        },
+        { customType: CUSTOM_TYPE, content: notice, details, display: true },
+        { deliverAs: "steer" },
+      );
+      pi.sendMessage(
+        { customType: CUSTOM_TYPE, content, details, display: false },
         { deliverAs: "steer" },
       );
       // 投递后登记（与 sendMessage 同一同步块，无窗口）：即使消息尚未落库，

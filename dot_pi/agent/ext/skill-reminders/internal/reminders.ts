@@ -4,21 +4,20 @@
  *
  * 一条提醒 = 一个注册项：命中判断 + 条目正文。新增提醒只需在 SKILL_REMINDERS
  * 追加一条，不改投递管线（index.ts）；同一技能的多条提醒并入该条目的 items
- * （渲染为编号列表），不新开注册项。渲染器保证 LLM 注入段与 TUI 通知展开
- * 态共用同一份条目正文（单一来源，改条目即两处同步）。
+ * （渲染为编号列表），不新开注册项。LLM 注入段直接由条目正文渲染（单一
+ * 来源，改条目即生效）。
  *
- * 命中判断入参为技能文件路径：read 通道为 input.path 原样值（可能带 ~ 前缀），
- * skill 工具通道为结果 details.path（绝对路径）；匹配按路径组件，不锁绝对
- * 路径（技能目录受 npx skills 管理重装迁移后仍生效）。
+ * 命中判断入参为技能文件路径：read 通道为 input.path 原样值（可能带 ~ 前缀）；
+ * 匹配按路径组件，不锁绝对路径（技能目录受 npx skills 管理重装迁移后仍生效）。
  */
 
 /** 一条技能专项提醒 */
 export interface SkillReminder {
-  /** 提醒标识（渲染进 LLM 段标题与 TUI 通知，如 "agent-browser"） */
+  /** 提醒标识（渲染进 LLM 段标题，如 "agent-browser"） */
   id: string;
   /** 命中判断：入参为技能文件路径 */
   matches: (filePath: string) => boolean;
-  /** 提醒条目（LLM 注入段与 TUI 通知展开态共用，单一来源） */
+  /** 提醒条目（LLM 注入段唯一来源） */
   items: readonly string[];
 }
 
@@ -51,12 +50,4 @@ export function collectReminders(filePath: string): SkillReminder[] {
 export function renderReminderSection(reminder: SkillReminder): string {
   const items = reminder.items.map((item, index) => `${index + 1}. ${item}`);
   return `**${reminder.id} 专项提醒（自动注入，须遵守）**：\n${items.join("\n")}`;
-}
-
-/** 渲染 TUI 通知载荷（appendEntry data）：摘要 + 展开态条目全文 */
-export function renderReminderNotice(reminder: SkillReminder): { notice: string; lines: string[] } {
-  return {
-    notice: `[自动注入] 技能专项提醒：${reminder.id}`,
-    lines: [...reminder.items],
-  };
 }
