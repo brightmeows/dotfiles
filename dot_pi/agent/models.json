@@ -889,7 +889,7 @@
         {
           "id": "zai-org/GLM-5.2-Fast",
           "name": "GLM-5.2 Fast",
-          "reasoning": false,
+          "reasoning": true,
           "input": [
             "text"
           ],
@@ -1111,7 +1111,7 @@
         {
           "id": "zai-org/GLM-5.1",
           "name": "GLM-5.1",
-          "reasoning": false,
+          "reasoning": true,
           "input": [
             "text"
           ],
@@ -1176,7 +1176,7 @@
         {
           "id": "moonshotai/Kimi-K2.6",
           "name": "Kimi K2.6",
-          "reasoning": false,
+          "reasoning": true,
           "input": [
             "text",
             "image"
@@ -1226,7 +1226,7 @@
         {
           "id": "MiniMaxAI/MiniMax-M2.5",
           "name": "MiniMax M2.5",
-          "reasoning": false,
+          "reasoning": true,
           "input": [
             "text"
           ],
