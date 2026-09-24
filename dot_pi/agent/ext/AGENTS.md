@@ -11,10 +11,10 @@ tags: [pi, extensions, typescript]
 
 本目录为独立扩展包集合，每个子目录是一个 Pi 包（`package.json` 声明 `pi.extensions`），通过 `settings.json` 的 `packages` 数组显式注册，不再依赖 Pi 自动发现。
 
-组织原则（2026-08-30 定）：**各包完全自包含**——包间零 import、无共享目录，需复用的模块各包自备副本、无同步义务；目录名 = 扩展语义名，包名前缀 `pi-meow-`；例外：`better-skill/`
-为技能域合集包，新技能扩展默认入此包；`skill-reminders/` 为独立的技能专项提醒注入包（2026-09-19 自 better-skill
-拆出，跨包契约：skill 工具结果 `details.path`）。历史域分组与 lib/ 均已拆解（跨包共享库）。
-包内纯库归包内 `internal/` 子目录（不跨包，与历史 lib/ 拆解性质不同）：better-skill 2026-08-31 起，subdir-agents-md 2026-09-08 起。
+组织原则（2026-08-30 定）：**各包完全自包含**——包间零 import、无共享目录，需复用的模块各包自备副本、无同步义务；目录名 = 扩展语义名，包名前缀 `pi-meow-`；
+`skill-reminders/` 为独立的技能专项提醒注入包（2026-09-19 自 better-skill 拆出）。历史域分组与 lib/ 均已拆解（跨包共享库）。
+包内纯库归包内 `internal/` 子目录（不跨包，与历史 lib/ 拆解性质不同）：subdir-agents-md 2026-09-08 起。
+（better-skill 技能域合集包 2026-09-24 移除，技能加载回归 Pi 内置机制，见“新增与归组”节历史记录）
 
 | 路径 | 包名 | 角色 | 要点 |
 |------|------|------|------|
@@ -24,7 +24,6 @@ tags: [pi, extensions, typescript]
 | `inline-context/` | `pi-meow-inline-context` | 环境摘要注入 | 日期/系统环境/Git 状态/工具与 gh，systemPrompt 注入；首条摘要消息走默认渲染 |
 | `subdir-agents-md/` | `pi-meow-subdir-agents-md` | 子目录规则懒加载 | 仅结构化工具路径触发（bash 通道已移除）；已注入规则文件被 read 时追加提示；双消息通知（提示条 + display:false 全文条）；含包内 `internal/path-extract.ts` |
 | `models-dev/` | `pi-meow-models-dev` | 模型目录导入 | models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await；纯库模块（registry / config / mapping / thinking / custom-models）归 `internal/` 子目录；配置 schema 见下文 |
-| `better-skill/` | `pi-meow-better-skill` | 技能域（合集包） | 注册模块（index-rewrite / read-hint / skill-tool）合并为 `index.ts` 顺序注册；skill 工具按名加载为主通道（全局唯一名空间 + 重名消歧别名），read 拦截为兜底，两通道共用增强段组装；纯库归 `internal/` 子目录（skill-content / namespace / inject-notice / path-canon）；customType `better-skill`（2026-09-01 由 skill-ext 改名） |
 | `skill-reminders/` | `pi-meow-skill-reminders` | 技能专项提醒注入 | 按技能文件路径命中提醒（read 通道 `input.path`），命中后在 tool_result 段尾注入提醒段；注册表（数据驱动）归 `internal/reminders.ts`，新增提醒只加注册项；2026-09-19 自 better-skill 拆出 |
 
 注册方式（`settings.meow.json`）：
@@ -34,7 +33,6 @@ tags: [pi, extensions, typescript]
   "npm:pi-mcp-adapter",
   "npm:@juicesharp/rpiv-ask-user-question",
   "./ext/aliases",
-  "./ext/better-skill",
   "./ext/editor-input-tweaks",
   "./ext/esc-hold",
   "./ext/inline-context",
@@ -86,7 +84,7 @@ pi 原生自定义模型文件 `~/.pi/agent/models.json`（chezmoi 源 `dot_pi/a
 ## 新增与归组
 
 - 一包一扩展（2026-08-30 定）：新扩展建新包目录（目录名 = 扩展语义名），包名 `pi-meow-<目录名>`，扩展文件改名 `index.ts` 直接作为入口；并在 `settings.meow.json` 注册
-- 技能域例外：技能相关扩展默认入 `better-skill/` 合集包（合集入口顺序注册），不单独成包；专项提醒注入归 `skill-reminders/` 独立包（2026-09-19 拆出）
+- 技能域历史：better-skill 合集包（技能索引重写 / skill 工具 / read 兜底增强）2026-09-24 移除，技能加载回归 Pi 内置机制（Pi 默认建议式索引 + read 加载，`/skill:name` 手动命令保留）；专项提醒注入归 `skill-reminders/` 独立包（2026-09-19 拆出）
 - 编辑器槽位例外：替换主编辑器的扩展（`ctx.ui.setEditorComponent` 全局单例）不可与 `editor-input-tweaks` 并存，新编辑器功能并入其 `SlashAtHighlightEditor` 或链式包装；
   2026-09-12 曾试换市场包 pi-vim，同日回退（现槽位归 `editor-input-tweaks`）
 - 各包完全自包含（2026-08-30 定）：包间零 import、无 lib 类共享目录；包内模块用 `./xxx.ts` 写法（tsconfig 已开 `allowImportingTsExtensions`）；需复用的模块在各包自备副本，副本间无同步义务
@@ -115,10 +113,10 @@ LLM 注入且用户需知情的操作，通知通道约定如下（2026-09-24 �
 - `-e` 传入的扩展排在扩展链最前（先于 `settings.json` 注册的包执行）；只传 dump 扩展会拿到改写前的提示词，误判“扩展未生效”。必须 `-e` 同时传入被测扩展源文件与 dump 扩展（dump 在后）：
 
 ```bash
-pi -p -e dot_pi/agent/ext/better-skill/index.ts -e /tmp/dump-ext.ts --no-session "只回复：收到"
+pi -p -e <被测扩展入口> -e /tmp/dump-ext.ts --no-session "只回复：收到"
 ```
 
-- 对比验证（行为回归）：从 git 检出旧版到 /tmp，两边分别 `pi -p -e <被测> -e <dump>` 跑，diff dump 落盘产物。对比前临时移走同源目录（`~/.pi/agent/ext/better-skill`），否则新旧双重改写，diff 失真
+- 对比验证（行为回归）：从 git 检出旧版到 /tmp，两边分别 `pi -p -e <被测> -e <dump>` 跑，diff dump 落盘产物。对比前临时移走同源目录（settings 注册的部署区包），否则新旧双重改写，diff 失真
 - Pi 项目技能加载渠道（2026-08-13 实测）：`loadSkills` 走 `includeDefaults: false`，不自动扫 `cwd/.pi/skills` 与祖先 `.agents/skills`（放进去不生效，项目 `.pi/settings.json` 的 skills 数组也未生效）
   项目技能靠 `--skill` 或 settings/packages 进入，验证注入路径技能与名空间消歧用 `--skill` 传 fixture 目录
 - 验证 `tool_result` 拦截类扩展（read-hint）：`-p` 控制台不打印 tool_result 原文，须在 dump 扩展里监听 `tool_result` 并把 read SKILL.md 的 content 落盘（链尾拿到的是改写后内容）
