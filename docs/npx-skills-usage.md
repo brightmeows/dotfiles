@@ -95,9 +95,20 @@ find ~ -maxdepth 4 -type d -name "<技能名>" 2>/dev/null | grep -v "\.npm\|nod
 | trae | `~/.trae` | 否 | |
 | openclaw | `~/.openclaw` | 否 | |
 | hermes-agent | `~/.hermes` | 否 | `~/.hermes/skills/openclaw-imports/` 是 hermes 自动导入缓存（`openclaw_residue_cleanup: true` 自管），非 npx skills 管理，勿手动清理 |
-| pi | `~/.pi/agent` | 否 | `~/.pi/agent/skills` 不存在 |
+| pi | `~/.pi/agent` | 否 | `~/.pi/agent/skills` 副本区 2026-09-24 已删除（45 项均为 canonical/meow 的一致副本，Pi 原生扫描 canonical + settings skills 数组，副本无存在必要）；技能改由 `~/.agents/skills`（canonical）+ `~/.agents_meow/skills`（settings 数组）两通道承载 |
+
+## 本机技能目录现状（2026-09-24 盘点）
+
+| 目录 | 数量 | 职责 |
+|------|------|------|
+| `~/.agents/skills` | 50 | npx canonical 区：全部 npx 技能唯一存放点（14 个 cloudflare 系 2026-09-24 自 meow 区迁入） |
+| `~/.agents_meow/skills` | 4 | 纯仓库本地技能分发区（`dot_agents_meow/skills` 同步目标；pi 经 settings skills 数组读、opencode 经 symlink 读） |
+| `~/.pi/agent/skills` | 已删 | Pi 原生扫描 `~/.agents/skills` 与 settings 数组，专属副本区冗余 |
+
+注意：`~/.agents/.skill-lock.json` 不存在（2026-08-11 清空后未重建），当前 npx 技能均不在 `skills update` 账本内，升级需重新 `npx skills add`。
 
 ## 变更历史
 
+- 2026-09-24：删除 `~/.pi/agent/skills`（45 项纯冗余副本，验证技能索引集合前后 diff 为零、collision 日志消失）；14 个 cloudflare 系技能自 meow 分发区迁入 canonical，meow 区职责纯化为仓库本地技能分发区；更新本表 pi 行与技能目录现状节
 - 2026-08-11：移除 bash/nushell 的 `skills` wrapper；清空全部全局技能（33 个 + lark-* 27 个副本）；本文档建立
 - 2026-08-10：`npx skills remove` 曾顺着 opencode symlink 删除仓库源文件（事故）
