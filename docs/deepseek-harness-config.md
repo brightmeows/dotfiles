@@ -37,7 +37,7 @@
 
 ## 技能与 MCP
 
-- 技能：dsh 默认扫描根已覆盖 `~/.agents/skills`（npx 安装区）；`~/.dsh/skills` 由 chezmoi 部署为指向 `~/.agents_meow/skills` 的符号链接，dsh 默认跟随符号链接。dsh 没有 Pi better-skill 的重名消歧别名机制，重名按层与扫描序判定并告警。
+- 技能：dsh 默认扫描根已覆盖 `~/.agents/skills`（npx 安装区）；`~/.dsh/skills` 由 chezmoi 部署为指向 `~/.agents_meow/skills` 的符号链接，dsh 默认跟随符号链接。Pi 的 better-skill 消歧别名扩展已于 2026-09-24 移除，两家重名处理现为同款策略：按层与扫描序保留首个并告警。
 - MCP：迁入 5 个 server（exa、anysearch、context7、cratesio、zai），工具名形如 `mcp__<server>__<tool>`。dsh 无 lazy 概念，启动时全部连接；anysearch 与 zai 的密钥从启动环境（`ANYSEARCH_API_KEY`、`ZHIPU_API_KEY`）读取。
 
 ## 凭据与沙箱
