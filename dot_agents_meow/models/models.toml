@@ -31,7 +31,7 @@ thinking_levels = ["low", "medium", "high"]
 
 [providers.command-code.models."xiaomi/mimo-v2.6-flash"]
 name = "MiMo V2.6 Flash"
-reasoning = false
+reasoning = true
 input = ["text", "image"]
 context_window = 1048576
 max_tokens = 131072
@@ -39,7 +39,7 @@ cost = { input = 0.14, output = 0.28, cache_read = 0.0028, cache_write = 0.0 }
 
 [providers.command-code.models."xiaomi/mimo-v2.6-pro"]
 name = "MiMo V2.6 Pro"
-reasoning = false
+reasoning = true
 input = ["text", "image"]
 context_window = 1048576
 max_tokens = 131072
@@ -47,7 +47,7 @@ cost = { input = 0.435, output = 0.87, cache_read = 0.0036, cache_write = 0.0 }
 
 [providers.command-code.models."xiaomi/mimo-v2.6-pro-ultraspeed"]
 name = "MiMo V2.6 Pro UltraSpeed"
-reasoning = false
+reasoning = true
 input = ["text", "image"]
 context_window = 1048576
 max_tokens = 131072
@@ -419,7 +419,7 @@ thinking_levels = ["low", "medium", "high"]
 
 [providers.command-code.models."xiaomi/mimo-v2.5"]
 name = "MiMo V2.5"
-reasoning = false
+reasoning = true
 input = ["text", "image"]
 context_window = 1000000
 max_tokens = 131072
@@ -427,7 +427,7 @@ cost = { input = 0.14, output = 0.28, cache_read = 0.0028, cache_write = 0.0 }
 
 [providers.command-code.models."xiaomi/mimo-v2.5-pro"]
 name = "MiMo V2.5 Pro"
-reasoning = false
+reasoning = true
 input = ["text"]
 context_window = 1000000
 max_tokens = 131072
