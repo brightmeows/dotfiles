@@ -73,6 +73,14 @@
             "output": 0.28,
             "cacheRead": 0.0028,
             "cacheWrite": 0.0
+          },
+          "thinkingLevelMap": {
+            "minimal": null,
+            "low": "low",
+            "medium": "medium",
+            "high": "high",
+            "xhigh": "xhigh",
+            "max": "max"
           }
         },
         {
@@ -90,6 +98,14 @@
             "output": 0.87,
             "cacheRead": 0.0036,
             "cacheWrite": 0.0
+          },
+          "thinkingLevelMap": {
+            "minimal": null,
+            "low": "low",
+            "medium": "medium",
+            "high": "high",
+            "xhigh": "xhigh",
+            "max": "max"
           }
         },
         {
@@ -107,6 +123,14 @@
             "output": 8.7,
             "cacheRead": 0.036,
             "cacheWrite": 0.0
+          },
+          "thinkingLevelMap": {
+            "minimal": null,
+            "low": "low",
+            "medium": "medium",
+            "high": "high",
+            "xhigh": "xhigh",
+            "max": "max"
           }
         },
         {
@@ -482,7 +506,7 @@
           },
           "thinkingLevelMap": {
             "minimal": null,
-            "low": "low",
+            "low": null,
             "medium": null,
             "high": "high",
             "xhigh": null,
@@ -704,7 +728,7 @@
           },
           "thinkingLevelMap": {
             "minimal": null,
-            "low": "low",
+            "low": null,
             "medium": null,
             "high": "high",
             "xhigh": null,
@@ -776,14 +800,6 @@
             "output": 4.05,
             "cacheRead": 0.17,
             "cacheWrite": 0.0
-          },
-          "thinkingLevelMap": {
-            "minimal": null,
-            "low": "low",
-            "medium": "medium",
-            "high": "high",
-            "xhigh": "xhigh",
-            "max": "max"
           }
         },
         {
@@ -916,6 +932,14 @@
             "output": 10.25,
             "cacheRead": 0.5,
             "cacheWrite": 0.0
+          },
+          "thinkingLevelMap": {
+            "minimal": null,
+            "low": "low",
+            "medium": "medium",
+            "high": "high",
+            "xhigh": "xhigh",
+            "max": "max"
           }
         },
         {
@@ -1049,14 +1073,6 @@
             "output": 1.15,
             "cacheRead": 0.04,
             "cacheWrite": 0.0
-          },
-          "thinkingLevelMap": {
-            "minimal": null,
-            "low": "low",
-            "medium": "medium",
-            "high": "high",
-            "xhigh": null,
-            "max": null
           }
         },
         {
@@ -1074,6 +1090,14 @@
             "output": 0.28,
             "cacheRead": 0.0028,
             "cacheWrite": 0.0
+          },
+          "thinkingLevelMap": {
+            "minimal": null,
+            "low": "low",
+            "medium": "medium",
+            "high": "high",
+            "xhigh": "xhigh",
+            "max": "max"
           }
         },
         {
@@ -1090,6 +1114,14 @@
             "output": 0.87,
             "cacheRead": 0.0036,
             "cacheWrite": 0.0
+          },
+          "thinkingLevelMap": {
+            "minimal": null,
+            "low": "low",
+            "medium": "medium",
+            "high": "high",
+            "xhigh": "xhigh",
+            "max": "max"
           }
         },
         {
@@ -1122,14 +1154,6 @@
             "output": 0.3,
             "cacheRead": 0.02,
             "cacheWrite": 0.0
-          },
-          "thinkingLevelMap": {
-            "minimal": null,
-            "low": "low",
-            "medium": null,
-            "high": "high",
-            "xhigh": null,
-            "max": null
           }
         },
         {
@@ -1146,6 +1170,14 @@
             "output": 4.4,
             "cacheRead": 0.26,
             "cacheWrite": 0.0
+          },
+          "thinkingLevelMap": {
+            "minimal": null,
+            "low": "low",
+            "medium": "medium",
+            "high": "high",
+            "xhigh": "xhigh",
+            "max": "max"
           }
         },
         {
@@ -1212,6 +1244,14 @@
             "output": 4.0,
             "cacheRead": 0.16,
             "cacheWrite": 0.0
+          },
+          "thinkingLevelMap": {
+            "minimal": null,
+            "low": "low",
+            "medium": "medium",
+            "high": "high",
+            "xhigh": "xhigh",
+            "max": "max"
           }
         },
         {
@@ -1261,6 +1301,14 @@
             "output": 1.2,
             "cacheRead": 0.03,
             "cacheWrite": 0.0
+          },
+          "thinkingLevelMap": {
+            "minimal": null,
+            "low": "low",
+            "medium": "medium",
+            "high": "high",
+            "xhigh": "xhigh",
+            "max": "max"
           }
         }
       ]

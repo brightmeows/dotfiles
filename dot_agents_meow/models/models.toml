@@ -36,6 +36,7 @@ input = ["text", "image"]
 context_window = 1048576
 max_tokens = 131072
 cost = { input = 0.14, output = 0.28, cache_read = 0.0028, cache_write = 0.0 }
+thinking_levels = ["low", "medium", "high", "xhigh", "max"]
 
 [providers.command-code.models."xiaomi/mimo-v2.6-pro"]
 name = "MiMo V2.6 Pro"
@@ -44,6 +45,7 @@ input = ["text", "image"]
 context_window = 1048576
 max_tokens = 131072
 cost = { input = 0.435, output = 0.87, cache_read = 0.0036, cache_write = 0.0 }
+thinking_levels = ["low", "medium", "high", "xhigh", "max"]
 
 [providers.command-code.models."xiaomi/mimo-v2.6-pro-ultraspeed"]
 name = "MiMo V2.6 Pro UltraSpeed"
@@ -52,6 +54,7 @@ input = ["text", "image"]
 context_window = 1048576
 max_tokens = 131072
 cost = { input = 4.35, output = 8.7, cache_read = 0.036, cache_write = 0.0 }
+thinking_levels = ["low", "medium", "high", "xhigh", "max"]
 
 [providers.command-code.models."xai/grok-4.7"]
 name = "Grok 4.7"
@@ -193,7 +196,7 @@ input = ["text", "image"]
 context_window = 1000000
 max_tokens = 384000
 cost = { input = 0.15, output = 0.6, cache_read = 0.003, cache_write = 0.0 }
-thinking_levels = ["low", "high", "max"]
+thinking_levels = ["high", "max"]
 
 [providers.command-code.models."zai-org/GLM-5.3"]
 name = "GLM-5.3"
@@ -274,7 +277,7 @@ input = ["text"]
 context_window = 1000000
 max_tokens = 384000
 cost = { input = 0.15, output = 0.6, cache_read = 0.003, cache_write = 0.0 }
-thinking_levels = ["low", "high", "max"]
+thinking_levels = ["high", "max"]
 
 [providers.command-code.models."thinkingmachines/inkling-small"]
 name = "Inkling Small"
@@ -307,7 +310,6 @@ input = ["text", "image"]
 context_window = 256000
 max_tokens = 65536
 cost = { input = 1.0, output = 4.05, cache_read = 0.17, cache_write = 0.0 }
-thinking_levels = ["low", "medium", "high", "xhigh", "max"]
 
 [providers.command-code.models."moonshotai/Kimi-K3"]
 name = "Kimi K3"
@@ -360,6 +362,7 @@ input = ["text"]
 context_window = 1000000
 max_tokens = 131072
 cost = { input = 3.0, output = 10.25, cache_read = 0.5, cache_write = 0.0 }
+thinking_levels = ["low", "medium", "high", "xhigh", "max"]
 
 [providers.command-code.models."zai-org/GLM-5.2"]
 name = "GLM-5.2"
@@ -418,7 +421,6 @@ input = ["text", "image"]
 context_window = 256000
 max_tokens = 256000
 cost = { input = 0.2, output = 1.15, cache_read = 0.04, cache_write = 0.0 }
-thinking_levels = ["low", "medium", "high"]
 
 [providers.command-code.models."xiaomi/mimo-v2.5"]
 name = "MiMo V2.5"
@@ -427,6 +429,7 @@ input = ["text", "image"]
 context_window = 1000000
 max_tokens = 131072
 cost = { input = 0.14, output = 0.28, cache_read = 0.0028, cache_write = 0.0 }
+thinking_levels = ["low", "medium", "high", "xhigh", "max"]
 
 [providers.command-code.models."xiaomi/mimo-v2.5-pro"]
 name = "MiMo V2.5 Pro"
@@ -435,6 +438,7 @@ input = ["text"]
 context_window = 1000000
 max_tokens = 131072
 cost = { input = 0.435, output = 0.87, cache_read = 0.0036, cache_write = 0.0 }
+thinking_levels = ["low", "medium", "high", "xhigh", "max"]
 
 [providers.command-code.models."Qwen/Qwen3.7-Max"]
 name = "Qwen 3.7 Max"
@@ -451,7 +455,6 @@ input = ["text"]
 context_window = 1000000
 max_tokens = 256000
 cost = { input = 0.1, output = 0.3, cache_read = 0.02, cache_write = 0.0 }
-thinking_levels = ["low", "high"]
 
 [providers.command-code.models."zai-org/GLM-5.1"]
 name = "GLM-5.1"
@@ -460,6 +463,7 @@ input = ["text"]
 context_window = 200000
 max_tokens = 131072
 cost = { input = 1.4, output = 4.4, cache_read = 0.26, cache_write = 0.0 }
+thinking_levels = ["low", "medium", "high", "xhigh", "max"]
 
 [providers.command-code.models."MiniMaxAI/MiniMax-M2.7"]
 name = "MiniMax M2.7"
@@ -492,6 +496,7 @@ input = ["text", "image"]
 context_window = 256000
 max_tokens = 262144
 cost = { input = 0.95, output = 4.0, cache_read = 0.16, cache_write = 0.0 }
+thinking_levels = ["low", "medium", "high", "xhigh", "max"]
 
 [providers.command-code.models."zai-org/GLM-5"]
 name = "GLM-5"
@@ -516,3 +521,4 @@ input = ["text"]
 context_window = 200000
 max_tokens = 131072
 cost = { input = 0.3, output = 1.2, cache_read = 0.03, cache_write = 0.0 }
+thinking_levels = ["low", "medium", "high", "xhigh", "max"]
