@@ -23,3 +23,16 @@ desc = "Archive selected files (compression level)"
 on = ["c", "a", "u"]
 run = "plugin compress -phl"
 desc = "Archive selected files (password+header+level)"
+
+# enter-archive：回车 = 进压缩包浏览（解压到 ~/.cache/yazi/archive/ 缓存），
+# o = 整包解压到包旁（全格式，zst 走 bsdtar 兤底）；详见插件源码头注释。
+# 目录与普通文件保持默认 open 行为（默认 o 与 <Enter> 均为 open，语义不变）。
+[[mgr.prepend_keymap]]
+on = ["<Enter>"]
+run = "plugin enter-archive"
+desc = "Enter archive (browse in cache)"
+
+[[mgr.prepend_keymap]]
+on = ["o"]
+run = "plugin enter-archive -- --extract"
+desc = "Extract archive next to it"
