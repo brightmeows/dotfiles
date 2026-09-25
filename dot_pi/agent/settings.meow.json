@@ -8,6 +8,7 @@
     "npm:pi-mcp-adapter",
     "npm:@juicesharp/rpiv-ask-user-question",
     "npm:@juicesharp/rpiv-todo",
+    "npm:pi-web-access",
     "./ext/aliases",
     "./ext/editor-input-tweaks",
     "./ext/esc-hold",
