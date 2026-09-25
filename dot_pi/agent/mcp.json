@@ -10,7 +10,7 @@
       "auth": "bearer",
       "bearerTokenEnv": "ANYSEARCH_API_KEY",
       "lifecycle": "keep-alive",
-      "directTools": true
+      "directTools": false
     },
     "context7": {
       "url": "https://mcp.context7.com/mcp",
