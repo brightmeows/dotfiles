@@ -1,0 +1,27 @@
+{
+  "searchRouting": {
+    "providers": [
+      "anysearch",
+      "searxng",
+      "exa",
+      "openai",
+      "brave",
+      "parallel",
+      "tinyfish",
+      "search1api",
+      "searchinfinity",
+      "querit",
+      "tavily",
+      "firecrawl",
+      "jina",
+      "serpdive",
+      "kagi",
+      "bocha",
+      "ollama",
+      "perplexity",
+      "gemini",
+      "duckduckgo"
+    ],
+    "fallbackOn": ["quota", "transient", "network", "invalid-response", "unsupported"]
+  }
+}

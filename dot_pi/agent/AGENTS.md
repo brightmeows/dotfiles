@@ -23,6 +23,7 @@ tags: [pi, mcp, settings]
 |---|---|---|
 | `settings.meow.json` | Pi 设置源 | 手改后 `chezmoi -S . apply`，合并脚本写入 `~/.pi/agent/settings.json` |
 | `mcp.json` | MCP server 清单 | 手改后 apply |
+| `web-search.json` | pi-web-access 搜索路由（`searchRouting` 顺序回退链） | 手改后 apply；curator UI 运行时回写的 `provider` 字段会被下次 apply 覆盖（顶层 `provider` 存在时会顶掉 `searchRouting`，如需临时换源记得回来删）；API key 不入仓库，用 `$ENV_VAR` 引用或依赖环境变量优先级 |
 | `models.json`、`models-dev.json` | 模型生成物 | 见上文，勿手改 |
 | `ext/` | Pi 扩展包 | 见 [ext/AGENTS.md](./ext/AGENTS.md) |
 
