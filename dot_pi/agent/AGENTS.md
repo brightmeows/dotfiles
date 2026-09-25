@@ -23,9 +23,24 @@ tags: [pi, mcp, settings]
 |---|---|---|
 | `settings.meow.json` | Pi 设置源 | 手改后 `chezmoi -S . apply`，合并脚本写入 `~/.pi/agent/settings.json` |
 | `mcp.json` | MCP server 清单 | 手改后 apply |
-| `web-search.json` | pi-web-access 搜索路由（`searchRouting` 顺序回退链） | 手改后 apply；curator UI 运行时回写的 `provider` 字段会被下次 apply 覆盖（顶层 `provider` 存在时会顶掉 `searchRouting`，如需临时换源记得回来删）；API key 不入仓库，用 `$ENV_VAR` 引用或依赖环境变量优先级 |
 | `models.json`、`models-dev.json` | 模型生成物 | 见上文，勿手改 |
 | `ext/` | Pi 扩展包 | 见 [ext/AGENTS.md](./ext/AGENTS.md) |
+
+## web-search.json（已迁出本目录）
+
+pi-web-access 的搜索路由（`searchRouting` 顺序回退链）源文件现为 [`dot_pi/web-search.json`](../web-search.json)，部署到 `~/.pi/web-search.json`；手改后 apply。
+
+**迁出原因**（2026-09-26）：pi-web-access 的配置路径解析 `getWebSearchConfigDir()`（`~/.pi/agent/npm/node_modules/pi-web-access/dist/index.js`）按序分支——
+`PI_CODING_AGENT_DIR` → `XDG_CONFIG_HOME` 已设时查 `$XDG_CONFIG_HOME/pi/` 再查 `~/.pi/` → 未设时查 `~/.pi/agent/` 再查 `~/.pi/`。
+`~/.pi/web-search.json` 是唯一两个分支都检查的位置：本机 GUI 会话 `XDG_CONFIG_HOME` 已设（TTY/SSH 登录未设），
+文件放 `~/.pi/agent/` 时 GUI 上下文会解析到不存在的 `~/.config/pi/`，路由从未生效；
+放 `~/.pi/` 则同机 GUI 与 TTY、非 XDG 平台（Windows Git Bash）全部命中。该函数每进程首查一次即缓存，改文件后需重启 pi。
+
+**维护要点**：
+
+- curator UI 运行时回写的 `provider` 字段会被下次 apply 覆盖（顶层 `provider` 存在时会顶掉 `searchRouting`，如需临时换源记得回来删）；回写落在解析出的同一文件，不会产生副本。
+- API key 不入仓库，用 `$ENV_VAR` 引用或依赖环境变量优先级。
+- 若 `~/.config/pi/web-search.json` 被人为创建，会优先于 `~/.pi/web-search.json` 被读到（XDG 分支先查它）——排查路由失效时先看这里。
 
 ## 踩坑点：enabledModels 不是可用性过滤
 
