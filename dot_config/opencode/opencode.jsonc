@@ -49,7 +49,7 @@
         "Z_AI_API_KEY": "{env:ZHIPU_API_KEY}",
         "Z_AI_MODE": "ZHIPU",
       },
-      "enabled": true,
+      "enabled": false,
     },
   },
   "agent": {
