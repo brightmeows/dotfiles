@@ -38,6 +38,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | [`docs/deepseek-harness-config.md`](docs/deepseek-harness-config.md) | DeepSeek Harness 配置托管、技能与 MCP 迁移、凭据与沙箱差异 |
 | [`docs/model-config-pipeline.md`](docs/model-config-pipeline.md) | 模型配置流水线：TOML 单一源、双消费者生成物、models.dev 刷新与映射规则 |
 | [`docs/matebook-battery-optimization.md`](docs/matebook-battery-optimization.md) | MateBook 续航优化：放电数据对比、battery-boost/power-log 改动、mihomo DoT 探测风暴处置 |
+| [`docs/pi-lsp-support.md`](docs/pi-lsp-support.md) | Pi 的 LSP 支持：pi-lsp-extension 选型决策与重审触发条件、tsserver/信任门机制记录、防漂移四件套写法示范 |
 
 ## Commands
 
