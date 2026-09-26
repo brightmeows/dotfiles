@@ -9,6 +9,7 @@
     "npm:@juicesharp/rpiv-ask-user-question",
     "npm:@juicesharp/rpiv-todo",
     "npm:pi-web-access",
+    "npm:pi-lsp-extension",
     "./ext/aliases",
     "./ext/editor-input-tweaks",
     "./ext/esc-hold",
