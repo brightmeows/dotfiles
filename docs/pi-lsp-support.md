@@ -27,7 +27,7 @@ pi 核心不承载 LSP，支持走扩展路线；选定 `pi-lsp-extension`。依
 
 | 事实 | 探针 |
 |------|------|
-| pi 运行时版本 | `pi --version`；包归属 `pacman -Q pi-coding-agent` |
+| pi 运行时版本 | `pi --version`（安装位置 `command -v pi`；包名曾从 `pi-coding-agent` 改为 `pi`，故不探包名） |
 | 扩展版本 | `npm view pi-lsp-extension version` |
 | 语言服务器在位 | `command -v rust-analyzer ty clangd typescript-language-server` |
 | 四 issue 状态 | `gh issue view {15,16,17,18} --repo samfoy/pi-lsp-extension` |
