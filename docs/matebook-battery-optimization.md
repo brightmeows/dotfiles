@@ -38,10 +38,23 @@
 
 | 项 | 内容 | 落点 | 验证 | 回退 |
 |----|------|------|------|------|
-| battery-boost | udev 规则：拔电关 CPU boost，插电恢复 | `/usr/local/bin/battery-boost.sh`、`/etc/udev/rules.d/99-battery-boost.rules`（源：[dot_config/battery-boost](../../dot_config/battery-boost/)） | `deploy.sh` 重放 ACAD change 事件后 boost 与电源状态一致 | 删两文件 + `udevadm control --reload` |
+| battery-boost | udev 规则：拔电关 CPU boost，插电恢复。**2026-09-27 已退役**，理由见下方“退役记录” | 系统侧 `/usr/local/bin/battery-boost.sh`、`/etc/udev/rules.d/99-battery-boost.rules`（源 `dot_config/battery-boost/` 已删除） | 退役后验证：电池上 `powerprofilesctl set` 不再报 `policyN/boost: Invalid argument` | 恢复 `git checkout` 源目录 + `deploy.sh`（需先确认上游 MR #235 状态） |
 | mihomo DoT 移除 | fallback 去掉 `tls://8.8.4.4:853`，保留两个 DoH 域名源 | `/etc/mihomo/config.yaml`（源：[dot_config/clash-meta](../../dot_config/clash-meta/)） | 下次挂起恢复/换网后 `get empty name` 日志量 | 恢复 `config.yaml.bak-20260920` |
 | localsearch 电池不索引 | `index-on-battery=false` | dconf（gsettings） | 电池时段索引日志消失 | 设回 true |
 | power-log 常驻采样 | systemd user 服务，5 秒粒度记录功率/电量/频率/负载/GPU | `~/.local/bin/power-log.sh`、`~/.config/systemd/user/power-log.service`（源：[dot_local/bin](../../dot_local/bin/)、[dot_config/systemd](../../dot_config/systemd/)） | `~/.local/state/power-log/*.csv` 持续落盘 | `systemctl --user disable --now power-log` |
+
+## 退役记录
+
+**battery-boost 退役（2026-09-27）**：它与 power-profiles-daemon（PPD）双头控制 boost 冲突。
+内核语义是全局 boost=0 时对任意 per-policy boost 属性的任何写入都返回 EINVAL，
+而 PPD 0.30 把 boost 写失败当 fatal、直接中止整个档位应用——只要 battery-boost 在电池上把全局 boost 置 0，
+PPD 切档就必然失败（插拔瞬间则是与 udev 异步的竞速），电池开机时 PPD 初始应用也失败。
+上游已确认根因（issue #172/#188/#189，MR #235 “amd-pstate: don’t fail profile switch when boost is disabled globally”，
+2026-08-13 提交时尚未合并发布），Kali bug #9784 独立复现。
+退役决策：battery-boost 的目标（电池关 boost）已包含在 Omarchy 记忆的 `battery=power-saver` 档内
+（PPD 对 power-saver 写 boost=0），由 Omarchy shell（`UPower.OnBattery` → `omarchy-powerprofiles-set` → PPD）作为唯一权威。
+语义变化：boost 改为跟档位走，电池上手动切 balanced 会重新打开 boost；
+若将来需要“电池强制关 boost”硬规则，须等 MR #235 发布后再评估。
 
 ## 待数据再定
 
