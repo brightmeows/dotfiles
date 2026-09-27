@@ -42,6 +42,13 @@ pi-web-access 的搜索路由（`searchRouting` 顺序回退链）源文件现�
 
 - curator UI 运行时回写的 `provider` 字段会被下次 apply 覆盖（顶层 `provider` 存在时会顶掉 `searchRouting`，如需临时换源记得回来删）；回写落在解析出的同一文件，不会产生副本。
 - API key 不入仓库，用 `$ENV_VAR` 引用或依赖环境变量优先级。
+- `ssrf.allowRanges`（2026-09-27 起，当前值 `["198.18.0.0/16"]`）：mihomo TUN fake-ip 把域名解析成
+  198.18.x.x 假地址，pi-web-access 的 SSRF 防护会把它误判为内网地址拦截（报
+  `Blocked internal address for <域名>`），故加白名单放行。范围依据：上游 README 要求写“覆盖代理
+  fake-ip 池的最窄范围”，本仓库各机 `fake-ip-range` 同源未显式配置、即默认 `198.18.0.1/16`——
+  改 `fake-ip-range` 或再撞同一报错时按此复核。安防含义：放行后域名级 SSRF 防护失效
+  （提示注入可借 pi 诱导抓取内网服务），残余防护仅剩 URL 字面内网 IP 与 fake-ip-filter 域名
+  （`*.lan`/`*.local` 解析真实内网 IP 仍拦）。
 - 若 `~/.config/pi/web-search.json` 被人为创建，会优先于 `~/.pi/web-search.json` 被读到（XDG 分支先查它）——排查路由失效时先看这里。
 
 ## LSP 扩展（pi-lsp-extension）
