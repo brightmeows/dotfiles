@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "brightmeows.active-window",
+  "name": "Active window (per monitor)",
+  "version": "1.0.0",
+  "author": "brightmeows",
+  "description": "Title of the active window on this monitor",
+  "kinds": ["bar-widget"],
+  "entryPoints": {
+    "barWidget": "ActiveWindow.qml"
+  },
+  "barWidget": {
+    "displayName": "Active window (per monitor)",
+    "description": "Title of the active window on this monitor",
+    "category": "Compositor",
+    "allowMultiple": false,
+    "defaultSection": "center"
+  }
+}
