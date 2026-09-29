@@ -73,15 +73,19 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | 模型配置 | `dot_agents_meow/models/models.toml` | `dot_pi/agent/models.json`、`dot_pi/agent/models-dev.json`（生成物，随仓库提交）与 `~/.agents_meow/models/resolved.json`（本机） | `gen-models.py` 从 TOML 生成；pre-commit 用 `--check` 校验仓库产物；apply 后 `.chezmoiscripts/run_onchange_after_gen-pi-models.sh.tmpl` 把同一结果同步到 `~/.pi/agent`。规则见 [dot_agents_meow/models/AGENTS.md](dot_agents_meow/models/AGENTS.md) |
 | Environment.d | `dot_env_common` | `~/.config/environment.d/50-meow.conf` | awk 翻译 `+=`（追加）/`<=`（前插）为 environment.d 的 `${KEY:+...}` 守卫语法，多操作合并为一行赋值 |
 | Omarchy 工作区组件启用 | `dot_config/omarchy/plugins/brightmeows.workspaces/manifest.json`（hash 触发） | `~/.config/omarchy/shell.json` | 仅替换 `bar.layout` 里的组件 id（内置 `omarchy.workspaces` 换为克隆 id）；幂等、尊重手动删除、文件缺失时从 Omarchy 默认初始化、非 Omarchy 平台跳过。shell.json 不纳入 chezmoi 管理（Omarchy CLI、栏拖拽与升级迁移会就地改写它） |
+| Omarchy 活动窗口组件启用 | `dot_config/omarchy/plugins/brightmeows.active-window/`（脚本每次 apply 运行） | `~/.config/omarchy/shell.json` | 缺条目则插到中区最左（`indicators` 之前），已存在则原地不动（尊重手动挪位）；`omarchy refresh shell` 重置后一次 apply 恢复；非 Omarchy 平台跳过 |
 
 **使用方式**：修改源文件后运行 `chezmoi -S . apply`，脚本自动执行并同步配置。
 
-**实现机制**：合并脚本位于 `.chezmoiscripts/` 目录，统一使用 `run_onchange_after_` 前缀，自动触发合并。
+**实现机制**：合并脚本位于 `.chezmoiscripts/` 目录，统一使用 `run_onchange_after_` 前缀，自动触发合并（唯一的 `run_after_` 例外见下）。
 
 - 时序背景：chezmoi 按 entry 名字母序应用条目，`.chezmoiscripts/`（c）排在 `.gitconfig.meow`、`.pi`、`.env_common`
   等数据源之前，脚本不加 `after_` 会先于数据文件运行、读到上一轮旧值，且触发 hash 被消耗后不再重跑，
   合并永久滞后（2026-09-14 修复，参照 b52aefc 同款坑；三个脚本已同步改名）
 - 触发方式：`after_` 保证脚本在数据文件部署后执行；`onchange` 配合模板 hash（内容变化才运行）
+- `run_after_` 例外：`run_after_omarchy-active-window-enable.sh.tmpl`（活动窗口组件调和）每次 apply 运行——
+  `omarchy refresh shell` 会把 shell.json 重置为默认，模板 hash 未变时 onchange 不会重跑、无法恢复布局条目，
+  故该脚本每次重新调和
 
 ## DeepSeek Harness 配置
 

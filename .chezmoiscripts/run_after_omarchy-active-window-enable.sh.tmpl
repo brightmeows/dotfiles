@@ -1,0 +1,60 @@
+#!/bin/bash
+# Keep the bar's layout pointing at the user plugin brightmeows.active-window.
+#
+# shell.json is deliberately not managed by chezmoi: Omarchy's CLI, the bar's
+# own drag gestures and its update migrations all rewrite it in place. This
+# script reconciles exactly one entry: if the widget is missing from the
+# layout it is inserted at the left edge of the center section; an existing
+# entry is left where it is, so manual moves stick and a manual removal is
+# reverted on the next apply (the repository is the source of truth).
+#
+# Unlike the other scripts here this one uses run_after_ (runs on every
+# apply) instead of run_onchange_: `omarchy refresh shell` resets shell.json
+# to the vendor default, and an onchange script would not fire again because
+# its rendered content (the embedded manifest hash) is unchanged. Re-running
+# the reconciliation every apply is what makes "refresh shell, then apply"
+# restore the widget.
+set -euo pipefail
+
+omarchy_path="${OMARCHY_PATH:-/usr/share/omarchy}"
+[ -d "$omarchy_path/shell" ] || exit 0
+
+# Read the plugin id from the source tree, not the deployed directory: on a
+# fresh machine the plugin directory may not exist yet when this runs.
+plugin_dir=$(find "{{ .chezmoi.sourceDir }}/dot_config/omarchy/plugins" -mindepth 1 -maxdepth 1 -type d -name '*.active-window' 2>/dev/null | sort | head -n1)
+[ -n "$plugin_dir" ] || exit 0
+plugin_id=$(basename "$plugin_dir")
+config="${HOME}/.config/omarchy/shell.json"
+
+if [ ! -s "$config" ]; then
+  default="${omarchy_path}/config/omarchy/shell.json"
+  [ -f "$default" ] || exit 0
+  mkdir -p "$(dirname "$config")"
+  cp "$default" "$config"
+fi
+
+# Only rewrite the file when the entry is actually missing: the shell and
+# the CLI write shell.json in their own formatting, so a byte comparison
+# after re-serializing with jq is not a change indicator. A non-object
+# layout (no standard bar layout to reconcile) also counts as done.
+reconciled=$(jq --arg id "$plugin_id" '
+  def entry_id: if type == "string" then . else (.id // "") end;
+
+  if (.bar.layout | type) == "object"
+  then ([ (.bar.layout // {})[]? | .[]? | entry_id ] | index($id)) != null
+  else true
+  end
+' "$config")
+if [ "$reconciled" = "true" ]; then
+  exit 0
+fi
+
+tmp=$(mktemp)
+jq --arg id "$plugin_id" '
+  .bar.layout.center = ([{ id: $id }] + ((.bar.layout.center // [])))
+' "$config" >"$tmp"
+mv "$tmp" "$config"
+
+# The shell watches the plugin directory, but an explicit rescan makes a
+# first deploy deterministic. Quiet mode stays a no-op when no shell runs.
+omarchy-shell -q shell rescanPlugins || true
