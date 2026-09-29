@@ -8,11 +8,6 @@ import qs.Ui
 
 // Workspace switcher with two additions over the stock omarchy.workspaces:
 //
-//   * Window follows process: when an app opens a new window while that app
-//     already has windows on another workspace, the new window is moved there
-//     silently instead of taking over the focused workspace. Only a window
-//     that landed on the focused monitor's active workspace is touched, so
-//     window rules and other explicit placements are never overridden.
 //   * New-window dot: a workspace that received a window while it was not
 //     visible on any monitor shows a small dot under its number until the
 //     workspace becomes visible.
@@ -20,8 +15,12 @@ import qs.Ui
 //     runs bell-flag.sh, which records the bell window's workspace; the dot
 //     uses the bar's urgent color until the workspace becomes visible.
 //
-// See README.md for the excludeClasses setting and the manual re-enable step
-// after `omarchy refresh shell`.
+// 历史注记：本插件曾有“新窗口跟随进程”的事后搬迁逻辑（同进程在其他工作区
+// 已有窗口时，把新窗口静默搬过去）。2026-09 由菜单/绑定侧的 meow-launch
+// 接管窗口落位（compositor exec 规则在 map 前决定工作区），搬迁逻辑因
+// 闪动、抢焦点、覆盖面不足而移除，openwindow 事件仅保留圆点标记职责。
+//
+// See README.md for the manual re-enable step after `omarchy refresh shell`.
 
 BarWidget {
   id: root
@@ -67,17 +66,6 @@ BarWidget {
   // Workspaces that received a new window while invisible on every monitor.
   // Replaced wholesale on each change so bindings re-evaluate.
   property var flaggedWorkspaces: []
-  // Open windows waiting for their hyprctl query: { address, landed, previousActive }
-  property var moveQueue: []
-  property var currentCandidate: null
-  // When the window we moved stole focus, put it back on this address.
-  property string restoreFocusTo: ""
-  property string movedAddress: ""
-
-  function hexAddress(value) {
-    var text = String(value || "").toLowerCase()
-    return text.indexOf("0x") === 0 ? text.substring(2) : text
-  }
 
   function isFlagged(id) {
     return flaggedWorkspaces.indexOf(id) !== -1
@@ -178,123 +166,23 @@ BarWidget {
       flagBell(id)
       consumed.push(parts[0])
     }
-    if (consumed.length === 0 || !isMoveExecutor()) return
+    if (consumed.length === 0 || !isFileCleaner()) return
     Quickshell.execDetached(["rm", "-f"].concat(consumed))
   }
 
-  // ---------------------------------------------------------------------
-  // Window follows process.
-  // ---------------------------------------------------------------------
-
-  function excludedClasses() {
-    var value = setting("excludeClasses", [])
-    return Array.isArray(value) ? value : []
-  }
-
-  function isExcluded(className) {
-    var haystack = String(className || "").toLowerCase()
-    if (!haystack) return false
-
-    var list = excludedClasses()
-    for (var i = 0; i < list.length; i++) {
-      var needle = String(list[i] || "").toLowerCase()
-      if (needle && haystack.indexOf(needle) !== -1) return true
-    }
-
-    return false
-  }
-
-  // One bar surface performs the move; the others only keep their flags in
-  // sync, so a two-monitor bar never fires the dispatcher twice.
-  function isMoveExecutor() {
+  // One bar surface deletes the consumed event files; the others only keep
+  // their flags in sync, so a two-monitor bar never races on rm.
+  function isFileCleaner() {
     if (!bar || typeof bar.moduleWidgets !== "function") return true
     var widgets = bar.moduleWidgets(moduleName)
     return widgets.length === 0 || widgets[0] === root
   }
 
   function onOpenWindow(address, landed, className) {
-    var focusedName = Hyprland.focusedWorkspace ? String(Hyprland.focusedWorkspace.name) : ""
-
-    // Only correct the default placement: a window that landed anywhere but
-    // the focused monitor's active workspace was placed there on purpose.
-    if (landed !== focusedName) {
-      var id = workspaceNumber(landed)
-      if (id && !workspaceVisible(id)) flagWorkspace(id)
-      return
-    }
-
-    if (isExcluded(className)) return
-
-    var previousActive = Hyprland.activeToplevel ? hexAddress(Hyprland.activeToplevel.address) : ""
-    var next = moveQueue.slice()
-    next.push({ address: address, landed: landed, previousActive: previousActive })
-    moveQueue = next
-    pumpMoveQueue()
-  }
-
-  function pumpMoveQueue() {
-    if (clientsProcess.running || moveQueue.length === 0) return
-    var next = moveQueue.slice()
-    currentCandidate = next.shift()
-    moveQueue = next
-    clientsProcess.running = true
-  }
-
-  function completeQuery(raw) {
-    if (!currentCandidate) return
-    var candidate = currentCandidate
-    currentCandidate = null
-    if (raw) handleClients(candidate, raw)
-    pumpMoveQueue()
-  }
-
-  function handleClients(candidate, raw) {
-    var clients
-    try {
-      clients = JSON.parse(String(raw || ""))
-    } catch (error) {
-      return
-    }
-
-    if (!Array.isArray(clients) || clients.length === 0) return
-
-    var wanted = hexAddress(candidate.address)
-    var window = null
-    var others = []
-    for (var i = 0; i < clients.length; i++) {
-      if (hexAddress(clients[i].address) === wanted) window = clients[i]
-      else others.push(clients[i])
-    }
-
-    if (!window || !window.workspace) return
-    // The window may have been closed or moved elsewhere while we queried.
-    if (String(window.workspace.name) !== candidate.landed) return
-    if (isExcluded(window.class) || isExcluded(window.initialClass)) return
-
-    var pid = Number(window.pid || 0)
-    if (!pid) return
-
-    var sibling = null
-    for (var j = 0; j < others.length; j++) {
-      var other = others[j]
-      if (Number(other.pid) !== pid) continue
-      if (!sibling || Number(other.focusHistoryID) < Number(sibling.focusHistoryID)) sibling = other
-    }
-
-    if (!sibling || !sibling.workspace) return
-
-    var target = String(sibling.workspace.name || "")
-    if (!target || target === candidate.landed) return
-
-    var targetId = workspaceNumber(target)
-    if (targetId && !workspaceVisible(targetId)) flagWorkspace(targetId)
-
-    if (!isMoveExecutor()) return
-
-    root.restoreFocusTo = candidate.previousActive
-    root.movedAddress = wanted
-    Hyprland.dispatch("hl.dsp.window.move({ window = \"address:0x" + wanted + "\", workspace = " + JSON.stringify(target) + ", follow = false })")
-    focusRestoreTimer.restart()
+    // meow-launch 已在 map 前决定窗口工作区；此处只做圆点标记：
+    // 新窗口落在任一显示器都不可见的工作区时点亮圆点。
+    var id = workspaceNumber(landed)
+    if (id && !workspaceVisible(id)) flagWorkspace(id)
   }
 
   // ---------------------------------------------------------------------
@@ -315,21 +203,6 @@ BarWidget {
     }
   }
 
-  Process {
-    id: clientsProcess
-    command: ["hyprctl", "-j", "clients"]
-
-    stdout: StdioCollector {
-      waitForEnd: true
-      onStreamFinished: root.completeQuery(text)
-    }
-
-    // Defensive pump for a process that produced no output at all.
-    onExited: function(exitCode) {
-      root.completeQuery("")
-    }
-  }
-
   // Bell event files from bell-flag.sh, polled once a second.
   Process {
     id: bellScan
@@ -346,44 +219,6 @@ BarWidget {
     running: true
     repeat: true
     onTriggered: if (!bellScan.running) bellScan.running = true
-  }
-
-  // The moved window can steal focus on its way out; hand it back to whatever
-  // the user was on. An app that asks for attention afterwards is left alone.
-  Timer {
-    id: focusRestoreTimer
-    interval: 80
-    repeat: true
-    property int checks: 0
-
-    onTriggered: {
-      checks++
-
-      if (!root.movedAddress || !root.restoreFocusTo || root.restoreFocusTo === root.movedAddress) {
-        stop()
-        checks = 0
-        root.restoreFocusTo = ""
-        root.movedAddress = ""
-        return
-      }
-
-      var active = Hyprland.activeToplevel
-      if (active && hexAddress(active.address) === root.movedAddress) {
-        Hyprland.dispatch("hl.dsp.focus({ window = \"address:0x" + root.restoreFocusTo + "\" })")
-        stop()
-        checks = 0
-        root.restoreFocusTo = ""
-        root.movedAddress = ""
-        return
-      }
-
-      if (checks >= 4) {
-        stop()
-        checks = 0
-        root.restoreFocusTo = ""
-        root.movedAddress = ""
-      }
-    }
   }
 
   // ---------------------------------------------------------------------

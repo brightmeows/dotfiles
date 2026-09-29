@@ -1,16 +1,20 @@
 # brightmeows.workspaces（工作区组件克隆）
 
-从 Omarchy 内置 `omarchy.workspaces` 克隆而来的用户组件，保留原有工作区切换功能，另加两个行为。
+从 Omarchy 内置 `omarchy.workspaces` 克隆而来的用户组件，保留原有工作区切换功能，另加两个圆点标记。
 
-- **新窗口跟随进程**：应用在当前聚焦工作区新建窗口、而同一进程在别的工作区已有窗口时，新窗口被静默移到该进程最近聚焦窗口所在的工作区，不抢焦点、不切工作区。
 - **新窗口圆点**：新窗口落在所有显示器都不可见的工作区时，该工作区数字下方出现一个小圆点；访问该工作区（在任一显示器上激活）后清除。
 - **响铃圆点**：Alacritty 终端响铃时（如 pi 问卷等待输入），本插件的 `bell-flag.sh` 被该终端的 `[bell] command` 调用，记录响铃窗口所在的工作区；状态栏圆点改用 urgent 色，访问该工作区后清除，超过 10 分钟的事件过期作废。
 
-## 规则边界
+## 历史注记
 
-- 只纠正默认落位：窗口被窗口规则显式放到别处（例如 `o.window(..., { workspace = "8 silent" })`）时不搬迁。
-- 同一进程的窗口分布在多个工作区时，目标取最近聚焦（focusHistoryID 最小）窗口所在的工作区。
-- 特殊工作区与命名工作区照常跟随，但状态栏只显示并标记 1 到 10 号数字工作区。
+本插件曾有“新窗口跟随进程”的事后搬迁逻辑（同进程在其他工作区已有窗口时，把新窗口静默搬过去）。2026-09 起窗口落位由菜单与绑定侧的
+`meow-launch`（`~/.local/bin/meow-launch`）接管：经 Hyprland exec 规则在窗口 map 前静默落位到发起操作的工作区，
+无闪动、不抢焦点、对 GTK/Qt/Electron 一致有效。搬迁逻辑因闪动、抢焦点、覆盖面不足而移除，
+`openwindow` 事件仅保留圆点标记职责。随之失效的 `excludeClasses` 配置项一并删除。
+
+## 圆点边界
+
+- 特殊工作区与命名工作区照常点亮圆点，但状态栏只显示并标记 1 到 10 号数字工作区。
 - 圆点标记不跨 shell 重启保留（响铃事件文件在 cache 里，重启后仅消费 10 分钟内的新鲜事件）。
 
 ## 响铃链路
@@ -24,19 +28,10 @@
 - `bell-flag.sh` 从自身进程向上找到 alacritty 进程，按 pid 查 `hyprctl clients` 得到工作区；窗口已可见时静默退出。
 - 只有 Alacritty 接了响铃钩子（`dot_config/alacritty/alacritty.toml` 的 `[bell]`）；foot、kitty、ghostty 若要同样效果需各自接同款命令。
 - Hyprland 侧配套 `o.window("Alacritty", { focus_on_activate = false })`（`~/.config/hypr/hyprland.lua`），禁止响铃经 xdg-activation 抢焦点。
-
-## 配置
-
-`excludeClasses`（字符串数组，默认空）按类名子串匹配，大小写不敏感；命中的应用不做搬迁，圆点标记不受影响。写在 `~/.config/omarchy/shell.json` 的布局条目里：
-
-```json
-{
-  "id": "brightmeows.workspaces",
-  "excludeClasses": ["microsoft-edge"]
-}
-```
-
-保存后热重载。
+- 同文件配套 `o.window("chromium", { no_initial_focus = true, focus_on_activate = false, no_follow_mouse = true })`：agent-browser（chromium 实例）
+  操作页面或弹新窗口时不抢焦点，三路全堵（初始焦点、激活请求、悬停聚焦），手动点击聚焦不受影响；弹窗跟随浏览器工作区
+  （`initial_workspace_tracking = 1` 下实测落浏览器所在工作区），落不可见工作区时由本插件新窗口圆点提示，
+  窗口内操作（导航、点击）不触发提示。接管非 chromium 浏览器（Edge 等）为非目标，届时补同构规则。
 
 ## 运维
 
