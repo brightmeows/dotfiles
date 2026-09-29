@@ -36,5 +36,5 @@
 ## 运维
 
 - 修改本目录的 QML 后若行为没有更新，执行 `omarchy restart shell` 让组件实例重建。
-- `omarchy refresh shell` 会把 shell.json 重置为默认（先备份原文件）；之后运行一次 `chezmoi -S . apply`，或手动执行 `omarchy plugin enable brightmeows.workspaces` 恢复启用。
+- `omarchy refresh shell` 会把 shell.json 重置为默认（先备份原文件）；之后手动执行 `omarchy plugin enable brightmeows.workspaces` 恢复克隆启用（本插件的 onchange 脚本在模板 hash 未变时不会重跑，`chezmoi -S . apply` 不恢复条目）。
 - 回退：`omarchy plugin remove brightmeows.workspaces --yes`，会恢复内置组件。
