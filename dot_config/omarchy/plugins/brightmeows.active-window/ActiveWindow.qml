@@ -211,8 +211,16 @@ BarWidget {
   // ---------------------------------------------------------------------
 
   visible: title !== "" && !vertical
-  implicitWidth: visible ? Math.min(maxLabelWidth, labelText.implicitWidth) + Style.spacing.controlPaddingX * 2 : 0
+  // Measured outside the Text item: reading Text.implicitWidth while that
+  // item's width tracks the root's implicitWidth builds a binding loop.
+  implicitWidth: visible ? Math.min(maxLabelWidth, labelMetrics.advanceWidth) + Style.spacing.controlPaddingX * 2 : 0
   implicitHeight: barSize
+
+  TextMetrics {
+    id: labelMetrics
+    font: labelText.font
+    text: root.title
+  }
 
   Behavior on implicitWidth {
     NumberAnimation {
