@@ -36,11 +36,6 @@
       "command": ["npx", "-y", "@nuskey8/docs-rs-mcp@latest"],
       "enabled": false,
     },
-    "cnki-mcp": {
-      "type": "local",
-      "command": ["uvx", "git+https://github.com/h-lu/cnki-mcp.git"],
-      "enabled": false,
-    },
     // zai-mcp-server: API key 通过环境变量 ZHIPU_API_KEY 注入，不落盘
     "zai-mcp-server": {
       "type": "local",
