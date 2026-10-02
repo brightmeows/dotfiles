@@ -23,6 +23,7 @@
     "prefer-named-capture-group": "off",
     "func-names": "off",
     "sort-imports": "off",
+    "one-var": "off",
     "new-cap": [
       "deny",
       {
