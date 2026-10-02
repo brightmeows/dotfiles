@@ -31,11 +31,6 @@
       "command": ["uvx", "git+https://github.com/openags/paper-search-mcp.git"],
       "enabled": false,
     },
-    "docs-rs-mcp": {
-      "type": "local",
-      "command": ["npx", "-y", "@nuskey8/docs-rs-mcp@latest"],
-      "enabled": false,
-    },
     // zai-mcp-server: API key 通过环境变量 ZHIPU_API_KEY 注入，不落盘
     "zai-mcp-server": {
       "type": "local",
