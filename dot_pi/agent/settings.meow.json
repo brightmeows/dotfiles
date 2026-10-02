@@ -4,6 +4,7 @@
   "retry": { "enabled": true, "maxRetries": 3 },
   "skills": ["~/.agents_meow/skills/"],
   "enableSkillCommands": true,
+  "codemode": { "mode": "only", "inlineBudget": 65536 },
   "packages": [
     "npm:@juicesharp/rpiv-ask-user-question",
     "npm:@narumitw/pi-goal",
