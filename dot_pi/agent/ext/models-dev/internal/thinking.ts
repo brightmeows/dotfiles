@@ -17,7 +17,6 @@
  * 借道顶档，改为直映 xhigh。
  */
 
-import type { ProviderModelConfig } from "@earendil-works/pi-coding-agent";
 import type { RawModel } from "./registry.ts";
 
 /**
@@ -26,7 +25,13 @@ import type { RawModel } from "./registry.ts";
  */
 const PI_THINKING_LEVELS = ["off", "minimal", "low", "medium", "high", "xhigh", "max"] as const;
 type PiThinkingLevel = (typeof PI_THINKING_LEVELS)[number];
-type ThinkingLevelMap = NonNullable<ProviderModelConfig["thinkingLevelMap"]>;
+/**
+ * 与 pi-ai 的 ThinkingLevelMap 结构一致（Partial<Record<ModelThinkingLevel, string | null>>）。
+ * 2026-10-02：pi 1.0 的 ProviderModelConfig 变为 chat/image/classifier 判别联合，
+ * thinkingLevelMap 仅存于 chat 变体，原索引访问编译失败；此处改为本地结构类型，
+ * 沿用硬编码策略，保持与主包内部类型解耦。
+ */
+type ThinkingLevelMap = Partial<Record<PiThinkingLevel, string | null>>;
 
 /**
  * 从 reasoning_options 中提取 effort 挡位列表。
