@@ -16,8 +16,9 @@
  * - 检测项精简：保留影响 LLM 决策的高价值项（OS / 不可变系统 / 会话 /
  *   桌面 / 容器），删除低价值项（shell / node / pnpm 版本、内核版本、
  *   架构）——需要时 LLM 可自行用命令查询
- * - 完整信息走 systemPrompt（每轮重建，compact 后自动恢复，无状态），
- *   摘要 message 只用于 TUI 可见性，不承载关键信息；渲染走 Pi 默认
+ * - 完整信息走结构化提示段 `sections.inline_context`（2026-10-02 自整段
+ *   systemPrompt 替换迁移；Pi 以 transcript delta 追加变更，不再每轮替换
+ *   完整提示词），摘要 message 只用于 TUI 可见性，不承载关键信息；渲染走 Pi 默认
  *   custom_message 外观（2026-09-24 起移除包内渲染器，无折叠，content 即
  *   单行摘要，默认渲染直接显示）
  * - 工具与 gh 状态：检测已安装的现代 CLI 替代（仅 fd/rg，2026-08-12
@@ -449,9 +450,13 @@ export default function (pi: ExtensionAPI) {
     const gitLine = gitInfo ? formatGitLine(gitInfo) : "";
     const toolsLine = tools.length > 0 ? formatToolsLine(tools) : "";
     const ghLine = gh ? formatGhLine(gh) : "";
-    const systemPrompt = `${event.systemPrompt}\n\n${[dateLine, envLine, gitLine, toolsLine, ghLine]
-      .filter(Boolean)
-      .join("\n")}`;
+    // 结构化提示段（1.0）：Pi 以 transcript delta 追加变更，不再整段替换 systemPrompt
+    const section = [dateLine, envLine, gitLine, toolsLine, ghLine].filter(Boolean).join("\n");
+    if (section) {
+      event.systemPromptOptions.sections["inline_context"] = section;
+    } else {
+      delete event.systemPromptOptions.sections["inline_context"];
+    }
 
     const result: {
       message?: {
@@ -460,10 +465,9 @@ export default function (pi: ExtensionAPI) {
         details: { notice: string };
         display: boolean;
       };
-      systemPrompt: string;
-    } = { systemPrompt };
+    } = {};
 
-    // 首条消息注入一条极简摘要（TUI 可见），完整信息已进 systemPrompt
+    // 首条消息注入一条极简摘要（TUI 可见），完整信息已进提示段
     if (!injectedMessage) {
       injectedMessage = true;
       // /resume 场景：历史已含（新或旧版）注入消息则跳过

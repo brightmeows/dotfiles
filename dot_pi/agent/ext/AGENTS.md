@@ -21,7 +21,7 @@ tags: [pi, extensions, typescript]
 | `aliases/` | `pi-meow-aliases` | 斜杠命令别名 | /clear → /new、/exit → /quit |
 | `esc-hold/` | `pi-meow-esc-hold` | Esc 防误触 | 单击提示不中断，双击/长按才中断；terminal 输入层；以 `ctx.isIdle()` 分场景：生成中守卫、空闲全放行 |
 | `editor-input-tweaks/` | `pi-meow-editor-input-tweaks` | 编辑器输入增强 | /@ 标记符着色 + / 补全停留；独占编辑器槽位（`ctx.ui.setEditorComponent` 全局单例，后设覆盖先设，新增编辑器类扩展须链式包装或并入本包）；2026-09-12 曾换市场包 pi-vim，同日回退 |
-| `inline-context/` | `pi-meow-inline-context` | 环境摘要注入 | 日期/系统环境/Git 状态/工具与 gh，systemPrompt 注入；首条摘要消息走默认渲染 |
+| `inline-context/` | `pi-meow-inline-context` | 环境摘要注入 | 日期/系统环境/Git 状态/工具与 gh，写入结构化 `sections.inline_context`（2026-10-02 自整段 systemPrompt 替换迁移）；首条摘要消息走默认渲染 |
 | `subdir-agents-md/` | `pi-meow-subdir-agents-md` | 子目录规则懒加载 | 触发与投递合并到 `tool_result` 同步点（规则拼进结果尾部，`details.subdirAgents` 标记持久去重，2026-09-26 重构）；结构化 `input.path` + bash 白名单启发式双通道；已注入规则文件被 read 时追加提示；含包内 `internal/path-extract.ts` |
 | `models-dev/` | `pi-meow-models-dev` | 模型目录导入 | models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await；纯库模块（registry / config / mapping / thinking / custom-models）归 `internal/` 子目录；配置 schema 见下文 |
 | `skill-reminders/` | `pi-meow-skill-reminders` | 技能专项提醒注入 | 按技能文件路径命中提醒（read 通道 `input.path`），命中后在 tool_result 段尾注入提醒段；注册表（数据驱动）归 `internal/reminders.ts`，新增提醒只加注册项；2026-09-19 自 better-skill 拆出 |
