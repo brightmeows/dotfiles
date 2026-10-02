@@ -31,7 +31,6 @@ tags: [pi, extensions, typescript]
 ```json
 "packages": [
   "npm:@juicesharp/rpiv-ask-user-question",
-  "npm:@juicesharp/rpiv-todo",
   "npm:@narumitw/pi-goal",
   "npm:pi-web-access",
   "npm:pi-lsp-extension",
@@ -90,6 +89,7 @@ pi 原生自定义模型文件 `~/.pi/agent/models.json`（chezmoi 源 `dot_pi/a
 - 技能域历史：better-skill 合集包（技能索引重写 / skill 工具 / read 兜底增强）2026-09-24 移除，技能加载回归 Pi 内置机制（Pi 默认建议式索引 + read 加载，`/skill:name` 手动命令保留）；专项提醒注入归 `skill-reminders/` 独立包（2026-09-19 拆出）
 - 编辑器槽位例外：替换主编辑器的扩展（`ctx.ui.setEditorComponent` 全局单例）不可与 `editor-input-tweaks` 并存，新编辑器功能并入其 `SlashAtHighlightEditor` 或链式包装；
   2026-09-12 曾试换市场包 pi-vim，同日回退（现槽位归 `editor-input-tweaks`）
+- npm 扩展历史：`rpiv-todo` 2026-10-02 移除，不再引入（主人确认）；任务跟踪不再用固定工具。
 - 各包完全自包含（2026-08-30 定）：包间零 import、无 lib 类共享目录；包内模块用 `./xxx.ts` 写法（tsconfig 已开 `allowImportingTsExtensions`）；需复用的模块在各包自备副本，副本间无同步义务
 - 新增包须在 `settings.meow.json` 的 `packages` 数组注册路径
 - 新增/移动扩展须实测加载：`pnpm check` 不查 default factory 契约，须 `pi -p -e <入口> --no-session` 验证（组目录传 `xxx/index.ts`）
