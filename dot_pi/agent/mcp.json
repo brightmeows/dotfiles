@@ -2,37 +2,32 @@
   "mcpServers": {
     "exa": {
       "url": "https://mcp.exa.ai/mcp",
-      "lifecycle": "keep-alive",
-      "directTools": false
+      "exposure": "codemode"
     },
     "anysearch": {
       "url": "https://api.anysearch.com/mcp",
-      "auth": "bearer",
-      "bearerTokenEnv": "ANYSEARCH_API_KEY",
-      "lifecycle": "keep-alive",
-      "directTools": false
+      "headers": {
+        "Authorization": "Bearer ${ANYSEARCH_API_KEY}"
+      },
+      "exposure": "codemode"
     },
     "context7": {
       "url": "https://mcp.context7.com/mcp",
-      "lifecycle": "keep-alive",
-      "directTools": false
+      "exposure": "codemode"
     },
     "cratesio-mcp": {
       "command": "cratesio-mcp",
-      "lifecycle": "keep-alive",
-      "directTools": false
+      "exposure": "codemode"
     },
     "paper-search-mcp": {
       "command": "uvx",
       "args": ["git+https://github.com/openags/paper-search-mcp.git"],
-      "lifecycle": "lazy",
-      "directTools": false
+      "exposure": "codemode"
     },
     "docs-rs-mcp": {
       "command": "npx",
       "args": ["-y", "@nuskey8/docs-rs-mcp@latest"],
-      "lifecycle": "lazy",
-      "directTools": false
+      "exposure": "codemode"
     },
     "zai-mcp-server": {
       "command": "npx",
@@ -41,9 +36,7 @@
         "Z_AI_API_KEY": "${ZHIPU_API_KEY}",
         "Z_AI_MODE": "ZHIPU"
       },
-      "disabled": true,
-      "lifecycle": "keep-alive",
-      "directTools": false
+      "enabled": false
     }
   }
 }

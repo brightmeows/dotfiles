@@ -5,7 +5,7 @@ tags: [pi, mcp, settings]
 
 # Pi agent 配置（面向代理）
 
-本目录管理 Pi 的配置源：`settings.meow.json`（合并部署）、`mcp-adapter.json`（MCP server 清单）、`models.json` 与 `models-dev.json`（模型配置生成物，随仓库提交）、`ext/`（扩展代码）。
+本目录管理 Pi 的配置源：`settings.meow.json`（合并部署）、`mcp.json`（Pi 内建 MCP server 清单）、`models.json` 与 `models-dev.json`（模型配置生成物，随仓库提交）、`ext/`（扩展代码）。
 部署与合并机制见仓库根 [AGENTS.md](../../AGENTS.md) 的“自动同步机制”；扩展代码的约定见 [ext/AGENTS.md](./ext/AGENTS.md)。根文件的通用约定（`chezmoi -S .`、提交规范、中文引号）此处不重复。
 
 ## 模型配置已迁出
@@ -22,11 +22,19 @@ tags: [pi, mcp, settings]
 | 文件 | 用途 | 维护方式 |
 |---|---|---|
 | `settings.meow.json` | Pi 设置源 | 手改后 `chezmoi -S . apply`，合并脚本写入 `~/.pi/agent/settings.json` |
-| `mcp-adapter.json` | MCP server 清单 | 手改后 apply |
+| `mcp.json` | Pi 内建 MCP server 清单 | 手改后 apply；字段与旧适配器字段的对照见下方注记 |
 | `models.json`、`models-dev.json` | 模型生成物 | 见上文，勿手改 |
 | `ext/` | Pi 扩展包 | 见 [ext/AGENTS.md](./ext/AGENTS.md) |
 
-> `mcp.json` 已于 2026-09-27 更名：pi-mcp-adapter 3.x 起不再读 `~/.pi/agent/mcp.json`，改读同目录 `mcp-adapter.json`（`ADAPTER_CONFIG_NAME`），旧路径只触发迁移提醒。源文件随仓库同步更名，勿再新增 `mcp.json`。
+> 2026-10-02 起 Pi 回归内建 MCP，`pi-mcp-adapter` 与 `mcp-adapter.json` 已移除
+> （2026-09-27 曾因适配器 3.x 从 `mcp.json` 更名为 `mcp-adapter.json`）。现配置源为 `mcp.json`，字段即内建格式：
+> stdio 用 `command`/`args`/`env`/`cwd`，HTTP 用 `url`/`headers`，另有 `enabled: false`、`exposure`、`timeout`、`description`。
+> `exposure` 默认 `codemode`，可写 `deferred`/`direct`/`hidden`。
+> 旧适配器字段对照：`directTools: false` 对应 `exposure: "codemode"`；
+> `auth: "bearer"` + `bearerTokenEnv` 对应 `headers.Authorization: "Bearer ${VAR}"`；
+> `disabled: true` 对应 `enabled: false`；`lifecycle` 无对应，内建对启用 server 后台连接并保持到会话结束。
+> 服务器增删优先用 `pi mcp add/remove`（写同一文件），手改文件后 `/reload` 生效。
+> `settings.json` 的 `extensions` 不应再出现 `-builtin:mcp`（适配器安装时写入的禁用项），内建 MCP 默认加载。
 
 ## web-search.json（已迁出本目录）
 

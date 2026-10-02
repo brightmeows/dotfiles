@@ -30,7 +30,6 @@ tags: [pi, extensions, typescript]
 
 ```json
 "packages": [
-  "npm:pi-mcp-adapter",
   "npm:@juicesharp/rpiv-ask-user-question",
   "npm:@juicesharp/rpiv-todo",
   "npm:@narumitw/pi-goal",
@@ -46,8 +45,7 @@ tags: [pi, extensions, typescript]
 ]
 ```
 
-权威源是 `settings.meow.json`（npm 包排本地包之前，本地包按字母序）；上方代码块仅为快照，改包后同步。
-本地包按字母序排列（顺序无运行时语义，各扩展事件面互不重叠）；npm:pi-mcp-adapter 保持首位。
+权威源是 `settings.meow.json`（npm 包与本地包分组，组内按字母序，npm 组在前）；上方代码块仅为快照，改包后同步。
 
 扩展文件必须 `export default function (pi)`，仅命名导出会加载报错。子目录内其他 `.ts` 仅作 import 模块。
 
