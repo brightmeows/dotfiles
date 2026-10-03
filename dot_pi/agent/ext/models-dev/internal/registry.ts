@@ -5,6 +5,9 @@
  * ~/.pi/agent/cache/models-dev-registry.json，TTL 内跳过网络请求、网络失败
  * 回退过期缓存。另含 models.dev 原始 JSON 的类型定义与 baseUrl 归一化。
  *
+ * 2026-10-03 修订：新增 fetchForRefresh（原生 Provider 的 fetchModels 入口，
+ * 并发合流）与 isOffline（--offline / PI_OFFLINE 时工厂期不发起网络）。
+ *
  * 缓存 schema 即 api.json 原始数据（fetchWithCache 直存直读），协议判定与
  * 模型映射在 mapping.ts 消费，不在本模块。
  */
@@ -90,13 +93,61 @@ export function fetchWithCache(): Promise<Record<string, RawProvider> | null> {
     if (age < CACHE_TTL_MS) {
       return Promise.resolve(cached.data); // TTL 内，直接用
     }
-    // 缓存过期，后台异步刷新，但先用过期数据
-    refreshCacheAsync();
+    // 缓存过期：在线时后台异步刷新并先用过期数据，离线时只用过期数据
+    if (!isOffline()) {
+      void fetchOnce();
+    }
     return Promise.resolve(cached.data);
   }
 
-  // 无缓存，同步拉取
-  return fetchAndSave();
+  // 无缓存：离线不发起网络（降级为无注册表），在线阻塞拉取
+  if (isOffline()) {
+    return Promise.resolve(null);
+  }
+  return fetchOnce();
+}
+
+/**
+ * 阻塞式刷新（原生 Provider 的 fetchModels 调用）：TTL 内回缓存；过期或
+ * force 时拉取并更新缓存，失败回退过期缓存。并发调用共享同一次请求；
+ * 离线兜底回缓存（pi 的网络刷新阶段离线时本就不会调用本函数）。
+ */
+export async function fetchForRefresh(
+  options: { force?: boolean | undefined } = {},
+): Promise<Record<string, RawProvider> | null> {
+  const cached = readCache();
+  if (!options.force && cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
+    return cached.data;
+  }
+  if (isOffline()) {
+    return cached?.data ?? null;
+  }
+  const fresh = await fetchOnce();
+  return fresh ?? cached?.data ?? null;
+}
+
+/** 进程内共享的单次拉取：并发刷新调用合流，避免逐 provider 各拉一遍 */
+let inFlightFetch: Promise<Record<string, RawProvider> | null> | null = null;
+
+function fetchOnce(): Promise<Record<string, RawProvider> | null> {
+  if (!inFlightFetch) {
+    inFlightFetch = fetchAndSave().finally(() => {
+      inFlightFetch = null;
+    });
+  }
+  return inFlightFetch;
+}
+
+/**
+ * 是否离线：--offline 时 pi 在 main.js 写入 PI_OFFLINE=1，PI_OFFLINE 环境变量
+ * 同义。解析与 pi 的 isTruthyEnvFlag 对齐（1/true/yes）。
+ */
+export function isOffline(): boolean {
+  const value = process.env["PI_OFFLINE"];
+  if (value === undefined) {
+    return false;
+  }
+  return value === "1" || value.toLowerCase() === "true" || value.toLowerCase() === "yes";
 }
 
 function readCache(): CacheEntry | null {
@@ -110,20 +161,6 @@ function readCache(): CacheEntry | null {
     // 文件不存在 / 解析失败，忽略
   }
   return null;
-}
-
-async function refreshCacheAsync(): Promise<void> {
-  try {
-    const res = await fetch(MODELS_DEV_URL);
-    if (!res.ok) {
-      return;
-    }
-    const data = (await res.json()) as Record<string, RawProvider>;
-    saveCache(data);
-    console.error("[models-dev] Cache updated");
-  } catch {
-    // 后台刷新失败不报错——stale 数据已用
-  }
 }
 
 async function fetchAndSave(): Promise<Record<string, RawProvider> | null> {

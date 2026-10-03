@@ -3,14 +3,20 @@
  *
  * Pi 扩展发现只支持一层子目录 + 单一入口（index.ts），本目录收纳 models.dev
  * provider 注册表导入：
- * - registry.ts：拉取与缓存（models.dev/api.json，24h TTL）
+ * - registry.ts：拉取与缓存（models.dev/api.json，24h TTL；离线守卫与刷新合流）
  * - config.ts：用户配置读取与校验（~/.pi/agent/models-dev.json，chezmoi 维护）
  * - mapping.ts：协议判定（npm→api 映射 + 模型层 shape/api 覆盖）与模型映射
  * - thinking.ts：思考挡位映射（pi 层级含 max）
+ * - native.ts：原生 Provider 构建（M2-hybrid；与内建不重名者走原生）
  *
  * 编排（async factory，入口 await 保证顺序）：读配置 → 遍历 provider →
  * 配置过滤（disabled）→ 协议判定 → 配置救活/覆盖 → 模型映射（含模型级
- * disabled 过滤）→ env 守卫 → 注册。
+ * disabled 过滤）→ env 守卫 → 按内建重名分流注册。
+ *
+ * 注册分流（2026-10-03，M2-hybrid）：pi 1.0 原生注册是顶层替换，注册原生
+ * provider 会顶掉同名内建（含 OAuth 登录与目录合成），故与内建重名的 id
+ * 仍走 legacy registerProvider（与内建 base 合成、保留内建 auth），非重名
+ * id 走原生 createProvider（auth / 刷新 / ModelsStore 持久化交给平台）。
  *
  * 目录组织（2026-08-27 拆包）：由 tools/ 拆出独立成域并做协议感知改造；
  * 同日接入用户配置（黑名单过滤 / 协议端点覆盖 / 救活被跳过 provider）。
@@ -21,15 +27,35 @@
  */
 
 import type { ExtensionAPI, ProviderModelConfig } from "@earendil-works/pi-coding-agent";
-import { fetchWithCache, type RawModel } from "./internal/registry.ts";
-import { loadConfig } from "./internal/config.ts";
+import { getBuiltinProviders } from "@earendil-works/pi-ai/providers/all";
+import {
+  fetchForRefresh,
+  fetchWithCache,
+  type RawModel,
+  type RawProvider,
+} from "./internal/registry.ts";
+import { loadConfig, type ProviderOverride } from "./internal/config.ts";
 import { loadCustomProviderIds } from "./internal/custom-models.ts";
+import { buildNativeProvider } from "./internal/native.ts";
 import {
   isOpenAiFamilyApi,
   mapModel,
   resolveProviderApi,
   type ResolvedProvider,
 } from "./internal/mapping.ts";
+
+/** 按用户配置映射单个 provider 的模型列表（legacy 注册与原生 fetchModels 共用） */
+function mapProviderModels(
+  provider: RawProvider,
+  resolved: ResolvedProvider,
+  providerOv: ProviderOverride | undefined,
+): ProviderModelConfig[] {
+  const rawList = Object.values(provider.models ?? {}).filter((m): m is RawModel => Boolean(m.id));
+  const modelOvMap = providerOv?.models;
+  return rawList
+    .map((m) => mapModel(m, resolved, { provider: providerOv, model: modelOvMap?.[m.id] }))
+    .filter((m): m is ProviderModelConfig => m !== null);
+}
 
 export default async function (pi: ExtensionAPI) {
   const registry = await fetchWithCache();
@@ -50,7 +76,30 @@ export default async function (pi: ExtensionAPI) {
     console.error(`[models-dev] ${modelsWarning}`);
   }
 
-  const registeredNames: string[] = [];
+  // 内建 provider id 集合：重名者原生注册会顶层替换内建，分流回 legacy（见 native.ts）
+  const builtinIds = new Set<string>(getBuiltinProviders());
+
+  /** 内建重名 id 的 legacy 路径注册（与内建 base 合成，保留内建 auth/登录） */
+  const registerLegacy = (options: {
+    id: string;
+    displayName: string;
+    resolved: ResolvedProvider;
+    models: ProviderModelConfig[];
+    envVars: readonly string[];
+  }): void => {
+    const [envKey] = options.envVars;
+    const apiKeyLiteral = envKey ? process.env[envKey] || undefined : undefined;
+    pi.registerProvider(options.id, {
+      name: options.displayName,
+      ...(options.resolved.baseUrl ? { baseUrl: options.resolved.baseUrl } : {}),
+      ...(apiKeyLiteral ? { apiKey: apiKeyLiteral } : {}),
+      api: options.resolved.api,
+      models: options.models,
+    });
+  };
+
+  const nativeNames: string[] = [];
+  const legacyNames: string[] = [];
   const skippedProtected: string[] = [];
   for (const [pid, provider] of Object.entries(registry)) {
     const providerOv = config?.providers?.[pid];
@@ -94,18 +143,7 @@ export default async function (pi: ExtensionAPI) {
       };
     }
 
-    if (!provider.models) {
-      continue;
-    }
-    const rawList = Object.values(provider.models).filter((m): m is RawModel => Boolean(m.id));
-    if (rawList.length === 0) {
-      continue;
-    }
-
-    const modelOvMap = providerOv?.models;
-    const models = rawList
-      .map((m) => mapModel(m, resolved, { provider: providerOv, model: modelOvMap?.[m.id] }))
-      .filter((m): m is ProviderModelConfig => m !== null);
+    const models = mapProviderModels(provider, resolved, providerOv);
     if (models.length === 0) {
       continue;
     }
@@ -118,30 +156,61 @@ export default async function (pi: ExtensionAPI) {
       continue;
     }
 
-    const envKey = provider.env?.[0];
-    const apiKeyLiteral = envKey ? process.env[envKey] || undefined : undefined;
-    pi.registerProvider(pid, {
-      name: provider.name ?? pid,
-      ...(resolved.baseUrl ? { baseUrl: resolved.baseUrl } : {}),
-      ...(apiKeyLiteral ? { apiKey: apiKeyLiteral } : {}),
-      api: resolved.api,
+    const displayName = provider.name ?? pid;
+    if (builtinIds.has(pid)) {
+      // 内建重名：原生注册会顶层替换内建（丢 OAuth 与内建目录合成），保留 legacy
+      registerLegacy({ id: pid, displayName, resolved, models, envVars });
+      legacyNames.push(displayName);
+      continue;
+    }
+
+    // 非重名：原生 Provider（auth / 刷新 / 持久化交给平台）
+    const nativeProvider = buildNativeProvider({
+      id: pid,
+      name: displayName,
+      baseUrl: resolved.baseUrl,
+      envVars,
       models,
+      fetchModels: async (context) => {
+        const fresh = await fetchForRefresh({ force: context.force });
+        const freshProvider = fresh?.[pid];
+        if (!freshProvider) {
+          return models; // 拉取失败：保持注册时列表
+        }
+        const refreshed = mapProviderModels(freshProvider, resolved, providerOv);
+        return refreshed.length > 0 ? refreshed : models;
+      },
     });
-    registeredNames.push(provider.name ?? pid);
+    if (nativeProvider) {
+      pi.registerProvider(nativeProvider);
+      nativeNames.push(displayName);
+    } else {
+      // 协议无可用 API 实现等异常：回退 legacy
+      registerLegacy({ id: pid, displayName, resolved, models, envVars });
+      legacyNames.push(displayName);
+    }
   }
 
   // ── 启动后发一条汇总提示 ──
-  if (registeredNames.length > 0 || skippedProtected.length > 0) {
+  if (nativeNames.length > 0 || legacyNames.length > 0 || skippedProtected.length > 0) {
     pi.on("session_start", async (event, ctx) => {
       if (event.reason === "startup") {
+        const parts: string[] = [];
+        if (nativeNames.length > 0) {
+          parts.push(`原生 ${nativeNames.length}：${nativeNames.join(", ")}`);
+        }
+        if (legacyNames.length > 0) {
+          parts.push(`legacy ${legacyNames.length}：${legacyNames.join(", ")}`);
+        }
+        const registeredNote =
+          parts.length > 0
+            ? `已注册 models.dev 提供商（${parts.join("；")}）`
+            : "models.dev 未注册提供商";
         const skippedNote =
           skippedProtected.length > 0
             ? `；跳过 ${skippedProtected.length} 个 models.json 已声明：${skippedProtected.join(", ")}`
             : "";
-        ctx.ui.notify(
-          `已注册 ${registeredNames.length} 个 models.dev 提供商：${registeredNames.join(", ")}${skippedNote}`,
-          "info",
-        );
+        ctx.ui.notify(`${registeredNote}${skippedNote}`, "info");
       }
     });
   }
