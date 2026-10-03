@@ -23,7 +23,7 @@ tags: [pi, extensions, typescript]
 | `editor-input-tweaks/` | `pi-meow-editor-input-tweaks` | 编辑器输入增强 | /@ 标记符着色 + / 补全停留；独占编辑器槽位（`ctx.ui.setEditorComponent` 全局单例，后设覆盖先设，新增编辑器类扩展须链式包装或并入本包）；2026-09-12 曾换市场包 pi-vim，同日回退 |
 | `inline-context/` | `pi-meow-inline-context` | 环境摘要注入 | 日期/系统环境/Git 状态/工具与 gh，写入结构化 `sections.inline_context`（2026-10-02 自整段 systemPrompt 替换迁移）；首条摘要消息走默认渲染 |
 | `subdir-agents-md/` | `pi-meow-subdir-agents-md` | 子目录规则懒加载 | 触发在 `tool_result` 收集、投递在 `turn_end` 边界条目（短通知 display: true + 全文 display: false，`details.subdirAgents` 标记持久去重，2026-10-03 重构：codemode 嵌套下脚本可能丢弃拼接内容，条目通道保证送达）；结构化 `input.path` + bash 白名单启发式双通道；已注入规则文件被 read 时追加提示；含包内 `internal/path-extract.ts` |
-| `models-dev/` | `pi-meow-models-dev` | 模型目录导入 | models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await；注册按内建重名分流（非重名走原生 createProvider + fetchModels/ModelsStore，重名保留 legacy 合成，2026-10-03 M2-hybrid）；纯库模块（registry / config / mapping / thinking / custom-models / native）归 `internal/` 子目录；配置 schema 见下文 |
+| `models-dev/` | `pi-meow-models-dev` | 模型目录导入 | models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await；注册按内建重名分流（非重名走原生 createProvider + fetchModels/ModelsStore，重名保留 legacy 合成，2026-10-03 M2-hybrid）；重名 provider 映射时按 id\|api 合并内建 compat 与档位表（内建优先，2026-10-04，见下文）；纯库模块（registry / config / mapping / thinking / custom-models / native）归 `internal/` 子目录；配置 schema 见下文 |
 | `skill-reminders/` | `pi-meow-skill-reminders` | 技能专项提醒注入 | 双通道命中：read 通道 `input.path`（tool_result 段尾注入）与 `/skill:<name>` 手动命令（input 事件 transform，先于 Pi 技能展开，2026-10-03 补）；注册表（数据驱动）归 `internal/reminders.ts`，新增提醒只加注册项；2026-09-19 自 better-skill 拆出 |
 
 注册方式（`settings.meow.json`）：
@@ -95,6 +95,22 @@ pi 1.0 的原生注册是顶层替换（`composeProvider` 取 `nativeExtensionPr
 - 仓库根 devDependency `@earendil-works/pi-ai` 仅服务 tsc；运行时由 pi 虚拟模块提供
   （`getApiProvider` 走 `/compat` 超集，与 coding-agent 同款用法）
 - 新增 internal 纯工厂模块 `native.ts`（不读环境、不注册；编排归 index.ts）
+
+## compat 合并（2026-10-04）
+
+与内建重名的 provider（legacy 路径）在模型映射时按 `id|api` 合并 pi-ai 内建模型的
+compat 与档位映射：内建显式键优先（官方针对端点调校），扩展只补缺；档位表保留内建
+的 null（显式“不支持”）。背景：pi compose 语义下扩展 `models` 会整体替换内建模型
+定义，修复前只剩 `supportsReasoningEffort`，会丢 thinkingFormat、strict 工具、
+zaiToolStream、reasoning_content 回传要求等（如 opencode-go/deepseek 退化为通用
+OpenAI 格式，与内建设计的 deepseek 格式不符）。索引由 `getBuiltinModels()` 构建，
+只在重名 provider 上；非重名 provider（zhipuai-coding-plan 等）行为不变。
+
+签名：`mapModel(raw, resolved, MapModelOptions)`，`MapModelOptions` 含
+provider/model/builtinIndex；`mapProviderModels` 用同名参数对象。验证方法：用
+本目录“运行时验证”节的 `pi -p -e` 方式跑 dump 扩展，对比合并前后的运行时模型表
+（关键点：opencode-go/deepseek 恢复 `thinkingFormat: "deepseek"`，zai 恢复
+`zaiToolStream`，github-copilot 的 `supportsReasoningEffort` 冲突取内建 false）。
 
 ## 与 models.json 的关系（优先级：models.json > models-dev 扩展 > pi 内置目录）
 

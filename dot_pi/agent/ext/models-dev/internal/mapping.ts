@@ -16,6 +16,13 @@
  * 3. npm 命中兼容白名单（openai-compatible/openrouter/azure）→ openai-completions，须有 api
  * 4. 其余未知 npm → 跳过不注册（避免把未知协议误注册为 openai-completions）
  *
+ * 2026-10-04 修订：内建适配合并——扩展注册（legacy 路径）会整体替换内建
+ * 模型列表（pi compose 的 applyExtension 语义），原实现只带 supportsReasoningEffort
+ * 一项，导致内建 compat（thinkingFormat、strict 工具、zaiToolStream、reasoning_content
+ * 回传要求等）与官方档位表丢失。现按 id|api 命中内建模型后合并：内建显式键优先
+ * （官方针对端点调校），扩展补缺；档位映射同规则（null 表示“不支持”，必须保留）。
+ * 索引由 index.ts 从 getBuiltinModels() 构建并传入，本模块保持纯函数。
+ *
  * 用户配置叠加（config.ts 读取，优先级：模型级 > provider 级 > 自动判定）：
  * - provider.api/provider.baseUrl 覆盖判定结果；api+baseUrl 双写可救活
  *   被跳过的 provider（Q6）；disabled 过滤（Q5）
@@ -163,10 +170,66 @@ function mapCostTiers(raw: RawModel["cost"]): ProviderModelConfig["cost"]["tiers
   return undefined;
 }
 
-/** 配置覆盖入参：provider 级与模型级 override（index.ts 从 config 取好后传入） */
-export interface OverrideInput {
+/** 模型映射入参：provider 级与模型级 override（index.ts 从 config 取好后传入），
+ *  以及内建适配索引（仅重名 provider 传入，mapModel 内按 id|api 查询） */
+export interface MapModelOptions {
   provider?: ProviderOverride | undefined;
   model?: ModelOverride | undefined;
+  builtinIndex?: ReadonlyMap<string, BuiltinCompatSource> | undefined;
+}
+
+/** 内建模型的适配信息（index.ts 从 pi-ai 内建目录预取，按 id|api 索引） */
+export interface BuiltinCompatSource {
+  /** 内建 compat（具体接口形态，此处按不透明对象合并） */
+  compat?: object | undefined;
+  /** 内建档位映射（null 为显式“不支持”声明） */
+  thinkingLevelMap?: object | undefined;
+}
+
+/** 合并 compat：内建显式键优先（官方针对端点调校），扩展只补内建缺失的键 */
+function mergeCompat(
+  extension: object | undefined,
+  builtin: object | undefined,
+): Record<string, unknown> | undefined {
+  const merged: Record<string, unknown> = {};
+  if (extension) {
+    for (const [key, value] of Object.entries(extension) as [string, unknown][]) {
+      if (value !== undefined) {
+        merged[key] = value;
+      }
+    }
+  }
+  if (builtin) {
+    for (const [key, value] of Object.entries(builtin) as [string, unknown][]) {
+      if (value !== undefined) {
+        merged[key] = value;
+      }
+    }
+  }
+  return Object.keys(merged).length > 0 ? merged : undefined;
+}
+
+/** 合并档位映射：内建优先；null 是需要保留的“不支持”声明，只过滤 undefined */
+function mergeLevelMap(
+  extension: object | undefined,
+  builtin: object | undefined,
+): Record<string, string | null> | undefined {
+  const merged: Record<string, string | null> = {};
+  if (extension) {
+    for (const [key, value] of Object.entries(extension) as [string, string | null | undefined][]) {
+      if (value !== undefined) {
+        merged[key] = value;
+      }
+    }
+  }
+  if (builtin) {
+    for (const [key, value] of Object.entries(builtin) as [string, string | null | undefined][]) {
+      if (value !== undefined) {
+        merged[key] = value;
+      }
+    }
+  }
+  return Object.keys(merged).length > 0 ? merged : undefined;
 }
 
 /**
@@ -180,12 +243,12 @@ export interface OverrideInput {
 export function mapModel(
   raw: RawModel,
   resolved: ResolvedProvider,
-  ov?: OverrideInput,
+  options?: MapModelOptions,
 ): ProviderModelConfig | null {
   if (!raw.id) {
     return null;
   }
-  const modelOv = ov?.model;
+  const modelOv = options?.model;
   if (modelOv?.disabled) {
     return null;
   }
@@ -195,21 +258,32 @@ export function mapModel(
     input.push("image");
   }
 
-  // 从 reasoning_options.effort 构建挡位映射（thinkingLevelMap）及 compat 翻转。
-  const effortValues = extractEffortValues(raw);
-  const thinkingLevelMap = buildThinkingLevelMap(effortValues);
-
   // 协议：模型配置 > provider 配置 > shape 判定 > npm 判定
   const api =
     modelOv?.api ??
-    ov?.provider?.api ??
+    options?.provider?.api ??
     applyShape(resolved.api, raw.provider?.shape, resolved.isOpenAiFamily);
+
+  // 内建适配：按 id|api 精确命中（仅重名 provider 传入了索引）
+  const builtin = options?.builtinIndex?.get(`${raw.id}|${api}`);
+
+  // 扩展侧推断：models.dev 声明 effort 时启用 reasoning_effort 并生成档位映射；
+  // 与内建合并时内建显式键优先，扩展只补内建缺失的键（见 mergeLevelMap/mergeCompat）
+  const effortValues = extractEffortValues(raw);
+  const thinkingLevelMap = mergeLevelMap(
+    buildThinkingLevelMap(effortValues),
+    builtin?.thinkingLevelMap,
+  );
+  const compat = mergeCompat(
+    effortValues ? { supportsReasoningEffort: true } : undefined,
+    builtin?.compat,
+  );
 
   // 端点：模型配置 > provider 配置 > 数据模型级 api（展开 ${ENV}）> 判定 baseUrl
   // （沿用真值判断语义：空串与 null 均回落下一级）
   const baseUrl =
     modelOv?.baseUrl ||
-    ov?.provider?.baseUrl ||
+    options?.provider?.baseUrl ||
     (raw.provider?.api ? expandEnvVars(raw.provider.api) : null) ||
     resolved.baseUrl;
 
@@ -232,6 +306,6 @@ export function mapModel(
     api,
     ...(baseUrl ? { baseUrl: normalizeBaseUrl(baseUrl) } : {}),
     ...(thinkingLevelMap ? { thinkingLevelMap } : {}),
-    ...(effortValues ? { compat: { supportsReasoningEffort: true } } : {}),
-  };
+    ...(compat ? { compat } : {}),
+  } as ProviderModelConfig;
 }

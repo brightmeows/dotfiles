@@ -11,7 +11,7 @@
  *
  * 编排（async factory，入口 await 保证顺序）：读配置 → 遍历 provider →
  * 配置过滤（disabled）→ 协议判定 → 配置救活/覆盖 → 模型映射（含模型级
- * disabled 过滤）→ env 守卫 → 按内建重名分流注册。
+ * disabled 过滤与内建 compat 合并）→ env 守卫 → 按内建重名分流注册。
  *
  * 注册分流（2026-10-03，M2-hybrid）：pi 1.0 原生注册是顶层替换，注册原生
  * provider 会顶掉同名内建（含 OAuth 登录与目录合成），故与内建重名的 id
@@ -24,10 +24,18 @@
  * 优先级（2026-09-08 修订）：配置文件 models.json > models-dev 扩展 > pi 内置
  * 目录。models.json 显式声明的 provider 进入保护名单，扩展跳过注册，避免
  * registerProvider 带 models 整体替换 pi 已合成的模型列表（覆盖自定义）。
+ *
+ * compat 合并（2026-10-04）：与内建重名的 provider 在模型映射时按 id|api 合并
+ * pi-ai 内建模型的 compat 与档位映射（内建显式键优先），修复扩展注册整体替换
+ * 导致的 thinkingFormat/strict 工具/zaiToolStream 等丢失；见 internal/mapping.ts。
  */
 
 import type { ExtensionAPI, ProviderModelConfig } from "@earendil-works/pi-coding-agent";
-import { getBuiltinProviders } from "@earendil-works/pi-ai/providers/all";
+import {
+  getBuiltinModels,
+  getBuiltinProviders,
+  type BuiltinProvider,
+} from "@earendil-works/pi-ai/providers/all";
 import {
   fetchForRefresh,
   fetchWithCache,
@@ -41,19 +49,44 @@ import {
   isOpenAiFamilyApi,
   mapModel,
   resolveProviderApi,
+  type BuiltinCompatSource,
   type ResolvedProvider,
 } from "./internal/mapping.ts";
+
+/** 内建 provider 的适配索引（id|api → compat/档位），供 mapModel 合并；仅重名 provider 构建 */
+function buildBuiltinCompatIndex(pid: BuiltinProvider): Map<string, BuiltinCompatSource> {
+  const index = new Map<string, BuiltinCompatSource>();
+  for (const model of getBuiltinModels(pid)) {
+    index.set(`${model.id}|${model.api}`, {
+      compat: model.compat,
+      thinkingLevelMap: model.thinkingLevelMap,
+    });
+  }
+  return index;
+}
+
+/** 函数 mapProviderModels 的入参：override 与内建索引成组传入，避免参数膨胀 */
+interface MapProviderModelsOptions {
+  providerOv: ProviderOverride | undefined;
+  builtinIndex: ReadonlyMap<string, BuiltinCompatSource> | undefined;
+}
 
 /** 按用户配置映射单个 provider 的模型列表（legacy 注册与原生 fetchModels 共用） */
 function mapProviderModels(
   provider: RawProvider,
   resolved: ResolvedProvider,
-  providerOv: ProviderOverride | undefined,
+  options: MapProviderModelsOptions,
 ): ProviderModelConfig[] {
   const rawList = Object.values(provider.models ?? {}).filter((m): m is RawModel => Boolean(m.id));
-  const modelOvMap = providerOv?.models;
+  const modelOvMap = options.providerOv?.models;
   return rawList
-    .map((m) => mapModel(m, resolved, { provider: providerOv, model: modelOvMap?.[m.id] }))
+    .map((m) =>
+      mapModel(m, resolved, {
+        provider: options.providerOv,
+        model: modelOvMap?.[m.id],
+        builtinIndex: options.builtinIndex,
+      }),
+    )
     .filter((m): m is ProviderModelConfig => m !== null);
 }
 
@@ -143,7 +176,10 @@ export default async function (pi: ExtensionAPI) {
       };
     }
 
-    const models = mapProviderModels(provider, resolved, providerOv);
+    const builtinIndex = builtinIds.has(pid)
+      ? buildBuiltinCompatIndex(pid as BuiltinProvider)
+      : undefined;
+    const models = mapProviderModels(provider, resolved, { providerOv, builtinIndex });
     if (models.length === 0) {
       continue;
     }
@@ -177,7 +213,7 @@ export default async function (pi: ExtensionAPI) {
         if (!freshProvider) {
           return models; // 拉取失败：保持注册时列表
         }
-        const refreshed = mapProviderModels(freshProvider, resolved, providerOv);
+        const refreshed = mapProviderModels(freshProvider, resolved, { providerOv, builtinIndex });
         return refreshed.length > 0 ? refreshed : models;
       },
     });
