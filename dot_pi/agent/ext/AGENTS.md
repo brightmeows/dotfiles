@@ -24,7 +24,7 @@ tags: [pi, extensions, typescript]
 | `inline-context/` | `pi-meow-inline-context` | 环境摘要注入 | 日期/系统环境/Git 状态/工具与 gh，写入结构化 `sections.inline_context`（2026-10-02 自整段 systemPrompt 替换迁移）；首条摘要消息走默认渲染 |
 | `subdir-agents-md/` | `pi-meow-subdir-agents-md` | 子目录规则懒加载 | 触发在 `tool_result` 收集、投递在 `turn_end` 边界条目（短通知 display: true + 全文 display: false，`details.subdirAgents` 标记持久去重，2026-10-03 重构：codemode 嵌套下脚本可能丢弃拼接内容，条目通道保证送达）；结构化 `input.path` + bash 白名单启发式双通道；已注入规则文件被 read 时追加提示；含包内 `internal/path-extract.ts` |
 | `models-dev/` | `pi-meow-models-dev` | 模型目录导入 | models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await；纯库模块（registry / config / mapping / thinking / custom-models）归 `internal/` 子目录；配置 schema 见下文 |
-| `skill-reminders/` | `pi-meow-skill-reminders` | 技能专项提醒注入 | 按技能文件路径命中提醒（read 通道 `input.path`），命中后在 tool_result 段尾注入提醒段；注册表（数据驱动）归 `internal/reminders.ts`，新增提醒只加注册项；2026-09-19 自 better-skill 拆出 |
+| `skill-reminders/` | `pi-meow-skill-reminders` | 技能专项提醒注入 | 双通道命中：read 通道 `input.path`（tool_result 段尾注入）与 `/skill:<name>` 手动命令（input 事件 transform，先于 Pi 技能展开，2026-10-03 补）；注册表（数据驱动）归 `internal/reminders.ts`，新增提醒只加注册项；2026-09-19 自 better-skill 拆出 |
 
 注册方式（`settings.meow.json`）：
 

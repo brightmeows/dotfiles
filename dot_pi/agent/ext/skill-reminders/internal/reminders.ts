@@ -7,15 +7,20 @@
  * （渲染为编号列表），不新开注册项。LLM 注入段直接由条目正文渲染（单一
  * 来源，改条目即生效）。
  *
- * 命中判断入参为技能文件路径：read 通道为 input.path 原样值（可能带 ~ 前缀）；
- * 匹配按路径组件，不锁绝对路径（技能目录受 npx skills 管理重装迁移后仍生效）。
+ * 命中判断双通道：
+ * - read：入参为技能文件路径（input.path 原样值，可能带 ~ 前缀）；匹配按
+ *   路径组件，不锁绝对路径（技能目录受 npx skills 管理重装迁移后仍生效）。
+ * - input：入参为手动命令解析出的技能名（/skill:<name>，2026-10-03 补）；
+ *   按条目声明的 skillName 精确匹配。
  */
 
 /** 一条技能专项提醒 */
 export interface SkillReminder {
   /** 提醒标识（渲染进 LLM 段标题，如 "agent-browser"） */
   id: string;
-  /** 命中判断：入参为技能文件路径 */
+  /** 技能命令名（/skill:<name> 输入通道命中用；与 id 相同时仍显式声明） */
+  skillName?: string;
+  /** 命中判断：入参为技能文件路径（read 通道） */
   matches: (filePath: string) => boolean;
   /** 提醒条目（LLM 注入段唯一来源） */
   items: readonly string[];
@@ -32,6 +37,7 @@ export function isAgentBrowserSkill(filePath: string): boolean {
 export const SKILL_REMINDERS: readonly SkillReminder[] = [
   {
     id: "agent-browser",
+    skillName: "agent-browser",
     matches: isAgentBrowserSkill,
     items: [
       "本文件只是发现桩：后续运行 `agent-browser skills get <name>` 获取实际工作流内容时，终端输出必须完整读取；输出被截断（超过 2000 行或 50KB）时，改为完整读取截断提示中给出的落盘临时文件，禁止基于部分内容开工。",
@@ -40,9 +46,14 @@ export const SKILL_REMINDERS: readonly SkillReminder[] = [
   },
 ];
 
-/** 命中技能文件的全部提醒（无命中返回空数组） */
+/** 命中技能文件的全部提醒（read 通道；无命中返回空数组） */
 export function collectReminders(filePath: string): SkillReminder[] {
   return SKILL_REMINDERS.filter((reminder) => reminder.matches(filePath));
+}
+
+/** 命中技能命令名的全部提醒（input 通道；无命中返回空数组） */
+export function collectRemindersBySkillName(skillName: string): SkillReminder[] {
+  return SKILL_REMINDERS.filter((reminder) => reminder.skillName === skillName);
 }
 
 /** 渲染 LLM 注入段：`**<id> 专项提醒（自动注入，须遵守）**：` + 编号条目；
