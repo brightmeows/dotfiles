@@ -43,7 +43,7 @@ remove 逻辑（`dist/cli.mjs` 5958 行附近）：
 ### `--all` 的危险
 
 `remove --all` = `--skill '*' --agent '*'`，会把 **opencode symlink 区（`~/.agents_meow/skills`）中的本地技能**
-（grilling、querying-clippy-lints）也纳入删除清单，rm 顺着 symlink 删除真实文件 → 2026-08-10 事故重演。**永远不要用 `--all`。**
+（grilling、querying-clippy-lints、writing-for-agents）也纳入删除清单，rm 顺着 symlink 删除真实文件 → 2026-08-10 事故重演。**永远不要用 `--all`。**
 
 ### add 的行为
 
@@ -102,13 +102,16 @@ find ~ -maxdepth 4 -type d -name "<技能名>" 2>/dev/null | grep -v "\.npm\|nod
 | 目录 | 数量 | 职责 |
 |------|------|------|
 | `~/.agents/skills` | 51 | npx canonical 区：全部 npx 技能唯一存放点（14 个 cloudflare 系 2026-09-24 自 meow 区迁入；humanizer-zh 2026-10-02 增装） |
-| `~/.agents_meow/skills` | 4 | 纯仓库本地技能分发区（`dot_agents_meow/skills` 同步目标；pi 经 settings skills 数组读、opencode 经 symlink 读） |
+| `~/.agents_meow/skills` | 5 | 纯仓库本地技能分发区（`dot_agents_meow/skills` 同步目标；pi 经 settings skills 数组读、opencode 经 symlink 读；2026-10-04 增 writing-for-agents） |
 | `~/.pi/agent/skills` | 已删 | Pi 原生扫描 `~/.agents/skills` 与 settings 数组，专属副本区冗余 |
 
 注意：`~/.agents/.skill-lock.json` 不存在（2026-08-11 清空后未重建），当前 npx 技能均不在 `skills update` 账本内，升级需重新 `npx skills add`。
 
 ## 变更历史
 
+- 2026-10-04：meow 分发区新增本地技能 writing-for-agents（中文本地化，译自 mattpocock/skills 的
+  skills/productivity/writing-for-agents，基准提交 d81f3a1，含 SKILL.md 与 SKILL-MECHANICS.md）；
+  上游同名技能不要再用 npx 安装，避免 canonical 与本地版本重名
 - 2026-10-02：canonical 增装 humanizer-zh（op7418/Humanizer-zh，基于
   blader/humanizer v3.0.0 的中文润色技能，revision 2026-09-23）；安全姿势
   `npx skills add … -g -a codex -y`，专属目录零副本；lock 文件仍未生成，
