@@ -5,29 +5,24 @@
  * 规则文件，把内容直接拼进本次 tool_result（Pi 默认只向上加载，不向下递归；
  * 上游 #4834 已确认不进核心，扩展是官方认可的实现位置）。
  *
- * 设计（2026-09-26 重构：触发与投递合并到 tool_result 同步点）：
+ * 设计（2026-10-03 重构：投递改为 turn_end 边界条目，触发仍走 tool_result）：
  * - 触发：tool_result 时提取被访问路径——结构化工具的 input.path
  *   （read/write/edit/grep/find/ls 六个内置工具中带 path 的全部，2026-09-26
  *   dump schema 实测确认）+ bash/powershell 的 input.command 白名单启发式
- *   （见下）。不再需要 tool_call 收集 + context 排空的两段式。
- * - 投递：规则全文作为附加 text block 拼进本次 tool_result 尾部，首行
- *   `[自动注入]` 单行作知情面（工具结果内可见，需展开）。业界同款：
- *   Claude Code 在 read 结果注入子目录 CLAUDE.md、opencode 在 read 工具内
- *   注入 `<system-reminder>`（packages/opencode/src/tool/read.ts:300）、
- *   npm 包 pi-subdir-context 在 tool_result 追加 text block。
- * - 时序依据（2026-09-26 实测，`-p` + before_provider_request dump 逐轮比对）：
- *   tool_result 拼接 / steer@tool_call / context 改写 event.messages 三种
- *   通道都在“访问后的下一次 LLM 调用”生效；旧方案 steer@context（tool_call
- *   收集 → context 排空 → sendMessage）晚整整一轮——模型拿到规则前已经
- *   动手一轮，这是“触发不及时”的量化根因。steer 通道另有在途窗口与
- *   pi 0.85.1 运行时双写（单次投递重复落库），三态去重机是给该链路打的
- *   补丁，随通道废弃一并移除。
- * - 去重（两态，无在途窗口）：实例集 injectedRels/injectedHashes（同批并行
- *   tool_result 防重——handlers 同步执行无交错）∪ 扫库。扫库读
- *   toolResult 消息 details.subdirAgents 标记（注入时随结果持久化，
- *   compact 后随条目消失自然回到可注入态，details 不进 LLM），并兼容读取
- *   旧版 custom_message 条目的 details.rel/hash（2026-09-26 前的存量会话
- *   resume 后不重复注入）。同内容跨 rel 去重靠 hash 标记。
+ *   （见下）。只收集进本回合待投集合，不在此处投递。
+ * - 投递：turn_end 回合一并处理待投 rel，返回两条 custom_message 条目
+ *   （0.87+ 可操作边界）：短通知（display: true，逐文件 [自动注入] 单行）+
+ *   全文（display: false，规则全文，details.subdirAgents 载标记持久去重）。
+ *   2026-10-03 实测（`-p` + before_provider_request dump）：直读场景与旧
+ *   tool_result 拼接同一次请求可见；codemode only 下嵌套读取（脚本不回传
+ *   内容）时拼接会丢、边界条目仍送达——脚本输出不可控，条目通道是唯一
+ *   保证送达的通道。不用 continue: true：实测会在回合本会停止时强制多
+ *   一轮模型请求，本场景不需要。
+ * - 去重（两态）：实例集 injectedRels/injectedHashes ∪ 扫库。扫库读
+ *   toolResult 消息 details.subdirAgents（read 自读标记）与 custom_message
+ *   条目同键标记（2026-10-03 起注入条目；2026-09-26 前旧版 details.rel/hash
+ *   直挂形态的兼容路径保留），compact 后随条目消失自然回到可注入态。
+ *   同内容跨 rel 去重靠 hash 标记。
  * - read 语义：代理 read 规则文件本身 → 内容已作为本次 tool_result 返回，
  *   标记 details 不再注入（防同文件两份进上下文）；此前已注入过的再 read
  *   → 结果尾部追加“已注入勿重复读”提示（内容仍真实返回）。
@@ -70,10 +65,10 @@ import {
 /** 注入标记写入 toolResult.details 的键（持久化去重；details 不进 LLM） */
 const MARK_KEY = "subdirAgents";
 
-/** 旧版注入条目的 customType（存量会话兼容：扫库时一并读取其 rel/hash） */
-const LEGACY_CUSTOM_TYPE = "subdir-agents-md";
+/** 注入条目的 customType（扫库识别；兼容 2026-09-26 前旧版条目） */
+const CUSTOM_TYPE = "subdir-agents-md";
 
-/** 注入块首行（工具结果内知情面，统一 [自动注入] 格式） */
+/** 注入通知单行（条目知情面，统一 [自动注入] 格式） */
 const injectNotice = (rel: string): string => `[自动注入] ./${rel}：子目录规则`;
 
 /** 已注入规则文件被 read 时的 tool_result 追加提示（统一 [自动注入] 格式） */
@@ -125,8 +120,9 @@ function withMarks(details: unknown, marks: Mark[]): unknown {
 
 /**
  * 从会话已落库条目收集已注入 rel/hash：
- * - toolResult 消息的 details.subdirAgents（本版注入标记，随结果持久化）
- * - 旧版 custom_message 条目的 details.rel/hash（存量会话 resume 兼容）
+ * - toolResult 消息的 details.subdirAgents（read 自读标记，随结果持久化）
+ * - custom_message 条目的 details.subdirAgents（2026-10-03 起注入条目；
+ *   更早版本 details.rel/hash 直挂的形态一并兼容）
  */
 function scanSessionMarks(ctx: { sessionManager: { buildContextEntries: () => unknown[] } }): {
   rels: Set<string>;
@@ -150,7 +146,7 @@ function scanSessionMarks(ctx: { sessionManager: { buildContextEntries: () => un
     } else if (
       e.type === "custom_message" &&
       typeof e.customType === "string" &&
-      (e.customType === LEGACY_CUSTOM_TYPE || e.customType.startsWith(`${LEGACY_CUSTOM_TYPE}:`))
+      (e.customType === CUSTOM_TYPE || e.customType.startsWith(`${CUSTOM_TYPE}:`))
     ) {
       ({ details } = e);
     } else {
@@ -246,9 +242,10 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
   const injectedRels = new Set<string>();
   /** 本实例已注入过的内容哈希（同内容跨 rel 去重；品牌类型防任意串冒充） */
   const injectedHashes = new Set<Hash>();
+  /** 本回合 tool_result 收集到的待投 rel（turn_end 处理并清空） */
+  const pendingRels = new Set<string>();
 
-  // 触发与投递的唯一同步点：tool_result 时查找并把规则拼进本次结果。
-  // 各 handler 同步执行无交错，check-then-add 在同一调用内完成，无在途窗口
+  // 触发：tool_result 只收集被访问路径，投递统一到 turn_end（见文件头设计）
   pi.on("tool_result", async (event, ctx) => {
     const root = realpathOr(ctx.cwd);
 
@@ -278,15 +275,26 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
       }
     }
 
-    const accessed = collectAccessed(event.input, event.toolName, root);
-    if (accessed.length === 0) {
+    for (const rel of collectAccessed(event.input, event.toolName, root)) {
+      pendingRels.add(rel);
+    }
+    return undefined;
+  });
+
+  // 投递：本回合有访问则查找并注入规则条目（短通知 + 全文两条一起出）
+  pi.on("turn_end", async (event, ctx) => {
+    if (pendingRels.size === 0) {
       return undefined;
     }
+    const rels = [...pendingRels];
+    pendingRels.clear();
 
+    const root = realpathOr(ctx.cwd);
     const scanned = scanSessionMarks(ctx);
     const newMarks: Mark[] = [];
+    const notices: string[] = [];
     const blocks: string[] = [];
-    for (const relPath of accessed) {
+    for (const relPath of rels) {
       for (const anchor of anchorDirs(path.resolve(root, relPath))) {
         for (const found of findAncestorContextFiles(anchor, root)) {
           if (injectedRels.has(found) || scanned.rels.has(found)) {
@@ -303,6 +311,7 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
           injectedRels.add(found);
           injectedHashes.add(hash);
           newMarks.push({ rel: found, hash });
+          notices.push(injectNotice(found));
           blocks.push(`${injectNotice(found)}\n\n${content}`);
         }
       }
@@ -312,15 +321,26 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
       return undefined;
     }
     return {
-      content: [
-        ...event.content,
-        ...blocks.map((text) => ({ type: "text" as const, text: `\n\n${text}` })),
+      entries: [
+        ...event.entries,
+        {
+          type: "custom_message" as const,
+          customType: CUSTOM_TYPE,
+          content: notices.join("\n"),
+          display: true,
+        },
+        {
+          type: "custom_message" as const,
+          customType: CUSTOM_TYPE,
+          content: blocks.join("\n\n---\n\n"),
+          display: false,
+          details: withMarks(undefined, newMarks),
+        },
       ],
-      details: withMarks(event.details, newMarks),
     };
   });
 
-  // Compact 后 toolResult 条目被压缩、代理不再记得内容，允许重新注入
+  // Compact 后注入条目被压缩、代理不再记得内容，允许重新注入
   // （扫库标记随条目一并消失，实例集主动清空回到可注入态）
   pi.on("session_compact", async () => {
     injectedRels.clear();
