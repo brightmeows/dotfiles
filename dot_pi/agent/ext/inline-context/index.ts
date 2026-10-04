@@ -4,7 +4,8 @@
  * 在用户提交消息（agent 开始前）注入系统上下文，合并原 inline-date /
  * inline-env / inline-git-status 三个扩展：
  * - 日期：每轮现算，systemPrompt 注入（跨天自动更新）
- * - 系统环境：session 内一次，异步预计算，systemPrompt 注入
+ * - 系统环境：session 内一次，异步预计算，systemPrompt 注入；2026-10-04 扩充
+ *   WSL / SSH / 提权 / 代理 TUN 信号，只陈述事实、不注入操作指南
  * - Git 状态：session 内一次，异步预计算，systemPrompt 注入
  * - 首条消息注入一条极简摘要 message（display: true），TUI 可见一行
  *
@@ -14,8 +15,8 @@
  *   （benchmark 实测）；现在 session_start 时后台预计算，before_agent_start
  *   只 await 缓存结果，不阻塞事件循环
  * - 检测项精简：保留影响 LLM 决策的高价值项（OS / 不可变系统 / 会话 /
- *   桌面 / 容器），删除低价值项（shell / node / pnpm 版本、内核版本、
- *   架构）——需要时 LLM 可自行用命令查询
+ *   桌面 / 容器 / WSL / SSH / 提权 / 代理 TUN），删除低价值项（shell /
+ *   node / pnpm 版本、内核版本、架构）——需要时 LLM 可自行用命令查询
  * - 完整信息走结构化提示段 `sections.inline_context`（2026-10-02 自整段
  *   systemPrompt 替换迁移；Pi 以 transcript delta 追加变更，不再每轮替换
  *   完整提示词），摘要 message 只用于 TUI 可见性，不承载关键信息；渲染走 Pi 默认
@@ -83,6 +84,37 @@ export interface SystemInfo {
   session: string | null;
   desktop: string | null;
   container: string | null;
+  wsl: { version: string; distro: string | null } | null;
+  ssh: boolean;
+  priv: { tools: string[] } | null; // null = root 或无 getuid（不注入）
+  tun: boolean;
+  proxyVars: string[];
+}
+
+// 已设置的代理环境变量（只报变量名不报值，避免凭据进提示词）
+const PROXY_ENV_VARS = [
+  "http_proxy",
+  "https_proxy",
+  "all_proxy",
+  "HTTP_PROXY",
+  "HTTPS_PROXY",
+  "ALL_PROXY",
+] as const;
+
+async function detectWslInfo(
+  exec: EnvContext["exec"],
+  env: EnvContext["env"],
+): Promise<{ version: string; distro: string | null }> {
+  const release = await exec("cat", ["/proc/sys/kernel/osrelease"]);
+  // WSL2 内核含 "microsoft-standard-WSL2"；WSL1 为 "…-Microsoft"
+  const version = release
+    ? /wsl2/i.test(release)
+      ? "WSL2"
+      : /microsoft/i.test(release)
+        ? "WSL1"
+        : "WSL"
+    : "WSL";
+  return { version, distro: env["WSL_DISTRO_NAME"] ?? null };
 }
 
 // Fedora Atomic 桌面变体：均为不可变系统
@@ -131,6 +163,8 @@ export async function detectEnv(ctx: EnvContext): Promise<SystemInfo> {
   let os: string | null = null;
   let immutable = false;
   let container: string | null = null;
+  let wsl: SystemInfo["wsl"] = null;
+  let tun = false;
 
   if (platform === "linux") {
     const release = await readOsRelease(exec);
@@ -141,14 +175,43 @@ export async function detectEnv(ctx: EnvContext): Promise<SystemInfo> {
         (await exec("rpm-ostree", ["--version"])) !== null;
     }
     const virt = await exec("systemd-detect-virt", ["--container"]);
-    if (virt && virt !== "none" && virt !== "0") {
+    if (virt === "wsl") {
+      wsl = await detectWslInfo(exec, env);
+    } else if (virt && virt !== "none" && virt !== "0") {
       container = virt;
+    } else if (!virt && (env["WSL_DISTRO_NAME"] || env["WSL_INTEROP"])) {
+      // systemd-detect-virt 缺失时退回 WSL env 信号
+      wsl = await detectWslInfo(exec, env);
+    }
+    // mihomo TUN fake-ip：默认路由网关落 198.18.0.0/16 即命中
+    const routes = await exec("ip", ["route", "show", "default"]);
+    for (const m of routes?.matchAll(/\bvia\s+(\d+\.\d+\.\d+\.\d+)/g) ?? []) {
+      const [a, b] = m[1]!.split(".").map(Number);
+      if (a === 198 && b === 18) {
+        tun = true;
+        break;
+      }
     }
   } else if (platform === "darwin") {
     const ver = await exec("sw_vers", ["-productVersion"]);
     os = ver ? `macOS ${ver}` : "macOS";
   } else if (platform === "win32") {
     os = "Windows";
+  }
+
+  const ssh = Boolean(env["SSH_CONNECTION"] ?? env["SSH_CLIENT"] ?? env["SSH_TTY"]);
+  const proxyVars = PROXY_ENV_VARS.filter((k) => env[k]);
+  let priv: SystemInfo["priv"] = null;
+  if (typeof process.getuid === "function" && process.getuid() !== 0) {
+    const out = await exec("sh", [
+      "-c",
+      'for c in sudo pkexec doas; do command -v "$c" >/dev/null && echo "$c"; done; exit 0',
+    ]);
+    const tools = (out ?? "")
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    priv = { tools };
   }
 
   return {
@@ -158,6 +221,11 @@ export async function detectEnv(ctx: EnvContext): Promise<SystemInfo> {
     session: env["XDG_SESSION_TYPE"] ?? null,
     desktop: env["XDG_CURRENT_DESKTOP"] ?? null,
     container,
+    wsl,
+    ssh,
+    priv,
+    tun,
+    proxyVars,
   };
 }
 
@@ -167,11 +235,34 @@ export function formatEnvLine(info: SystemInfo): string {
   parts.push(
     info.immutable ? `${osLabel}（不可变系统：系统级包用 rpm-ostree / flatpak）` : osLabel,
   );
+  if (info.wsl) {
+    parts.push(
+      info.wsl.distro
+        ? `${info.wsl.version} 环境（${info.wsl.distro} 发行版）`
+        : `${info.wsl.version} 环境`,
+    );
+  }
   if (info.session) {
     parts.push(info.desktop ? `${info.session} 会话（${info.desktop}）` : `${info.session} 会话`);
   }
   if (info.container) {
     parts.push(`容器环境（${info.container}）`);
+  }
+  if (info.ssh) {
+    parts.push("SSH 远程会话");
+  }
+  if (info.priv) {
+    parts.push(
+      info.priv.tools.length > 0
+        ? `非 root，提权工具：${info.priv.tools.join("、")}`
+        : "非 root，未安装 sudo/pkexec/doas",
+    );
+  }
+  if (info.tun) {
+    parts.push("默认路由经 mihomo TUN（fake-ip 198.18.0.0/16）");
+  }
+  if (info.proxyVars.length > 0) {
+    parts.push(`${info.proxyVars.join("、")} 已设置`);
   }
   return `[系统环境] ${parts.join("；")}`;
 }
@@ -182,7 +273,9 @@ function shortEnvLabel(info: SystemInfo): string {
   // "Fedora Linux 44.x (Kinoite)" → "Fedora Kinoite"
   const m = info.os?.match(/^([^\s]+).*\(([^)]+)\)$/);
   const base = m ? `${m[1]!} ${m[2]!}` : osLabel;
-  return info.immutable ? `${base}(不可变)` : base;
+  const name = info.wsl?.distro ?? base;
+  const wslTag = info.wsl ? ` (${info.wsl.version})` : "";
+  return `${name}${wslTag}${info.immutable ? "(不可变)" : ""}`;
 }
 
 // ---------- Git 状态 ----------
@@ -380,6 +473,10 @@ export function buildSummary(opts: {
   const parts: string[] = [`[上下文] ${formatDateShort()}`];
   if (env) {
     parts.push(shortEnvLabel(env));
+    const flags = [...(env.ssh ? ["ssh"] : []), ...(env.tun ? ["tun"] : [])];
+    if (flags.length > 0) {
+      parts.push(flags.join("/"));
+    }
   }
   if (git?.info) {
     parts.push(`git ${basename(git.info.root)}@${git.info.branch ?? "detached"}`);
