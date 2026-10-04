@@ -121,6 +121,9 @@ patch:
       - { when: has_menu, accept: equal, send: Page_Down }
       - { when: has_menu, accept: bracketleft, send: Page_Up }
       - { when: has_menu, accept: bracketright, send: Page_Down }
+      # 符号分类入口：注入标记 ZQ，候选窗列出分类提示，再按 1-9 进入对应分类（见 README“符号输入”）
+      - { when: always, accept: Control+Shift+3, send_sequence: ZQ }
+      - { when: always, accept: Control+Shift+numbersign, send_sequence: ZQ }
       # 中英标点已固定为中文标点：无快捷键、不写入记忆（F4 方案选单内仍可临时切换）
       # 切换简繁（Control+Shift+4 或 Control+Shift+$）
       - { when: always, toggle: traditionalization, accept: Control+Shift+4 }

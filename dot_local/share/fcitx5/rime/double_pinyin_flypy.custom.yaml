@@ -14,6 +14,40 @@ patch:
   speller/max_code_length: 4 # 最长4码
   speller/auto_select: true # 顶字上屏
   speller/auto_select_unique_candidate: true # 无重码自动上屏
+  # 符号分类入口（配合 default.custom.yaml 的 Ctrl+Shift+3 绑定）
+  # 入口键注入标记 ZQ（避开 V 前缀命名空间，也避开英文词条），候选窗列出分类提示，
+  # 再按 1-9 进入对应分类；别名指向 rime-ice 原表（__include），内容不重复维护
+  recognizer/patterns/punct: "^(V([0-9]|10|[A-Za-z]+)|ZQ[1-9]?)$"
+  punctuator/symbols:
+    __include: symbols_caps_v:/symbols
+    ZQ: # 入口提示列表：仅作展示，按数字进入分类（按空格会把提示文字打出来）
+      - "①标点"
+      - "②数学"
+      - "③箭头"
+      - "④单位"
+      - "⑤货币"
+      - "⑥括号"
+      - "⑦带圈序号"
+      - "⑧符号"
+      - "⑨分数"
+    ZQ1:
+      __include: symbols_caps_v:/symbols/Vbd
+    ZQ2:
+      __include: symbols_caps_v:/symbols/Vsx
+    ZQ3:
+      __include: symbols_caps_v:/symbols/Vjt
+    ZQ4:
+      __include: symbols_caps_v:/symbols/Vdw
+    ZQ5:
+      __include: symbols_caps_v:/symbols/Vhb
+    ZQ6:
+      __include: symbols_caps_v:/symbols/Vjz
+    ZQ7:
+      __include: symbols_caps_v:/symbols/Vszq
+    ZQ8:
+      __include: symbols_caps_v:/symbols/Vfh
+    ZQ9:
+      __include: symbols_caps_v:/symbols/Vfs
   # processors 使用方案默认链（ascii_composer/recognizer/key_binder/...）
   translator/dictionary: custom      # 词库：聚合 cn_dicts + zhwiki + moegirl + 补字（见 custom.dict.yaml）
   translator/enable_user_dict: false # 关闭自学习：不记录用户词典、不自动调频，词序固定为词库原始权重
