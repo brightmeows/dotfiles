@@ -14,7 +14,6 @@ patch:
   # 方案选单：仅修改差异项，保留系统默认的 hotkeys/fold_options 等
   switcher/caption: 「方案选单」
   switcher/save_options:
-    - ascii_punct
     - traditionalization
     - full_shape
     - search_single_char
@@ -32,9 +31,45 @@ patch:
       Shift+Left: left_by_syllable
       Shift+Right: right_by_syllable
 
-  # 标点符号：half_shape 改为直接上屏风格，避免符号选择打断输入
-  # full_shape 保留系统默认，不做改动
+  # 标点符号：中文状态下全程中文标点，全部单值映射、一键直出（不弹候选，避免打断输入）
+  #   half_shape：对齐 fcitx5 官方中文标点表（punc.mb.zh_CN）——/ | @ # % & * - + = 保持半角，
+  #               波浪号取全角 ～；其余按键输出中文标点
+  #   full_shape：真全角——上述保持半角的符号也转全角，字母数字由引擎统一转全角
   punctuator/digit_separators: ",.:" # 数字后输入这些字符，再次输入数字时连同上屏；双击恢复映射（librime >= 1.13.0）
+  punctuator/full_shape:
+    " ": { commit: "　" }
+    ",": "，"
+    ".": "。"
+    "<": "《"
+    ">": "》"
+    "/": "／"
+    "?": "？"
+    ";": "；"
+    ":": "："
+    "'": { pair: ["‘", "’"] }
+    '"': { pair: ["“", "”"] }
+    '\': "、"
+    "|": "｜"
+    "`": "·"
+    "~": "～"
+    "!": "！"
+    "@": "＠"
+    "#": "＃"
+    "%": "％"
+    "$": "￥"
+    "^": "……"
+    "&": "＆"
+    "*": "＊"
+    "(": "（"
+    ")": "）"
+    "-": "－"
+    "_": "——"
+    "+": "＋"
+    "=": "＝"
+    "[": "【"
+    "]": "】"
+    "{": "「"
+    "}": "」"
   punctuator/half_shape:
     ",": "，"
     ".": "。"
@@ -49,7 +84,7 @@ patch:
     '\': "、"
     "|": "|"
     "`": "·"
-    "~": "~"
+    "~": "～"
     "!": "！"
     "@": "@"
     "#": "#"
@@ -86,9 +121,7 @@ patch:
       - { when: has_menu, accept: equal, send: Page_Down }
       - { when: has_menu, accept: bracketleft, send: Page_Up }
       - { when: has_menu, accept: bracketright, send: Page_Down }
-      # 切换中英标点（Control+Shift+3 或 Control+Shift+#）
-      - { when: always, toggle: ascii_punct, accept: Control+Shift+3 }
-      - { when: always, toggle: ascii_punct, accept: Control+Shift+numbersign }
+      # 中英标点已固定为中文标点：无快捷键、不写入记忆（F4 方案选单内仍可临时切换）
       # 切换简繁（Control+Shift+4 或 Control+Shift+$）
       - { when: always, toggle: traditionalization, accept: Control+Shift+4 }
       - { when: always, toggle: traditionalization, accept: Control+Shift+dollar }
