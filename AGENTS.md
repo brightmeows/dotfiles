@@ -39,7 +39,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | [`docs/model-config-pipeline.md`](docs/model-config-pipeline.md) | 模型配置流水线：TOML 单一源、双消费者生成物、models.dev 刷新与映射规则 |
 | [`docs/matebook-battery-optimization.md`](docs/matebook-battery-optimization.md) | MateBook 续航优化：放电数据对比、battery-boost/power-log 改动、mihomo DoT 探测风暴处置 |
 | [`docs/pi-lsp-support.md`](docs/pi-lsp-support.md) | Pi 的 LSP 支持：pi-lsp-extension 选型决策与重审触发条件、tsserver/信任门机制记录、防漂移四件套写法示范 |
-| [`docs/nvm-shim-nvm4306-script-trust.md`](docs/nvm-shim-nvm4306-script-trust.md) | NVM shim 模式 NVM4306 拦截：脚本信任缓存 USN 漂移根因、`nvm reshim` 失效原因与 `nvm --sign-version-scripts` 重签修复 |
+| [`docs/nvm-shim-nvm4306-script-trust.md`](docs/nvm-shim-nvm4306-script-trust.md) | （历史）NVM shim 模式 NVM4306 拦截：脚本信任缓存 USN 漂移根因、`nvm reshim` 失效原因与 `nvm --sign-version-scripts` 重签修复；2026-10-05 nvm 退役改用 scoop nodejs，该类问题随 shim 代理层消失 |
 
 ## Commands
 

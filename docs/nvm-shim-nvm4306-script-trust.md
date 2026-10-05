@@ -1,6 +1,7 @@
 # NVM shim 模式 NVM4306 拦截排查
 
-> 2026-10-04 建立。记录 `pi update --extensions` 被 NVM for Windows 以 NVM4306 拦截的根因（脚本信任缓存 USN 漂移）、源码级机制与修复命令。
+> 2026-10-04 建立；2026-10-05 nvm 在本机退役（见文末“退役记录”），本文化为历史参考。
+> 记录 `pi update --extensions` 被 NVM for Windows 以 NVM4306 拦截的根因（脚本信任缓存 USN 漂移）、源码级机制与修复命令。
 
 ## 现象
 
@@ -56,6 +57,7 @@ nvm --sign-version-scripts D:\ScoopGlobal\persist\nvm\nodejs\v24.21.0
 执行后条目 Sig 更新、USN 刷为 `0x0`，`pi update --extensions` 恢复正常。
 
 注意：`nvm reshim` 在本机实测**不会**刷新已有条目（spawn 的签名子进程未生效，具体原因未定位）。GitHub main 已有 `nvm --sign-script <path>` 单脚本强制重签子命令，本机 2026-09-02 构建没有（`strings nvm.exe` 验证）。
+另：bash 下路径必须用单引号包裹，否则反斜杠被当转义符吃掉、签名器对不存在的目录静默返回 nil（exit 0 的假成功），见“退役记录”。
 
 ## 复发与处置
 
@@ -66,6 +68,24 @@ nvm --sign-version-scripts D:\ScoopGlobal\persist\nvm\nodejs\v24.21.0
 ```
 
 可选固化：给 `pi update` 包一层遇 NVM4306 自动重签重试的 wrapper（截至记录时尚未做）。
+
+## 退役记录（2026-10-05）
+
+nvm 已在本机卸载，改用 scoop 全局安装的 nodejs 26.10.0；pnpm 由 scoop 的 pnpm 12.9.x 提供（实测自动识别
+`package.json` 的 `packageManager` 引脚并自管版本），npm 全局 prefix 保持 `C:\Users\19601\.local\bin`
+（用户级 `~/.npmrc`，与 node 安装目录解耦）。Node 25 起 corepack 不再随发行包分发，该方案不依赖 corepack。
+
+退役动机：shim 代理的信任层会随 USN 日志变动反复失效（本文问题），且 `auto_detect` 在 `.nvmrc` 指向未安装
+版本时直接拦截（本机 brightmeows.github.io 的 `.nvmrc=26` 曾使 node 完全不可用），收益为负。换到 scoop
+nodejs 后没有代理层，NVM4306 这一类问题不复现，升级即 `scoop update nodejs`。
+
+退役过程中确认的两点操作事实：
+
+- 在 bash 里直接写 `nvm --sign-version-scripts D:\ScoopGlobal\persist\nvm\nodejs\v24.21.0`，反斜杠被当
+  转义符吃掉，路径变成不存在的 `D:ScoopGlobalpersistnvmnodejsv24.21.0`；签名器对不存在的目录静默返回
+  nil，命令 exit 0 却没有做任何事（假成功）。必须用单引号。
+- `--sign-version-scripts` 覆盖版本目录顶层的全部 `.cmd`/`.bat`（含 corepack 生成的 `pnpm.CMD`/`pnpx.CMD`），
+  不止 npm/npx；重签会把条目 USN 刷成当前实读值（本机为 `0x0`）。
 
 ## 参考
 
