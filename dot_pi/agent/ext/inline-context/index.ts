@@ -86,7 +86,7 @@ export interface SystemInfo {
   container: string | null;
   wsl: { version: string; distro: string | null } | null;
   ssh: boolean;
-  priv: { tools: string[] } | null; // null = root 或无 getuid（不注入）
+  priv: { tools: string[] } | null; // Null = root 或无 getuid（不注入）
   tun: boolean;
   proxyVars: string[];
 }
@@ -107,13 +107,12 @@ async function detectWslInfo(
 ): Promise<{ version: string; distro: string | null }> {
   const release = await exec("cat", ["/proc/sys/kernel/osrelease"]);
   // WSL2 内核含 "microsoft-standard-WSL2"；WSL1 为 "…-Microsoft"
-  const version = release
-    ? /wsl2/i.test(release)
-      ? "WSL2"
-      : /microsoft/i.test(release)
-        ? "WSL1"
-        : "WSL"
-    : "WSL";
+  let version = "WSL";
+  if (release && /wsl2/i.test(release)) {
+    version = "WSL2";
+  } else if (release && /microsoft/i.test(release)) {
+    version = "WSL1";
+  }
   return { version, distro: env["WSL_DISTRO_NAME"] ?? null };
 }
 
@@ -180,10 +179,10 @@ export async function detectEnv(ctx: EnvContext): Promise<SystemInfo> {
     } else if (virt && virt !== "none" && virt !== "0") {
       container = virt;
     } else if (!virt && (env["WSL_DISTRO_NAME"] || env["WSL_INTEROP"])) {
-      // systemd-detect-virt 缺失时退回 WSL env 信号
+      // 回退：systemd-detect-virt 缺失时用 WSL env 信号
       wsl = await detectWslInfo(exec, env);
     }
-    // mihomo TUN fake-ip：默认路由网关落 198.18.0.0/16 即命中
+    // Mihomo TUN fake-ip：默认路由网关落 198.18.0.0/16 即命中
     const routes = await exec("ip", ["route", "show", "default"]);
     for (const m of routes?.matchAll(/\bvia\s+(\d+\.\d+\.\d+\.\d+)/g) ?? []) {
       const [a, b] = m[1]!.split(".").map(Number);
