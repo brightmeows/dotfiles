@@ -71,8 +71,12 @@ if ($_sys_missing | length) > 0 {
 }
 
 # pnpm
-$env.PNPM_HOME = "/var/home/brightmeows/.local/share/pnpm"
-$env.PATH = ($env.PATH | prepend $env.PNPM_HOME)
+# On Windows, PNPM_HOME comes from the scoop pnpm package (machine environment);
+# overriding it here with a POSIX-only path breaks global installs.
+if ($nu.os-info.name != "windows") {
+    $env.PNPM_HOME = "/var/home/brightmeows/.local/share/pnpm"
+    $env.PATH = ($env.PATH | prepend $env.PNPM_HOME)
+}
 
 # GitHub token
 try {
