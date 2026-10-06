@@ -2,7 +2,6 @@
   "theme": "dark",
   "quietStartup": true,
   "retry": { "enabled": true, "maxRetries": 3 },
-  "skills": ["~/.agents_meow/skills/"],
   "enableSkillCommands": true,
   "codemode": { "mode": "only", "inlineBudget": 65536 },
   "packages": [

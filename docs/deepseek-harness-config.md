@@ -26,7 +26,6 @@
 |---|---|---|
 | `dot_dsh/AGENTS.md.tmpl` | `~/.dsh/AGENTS.md` | 渲染 `dot_agents_meow/AGENTS.main.md`，与 Pi/opencode 同源 |
 | `dot_dsh/cordis.patch.yml.tmpl` | `~/.dsh/cordis.patch.yml` | home 级 patch：5 个 MCP server 行与 models-dev 插件挂载行 |
-| `dot_dsh/symlink_skills.tmpl` | `~/.dsh/skills` | 符号链接到 `~/.agents_meow/skills`，使 meow 技能（grilling 等）对 dsh 可见 |
 | `dot_agents_meow/models/plugin.mts` 等 | `~/.agents_meow/models/` | 模型域插件：抓取 models.dev、叠加用户配置、写各 profile 的模型配置生成块 |
 
 `settings.yaml` 与 `.credentials.yaml` 由 dsh 持有，不入仓库；GUI 内的偏好（主题、默认模型等）因而不随仓库分发。
@@ -37,7 +36,7 @@
 
 ## 技能与 MCP
 
-- 技能：dsh 默认扫描根已覆盖 `~/.agents/skills`（npx 安装区）；`~/.dsh/skills` 由 chezmoi 部署为指向 `~/.agents_meow/skills` 的符号链接，dsh 默认跟随符号链接。Pi 的 better-skill 消歧别名扩展已于 2026-09-24 移除，两家重名处理现为同款策略：按层与扫描序保留首个并告警。
+- 技能：dsh 默认扫描根已覆盖 `~/.agents/skills`（npx 安装区），这是唯一技能通道；原 `~/.dsh/skills` → `~/.agents_meow/skills` 符号链接已于 2026-10-06 随仓库技能分发退役删除。Pi 的 better-skill 消歧别名扩展已于 2026-09-24 移除，两家重名处理现为同款策略：按层与扫描序保留首个并告警。
 - MCP：迁入 5 个 server（exa、anysearch、context7、cratesio、zai），工具名形如 `mcp__<server>__<tool>`。dsh 无 lazy 概念，启动时全部连接；anysearch 与 zai 的密钥从启动环境（`ANYSEARCH_API_KEY`、`ZHIPU_API_KEY`）读取。
 
 ## 凭据与沙箱

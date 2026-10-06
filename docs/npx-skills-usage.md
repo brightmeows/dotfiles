@@ -13,7 +13,7 @@
 - `~/.agents/skills` 是 canonical/universal 目录，`skillsDir = ".agents/skills"` 的 agent（codex、opencode、amp、replit 等）都共享它
 - 各 agent 还有专属目录（`globalSkillsDir`）：
   - codex → `~/.codex/skills`
-  - opencode → `~/.config/opencode/skills`（**symlink → `~/.agents_meow/skills`**，危险区）
+  - opencode → `~/.config/opencode/skills`（原 symlink 危险区；2026-10-06 随仓库分发退役，专属目录已删除）
   - claude-code → `~/.claude/skills`
   - goose → `~/.config/goose/skills`
   - trae → `~/.trae/skills`
@@ -42,8 +42,9 @@ remove 逻辑（`dist/cli.mjs` 5958 行附近）：
 
 ### `--all` 的危险
 
-`remove --all` = `--skill '*' --agent '*'`，会把 **opencode symlink 区（`~/.agents_meow/skills`）中的本地技能**
-（grilling、querying-clippy-lints、writing-for-agents）也纳入删除清单，rm 顺着 symlink 删除真实文件 → 2026-08-10 事故重演。**永远不要用 `--all`。**
+`remove --all` = `--skill '*' --agent '*'`，不带 `-g` 同样作用于全局，效果是清空 canonical 全部技能。
+2026-08-10 事故中它曾顺着 opencode symlink（`~/.config/opencode/skills` → `~/.agents_meow/skills`）删掉仓库源文件；
+该 symlink 已于 2026-10-06 随仓库技能分发退役删除，但**仍然不要用 `--all`**。
 
 ### add 的行为
 
@@ -79,36 +80,41 @@ find ~ -maxdepth 4 -type d -name "<技能名>" 2>/dev/null | grep -v "\.npm\|nod
 
 ### 铁律
 
-1. **永远不要 `npx skills remove --all`**（会波及 opencode symlink 区）
-2. 删除前确认技能名不与 `~/.agents_meow/skills` 下的本地技能重名（grilling、querying-clippy-lints）
-3. 每次操作后检查 canonical 目录和 lock 文件确认实际效果，不信任 CLI 的 success 报告
-4. 本机不再提供 `skills` wrapper（2026-08-11 移除），裸跑 `npx skills` 需自己确认作用域
+1. **永远不要 `npx skills remove --all`**（会清空 canonical 全部技能）
+2. 每次操作后检查 canonical 目录和 lock 文件确认实际效果，不信任 CLI 的 success 报告
+3. 本机不再提供 `skills` wrapper（2026-08-11 移除），裸跑 `npx skills` 需自己确认作用域
 
 ## 本机 agent 状态备忘
 
 | agent | 目录 | universal | 备注 |
 |-------|------|-----------|------|
 | codex | `~/.codex` | 是 | skillsDir = .agents/skills；`~/.codex/skills` 下 16 项 npx 副本 2026-09-24 已删（保留 `.system/` codex 自管系统技能与 Omarchy 只读技能 diagnose-crash/omarchy） |
-| opencode | `~/.config/opencode` | 是 | globalSkillsDir 是 symlink 危险区 |
+| opencode | `~/.config/opencode` | 是 | 专属 skills symlink 已于 2026-10-06 退役删除，技能读 canonical |
 | claude-code | `~/.claude` | 否 | 已弃用，根目录 2026-09-24 删除（内仅 skills 副本与 omarchy 主题，无用户数据），npx 不再检测 |
 | goose | `~/.config/goose` | 否 | 根目录不存在，npx 不检测 |
 | trae | `~/.trae` | 否 | 根目录不存在，npx 不检测 |
 | openclaw | `~/.openclaw` | 否 | 根目录不存在，npx 不检测 |
 | hermes-agent | `~/.hermes` | 否 | 已弃用，根目录 2026-09-24 删除（内仅 44 项 skills 副本，原 openclaw-imports 自管区已不存在），npx 不再检测 |
-| pi | `~/.pi/agent` | 否 | `~/.pi/agent/skills` 副本区 2026-09-24 已删除（45 项均为 canonical/meow 的一致副本，Pi 原生扫描 canonical + settings skills 数组，副本无存在必要）；技能改由 `~/.agents/skills`（canonical）+ `~/.agents_meow/skills`（settings 数组）两通道承载 |
+| pi | `~/.pi/agent` | 否 | `~/.pi/agent/skills` 副本区 2026-09-24 已删除（45 项均为 canonical/meow 的一致副本，Pi 原生扫描 canonical + settings skills 数组，副本无存在必要）；技能由 `~/.agents/skills`（canonical）单通道承载（settings skills 数组 2026-10-06 移除） |
 
-## 本机技能目录现状（2026-09-24 盘点）
+## 本机技能目录现状（2026-10-06 盘点）
 
 | 目录 | 数量 | 职责 |
 |------|------|------|
-| `~/.agents/skills` | 51 | npx canonical 区：全部 npx 技能唯一存放点（14 个 cloudflare 系 2026-09-24 自 meow 区迁入；humanizer-zh 2026-10-02 增装） |
-| `~/.agents_meow/skills` | 5 | 纯仓库本地技能分发区（`dot_agents_meow/skills` 同步目标；pi 经 settings skills 数组读、opencode 经 symlink 读；2026-10-04 增 writing-for-agents） |
-| `~/.pi/agent/skills` | 已删 | Pi 原生扫描 `~/.agents/skills` 与 settings 数组，专属副本区冗余 |
+| `~/.agents/skills` | 18 | npx canonical 区：全部技能唯一存放点（含自有 4 仓库的 9 个技能，2026-10-06 安装） |
+| `~/.pi/agent/skills` | 已删 | Pi 原生扫描 canonical，专属副本区冗余（2026-09-24 删） |
+| `~/.agents_meow/skills` | 已删 | 原仓库本地技能分发区，2026-10-06 随 `dot_agents_meow/skills` 迁往自有 GitHub 仓库而退役；opencode/dsh symlink、Pi settings skills 数组同步移除 |
 
-注意：`~/.agents/.skill-lock.json` 不存在（2026-08-11 清空后未重建），当前 npx 技能均不在 `skills update` 账本内，升级需重新 `npx skills add`。
+注意：`~/.agents/.skill-lock.json` 现已存在（25 条），其中 7 条（docx、humanizer-zh、pdf、pptx、
+pptx-generator、uv-package-manager、xlsx）在 canonical 目录无对应文件，为历史幽灵条目；lock 内有效技能
+可走 `skills update`，升级前先核对 lock 与目录的一致性。
 
 ## 变更历史
 
+- 2026-10-06：仓库技能分发退役。`dot_agents_meow/skills` 全部 5 技能（codeberg-github-migration、
+  git-hash-repo-conversion、grilling、querying-clippy-lints、writing-for-agents）已迁往自有 GitHub 仓库
+  （skills-scratch、rust-meta-skills、workflow-skills），本机 `~/.agents/skills` 经 npx 安装承载（4 仓库 9 技能）；
+  删除仓库分发区、`~/.agents_meow/skills`（含 10 项历史孤儿副本）、opencode/dsh symlink、Pi settings skills 数组
 - 2026-10-04：meow 分发区新增本地技能 writing-for-agents（中文本地化，译自 mattpocock/skills 的
   skills/productivity/writing-for-agents，基准提交 d81f3a1，含 SKILL.md 与 SKILL-MECHANICS.md）；
   上游同名技能不要再用 npx 安装，避免 canonical 与本地版本重名

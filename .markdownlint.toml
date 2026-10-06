@@ -1,7 +1,6 @@
 # dotfiles markdownlint 配置
 #
 # 适用范围：仓库内所有 markdown 文件
-#   - 技能文档（dot_agents_meow/skills/*/SKILL.md）
 #   - 代理指令（AGENTS.md、dot_agents_meow/AGENTS.*.md）
 #   - opencode commands（dot_config/opencode/commands/*.md）
 #   - 子代理、README、RECORD 等

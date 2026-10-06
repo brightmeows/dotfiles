@@ -50,9 +50,9 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 > 2026-08-11 已移除 bash/nushell 的 `skills` wrapper（曾自动注入 `--agent codex`）；现在裸跑 `npx skills` 写命令前必须先确认作用域。
 > **remove 需注意**：不带 `-a` 时 targeting 所有 agent（会清理各 agent 专属目录中的同名技能）；
 > 指定 `-a` 时仅列出所有已安装的 universal agent（codex+opencode）才会真删 canonical 与 lock，否则报成功但实际不删。
-> **永远不要用 `remove --all`**（会波及 opencode symlink 区）；每次操作后验证 canonical 与 lock（详见 [docs/npx-skills-usage.md](docs/npx-skills-usage.md)）。
-> opencode 技能目录 `~/.config/opencode/skills` 由 `dot_config/opencode/symlink_skills.tmpl` 管理，指向 `~/.agents_meow/skills` 分发目录
-> （曾指向仓库源目录，2026-08-10 曾导致 `npx skills remove` 顺着 symlink 删除仓库源文件）。
+> **永远不要用 `remove --all`**（会清空 canonical 全部技能）；每次操作后验证 canonical 与 lock（详见 [docs/npx-skills-usage.md](docs/npx-skills-usage.md)）。
+> 技能统一由 npx skills 全局安装承载（canonical `~/.agents/skills`）；原仓库分发区 `~/.agents_meow/skills` 与
+> opencode/dsh symlink 已于 2026-10-06 退役（2026-08-10 symlink 事故记录见 docs/npx-skills-usage.md）。
 
 | 命令 | 用途 |
 |---|---|
@@ -96,7 +96,6 @@ dsh 的用户级配置同样由本仓库托管，落在 `~/.dsh`：
 |--------|------|------|
 | `dot_dsh/AGENTS.md.tmpl` | `~/.dsh/AGENTS.md` | 用户级指令，渲染 `dot_agents_meow/AGENTS.main.md` |
 | `dot_dsh/cordis.patch.yml.tmpl` | `~/.dsh/cordis.patch.yml` | home 级 patch：5 个 MCP server 行与 models-dev 插件挂载行 |
-| `dot_dsh/symlink_skills.tmpl` | `~/.dsh/skills` | 符号链接到 `~/.agents_meow/skills` |
 | `dot_agents_meow/models/plugin.mts` 等 | `~/.agents_meow/models/` | 模型域插件：抓取 models.dev、叠加 `models.toml`、写各 profile 的模型配置生成块（含 `/models-refresh` 命令） |
 
 模型配置的唯一编辑入口是 `dot_agents_meow/models/models.toml`（流水线见 [docs/model-config-pipeline.md](docs/model-config-pipeline.md)）；`settings.yaml` 与 `.credentials.yaml` 由 dsh 运行时持有，不入仓库。细节见 [docs/deepseek-harness-config.md](docs/deepseek-harness-config.md)。
