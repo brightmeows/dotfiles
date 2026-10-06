@@ -101,13 +101,11 @@ find ~ -maxdepth 4 -type d -name "<技能名>" 2>/dev/null | grep -v "\.npm\|nod
 
 | 目录 | 数量 | 职责 |
 |------|------|------|
-| `~/.agents/skills` | 18 | npx canonical 区：全部技能唯一存放点（含自有 4 仓库的 9 个技能，2026-10-06 安装） |
+| `~/.agents/skills` | 34 | npx canonical 区：全部技能唯一存放点（含自有 4 仓库的 9 个技能，2026-10-06 安装） |
 | `~/.pi/agent/skills` | 已删 | Pi 原生扫描 canonical，专属副本区冗余（2026-09-24 删） |
 | `~/.agents_meow/skills` | 已删 | 原仓库本地技能分发区，2026-10-06 随 `dot_agents_meow/skills` 迁往自有 GitHub 仓库而退役；opencode/dsh symlink、Pi settings skills 数组同步移除 |
 
-注意：`~/.agents/.skill-lock.json` 现已存在（25 条），其中 7 条（docx、humanizer-zh、pdf、pptx、
-pptx-generator、uv-package-manager、xlsx）在 canonical 目录无对应文件，为历史幽灵条目；lock 内有效技能
-可走 `skills update`，升级前先核对 lock 与目录的一致性。
+注意：`~/.agents/.skill-lock.json` 曾于 2026-08-11 清空后长期未重建，2026-10-06 重装自有 4 仓库时由 CLI 重建并将存量技能入账，现存 34 条与 canonical 目录一一对应（旧账本的 7 条幽灵条目已随重建消除），`skills update` 账本自此有效，升级前仍建议核对 lock 与目录的一致性。
 
 ## 变更历史
 
@@ -115,6 +113,10 @@ pptx-generator、uv-package-manager、xlsx）在 canonical 目录无对应文件
   git-hash-repo-conversion、grilling、querying-clippy-lints、writing-for-agents）已迁往自有 GitHub 仓库
   （skills-scratch、rust-meta-skills、workflow-skills），本机 `~/.agents/skills` 经 npx 安装承载（4 仓库 9 技能）；
   删除仓库分发区、`~/.agents_meow/skills`（含 10 项历史孤儿副本）、opencode/dsh symlink、Pi settings skills 数组
+- 2026-10-06：重装自有 4 个未存档 skills 仓库（bms-skills、skills-scratch、rust-meta-skills、workflow-skills；
+  agent-docs-skills 已存档跳过），CLI 重建 lock 并将存量技能入账；canonical 曾手工清除 4 项 obra/superpowers
+  旧副本（brainstorming、receiving-code-review、test-driven-development、using-git-worktrees），后核实上游仍在，
+  已自上游重装并恢复 lock 条目；querying-clippy-lints 仓库旧副本删除，收敛至 rust-meta-skills 分发
 - 2026-10-04：meow 分发区新增本地技能 writing-for-agents（中文本地化，译自 mattpocock/skills 的
   skills/productivity/writing-for-agents，基准提交 d81f3a1，含 SKILL.md 与 SKILL-MECHANICS.md）；
   上游同名技能不要再用 npx 安装，避免 canonical 与本地版本重名
