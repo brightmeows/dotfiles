@@ -2,7 +2,6 @@
   "theme": "dark",
   "quietStartup": true,
   "retry": { "enabled": true, "maxRetries": 3 },
-  "defaultTools": ["+grep", "+find", "+ls"],
   "enableSkillCommands": true,
   "codemode": { "mode": "on", "inlineBudget": 65536 },
   "packages": [
