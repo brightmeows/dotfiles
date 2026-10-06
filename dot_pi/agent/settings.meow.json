@@ -3,7 +3,7 @@
   "quietStartup": true,
   "retry": { "enabled": true, "maxRetries": 3 },
   "enableSkillCommands": true,
-  "codemode": { "mode": "only", "inlineBudget": 65536 },
+  "codemode": { "mode": "on", "inlineBudget": 65536 },
   "packages": [
     "npm:@juicesharp/rpiv-ask-user-question",
     "npm:@narumitw/pi-goal",
