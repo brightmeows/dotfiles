@@ -425,6 +425,11 @@ rules:
   # 一条端口规则覆盖所有 SSH 目标，无需逐域名添加
   - DST-PORT,22,DIRECT
 
+  # RustDesk 注册与打洞直连：rendezvous 的 register_pk/UDP 打洞经节点转发时
+  # 响应回不来（节点 UDP 黑洞），key 永不确认，对端显示“设备离线或不存在”
+  # 须置于 global_non_ip 等 RULE-SET 之前，防止 rustdesk.com 被全局列表先匹配到节点
+  - DOMAIN-SUFFIX,rustdesk.com,DIRECT
+
   ### 非 IP 类规则
   - RULE-SET,reject_non_ip,REJECT
   - RULE-SET,reject_domainset,REJECT
