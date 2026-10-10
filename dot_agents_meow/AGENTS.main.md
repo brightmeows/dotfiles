@@ -141,6 +141,7 @@ Rust 精通；Python、C/C++ 熟悉；Java、JavaScript、TypeScript 勉强了�
 ## 提交
 
 提交要写得让以后的自己也看得懂。**格式**：Conventional Commits，`type(scope)!: subject`。`!` 表示 breaking change、放在冒号前。scope 是变更模块名（小写 kebab-case，如 `core`、`api`、`cli`）。
+**语言**：提交信息用简体中文，type 与 scope 保留英文约定（如 `feat(fetcher): 支持自动发现全部活动`）。
 
 **粒度**：
 
