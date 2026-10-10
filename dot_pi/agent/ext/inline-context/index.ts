@@ -7,6 +7,14 @@
  * - 系统环境：session 内一次，异步预计算，systemPrompt 注入；2026-10-04 扩充
  *   WSL / SSH / 提权 / 代理 TUN 信号，只陈述事实、不注入操作指南
  * - Git 状态：session 内一次，异步预计算，systemPrompt 注入
+ * - Git 快照（2026-10-10 扩充）：remote（URL 剥 userinfo 凭据后才注入，
+ *   systemPrompt 会出网给模型提供商）/ dirty 数 / ahead-behind / stash /
+ *   进行中操作 / 最近提交。全部 session_start 采集一次（/resume 时
+ *   session_start 以 reason=resume 重触发、快照自动重算，实测
+ *   agent-session-runtime.js）；sections 走 diff：内容不变则零 delta、
+ *   不碎前缀缓存，每轮刷新方案被否决——dirty 高频变化会对折叠型 API
+ *   （collapseSystemMessages 头部重放）每轮打碎全量缓存，过期风险由
+ *   行尾快照标注化解
  * - 首条消息注入一条极简摘要 message（display: true），TUI 可见一行
  *
  * 设计决策（可验证优先）：
@@ -32,9 +40,9 @@
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { execFile } from "node:child_process";
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { homedir } from "node:os";
-import { basename, join } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
@@ -288,16 +296,35 @@ export interface GitStatus {
   isSubmodule: boolean;
 }
 
+// 会话启动时的 Git 快照（session 内不变量，每轮复用不重算；resume 时重算）
+export interface GitSnapshot {
+  remotes: string[]; // "名字 URL"，URL 已剥 userinfo 凭据
+  dirty: { staged: number; unstaged: number; untracked: number } | null; // 为 null 表示 status 命令失败
+  ahead: number | null; // 为 null 表示分支无 upstream
+  behind: number | null;
+  stashCount: number;
+  inProgress: string[]; // 取值：merge / rebase / cherry-pick / revert / bisect
+  lastCommit: string | null; // "短 hash 主题"（主题超 60 字符截断）
+}
+
 export interface GitContext {
   info: GitStatus | null;
   ignoredWorktreeDir: string | null;
+  snapshot: GitSnapshot | null;
 }
 
 // 执行 git 命令，失败（非仓库 / 命令不存在）返回 null
-async function runGit(cwd: string, args: string[]): Promise<string | null> {
+// 尾部修剪（trimEnd）模式仅去尾部换行、保留行首空格——porcelain 首行 X 位是前导空格，
+// 全量 trim 会把未暂存改动误分类为暂存（2026-10-10 实测踩坑）
+async function runGit(
+  cwd: string,
+  args: string[],
+  opts?: { trimEnd?: boolean },
+): Promise<string | null> {
   try {
     const { stdout } = await execFileAsync("git", args, { cwd, encoding: "utf8" });
-    return String(stdout).trim();
+    const text = String(stdout);
+    return opts?.trimEnd ? text.replace(/[\s\u00a0]+$/, "") : text.trim();
   } catch {
     return null;
   }
@@ -339,25 +366,125 @@ export async function findIgnoredWorktreeDir(cwd: string): Promise<string | null
   return results.find((dir) => dir !== null) ?? null;
 }
 
-// Git 状态 + worktree 建议合并检测，供 systemPrompt 每轮复用
+// 剥除 URL userinfo 凭据（https://user:token@host/... → https://host/...；
+// SSH 形态 git@host:... 无 // 前缀不受影响）
+function stripUrlCredentials(url: string): string {
+  return url.replace(/\/\/[^/@]+@/, "//");
+}
+
+// 进行中操作：git-dir 下标志文件/目录存在性（并行探测，rebase 两目录去重）
+async function detectInProgress(gitDirAbs: string): Promise<string[]> {
+  const candidates: (readonly [string, string])[] = [
+    ["MERGE_HEAD", "merge"],
+    ["rebase-merge", "rebase"],
+    ["rebase-apply", "rebase"],
+    ["CHERRY_PICK_HEAD", "cherry-pick"],
+    ["REVERT_HEAD", "revert"],
+    ["BISECT_LOG", "bisect"],
+  ];
+  const results = await Promise.all(
+    candidates.map(async ([name, label]) => {
+      try {
+        await stat(join(gitDirAbs, name));
+        return label;
+      } catch {
+        return null;
+      }
+    }),
+  );
+  return [...new Set(results.filter((l): l is string => l !== null))];
+}
+
+// 会话启动时的 Git 快照采集；各子项独立容错，单项失败自动省略
+export async function detectGitSnapshot(cwd: string): Promise<GitSnapshot> {
+  const [remotesOut, statusOut, upstreamOut, stashOut, logOut, gitDir] = await Promise.all([
+    runGit(cwd, ["remote", "-v"]),
+    runGit(cwd, ["status", "--porcelain"], { trimEnd: true }),
+    runGit(cwd, ["rev-list", "--left-right", "--count", "@{upstream}...HEAD"]),
+    runGit(cwd, ["stash", "list"]),
+    runGit(cwd, ["log", "-1", "--format=%h %s"]),
+    runGit(cwd, ["rev-parse", "--git-dir"]),
+  ]);
+
+  // 远程列表：每个 remote 取 fetch 行，URL 剥凭据
+  const remotes: string[] = [];
+  for (const line of remotesOut?.split("\n") ?? []) {
+    const m = line.match(/^(\S+)\t(.+) \(fetch\)$/);
+    if (m) {
+      remotes.push(`${m[1]!} ${stripUrlCredentials(m[2]!)}`);
+    }
+  }
+
+  // 变更计数：porcelain v1 每行 "XY 路径"，X = 暂存状态、Y = 未暂存状态，?? = 未跟踪；
+  // 空输出（干净工作区）不进循环，避免空行误报
+  let dirty: GitSnapshot["dirty"] = null;
+  if (statusOut !== null) {
+    const counts = { staged: 0, unstaged: 0, untracked: 0 };
+    for (const line of statusOut.length > 0 ? statusOut.split("\n") : []) {
+      if (line.startsWith("??")) {
+        counts.untracked++;
+      } else {
+        if (line[0] !== " ") {
+          counts.staged++;
+        }
+        if (line[1] !== " ") {
+          counts.unstaged++;
+        }
+      }
+    }
+    dirty = counts;
+  }
+
+  // 上游差距：输出 "落后<TAB>领先"（左列 = upstream 独有提交）
+  let ahead: number | null = null;
+  let behind: number | null = null;
+  if (upstreamOut) {
+    const [behindStr, aheadStr] = upstreamOut.split("\t");
+    const a = Number(aheadStr);
+    const b = Number(behindStr);
+    if (Number.isFinite(a) && Number.isFinite(b)) {
+      ahead = a;
+      behind = b;
+    }
+  }
+
+  // 最近提交：主题超 60 字符截断
+  let lastCommit: string | null = null;
+  if (logOut) {
+    const sp = logOut.indexOf(" ");
+    const hash = sp > 0 ? logOut.slice(0, sp) : logOut;
+    const subject = sp > 0 ? logOut.slice(sp + 1) : "";
+    lastCommit = subject.length > 60 ? `${hash} ${subject.slice(0, 60)}…` : logOut;
+  }
+
+  return {
+    remotes,
+    dirty,
+    ahead,
+    behind,
+    stashCount: stashOut ? stashOut.split("\n").length : 0,
+    inProgress: gitDir ? await detectInProgress(resolve(cwd, gitDir)) : [],
+    lastCommit,
+  };
+}
+
+// Git 状态 + worktree 建议 + 启动快照合并检测，供 systemPrompt 每轮复用
 export async function detectGitContext(cwd: string): Promise<GitContext> {
   const info = await detectGitStatus(cwd);
   if (!info) {
-    return { info: null, ignoredWorktreeDir: null };
+    return { info: null, ignoredWorktreeDir: null, snapshot: null };
   }
-  let ignoredWorktreeDir: string | null = null;
-  if (
-    (info.branch === "main" || info.branch === "master") &&
-    !info.isWorktree &&
-    !info.isSubmodule
-  ) {
-    ignoredWorktreeDir = await findIgnoredWorktreeDir(cwd);
-  }
-  return { info, ignoredWorktreeDir };
+  const [ignoredWorktreeDir, snapshot] = await Promise.all([
+    (info.branch === "main" || info.branch === "master") && !info.isWorktree && !info.isSubmodule
+      ? findIgnoredWorktreeDir(cwd)
+      : Promise.resolve(null),
+    detectGitSnapshot(cwd),
+  ]);
+  return { info, ignoredWorktreeDir, snapshot };
 }
 
 export function formatGitLine(ctx: GitContext): string {
-  const { info, ignoredWorktreeDir } = ctx;
+  const { info, ignoredWorktreeDir, snapshot } = ctx;
   if (!info) {
     return "[Git 状态] 当前目录不在 Git 仓库中。";
   }
@@ -375,6 +502,47 @@ export function formatGitLine(ctx: GitContext): string {
   }
   if (ignoredWorktreeDir) {
     text += ` 工作树目录 ${ignoredWorktreeDir} 已被 Git 忽略，建议在隔离分支上开发：\`git worktree add ${ignoredWorktreeDir}/<新分支> -b <新分支>\`，避免直接修改 ${branch ?? "HEAD"}。`;
+  }
+  if (snapshot) {
+    const parts: string[] = [];
+    if (snapshot.remotes.length > 0) {
+      parts.push(`远程 ${snapshot.remotes.join("、")}`);
+    }
+    if (snapshot.dirty) {
+      const { staged, unstaged, untracked } = snapshot.dirty;
+      const total = staged + unstaged + untracked;
+      if (total === 0) {
+        parts.push("工作区干净");
+      } else {
+        const cats = [
+          staged > 0 ? `暂存 ${staged}` : null,
+          unstaged > 0 ? `未暂存 ${unstaged}` : null,
+          untracked > 0 ? `未跟踪 ${untracked}` : null,
+        ].filter((s): s is string => s !== null);
+        parts.push(`未提交 ${total}（${cats.join("/")}）`);
+      }
+    }
+    if (snapshot.ahead !== null && snapshot.behind !== null) {
+      if (snapshot.ahead > 0 && snapshot.behind > 0) {
+        parts.push(`领先上游 ${snapshot.ahead} 落后上游 ${snapshot.behind}`);
+      } else if (snapshot.ahead > 0) {
+        parts.push(`领先上游 ${snapshot.ahead}`);
+      } else if (snapshot.behind > 0) {
+        parts.push(`落后上游 ${snapshot.behind}`);
+      }
+    }
+    if (snapshot.stashCount > 0) {
+      parts.push(`stash ${snapshot.stashCount} 条`);
+    }
+    if (snapshot.inProgress.length > 0) {
+      parts.push(`${snapshot.inProgress.join("/")} 进行中`);
+    }
+    if (snapshot.lastCommit) {
+      parts.push(`最近提交 ${snapshot.lastCommit}`);
+    }
+    if (parts.length > 0) {
+      text += ` ${parts.join("；")}。Git 快照为会话启动时状态，操作后以实时命令为准。`;
+    }
   }
   return text;
 }
