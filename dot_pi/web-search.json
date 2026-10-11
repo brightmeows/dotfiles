@@ -1,11 +1,11 @@
 {
   "searchRouting": {
     "providers": [
-      "anysearch",
-      "tavily",
       "exa",
-      "keenable",
       "duckduckgo",
+      "anysearch",
+      "keenable",
+      "tavily",
       "tinyfish",
       "querit",
       "serpdive"
