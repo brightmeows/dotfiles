@@ -90,7 +90,7 @@ INPUT 默认拒绝，目的为 LOCAL 的包经 `ufw-after-input → ufw-skip-to-
 监听 → 无 SYN-ACK → 全部 TCP 静默死亡（境内直连也死），`/connections` 无连接、无日志。UDP 不过此
 路径（system 栈 UDP 直通写回、mixed 栈 UDP 走 gvisor），ICMP 同样用户态应答——故障面精确限定在 TCP。
 
-单变量实验闭环（2026-08-30，内核 7.1.9）：mixed 栈下 `ufw allow in on mihomo` → TCP 立即复活；
+单变量实验闭环（内核 7.1.9）：mixed 栈下 `ufw allow in on mihomo` → TCP 立即复活；
 `ufw delete` → 复死。官方 wiki 亦明示“开启防火墙则 system/mixed 不可用需放行”。
 
 本机决策：`stack: system` + deploy.sh 自动放行（ufw 分支 `allow in on mihomo`，幂等、持久化于
@@ -109,8 +109,8 @@ interface: device or resource busy`——tun 消失、流量走直连，且用�
 
 `fallback` 中的 `tls://8.8.4.4:853`（IP 直连 DoT）在 suspend/resume、换网、挂起恢复的接口监控空窗期
 高频重试并刷 `Auto detect interface ... get empty name`：monitor 拿不到默认接口名时，每次 DoT 重连
-都记一条 warning。实测（2026-09-19/20）：单次挂起恢复风暴 2.1 万条，风暴日 mihomo 日志全天可达数十
-万行（journal 历史累计 562 万行/2.8GB）。2026-09-20 已移除该项，保留 dns.google 与 dns.twnic.tw
+都记一条 warning。实测：单次挂起恢复风暴 2.1 万条，风暴日 mihomo 日志全天可达数十
+万行（journal 历史累计 562 万行/2.8GB）。已移除该项，保留 dns.google 与 dns.twnic.tw
 两个域名形式 DoH（解析走 bootstrap，重试节奏不同，双源冗余不变）。若日后要恢复第三境外源，
 优先 DoH 域名形式，勿用 IP 直连形式。
 

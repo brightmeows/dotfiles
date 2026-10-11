@@ -39,7 +39,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | [`docs/model-config-pipeline.md`](docs/model-config-pipeline.md) | 模型配置流水线：TOML 单一源、双消费者生成物、models.dev 刷新与映射规则 |
 | [`docs/matebook-battery-optimization.md`](docs/matebook-battery-optimization.md) | MateBook 续航优化：放电数据对比、battery-boost/power-log 改动、mihomo DoT 探测风暴处置 |
 | [`docs/pi-lsp-support.md`](docs/pi-lsp-support.md) | Pi 的 LSP 支持：pi-lsp-extension 选型决策与重审触发条件、tsserver/信任门机制记录、防漂移四件套写法示范 |
-| [`docs/nvm-shim-nvm4306-script-trust.md`](docs/nvm-shim-nvm4306-script-trust.md) | （历史）NVM shim 模式 NVM4306 拦截：脚本信任缓存 USN 漂移根因、`nvm reshim` 失效原因与 `nvm --sign-version-scripts` 重签修复；2026-10-05 nvm 退役改用 scoop nodejs，该类问题随 shim 代理层消失 |
+| [`docs/nvm-shim-nvm4306-script-trust.md`](docs/nvm-shim-nvm4306-script-trust.md) | （历史）NVM shim 模式 NVM4306 拦截：脚本信任缓存 USN 漂移根因、`nvm reshim` 失效原因与 `nvm --sign-version-scripts` 重签修复；nvm 已退役改用 scoop nodejs，该类问题随 shim 代理层消失 |
 
 ## Commands
 
@@ -47,12 +47,12 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 > **ℹ️ Copy 模式**：本仓库使用 `mode = "file"`（复制模式），目标文件是源文件的副本，运行时回写（如 fcitx5）不会穿透 symlink 到仓库。编辑源文件后需 `chezmoi -S . apply` 同步至 `$HOME`（模板渲染与 `run_onchange_` 脚本也在此步生效）。
 > **⚠️ npx skills 作用域**：`npx skills` 不带 `--agent` 时对所有已检测 agent 生效
 > （含 pi 的 `~/.pi/agent/skills`、opencode 的 `~/.config/opencode/skills` 等）。
-> 2026-08-11 已移除 bash/nushell 的 `skills` wrapper（曾自动注入 `--agent codex`）；现在裸跑 `npx skills` 写命令前必须先确认作用域。
+> 已移除 bash/nushell 的 `skills` wrapper（曾自动注入 `--agent codex`）；现在裸跑 `npx skills` 写命令前必须先确认作用域。
 > **remove 需注意**：不带 `-a` 时 targeting 所有 agent（会清理各 agent 专属目录中的同名技能）；
 > 指定 `-a` 时仅列出所有已安装的 universal agent（codex+opencode）才会真删 canonical 与 lock，否则报成功但实际不删。
 > **永远不要用 `remove --all`**（会清空 canonical 全部技能）；每次操作后验证 canonical 与 lock（详见 [docs/npx-skills-usage.md](docs/npx-skills-usage.md)）。
 > 技能统一由 npx skills 全局安装承载（canonical `~/.agents/skills`）；原仓库分发区 `~/.agents_meow/skills` 与
-> opencode/dsh symlink 已于 2026-10-06 退役（2026-08-10 symlink 事故记录见 docs/npx-skills-usage.md）。
+> opencode/dsh symlink 已退役（symlink 事故记录见 docs/npx-skills-usage.md）。
 
 | 命令 | 用途 |
 |---|---|
@@ -82,7 +82,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 - 时序背景：chezmoi 按 entry 名字母序应用条目，`.chezmoiscripts/`（c）排在 `.gitconfig.meow`、`.pi`、`.env_common`
   等数据源之前，脚本不加 `after_` 会先于数据文件运行、读到上一轮旧值，且触发 hash 被消耗后不再重跑，
-  合并永久滞后（2026-09-14 修复，参照 b52aefc 同款坑；三个脚本已同步改名）
+  合并永久滞后（已修复，参照 b52aefc 同款坑；三个脚本已同步改名）
 - 触发方式：`after_` 保证脚本在数据文件部署后执行；`onchange` 配合模板 hash（内容变化才运行）
 - `run_after_` 例外：`run_after_omarchy-active-window-enable.sh.tmpl`（活动窗口组件调和）每次 apply 运行——
   `omarchy refresh shell` 会把 shell.json 重置为默认，模板 hash 未变时 onchange 不会重跑、无法恢复布局条目，

@@ -11,20 +11,20 @@ tags: [pi, extensions, typescript]
 
 本目录为独立扩展包集合，每个子目录是一个 Pi 包（`package.json` 声明 `pi.extensions`），通过 `settings.json` 的 `packages` 数组显式注册，不再依赖 Pi 自动发现。
 
-组织原则（2026-08-30 定）：**各包完全自包含**——包间零 import、无共享目录，需复用的模块各包自备副本、无同步义务；目录名 = 扩展语义名，包名前缀 `pi-meow-`；
-`skill-reminders/` 为独立的技能专项提醒注入包（2026-09-19 自 better-skill 拆出）。历史域分组与 lib/ 均已拆解（跨包共享库）。
-包内纯库归包内 `internal/` 子目录（不跨包，与历史 lib/ 拆解性质不同）：subdir-agents-md 2026-09-08 起。
-（better-skill 技能域合集包 2026-09-24 移除，技能加载回归 Pi 内置机制，见“新增与归组”节历史记录）
+组织原则：**各包完全自包含**——包间零 import、无共享目录，需复用的模块各包自备副本、无同步义务；目录名 = 扩展语义名，包名前缀 `pi-meow-`；
+`skill-reminders/` 为独立的技能专项提醒注入包（自 better-skill 拆出）。历史域分组与 lib/ 均已拆解（跨包共享库）。
+包内纯库归包内 `internal/` 子目录（不跨包，与 lib/ 拆解性质不同）：subdir-agents-md 采用此结构。
+（better-skill 技能域合集包已移除，技能加载回归 Pi 内置机制）
 
 | 路径 | 包名 | 角色 | 要点 |
 |------|------|------|------|
 | `aliases/` | `pi-meow-aliases` | 斜杠命令别名 | /clear → /new、/exit → /quit |
 | `esc-hold/` | `pi-meow-esc-hold` | Esc 防误触 | 单击提示不中断，双击/长按才中断；terminal 输入层；以 `ctx.isIdle()` 分场景：生成中守卫、空闲全放行 |
-| `editor-input-tweaks/` | `pi-meow-editor-input-tweaks` | 编辑器输入增强 | /@ 标记符着色 + / 补全停留；独占编辑器槽位（`ctx.ui.setEditorComponent` 全局单例，后设覆盖先设，新增编辑器类扩展须链式包装或并入本包）；2026-09-12 曾换市场包 pi-vim，同日回退 |
-| `inline-context/` | `pi-meow-inline-context` | 环境摘要注入 | 日期/系统环境（含 WSL/SSH/提权/代理 TUN 信号，2026-10-04 扩充，只陈述事实）/Git 状态/工具与 gh，写入结构化 `sections.inline_context`（2026-10-02 自整段 systemPrompt 替换迁移）；Git 快照（2026-10-10 扩充）：remote（URL 剥 userinfo 凭据）/dirty/ahead-behind/stash/进行中操作/最近提交，session_start 快照零缓存损伤、resume 自动重算、行尾标注过期语义；首条摘要消息走默认渲染 |
-| `subdir-agents-md/` | `pi-meow-subdir-agents-md` | 子目录规则懒加载 | 触发在 `tool_result` 收集、投递在 `turn_end` 边界条目（短通知 display: true + 全文 display: false，`details.subdirAgents` 标记持久去重，2026-10-03 重构：codemode 嵌套下脚本可能丢弃拼接内容，条目通道保证送达）；结构化 `input.path` + bash 白名单启发式双通道；已注入规则文件被 read 时追加提示；含包内 `internal/path-extract.ts` |
-| `models-dev/` | `pi-meow-models-dev` | 模型目录导入 | models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await；注册按内建重名分流（非重名走原生 createProvider + fetchModels/ModelsStore，重名保留 legacy 合成，2026-10-03 M2-hybrid）；重名 provider 映射时按 id\|api 合并内建 compat 与档位表（内建优先，2026-10-04，见下文）；纯库模块（registry / config / mapping / thinking / custom-models / native）归 `internal/` 子目录；配置 schema 见下文 |
-| `skill-reminders/` | `pi-meow-skill-reminders` | 技能专项提醒注入 | 双通道命中：read 通道 `input.path`（tool_result 段尾注入）与 `/skill:<name>` 手动命令（input 事件 transform，先于 Pi 技能展开，2026-10-03 补）；注册表（数据驱动）归 `internal/reminders.ts`，新增提醒只加注册项；2026-09-19 自 better-skill 拆出 |
+| `editor-input-tweaks/` | `pi-meow-editor-input-tweaks` | 编辑器输入增强 | /@ 标记符着色 + / 补全停留；独占编辑器槽位（`ctx.ui.setEditorComponent` 全局单例，后设覆盖先设，新增编辑器类扩展须链式包装或并入本包） |
+| `inline-context/` | `pi-meow-inline-context` | 环境摘要注入 | 日期/系统环境（含 WSL/SSH/提权/代理 TUN 信号，只陈述事实）/Git 状态/工具与 gh，写入结构化 `sections.inline_context`；Git 快照：remote（URL 剥 userinfo 凭据）/dirty/ahead-behind/stash/进行中操作/最近提交，session_start 快照零缓存损伤、resume 自动重算、行尾标注过期语义；首条摘要消息走默认渲染 |
+| `subdir-agents-md/` | `pi-meow-subdir-agents-md` | 子目录规则懒加载 | 触发在 `tool_result` 收集、投递在 `turn_end` 边界条目（短通知 display: true + 全文 display: false，`details.subdirAgents` 标记持久去重；设计原因：codemode 嵌套下脚本可能丢弃拼接内容，条目通道保证送达）；结构化 `input.path` + bash 白名单启发式双通道；已注入规则文件被 read 时追加提示；含包内 `internal/path-extract.ts` |
+| `models-dev/` | `pi-meow-models-dev` | 模型目录导入 | models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await；注册按内建重名分流（非重名走原生 createProvider + fetchModels/ModelsStore，重名保留 legacy 合成，即 M2-hybrid 分流）；重名 provider 映射时按 id\|api 合并内建 compat 与档位表（内建优先，见下文）；纯库模块（registry / config / mapping / thinking / custom-models / native）归 `internal/` 子目录；配置 schema 见下文 |
+| `skill-reminders/` | `pi-meow-skill-reminders` | 技能专项提醒注入 | 双通道命中：read 通道 `input.path`（tool_result 段尾注入）与 `/skill:<name>` 手动命令（input 事件 transform，先于 Pi 技能展开）；注册表（数据驱动）归 `internal/reminders.ts`，新增提醒只加注册项；自 better-skill 拆出 |
 
 注册方式（`settings.meow.json`）：
 
@@ -79,7 +79,7 @@ models.dev 导入的用户配置，源文件 `dot_pi/agent/models-dev.json` 由 
 - 引用未知 provider/模型 id 时忽略；配置语法/校验失败时警告并按无配置运行
 - 配了 `api` 的 provider 视为显式表态：env 守卫缺失不阻止其注册
 
-## 注册分流（M2-hybrid，2026-10-03）
+## 注册分流（M2-hybrid）
 
 pi 1.0 的原生注册是顶层替换（`composeProvider` 取 `nativeExtensionProviders ?? builtins`），
 注册原生 provider 会顶掉同名内建（含 OAuth 登录与目录合成），故按 `getBuiltinProviders()`
@@ -96,7 +96,7 @@ pi 1.0 的原生注册是顶层替换（`composeProvider` 取 `nativeExtensionPr
   （`getApiProvider` 走 `/compat` 超集，与 coding-agent 同款用法）
 - 新增 internal 纯工厂模块 `native.ts`（不读环境、不注册；编排归 index.ts）
 
-## compat 合并（2026-10-04）
+## compat 合并
 
 与内建重名的 provider（legacy 路径）在模型映射时按 `id|api` 合并 pi-ai 内建模型的
 compat 与档位映射：内建显式键优先（官方针对端点调校），扩展只补缺；档位表保留内建
@@ -114,23 +114,22 @@ provider/model/builtinIndex；`mapProviderModels` 用同名参数对象。验证
 
 ## 与 models.json 的关系（优先级：models.json > models-dev 扩展 > pi 内置目录）
 
-pi 原生自定义模型文件 `~/.pi/agent/models.json`（chezmoi 源 `dot_pi/agent/models.json`）中显式声明的 provider 进入保护名单，本扩展注册时跳过（2026-09-08 定，修复 registerProvider 带 models 整体替换导致的自定义失效）。扩展启动时读一次名单，reload/重启生效。
+pi 原生自定义模型文件 `~/.pi/agent/models.json`（chezmoi 源 `dot_pi/agent/models.json`）中显式声明的 provider 进入保护名单，本扩展注册时跳过（修复 registerProvider 带 models 整体替换导致的自定义失效）。扩展启动时读一次名单，reload/重启生效。
 
 ## 新增与归组
 
-- 一包一扩展（2026-08-30 定）：新扩展建新包目录（目录名 = 扩展语义名），包名 `pi-meow-<目录名>`，扩展文件改名 `index.ts` 直接作为入口；并在 `settings.meow.json` 注册
-- 技能域历史：better-skill 合集包（技能索引重写 / skill 工具 / read 兜底增强）2026-09-24 移除，技能加载回归 Pi 内置机制（Pi 默认建议式索引 + read 加载，`/skill:name` 手动命令保留）；专项提醒注入归 `skill-reminders/` 独立包（2026-09-19 拆出）
-- 编辑器槽位例外：替换主编辑器的扩展（`ctx.ui.setEditorComponent` 全局单例）不可与 `editor-input-tweaks` 并存，新编辑器功能并入其 `SlashAtHighlightEditor` 或链式包装；
-  2026-09-12 曾试换市场包 pi-vim，同日回退（现槽位归 `editor-input-tweaks`）
-- npm 扩展历史：`rpiv-todo` 2026-10-02 移除，不再引入（主人确认）；任务跟踪不再用固定工具。
-- 各包完全自包含（2026-08-30 定）：包间零 import、无 lib 类共享目录；包内模块用 `./xxx.ts` 写法（tsconfig 已开 `allowImportingTsExtensions`）；需复用的模块在各包自备副本，副本间无同步义务
+- 一包一扩展：新扩展建新包目录（目录名 = 扩展语义名），包名 `pi-meow-<目录名>`，扩展文件改名 `index.ts` 直接作为入口；并在 `settings.meow.json` 注册
+- 技能域：better-skill 合集包（技能索引重写 / skill 工具 / read 兜底增强）已移除，技能加载回归 Pi 内置机制（Pi 默认建议式索引 + read 加载，`/skill:name` 手动命令保留）；专项提醒注入归 `skill-reminders/` 独立包
+- 编辑器槽位例外：替换主编辑器的扩展（`ctx.ui.setEditorComponent` 全局单例）不可与 `editor-input-tweaks` 并存，新编辑器功能并入其 `SlashAtHighlightEditor` 或链式包装
+- npm 扩展：`rpiv-todo` 已移除、不再引入（主人确认）；任务跟踪不用固定工具。
+- 各包完全自包含：包间零 import、无 lib 类共享目录；包内模块用 `./xxx.ts` 写法（tsconfig 已开 `allowImportingTsExtensions`）；需复用的模块在各包自备副本，副本间无同步义务
 - 新增包须在 `settings.meow.json` 的 `packages` 数组注册路径
 - 新增/移动扩展须实测加载：`pnpm check` 不查 default factory 契约，须 `pi -p -e <入口> --no-session` 验证（组目录传 `xxx/index.ts`）
 - 各文件头部注释即设计文档：改动前完整读取，改动后同步更新（含包内模块）
 
 ## 通知约定（LLM 注入且用户需知情）
 
-LLM 注入且用户需知情的操作，通知通道约定如下（2026-09-24 重定：移除各包
+LLM 注入且用户需知情的操作，通知通道约定如下（不用各包
 `inject-notice.ts` 渲染器覆写，回落 Pi 默认渲染）：
 
 - 知情面：投递短 custom_message（`display: true`，content 即单行提示，统一格式
@@ -138,11 +137,11 @@ LLM 注入且用户需知情的操作，通知通道约定如下（2026-09-24 �
 - 注入全文：另投一条 `display: false` 的 custom_message（content 总进 LLM，
   TUI 不渲染，实测确认）；两条均携去重所需 details 字段
 - Pi 对 entry 无默认渲染：`appendEntry` 数据未注册 renderer 时不在转录显示
-  （2026-09-24 实测），故不注册 renderer 的扩展不再用 entry 传知情面
+  （实测），故不注册 renderer 的扩展不用 entry 传知情面
 - 消费方：inline-context（摘要单条消息，content 即全文无独立全文条）；
-  subdir-agents-md 2026-10-03 起回到 custom_message 双条（短通知 + 全文，
-  turn_end 边界投递；2026-09-26 曾改走 tool_result 拼接，因 codemode only
-  下嵌套脚本可能丢弃拼接内容而回退）
+  subdir-agents-md 走 custom_message 双条（短通知 + 全文，
+  turn_end 边界投递；不走 tool_result 拼接——codemode only
+  下嵌套脚本可能丢弃拼接内容）
 
 ## 踩坑点：运行时验证
 
@@ -155,19 +154,19 @@ pi -p -e <被测扩展入口> -e /tmp/dump-ext.ts --no-session "只回复：收�
 ```
 
 - 对比验证（行为回归）：从 git 检出旧版到 /tmp，两边分别 `pi -p -e <被测> -e <dump>` 跑，diff dump 落盘产物。对比前临时移走同源目录（settings 注册的部署区包），否则新旧双重改写，diff 失真
-- Pi 项目技能加载渠道（2026-08-13 实测）：`loadSkills` 走 `includeDefaults: false`，不自动扫 `cwd/.pi/skills` 与祖先 `.agents/skills`（放进去不生效，项目 `.pi/settings.json` 的 skills 数组也未生效）
+- Pi 项目技能加载渠道（实测）：`loadSkills` 走 `includeDefaults: false`，不自动扫 `cwd/.pi/skills` 与祖先 `.agents/skills`（放进去不生效，项目 `.pi/settings.json` 的 skills 数组也未生效）
   项目技能靠 `--skill` 或 settings/packages 进入，验证注入路径技能与名空间消歧用 `--skill` 传 fixture 目录
 - 验证 `tool_result` 拦截类扩展（read-hint）：`-p` 控制台不打印 tool_result 原文，须在 dump 扩展里监听 `tool_result` 并把 read SKILL.md 的 content 落盘（链尾拿到的是改写后内容）
 - dump 工具定义验证 schema：`pi.on("session_start")` 内调 `pi.getAllTools()`，`-e` dump 扩展 + `--no-session` 跑，`parameters` 即 typebox JSON Schema（含 `maxLength`，确认已传 LLM）
 - 孤儿目录清理：ext 为 copy 模式分发，chezmoi apply 不清理部署区多余目录——源目录删除/改名后 `~/.pi/agent/ext/` 残留孤儿（不再被 settings 引用、无害但混乱），apply 后手动 `rm -rf` 处理
-- meow 合并脚本时序坑（2026-08-30 实测，2026-09-14 根因修复）：apply 时 `.chezmoiscripts`（字母序在前）先于 `dot_pi` 部署，脚本读到上一轮的 settings.meow.json 副本，改源后首次 apply 合并的是旧内容；已改用 `run_onchange_after_` 前缀让脚本在数据文件部署后执行，不再需要手动补救
+- meow 合并脚本时序坑（已根因修复）：apply 时 `.chezmoiscripts`（字母序在前）先于 `dot_pi` 部署，脚本读到上一轮的 settings.meow.json 副本，改源后首次 apply 合并的是旧内容；已改用 `run_onchange_after_` 前缀让脚本在数据文件部署后执行，不再需要手动补救
   - 必要时手动执行渲染脚本：`chezmoi -S . execute-template < .chezmoiscripts/run_onchange_after_merge-pi-settings.sh.tmpl | bash`
   - packages 为并集语义，meow 源删除不传导，删包后手动从 settings.json 移除
 - `/reload`（pi 内键入）热重载扩展/技能/提示词/主题/上下文文件（非仅 keybindings，`interactive-mode.js` 重载文案含 `extensions`）；改源文件后用它加载新代码免重启。副作用：reload 后旧 `pi`/`ctx` 变 stale（`runner.js` 校验），勿跨 reload 复用
 - 验证 TUI 渲染（`renderResult`/`renderCall`/`ctx.ui.custom`）：`-p` headless 不走 TUI 渲染，须 `/reload` 后在交互会话触发该工具，人眼校验两态——如 `Ctrl+O`（`app.tools.expand`）由 `tool-execution` 重调 renderer 传 `{ expanded }` 触发展开态
-- 块注释内禁含 `*/` 序列（会提前终止注释，tsc 报 TS1443 / oxfmt 语法错；写路径如 `*/index.ts` 时改写避让，2026-08-12 inject-notice.ts 踩坑）
+- 块注释内禁含 `*/` 序列（会提前终止注释，tsc 报 TS1443 / oxfmt 语法错；写路径如 `*/index.ts` 时改写避让；inject-notice.ts 踩坑）
 - pi 二进制的运行时结构与 npm 发布物可能不同：bun 打包把类字段降级为构造期赋值，未初始化的字段声明直接丢弃——用 `in` 探测实例属性会误报缺失。
-  0.85.1 的 `Editor.autocompleteList`（d.ts 可选成员）即此类：仅补全菜单显示时才赋值，构造后不存在（2026-09-16 editor-input-tweaks 实测 probe：`autocompleteList: false`，其余成员全部存在）。
+  0.85.1 的 `Editor.autocompleteList`（d.ts 可选成员）即此类：仅补全菜单显示时才赋值，构造后不存在（editor-input-tweaks 实测 probe：`autocompleteList: false`，其余成员全部存在）。
   探测扩展依赖的 private 成员时，以 d.ts 可选性 + 运行时守卫读取为准，勿把可选成员纳入硬性自检
 - 验证 TUI 着色/渲染类扩展的真实画面：`tmux new-session -d -s <name> -x 140 -y 42 "bash -lc '<cmd>'"` 跑交互 pi，`tmux capture-pane -p -e` 捕获带 ANSI 的画面，
   grep 颜色序列（如 `\x1b[33m`）与降级通知文本；源文件改动须先 `chezmoi -S . apply` 部署再测（`-e` 传入的扩展排最前、会被 settings 包覆盖，测不到目标版本）
