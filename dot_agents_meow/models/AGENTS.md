@@ -36,6 +36,8 @@ node dot_agents_meow/models/cli.mts write             # 重写各 profile 的生
 node --test dot_agents_meow/models/*.test.mts         # 映射与写入逻辑单测
 ```
 
+oxlint 复杂度规则（全局严阈值 complexity 15 / depth 4 / 函数 100 行）对本域放宽：mapping.mts（85/5/165）、cli.mts 与 plugin.mts（50/5/165）——存量热点棘轮，不许比现状更糟；触碰重构后从 `.oxlintrc.json` overrides 收紧删除。
+
 ## TOML 规则
 
 单段 `[providers.<id>]`：`id` 与 models.dev 同名表示覆盖外部数据，未收录表示完整定义。

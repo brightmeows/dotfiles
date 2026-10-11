@@ -9,6 +9,9 @@
   },
   "plugins": ["typescript", "oxc", "unicorn"],
   "rules": {
+    "complexity": ["deny", 15],
+    "max-depth": ["deny", 4],
+    "max-lines-per-function": ["deny", 100],
     "no-console": "off",
     "no-magic-numbers": "off",
     "func-style": "off",
@@ -31,5 +34,31 @@
       }
     ]
   },
-  "ignorePatterns": ["node_modules"]
+  "ignorePatterns": ["node_modules"],
+  "overrides": [
+    {
+      "files": ["dot_agents_meow/models/mapping.mts"],
+      "rules": {
+        "complexity": ["deny", 85],
+        "max-depth": ["deny", 5],
+        "max-lines-per-function": ["deny", 165]
+      }
+    },
+    {
+      "files": [
+        "dot_agents_meow/models/cli.mts",
+        "dot_agents_meow/models/plugin.mts",
+        "dot_pi/agent/ext/subdir-agents-md/index.ts",
+        "dot_pi/agent/ext/subdir-agents-md/internal/path-extract.ts",
+        "dot_pi/agent/ext/models-dev/index.ts",
+        "dot_pi/agent/ext/models-dev/internal/mapping.ts",
+        "dot_pi/agent/ext/inline-context/index.ts"
+      ],
+      "rules": {
+        "complexity": ["deny", 50],
+        "max-depth": ["deny", 5],
+        "max-lines-per-function": ["deny", 165]
+      }
+    }
+  ]
 }

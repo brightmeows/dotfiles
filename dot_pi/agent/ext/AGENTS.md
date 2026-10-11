@@ -126,6 +126,9 @@ pi 原生自定义模型文件 `~/.pi/agent/models.json`（chezmoi 源 `dot_pi/a
 - 新增包须在 `settings.meow.json` 的 `packages` 数组注册路径
 - 新增/移动扩展须实测加载：`pnpm check` 不查 default factory 契约，须 `pi -p -e <入口> --no-session` 验证（组目录传 `xxx/index.ts`）
 - 各文件头部注释即设计文档：改动前完整读取，改动后同步更新（含包内模块）
+- oxlint 复杂度规则放宽清单含 subdir-agents-md（index.ts、internal/path-extract.ts）、models-dev（index.ts、internal/mapping.ts）、inline-context（index.ts）——
+  全局严阈值 complexity 15 / depth 4 / 函数 100 行，本域放宽 50/5/165（存量热点棘轮，不许比现状更糟）；
+  触碰重构后从 `.oxlintrc.json` overrides 收紧删除
 
 ## 通知约定（LLM 注入且用户需知情）
 
