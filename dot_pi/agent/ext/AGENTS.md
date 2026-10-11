@@ -24,7 +24,7 @@ tags: [pi, extensions, typescript]
 | `inline-context/` | `pi-meow-inline-context` | 环境摘要注入 | 日期/系统环境（含 WSL/SSH/提权/代理 TUN 信号，只陈述事实）/Git 状态/工具与 gh，写入结构化 `sections.inline_context`；Git 快照：remote（URL 剥 userinfo 凭据）/dirty/ahead-behind/stash/进行中操作/最近提交，session_start 快照零缓存损伤、resume 自动重算、行尾标注过期语义；首条摘要消息走默认渲染 |
 | `subdir-agents-md/` | `pi-meow-subdir-agents-md` | 子目录规则懒加载 | 触发在 `tool_result` 收集、投递在 `turn_end` 边界条目（短通知 display: true + 全文 display: false，`details.subdirAgents` 标记持久去重；设计原因：codemode 嵌套下脚本可能丢弃拼接内容，条目通道保证送达）；结构化 `input.path` + bash 白名单启发式双通道；已注入规则文件被 read 时追加提示；含包内 `internal/path-extract.ts` |
 | `models-dev/` | `pi-meow-models-dev` | 模型目录导入 | models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await；注册按内建重名分流（非重名走原生 createProvider + fetchModels/ModelsStore，重名保留 legacy 合成，即 M2-hybrid 分流）；重名 provider 映射时按 id\|api 合并内建 compat 与档位表（内建优先，见下文）；纯库模块（registry / config / mapping / thinking / custom-models / native）归 `internal/` 子目录；配置 schema 见下文 |
-| `skill-reminders/` | `pi-meow-skill-reminders` | 技能专项提醒注入 | 双通道命中：read 通道 `input.path`（tool_result 段尾注入）与 `/skill:<name>` 手动命令（input 事件 transform，先于 Pi 技能展开）；注册表（数据驱动）归 `internal/reminders.ts`，新增提醒只加注册项；自 better-skill 拆出 |
+| `skill-reminders/` | `pi-meow-skill-reminders` | 技能专项提醒注入 | 三通道命中：read/edit/write 通道 `input.path`（tool_result 段尾注入 + details 载标记）、bash/powershell 通道白名单启发式（tool_result 只收集、turn_end 投单条 display:true 条目——codemode 嵌套下拼接会丢，条目保住投递与标记的原子性）、`/skill:<name>` 手动命令（input 事件 transform，先于 Pi 技能展开）；持久去重 subdir-agents-md 同款（details 标记 + 扫库，hash 为权威键同提醒跨文件一次，compact 后可重注）；存在性守卫 requiresPath（技能未安装整条静默跳过，`internal/skill-presence.ts`）；注册表（数据驱动）归 `internal/reminders.ts`，新增提醒只加注册项；bash 提取归 `internal/bash-paths.ts`（自 subdir-agents-md 副本，白名单加纯读取命令）；自 better-skill 拆出 |
 
 注册方式（`settings.meow.json`）：
 
@@ -126,7 +126,7 @@ pi 原生自定义模型文件 `~/.pi/agent/models.json`（chezmoi 源 `dot_pi/a
 - 新增包须在 `settings.meow.json` 的 `packages` 数组注册路径
 - 新增/移动扩展须实测加载：`pnpm check` 不查 default factory 契约，须 `pi -p -e <入口> --no-session` 验证（组目录传 `xxx/index.ts`）
 - 各文件头部注释即设计文档：改动前完整读取，改动后同步更新（含包内模块）
-- oxlint 复杂度规则放宽清单含 subdir-agents-md（index.ts、internal/path-extract.ts）、models-dev（index.ts、internal/mapping.ts）、inline-context（index.ts）——
+- oxlint 复杂度规则放宽清单含 subdir-agents-md（index.ts、internal/path-extract.ts）、models-dev（index.ts、internal/mapping.ts）、inline-context（index.ts）、skill-reminders（internal/bash-paths.ts，自 subdir-agents-md 副本同源同待遇）——
   全局严阈值 complexity 15 / depth 4 / 函数 100 行，本域放宽 50/5/165（存量热点棘轮，不许比现状更糟）；
   触碰重构后从 `.oxlintrc.json` overrides 收紧删除
 

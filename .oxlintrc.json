@@ -50,6 +50,7 @@
         "dot_agents_meow/models/plugin.mts",
         "dot_pi/agent/ext/subdir-agents-md/index.ts",
         "dot_pi/agent/ext/subdir-agents-md/internal/path-extract.ts",
+        "dot_pi/agent/ext/skill-reminders/internal/bash-paths.ts",
         "dot_pi/agent/ext/models-dev/index.ts",
         "dot_pi/agent/ext/models-dev/internal/mapping.ts",
         "dot_pi/agent/ext/inline-context/index.ts"
