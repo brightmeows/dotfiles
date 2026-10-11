@@ -7,6 +7,8 @@ LICENSE
 AGENTS.md
 # Pi 全局指令路径：仅供仓库内子目录规则注入，不部署
 .pi/agent/AGENTS.md
+# 搜索源维护记录：仓库内文档，不部署
+.pi/web-search.md
 
 # Node
 package.json
