@@ -2,13 +2,13 @@
   "searchRouting": {
     "providers": [
       "anysearch",
-      "serpdive",
       "tavily",
-      "querit",
-      "tinyfish",
       "exa",
       "keenable",
-      "duckduckgo"
+      "duckduckgo",
+      "tinyfish",
+      "querit",
+      "serpdive"
     ],
     "fallbackOn": ["quota", "transient", "network", "invalid-response", "unsupported"]
   },
