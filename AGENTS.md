@@ -10,7 +10,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 | 文件 | 内容 | 加载到 opencode 的方式 | 加载到 Pi 的方式 | 加载到 dsh 的方式 |
 |------|------|----------------------|-----------------|------------------|
-| `AGENTS.main.md` | 工程质量准则 + 自主决策协议 | `agents/default.md.tmpl` → `{{ include }}`（主代理系统提示词） | `APPEND_SYSTEM.md.tmpl` → `{{ include }}`（追加至系统提示词） | `dot_dsh/AGENTS.md.tmpl` 的 `{{ include }}`（用户级指令文件） |
+| `AGENTS.main.md` | 工程质量准则 + 白小喵人设（角色化工程助手） | `agents/default.md.tmpl` → `{{ include }}`（主代理系统提示词） | `APPEND_SYSTEM.md.tmpl` → `{{ include }}`（追加至系统提示词） | `dot_dsh/AGENTS.md.tmpl` 的 `{{ include }}`（用户级指令文件） |
 | `AGENTS.main.ref.md` | 维护参考（设计决策 / 理论出处 / 否决方案） | 不加载（仅 chezmoi 分发到 `~/.agents_meow/`） | 不加载 | 不加载 |
 
 修改 `AGENTS.main.md` 前先读 `AGENTS.main.ref.md` 理解决策脉络；ref.md 不被任何模板 include，不进系统提示词。
