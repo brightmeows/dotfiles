@@ -30,21 +30,27 @@
  *   cursorPos?}]，text 无 ANSI（cursorPos 按纯文本 index 计算）。
  * - 本扩展复制 pi 的 render 主体（padding/scroll/着色/autocomplete-list），
  *   但把“光标注入 + 着色”合并为一次 grapheme 遍历：每个字符判断是否光标位、
- *   是否标记符，组合 \x1b[7m（反白光标）与 \x1b[33m/\x1b[34m（颜色），用一个
- *   \x1b[0m 收尾，正确处理光标与颜色叠加（光标停在标记符上时反白+颜色同时生效）。
+ *   是否标记符，光标位用 renderFakeCursor() 包裹（1.2.0 起公开导出，OSC 标记
+ *   包裹假光标，TUI 按 showHardwareCursor 统一裁决：硬件光标模式剥除反白、
+ *   否则替换为反白），标记符叠加 \x1b[33m/\x1b[34m 并用 \x1b[0m 收尾，正确处理
+ *   光标与颜色叠加（光标停在标记符上时反白+颜色同时生效；原生
+ *   renderFakeCursor 不支持字符级着色，叠加逻辑是本扩展独有）。
  * - 上下边框不自绘：0.85 起 pi 提供 protected renderTopBorder / renderBottomBorder
  *   （含滚动指示与 CustomEditor 的工作状态嵌入），直接调用。
  * - 0.85 的鼠标命中测试依赖 renderedVisibleLineCount、renderedAutocompleteHeight，
  *   render 中同步维护（滚动状态 scrollOffset 仍由本实现管理）。
  *
  * ═══════════════════════════════════════════════════════════════════════
- * ⚠️ API 依赖风险（0.85.1 复核，2026-09-16；跨 pi 升级必须复核）
+ * ⚠️ API 依赖风险（1.2.0 复核，2026-10-13；跨 pi 升级必须复核）
  * ═══════════════════════════════════════════════════════════════════════
  * 🟢 公开 / protected API（0.85 起）：
  *    - renderTopBorder(width, hiddenLineCount) / renderBottomBorder：protected 子类
  *      API，边框渲染与滚动指示都走它；CustomEditor 还借此嵌入工作状态。
  *    - CustomEditorOptions.embedWorkingStatus：本扩展开启，工作状态嵌入上边框，
- *      与 pi 0.85 默认编辑器一致（不开启则退回独立状态行，见 docs/extensions.md）。
+ *      与 pi 默认编辑器一致（不开启则退回独立状态行，见 docs/extensions.md）。
+ *    - renderFakeCursor(text)（1.2.0 起）：假光标统一渲染，OSC 标记包裹，TUI 按
+ *      showHardwareCursor 设置剥除（用硬件光标）或替换为反白；1.2.0 前编辑器
+ *      硬编码 \x1b[7m 不受该设置管辖，本扩展必须用它而非硬编码反白。
  * 🔴 private 字段访问（as unknown as 绕过类型检查）：
  *    - layoutText(width)          → 纯文本 layoutLines（着色定位的基础）。pi 未提供
  *      精确到字符级的公开着色 API——官方 rainbow-editor 示例的 render 后处理只能
@@ -54,7 +60,7 @@
  *    - renderedVisibleLineCount / renderedAutocompleteHeight（0.85 起，写）→ 鼠标命中
  *    pi 若重命名/重构这些 private 成员，本扩展会断，需同步修复。
  * 🟡 render 逻辑复制：光标注入 + 着色 + autocomplete-list 约 70 行复制自
- *    pi-tui editor.js render()（0.85.1），pi 改 render 本扩展要同步。
+ *    pi-tui editor.js render()（1.2.0 对齐），pi 改 render 本扩展要同步。
  * 🟢 颜色固定 ANSI 标准色：pi 的 EditorTheme 仅含 borderColor/selectList，
  *    无 semantic fg()，故用固定 \x1b[33m/\x1b[34m（不随主题变）。颜色常量集中
  *    在文件顶部，便于调整。
@@ -79,11 +85,15 @@
  */
 
 import { CustomEditor, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { CURSOR_MARKER, getKeybindings, visibleWidth } from "@earendil-works/pi-tui";
+import {
+  CURSOR_MARKER,
+  getKeybindings,
+  renderFakeCursor,
+  visibleWidth,
+} from "@earendil-works/pi-tui";
 
 // ─── ANSI 颜色常量（固定标准色，便于调整） ───
 const RESET = "\x1b[0m";
-const REVERSE = "\x1b[7m";
 const YELLOW = "\x1b[33m"; // / 命令标记符
 const BLUE = "\x1b[34m"; // @ 文件引用标记符
 
@@ -153,9 +163,10 @@ function findAtPositions(text: string): Set<number> {
 /**
  * 渲染单个 layoutLine：着色 + 光标一次 grapheme 遍历完成。
  *
- * 每个字符判断是否光标位、是否标记符，组合 ANSI 前缀（反白 \x1b[7m + 颜色），
- * 用一个 \x1b[0m 收尾。光标停在标记符上时反白+颜色同时生效。
- * 光标条件与 pi 0.85.1 render 一致：仅 hasCursor 且 cursorPos 有值时才注入。
+ * 每个字符判断是否光标位、是否标记符；光标位经 renderFakeCursor 包裹（反白
+ * 或按 showHardwareCursor 剥除），标记符叠加颜色并以 \x1b[0m 收尾。光标停在
+ * 标记符上时反白+颜色同时生效。
+ * 光标条件与 pi render 一致：仅 hasCursor 且 cursorPos 有值时才注入。
  *
  * 返回 displayText（含 ANSI）、可见宽度（光标行尾时已 +1）与光标是否在行尾
  * （行尾溢出的 padding 处理用，对齐 pi 的 cursorInPadding 判定）。
@@ -211,18 +222,18 @@ function renderLayoutLine({
 
   const marker = emitMarker ? CURSOR_MARKER : "";
   if (after.length > 0) {
-    // 光标落在字符上：取首个 grapheme，叠加反白 +（若为标记符）颜色
+    // 光标落在字符上：取首个 grapheme，假光标（反白）与（若为标记符）颜色叠加；
+    // 颜色在 OSC 包裹内显式 RESET（FAKE_CURSOR_END 只关反白不关前景色）
     const grapheme = firstGrapheme(after);
     const rest = after.slice(grapheme.length);
     const color = colorOf(cursorPos);
-    const prefix = color ? REVERSE + color : REVERSE;
-    displayText += marker + prefix + grapheme + RESET;
+    displayText += marker + renderFakeCursor(color ? color + grapheme + RESET : grapheme);
     for (let j = 0; j < rest.length; j++) {
       displayText += emitColored(cursorPos + grapheme.length + j, rest.charAt(j));
     }
   } else {
     // 光标在行尾：高亮一个空格
-    displayText += `${marker}${REVERSE} ${RESET}`;
+    displayText += marker + renderFakeCursor(" ");
     width += 1;
     cursorAtEnd = true;
   }
