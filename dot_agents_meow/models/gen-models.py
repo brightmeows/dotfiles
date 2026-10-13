@@ -3,7 +3,7 @@
 
 产物（默认写入仓库与本地）：
 - dot_pi/agent/models-dev.json          Pi models-dev 扩展的编辑配置（覆盖类条目与禁用清单，随仓库提交）
-- dot_pi/agent/models.json              Pi 原生自定义模型文件（定义类条目，随仓库提交）
+- dot_pi/agent/models.json              Pi 原生自定义模型文件（定义类条目，随仓库提交；带 $schema 供编辑器校验）
 - ~/.agents_meow/models/resolved.json   dsh 插件消费的中立配置（本机生成，不入库）
 
 用法：
@@ -350,7 +350,8 @@ def to_pi_models(disabled: list[str], providers: dict[str, dict]) -> dict:
             models.append(model_entry)
         entry["models"] = models
         out[provider_id] = entry
-    return {"providers": out}
+    # pi 1.2.0 起发布配置 schema，$schema 供编辑器校验补全，pi 读取时忽略该键
+    return {"$schema": "https://pi.dev/schemas/models.schema.json", "providers": out}
 
 
 def to_target_compat(compat: dict[str, object]) -> dict[str, object]:
