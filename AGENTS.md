@@ -75,6 +75,9 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | [`docs/env-loading.md`](docs/env-loading.md) | 环境变量单一数据源 + 双加载路径、自定义语法与踩坑点 |
 | [`docs/chezmoi-sync-scripts.md`](docs/chezmoi-sync-scripts.md) | 合并脚本命名约定、触发方式与时序约束 |
 | [`docs/nvm-shim-nvm4306-script-trust.md`](docs/nvm-shim-nvm4306-script-trust.md) | （历史）NVM shim NVM4306 拦截与脚本信任修复；nvm 已退役，问题随 shim 代理层消失 |
+| [`docs/Edge与Firefox书签合并经验.md`](docs/Edge与Firefox书签合并经验.md) | Edge 与 Firefox 书签合并：同步引擎与文件层两套真相、去重映射与两地手术 |
+| [`docs/lark-cli技能环境与维护记录.md`](docs/lark-cli技能环境与维护记录.md) | lark-cli 技能环境：安装来源差异、版本对齐与 skills CLI 已知 bug |
+| [`docs/terra-mesa-setup.md`](docs/terra-mesa-setup.md) | terra-mesa 硬件解码部署记录（Fedora Kinoite、AMD Ryzen 5 5500U） |
 
 ## 边界规则
 
