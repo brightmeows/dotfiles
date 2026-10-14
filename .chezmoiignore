@@ -10,6 +10,9 @@ AGENTS.md
 # 搜索源维护记录：仓库内文档，不部署
 .pi/web-search.md
 
+# docs 仅仓库维护：不再部署到 ~/docs（~/docs 内容不归本仓库管）
+docs/**
+
 # Python 缓存：gen-* 脚本被 import 时会生成，不入部署
 **/__pycache__
 
