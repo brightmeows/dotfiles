@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# 合盖：保留 Omarchy 的锁屏与 clamshell 重建逻辑，随后熄屏。
+# 挂起：合盖不触发（logind drop-in 全部 ignore，见 /etc/systemd/logind.conf.d/30-lid.conf）。
+#       空闲挂起由 hypridle 负责：电池、开盖、空闲 20 分钟；规则见 ~/.config/hypr/hypridle.conf。
+# 有外接屏时是 clamshell 工作模式，不熄屏。
+omarchy-system-lid-close
+omarchy-hw-external-monitors || hyprctl dispatch dpms off >/dev/null 2>&1

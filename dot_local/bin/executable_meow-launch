@@ -1,0 +1,51 @@
+#!/bin/bash
+# meow-launch: 在“调用时刻的工作区”spawn 应用窗口。经 Hyprland executor 带
+# 窗口规则 [workspace W silent]，map 前静默落位，不切视图、不抢焦点。
+# 与 initial_workspace_tracking 的双轨分工见 ~/.config/hypr/WORKSPACES.md。
+#
+# 用法: meow-launch <完整启动命令...>
+# 例: meow-launch "uwsm-app -- gtk-launch org.gnome.Nautilus.desktop"
+#
+# 内部统一注入 UWSM_APP_UNIT_TYPE=scope：uwsm-app 走 systemd scope 直启而非
+# 常驻 daemon，进程环境链保持在 Hyprland fork 树下，exec 规则才能传播到窗口。
+# 副作用：scope 模式无 daemon 去重，同应用重复调用可能双实例（由调用方
+# omarchy-launch-or-focus 类逻辑或用户习惯兜底）。
+#
+# 回退语义：hyprctl 不可用或 eval 失败时直接 exec 原命令——保住“能启动”，
+# 落位退化为跟随 map 时刻焦点工作区。落位正确性是异步的，无法同步判定，
+# 故不做同步校验。
+
+set -euo pipefail
+
+(( $# )) || { echo "usage: meow-launch <command...>" >&2; exit 64; }
+
+CMD="$*"
+
+# 无 Hyprland 会话（SSH/TTY 调试等）：直接跑。
+if ! command -v hyprctl >/dev/null 2>&1 || [[ -z ${HYPRLAND_INSTANCE_SIGNATURE:-} ]]; then
+  exec bash -lc "$CMD"
+fi
+
+W=$(hyprctl activeworkspace -j | jq -r '.id // empty' 2>/dev/null || true)
+
+if [[ -z $W ]]; then
+  exec bash -lc "$CMD"
+fi
+
+# 构造 Lua 字符串字面量。jq -Rs 产出的 JSON 字符串转义（\" \\ \n \t \r \b \f）
+# 与 Lua 双引号字符串兼容；非 ASCII 字符 jq 按 UTF-8 原样输出，不产 \u 序列。
+# 若命令含裸控制字符导致 Lua 语法错，eval 非零退出，走末尾回退。
+CMD_LUA=$(printf '%s' "$CMD" | jq -Rs .)
+
+lua="hl.dispatch(hl.dsp.exec_cmd(\"[workspace ${W} silent] \" .. ${CMD_LUA}))"
+
+# scope 注入：树内所有 uwsm-app 调用（含 omarchy-launch-webapp/tui 脚本内部的
+# uwsm-app）一律走 scope，保证 exec 规则环境不断链。
+# eval 交由 compositor spawn，脚本自身不得再跑一遍命令（双 spawn）。
+if hyprctl eval "$lua" >/dev/null 2>&1; then
+  exit 0
+fi
+
+# 回退：compositor 侧 spawn 失败（hyprctl 异常/规则语法被未来版本改动等）。
+# 注意：此路径无 exec 规则落位，窗口跟随 map 时刻焦点工作区。
+exec env UWSM_APP_UNIT_TYPE=scope bash -lc "$CMD"
