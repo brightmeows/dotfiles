@@ -1,4 +1,6 @@
-{{- /* dsh 用户级指令：与 Pi/opencode 共用 dot_agents_meow/AGENTS.main.md 单一源 */ -}}
+{{- /* dsh 用户级指令：与 Pi/opencode 共用 dot_agents_meow 下的两份源文件（人设在前，准则在后） */ -}}
 **系统**: {{ with .chezmoi.osRelease }}{{ .prettyName }}{{ else }}Windows{{ end }} ({{ .chezmoi.arch }})
+
+{{ include "dot_agents_meow/AGENTS.persona.md" }}
 
 {{ include "dot_agents_meow/AGENTS.main.md" -}}
