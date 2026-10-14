@@ -51,3 +51,12 @@
       config:
         resolvedPath: '{{ .chezmoi.homeDir }}/.agents_meow/models/resolved.json'
         cachePath: '{{ .chezmoi.homeDir }}/.dsh/cache/models-dev.json'
+
+# 人设平面：dsh 的 preset 会遮蔽部署级 persona，而人设必须挂在 persona 平面（提示词最前）
+# 才稳，所以默认预设换成派生的“鲸鱼娘模式”；本行替换 web-app bundle 的整份 config
+# （patch 语义：按 id 命中、整份 config 覆盖）。预设本体由
+# .chezmoiscripts/run_after_dsh-persona-preset.sh.tmpl 从自带 standard 预设生成。
+- id: agent-presets
+  name: '@deepseek-ai/dsh-agent-presets'
+  config:
+    default: dafeiyu

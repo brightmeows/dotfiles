@@ -10,6 +10,9 @@ AGENTS.md
 # 搜索源维护记录：仓库内文档，不部署
 .pi/web-search.md
 
+# Python 缓存：gen-* 脚本被 import 时会生成，不入部署
+**/__pycache__
+
 # Node
 package.json
 pnpm-lock.yaml
