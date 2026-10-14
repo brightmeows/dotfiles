@@ -27,7 +27,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 ## 自动同步机制
 
-修改源文件后运行 `chezmoi apply`，`.chezmoiscripts/` 的合并脚本自动执行同步。脚本统一使用 `run_onchange_after_` 前缀（数据文件部署后执行 + 内容变化才运行），命名约束与时序背景见 [docs/chezmoi-sync-scripts.md](docs/chezmoi-sync-scripts.md)。
+修改源文件后运行 `chezmoi apply`，`.chezmoiscripts/` 的合并脚本自动执行同步。脚本统一使用 `run_onchange_after_` 前缀（数据文件部署后执行 + 内容变化才运行）；两个 `run_after_` 例外（触发条件不在模板 hash 里）见 [docs/chezmoi-sync-scripts.md](docs/chezmoi-sync-scripts.md)。
 
 | 配置文件 | 源文件 | 目标文件 | 合并策略 |
 |---------|--------|---------|---------|
@@ -37,6 +37,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | Environment.d | `dot_env_common` | `~/.config/environment.d/50-meow.conf` | awk 翻译 `+=`/`<=` 为 environment.d 守卫语法 |
 | Omarchy 工作区组件 | `dot_config/omarchy/plugins/brightmeows.workspaces/manifest.json` | `~/.config/omarchy/shell.json` | 仅替换 `bar.layout` 组件 id；幂等、尊重手动删除；shell.json 不入 chezmoi 管理（Omarchy CLI 与升级迁移会就地改写） |
 | Omarchy 活动窗口组件 | `dot_config/omarchy/plugins/brightmeows.active-window/`（脚本每次 apply 运行） | `~/.config/omarchy/shell.json` | 缺条目则插到中区最左，已存在则原地不动；`omarchy refresh shell` 重置后一次 apply 恢复 |
+| dsh 人设预设 | `dot_agents_meow/AGENTS.persona.md`（脚本每次 apply 运行） | `~/.dsh/.agent-presets/dafeiyu/`（生成物，不入仓库） | `gen-dsh-preset.py` 从 dsh 自带 standard 预设派生，只换 persona 行、其余字节原样保留；默认预设由 home 级 patch 指向它。规则见 [docs/deepseek-harness-config.md](docs/deepseek-harness-config.md) |
 
 ## DeepSeek Harness 配置
 
