@@ -15,11 +15,8 @@ import qs.Ui
 //     runs bell-flag.sh, which records the bell window's workspace; the dot
 //     uses the bar's urgent color until the workspace becomes visible.
 //
-// 历史注记：本插件曾有“新窗口跟随进程”的事后搬迁逻辑（同进程在其他工作区
-// 已有窗口时，把新窗口静默搬过去）。2026-09 由菜单/绑定侧的 meow-launch
-// 接管窗口落位（compositor exec 规则在 map 前决定工作区），搬迁逻辑因
-// 闪动、抢焦点、覆盖面不足而移除，openwindow 事件仅保留圆点标记职责。
-//
+// 本插件只做圆点标记；窗口落位由 meow-launch 与 initial_workspace_tracking
+// 接管，决策表见 ~/.config/hypr/WORKSPACES.md。
 // See README.md for the manual re-enable step after `omarchy refresh shell`.
 
 BarWidget {
