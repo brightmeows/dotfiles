@@ -124,7 +124,7 @@ keyboard-us ↔ rime   ascii_mode reset: 0
 
 ```bash
 # 修改源文件后应用
-chezmoi -S . apply
+chezmoi apply
 
 # 重新部署 Rime（重启 fcitx5 触发词库重新编译；
 # fcitx5 由 omarchy-fcitx5.service 管理，勿手动 setsid 拉起）

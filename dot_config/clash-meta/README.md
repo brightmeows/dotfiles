@@ -33,7 +33,7 @@ PEIQIANJICHANG_SUBSCRIPTION=   # 空值会被自动跳过
 
 ```bash
 # 1. 仓库内改配置 / 改订阅后，渲染到 ~/.config/clash-meta/
-chezmoi -S . apply
+chezmoi apply
 
 # 2. （可选）本地非 root 预检配置语法
 mihomo -t -d /tmp -f ~/.config/clash-meta/config.yaml
@@ -49,8 +49,8 @@ sudo bash ~/.config/clash-meta/deploy.sh
 改配置或增删订阅后的标准流程：
 
 ```bash
-chezmoi -S . diff        # 预览差异
-chezmoi -S . apply       # 渲染
+chezmoi diff        # 预览差异
+chezmoi apply       # 渲染
 sudo bash ~/.config/clash-meta/deploy.sh   # 部署 + 重载
 ```
 

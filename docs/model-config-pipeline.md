@@ -87,4 +87,4 @@ dsh web --no-open --port 3081                      # 冷启动，观察插件日
 
 ## 回退
 
-回退相关提交后运行 `chezmoi -S . apply`；本机需手工清理各 `~/.dsh/profiles/*/cordis.patch.yml` 中的 models-dev 生成块与 `~/.dsh/cache/models-dev.json`。`models.toml` 与生成物可保留（对旧链路无副作用）。
+回退相关提交后运行 `chezmoi apply`；本机需手工清理各 `~/.dsh/profiles/*/cordis.patch.yml` 中的 models-dev 生成块与 `~/.dsh/cache/models-dev.json`。`models.toml` 与生成物可保留（对旧链路无副作用）。

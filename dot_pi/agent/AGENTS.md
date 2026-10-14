@@ -6,7 +6,7 @@ tags: [pi, mcp, settings]
 # Pi agent 配置（面向代理）
 
 本目录管理 Pi 的配置源：`settings.meow.json`（合并部署）、`mcp.json`（Pi 内建 MCP server 清单）、`models.json` 与 `models-dev.json`（模型配置生成物，随仓库提交）、`ext/`（扩展代码）。
-部署与合并机制见仓库根 [AGENTS.md](../../AGENTS.md) 的“自动同步机制”；扩展代码的约定见 [ext/AGENTS.md](./ext/AGENTS.md)。根文件的通用约定（`chezmoi -S .`、提交规范、中文引号）此处不重复。
+部署与合并机制见仓库根 [AGENTS.md](../../AGENTS.md) 的“自动同步机制”；扩展代码的约定见 [ext/AGENTS.md](./ext/AGENTS.md)。根文件的通用约定（chezmoi 默认源目录、提交规范、中文引号）此处不重复。
 
 ## 模型配置已迁出
 
@@ -21,7 +21,7 @@ tags: [pi, mcp, settings]
 
 | 文件 | 用途 | 维护方式 |
 |---|---|---|
-| `settings.meow.json` | Pi 设置源 | 手改后 `chezmoi -S . apply`，合并脚本写入 `~/.pi/agent/settings.json` |
+| `settings.meow.json` | Pi 设置源 | 手改后 `chezmoi apply`，合并脚本写入 `~/.pi/agent/settings.json` |
 | `mcp.json` | Pi 内建 MCP server 清单 | 手改后 apply；字段与旧适配器字段的对照见下方注记 |
 | `models.json`、`models-dev.json` | 模型生成物 | 见上文，勿手改 |
 | `ext/` | Pi 扩展包 | 见 [ext/AGENTS.md](./ext/AGENTS.md) |

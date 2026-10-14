@@ -62,7 +62,7 @@ oxlint 复杂度规则（全局严阈值 complexity 15 / depth 4 / 函数 100 �
 
 1. 编辑 `models.toml`；
 2. `python3 dot_agents_meow/models/gen-models.py` 生成仓库产物与本机 `resolved.json`；
-3. `chezmoi -S . apply` 部署 TOML 与产物，并在 apply 之后把同一结果同步到 `~/.pi/agent`；
+3. `chezmoi apply` 部署 TOML 与产物，并在 apply 之后把同一结果同步到 `~/.pi/agent`；
 4. 验证：`--check` 通过；dsh 侧看插件日志与 `/models-refresh`；Pi 侧 `/reload` 后确认模型列表；
 5. 提交（TOML 与两份 JSON 同提交，pre-commit 会拦截漂移）。
 

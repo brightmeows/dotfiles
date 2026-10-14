@@ -48,7 +48,7 @@
 ## 验证方法
 
 ```bash
-chezmoi -S . diff                                        # 预览部署差异
+chezmoi diff                                        # 预览部署差异
 python3 dot_agents_meow/models/gen-models.py --check     # 模型域产物与 TOML 一致
 node dot_agents_meow/models/cli.mts check                # dsh 映射统计（读本机缓存）
 dsh --profile web --dump-config                          # 组合校验：patch 可加载、MCP 行与模型路由存在
@@ -65,7 +65,7 @@ dsh web --no-open --port 3081                            # 冷启动校验（验
 
 ## 回退
 
-相关提交 revert 后运行 `chezmoi -S . apply`；如 chezmoi 未清理目标，手工删除 `~/.dsh/AGENTS.md`、`~/.dsh/cordis.patch.yml` 与 `~/.dsh/skills` 符号链接，并清掉各 `~/.dsh/profiles/*/cordis.patch.yml` 里的 models-dev 生成块。dsh 运行时目录（sessions、storages、profiles）不受影响。
+相关提交 revert 后运行 `chezmoi apply`；如 chezmoi 未清理目标，手工删除 `~/.dsh/AGENTS.md`、`~/.dsh/cordis.patch.yml` 与 `~/.dsh/skills` 符号链接，并清掉各 `~/.dsh/profiles/*/cordis.patch.yml` 里的 models-dev 生成块。dsh 运行时目录（sessions、storages、profiles）不受影响。
 
 ## 参考
 

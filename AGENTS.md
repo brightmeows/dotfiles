@@ -43,8 +43,13 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 ## Commands
 
-> **⚠️ 重要约定**： chezmoi 命令必须使用 `-S .` 指定源目录为当前仓库根目录（`~/Codes/dotfiles`）。这是本仓库的非标准目录结构要求，避免使用默认的 `~/.local/share/chezmoi`。
-> **ℹ️ Copy 模式**：本仓库使用 `mode = "file"`（复制模式），目标文件是源文件的副本，运行时回写（如 fcitx5）不会穿透 symlink 到仓库。编辑源文件后需 `chezmoi -S . apply` 同步至 `$HOME`（模板渲染与 `run_onchange_` 脚本也在此步生效）。
+> **ℹ️ 源目录**：默认源目录 `~/.local/share/chezmoi` 是指向本仓库的链接（Linux/macOS 为 symlink，Windows 为 junction，指向本机实际 clone 位置），chezmoi 命令在任意目录直接裸跑，无需 `-S`。新机器 clone 后建链一次：
+>
+> - Linux/macOS：`ln -s ~/Codes/dotfiles ~/.local/share/chezmoi`
+> - Windows（PowerShell，无需管理员）：先 `New-Item -ItemType Directory -Force "$env:USERPROFILE\.local\share" | Out-Null`，再 `New-Item -ItemType Junction -Path "$env:USERPROFILE\.local\share\chezmoi" -Target "D:\Codes\dotfiles"`
+>
+> 验证：`chezmoi source-path` 解析到仓库根；`chezmoi doctor` 显示 source-dir 为 clean 的 git working tree。链接被误删时裸跑 `chezmoi init` 会向默认目录重新 clone，重建链接即可恢复。
+> **ℹ️ Copy 模式**：本仓库使用 `mode = "file"`（复制模式），目标文件是源文件的副本，运行时回写（如 fcitx5）不会穿透 symlink 到仓库。编辑源文件后需 `chezmoi apply` 同步至 `$HOME`（模板渲染与 `run_onchange_` 脚本也在此步生效）。
 > **⚠️ npx skills 作用域**：`npx skills` 不带 `--agent` 时对所有已检测 agent 生效
 > （含 pi 的 `~/.pi/agent/skills`、opencode 的 `~/.config/opencode/skills` 等）。
 > 已移除 bash/nushell 的 `skills` wrapper（曾自动注入 `--agent codex`）；现在裸跑 `npx skills` 写命令前必须先确认作用域。
@@ -56,10 +61,10 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 | 命令 | 用途 |
 |---|---|
-| `chezmoi -S . status` | 检视变更 |
-| `chezmoi -S . diff` | 预览差异 |
-| `chezmoi -S . apply` | 应用至 `$HOME` |
-| `chezmoi -S . add <path>` | 纳新文件入 chezmoi 管理 |
+| `chezmoi status` | 检视变更 |
+| `chezmoi diff` | 预览差异 |
+| `chezmoi apply` | 应用至 `$HOME` |
+| `chezmoi add <path>` | 纳新文件入 chezmoi 管理 |
 | `python3 dot_agents_meow/models/gen-models.py` | 生成 Pi 模型 JSON 与 dsh resolved.json（`--check` 校验） |
 | `pnpm check` | `tsc --noEmit` 类型检查（最小验证 gate） |
 
@@ -76,7 +81,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | Omarchy 工作区组件启用 | `dot_config/omarchy/plugins/brightmeows.workspaces/manifest.json`（hash 触发） | `~/.config/omarchy/shell.json` | 仅替换 `bar.layout` 里的组件 id（内置 `omarchy.workspaces` 换为克隆 id）；幂等、尊重手动删除、文件缺失时从 Omarchy 默认初始化、非 Omarchy 平台跳过。shell.json 不纳入 chezmoi 管理（Omarchy CLI、栏拖拽与升级迁移会就地改写它） |
 | Omarchy 活动窗口组件启用 | `dot_config/omarchy/plugins/brightmeows.active-window/`（脚本每次 apply 运行） | `~/.config/omarchy/shell.json` | 缺条目则插到中区最左（`indicators` 之前），已存在则原地不动（尊重手动挪位）；`omarchy refresh shell` 重置后一次 apply 恢复；非 Omarchy 平台跳过 |
 
-**使用方式**：修改源文件后运行 `chezmoi -S . apply`，脚本自动执行并同步配置。
+**使用方式**：修改源文件后运行 `chezmoi apply`，脚本自动执行并同步配置。
 
 **实现机制**：合并脚本位于 `.chezmoiscripts/` 目录，统一使用 `run_onchange_after_` 前缀，自动触发合并（唯一的 `run_after_` 例外见下）。
 
@@ -159,8 +164,8 @@ url = "file://{{ .chezmoi.sourceDir }}/dot_config/nushell/env.nu"
 ### Always Do
 
 - 编辑后运行 `pnpm check` 确保类型通过
-- 用 `chezmoi -S . diff` 预览变更后再 apply
-- 修改配置文件源文件后运行 `chezmoi -S . apply` 同步
+- 用 `chezmoi diff` 预览变更后再 apply
+- 修改配置文件源文件后运行 `chezmoi apply` 同步
 
 ### Ask First
 

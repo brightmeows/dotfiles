@@ -29,7 +29,7 @@
 
 ## 运维
 
-- 布局由 `.chezmoiscripts/run_after_omarchy-active-window-enable.sh.tmpl` 调和：条目缺失时插入中区最左（`indicators` 之前），已存在则原地不动。`omarchy refresh shell` 重置 shell.json 后，运行一次 `chezmoi -S . apply` 恢复。
+- 布局由 `.chezmoiscripts/run_after_omarchy-active-window-enable.sh.tmpl` 调和：条目缺失时插入中区最左（`indicators` 之前），已存在则原地不动。`omarchy refresh shell` 重置 shell.json 后，运行一次 `chezmoi apply` 恢复。
 - 修改组件代码后若行为未更新，先试 `omarchy-shell -q shell rescanPlugins`，仍无效再 `omarchy restart shell`。
 - 检查启用状态：`omarchy plugin list | rg active-window`；校验清单：`omarchy plugin validate <插件目录>`。
 - 回退：`omarchy plugin disable brightmeows.active-window`（或从 shell.json 手动移除该条目）。

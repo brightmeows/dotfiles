@@ -7,7 +7,7 @@ tags: [mihomo, clash-meta, proxy, tun]
 
 本目录管理 mihomo (clash-meta) tun 全局透明代理。部署步骤、订阅管理、已知系统约束（systemd-resolved / firewalld / SELinux）见 [README.md](./README.md)（面向人）。本文件聚焦代理维护时的高信号约定与踩坑点。
 
-仓库根 [AGENTS.md](../../../AGENTS.md) 的通用约定（`chezmoi -S .`、提交规范、中文引号）此处不重复。
+仓库根 [AGENTS.md](../../../AGENTS.md) 的通用约定（chezmoi 默认源目录、提交规范、中文引号）此处不重复。
 
 ## 三层架构
 
@@ -152,7 +152,7 @@ curl -s http://127.0.0.1:9090/proxies | python3 -c "import json,sys;d=json.load(
 改配置的标准流程：
 
 1. 编辑 `config.yaml.tmpl`
-2. `chezmoi -S . apply ~/.config/clash-meta`
+2. `chezmoi apply ~/.config/clash-meta`
 3. `mihomo -t -d /tmp -f ~/.config/clash-meta/config.yaml`（退出码须为 0）
 4. payload 热加载 + `/proxies` 验证节点
 5. `sudo bash ~/.config/clash-meta/deploy.sh`（持久化到 `/etc`）

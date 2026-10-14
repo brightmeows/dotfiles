@@ -7,14 +7,14 @@
 ```bash
 git clone git@github.com:MiyakoMeow/dotfiles
 cd dotfiles
-chezmoi apply -S .
-chezmoi apply -S .
+ln -s "$PWD" ~/.local/share/chezmoi
+chezmoi apply
 ```
 
 ## 更新步骤
 
 ```bash
-chezmoi update -S .
+chezmoi update
 ```
 
 ## 参考列表

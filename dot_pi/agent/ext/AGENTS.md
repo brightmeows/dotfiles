@@ -163,7 +163,7 @@ pi -p -e <被测扩展入口> -e /tmp/dump-ext.ts --no-session "只回复：收�
 - dump 工具定义验证 schema：`pi.on("session_start")` 内调 `pi.getAllTools()`，`-e` dump 扩展 + `--no-session` 跑，`parameters` 即 typebox JSON Schema（含 `maxLength`，确认已传 LLM）
 - 孤儿目录清理：ext 为 copy 模式分发，chezmoi apply 不清理部署区多余目录——源目录删除/改名后 `~/.pi/agent/ext/` 残留孤儿（不再被 settings 引用、无害但混乱），apply 后手动 `rm -rf` 处理
 - meow 合并脚本时序坑（已根因修复）：apply 时 `.chezmoiscripts`（字母序在前）先于 `dot_pi` 部署，脚本读到上一轮的 settings.meow.json 副本，改源后首次 apply 合并的是旧内容；已改用 `run_onchange_after_` 前缀让脚本在数据文件部署后执行，不再需要手动补救
-  - 必要时手动执行渲染脚本：`chezmoi -S . execute-template < .chezmoiscripts/run_onchange_after_merge-pi-settings.sh.tmpl | bash`
+  - 必要时手动执行渲染脚本：`chezmoi execute-template < .chezmoiscripts/run_onchange_after_merge-pi-settings.sh.tmpl | bash`
   - packages 为并集语义，meow 源删除不传导，删包后手动从 settings.json 移除
 - `/reload`（pi 内键入）热重载扩展/技能/提示词/主题/上下文文件（非仅 keybindings，`interactive-mode.js` 重载文案含 `extensions`）；改源文件后用它加载新代码免重启。副作用：reload 后旧 `pi`/`ctx` 变 stale（`runner.js` 校验），勿跨 reload 复用
 - 验证 TUI 渲染（`renderResult`/`renderCall`/`ctx.ui.custom`）：`-p` headless 不走 TUI 渲染，须 `/reload` 后在交互会话触发该工具，人眼校验两态——如 `Ctrl+O`（`app.tools.expand`）由 `tool-execution` 重调 renderer 传 `{ expanded }` 触发展开态
@@ -172,5 +172,5 @@ pi -p -e <被测扩展入口> -e /tmp/dump-ext.ts --no-session "只回复：收�
   0.85.1 的 `Editor.autocompleteList`（d.ts 可选成员）即此类：仅补全菜单显示时才赋值，构造后不存在（editor-input-tweaks 实测 probe：`autocompleteList: false`，其余成员全部存在）。
   探测扩展依赖的 private 成员时，以 d.ts 可选性 + 运行时守卫读取为准，勿把可选成员纳入硬性自检
 - 验证 TUI 着色/渲染类扩展的真实画面：`tmux new-session -d -s <name> -x 140 -y 42 "bash -lc '<cmd>'"` 跑交互 pi，`tmux capture-pane -p -e` 捕获带 ANSI 的画面，
-  grep 颜色序列（如 `\x1b[33m`）与降级通知文本；源文件改动须先 `chezmoi -S . apply` 部署再测（`-e` 传入的扩展排最前、会被 settings 包覆盖，测不到目标版本）
+  grep 颜色序列（如 `\x1b[33m`）与降级通知文本；源文件改动须先 `chezmoi apply` 部署再测（`-e` 传入的扩展排最前、会被 settings 包覆盖，测不到目标版本）
 - 本文件列表行宽 ≤200 字符（markdownlint MD013 豁免表格，列表不豁免）
