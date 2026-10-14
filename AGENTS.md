@@ -4,42 +4,7 @@
 
 Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Rime 输入法、AI 工具链等），涉及 10+ 异构格式（TOML/KDL/JSON/YAML/JSONC/Nu/INI）。精确性与一致性优先于花哨。
 
-## 全局代理文件说明
-
-`dot_agents_meow/AGENTS.main.md` 是 opencode/Pi/dsh 工具使用的**全局代理指令文件**，本仓库仅负责托管它（通过 chezmoi 分发至 `agents/default.md.tmpl` / `APPEND_SYSTEM.md.tmpl` / `dot_dsh/AGENTS.md.tmpl` 等入口）。
-
-| 文件 | 内容 | 加载到 opencode 的方式 | 加载到 Pi 的方式 | 加载到 dsh 的方式 |
-|------|------|----------------------|-----------------|------------------|
-| `AGENTS.main.md` | 工程质量准则 + 大肥鱼人设（角色化工程助手） | `agents/default.md.tmpl` → `{{ include }}`（主代理系统提示词） | `APPEND_SYSTEM.md.tmpl` → `{{ include }}`（追加至系统提示词） | `dot_dsh/AGENTS.md.tmpl` 的 `{{ include }}`（用户级指令文件） |
-| `AGENTS.main.ref.md` | 维护参考（设计决策 / 理论出处 / 否决方案） | 不加载（仅 chezmoi 分发到 `~/.agents_meow/`） | 不加载 | 不加载 |
-
-修改 `AGENTS.main.md` 前先读 `AGENTS.main.ref.md` 理解决策脉络；ref.md 不被任何模板 include，不进系统提示词。
-
-## Tech Stack
-
-| 工具 | 版本 | 用途 |
-|---|---|---|
-| chezmoi | latest (system) | 点文件管理，`mode = "file"`（copy 模式，见 `dot_config/chezmoi/chezmoi.toml.tmpl`） |
-| pnpm | latest (system) | TypeScript 扩展依赖管理 |
-| TypeScript | latest (system) | 扩展/插件类型检查 |
-| Node | latest (system) | JS 运行时 |
-| dsh | npm 全局（`@deepseek-ai/dsh`，rc） | DeepSeek Harness 代理，浏览器界面 |
-
-## 系统配置记录
-
-`docs/` 目录下记录了本系统的关键配置决策和历史变更，方便后续排查和重建。
-
-| 文件 | 内容 |
-|------|------|
-| [`docs/fedora-kinoite-multimedia-repo-config.md`](docs/fedora-kinoite-multimedia-repo-config.md) | Fedora Kinoite 44 多媒体仓库布局、编解码能力分析、terra-mesa 移除记录 |
-| [`docs/audio-acp3x-es83xx-headphone.md`](docs/audio-acp3x-es83xx-headphone.md) | AMD ACP3x 音频耳机问题处理 |
-| [`docs/fedora-kinoite-obs-vaapi-encode.md`](docs/fedora-kinoite-obs-vaapi-encode.md) | OBS Studio VAAPI 硬件编码配置、VCN 单元监控方法 |
-| [`docs/npx-skills-usage.md`](docs/npx-skills-usage.md) | npx skills 作用域机制、remove 假成功 bug、安全操作姿势与验证方法 |
-| [`docs/deepseek-harness-config.md`](docs/deepseek-harness-config.md) | DeepSeek Harness 配置托管、技能与 MCP 迁移、凭据与沙箱差异 |
-| [`docs/model-config-pipeline.md`](docs/model-config-pipeline.md) | 模型配置流水线：TOML 单一源、双消费者生成物、models.dev 刷新与映射规则 |
-| [`docs/matebook-battery-optimization.md`](docs/matebook-battery-optimization.md) | MateBook 续航优化：放电数据对比、battery-boost/power-log 改动、mihomo DoT 探测风暴处置 |
-| [`docs/pi-lsp-support.md`](docs/pi-lsp-support.md) | Pi 的 LSP 支持：pi-lsp-extension 选型决策与重审触发条件、tsserver/信任门机制记录、防漂移四件套写法示范 |
-| [`docs/nvm-shim-nvm4306-script-trust.md`](docs/nvm-shim-nvm4306-script-trust.md) | （历史）NVM shim 模式 NVM4306 拦截：脚本信任缓存 USN 漂移根因、`nvm reshim` 失效原因与 `nvm --sign-version-scripts` 重签修复；nvm 已退役改用 scoop nodejs，该类问题随 shim 代理层消失 |
+全局代理指令文件（opencode/Pi/dsh 共用）托管于 [dot_agents_meow/AGENTS.md](dot_agents_meow/AGENTS.md)，本仓库仅负责 chezmoi 分发。
 
 ## Commands
 
@@ -50,19 +15,11 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 >
 > 验证：`chezmoi source-path` 解析到仓库根；`chezmoi doctor` 显示 source-dir 为 clean 的 git working tree。链接被误删时裸跑 `chezmoi init` 会向默认目录重新 clone，重建链接即可恢复。
 > **ℹ️ Copy 模式**：本仓库使用 `mode = "file"`（复制模式），目标文件是源文件的副本，运行时回写（如 fcitx5）不会穿透 symlink 到仓库。编辑源文件后需 `chezmoi apply` 同步至 `$HOME`（模板渲染与 `run_onchange_` 脚本也在此步生效）。
-> **⚠️ npx skills 作用域**：`npx skills` 不带 `--agent` 时对所有已检测 agent 生效
-> （含 pi 的 `~/.pi/agent/skills`、opencode 的 `~/.config/opencode/skills` 等）。
-> 已移除 bash/nushell 的 `skills` wrapper（曾自动注入 `--agent codex`）；现在裸跑 `npx skills` 写命令前必须先确认作用域。
-> **remove 需注意**：不带 `-a` 时 targeting 所有 agent（会清理各 agent 专属目录中的同名技能）；
-> 指定 `-a` 时仅列出所有已安装的 universal agent（codex+opencode）才会真删 canonical 与 lock，否则报成功但实际不删。
-> **永远不要用 `remove --all`**（会清空 canonical 全部技能）；每次操作后验证 canonical 与 lock（详见 [docs/npx-skills-usage.md](docs/npx-skills-usage.md)）。
-> 技能统一由 npx skills 全局安装承载（canonical `~/.agents/skills`）；原仓库分发区 `~/.agents_meow/skills` 与
-> opencode/dsh symlink 已退役（symlink 事故记录见 docs/npx-skills-usage.md）。
+> **⚠️ npx skills**：裸跑时作用于所有已检测 agent（pi、opencode 等），写操作前先确认作用域；`remove` 不带 `-a` 会报成功但实际不删，`remove --all` 会清空 canonical 全部技能。细节与事故记录见 [docs/npx-skills-usage.md](docs/npx-skills-usage.md)。
 
 | 命令 | 用途 |
 |---|---|
-| `chezmoi status` | 检视变更 |
-| `chezmoi diff` | 预览差异 |
+| `chezmoi status` / `chezmoi diff` | 检视变更 / 预览差异 |
 | `chezmoi apply` | 应用至 `$HOME` |
 | `chezmoi add <path>` | 纳新文件入 chezmoi 管理 |
 | `python3 dot_agents_meow/models/gen-models.py` | 生成 Pi 模型 JSON 与 dsh resolved.json（`--check` 校验） |
@@ -70,94 +27,53 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 ## 自动同步机制
 
-本仓库使用 chezmoi 脚本自动同步配置文件，确保本地配置与源文件保持一致。
+修改源文件后运行 `chezmoi apply`，`.chezmoiscripts/` 的合并脚本自动执行同步。脚本统一使用 `run_onchange_after_` 前缀（数据文件部署后执行 + 内容变化才运行），命名约束与时序背景见 [docs/chezmoi-sync-scripts.md](docs/chezmoi-sync-scripts.md)。
 
 | 配置文件 | 源文件 | 目标文件 | 合并策略 |
 |---------|--------|---------|---------|
 | Git config | `dot_gitconfig.meow` | `~/.gitconfig` | .meow 覆盖同名键，保留 local-only 键 |
 | Pi settings | `dot_pi/agent/settings.meow.json` | `~/.pi/agent/settings.json` | .meow 覆盖同名键，packages 数组并集合并（去重排序；meow 源删除不传导，删包后须手动从 settings.json 移除），Pi 管理键保留 |
-| 模型配置 | `dot_agents_meow/models/models.toml` | `dot_pi/agent/models.json`、`dot_pi/agent/models-dev.json`（生成物，随仓库提交）与 `~/.agents_meow/models/resolved.json`（本机） | `gen-models.py` 从 TOML 生成；pre-commit 用 `--check` 校验仓库产物；apply 后 `.chezmoiscripts/run_onchange_after_gen-pi-models.sh.tmpl` 把同一结果同步到 `~/.pi/agent`。规则见 [dot_agents_meow/models/AGENTS.md](dot_agents_meow/models/AGENTS.md) |
-| Environment.d | `dot_env_common` | `~/.config/environment.d/50-meow.conf` | awk 翻译 `+=`（追加）/`<=`（前插）为 environment.d 的 `${KEY:+...}` 守卫语法，多操作合并为一行赋值 |
-| Omarchy 工作区组件启用 | `dot_config/omarchy/plugins/brightmeows.workspaces/manifest.json`（hash 触发） | `~/.config/omarchy/shell.json` | 仅替换 `bar.layout` 里的组件 id（内置 `omarchy.workspaces` 换为克隆 id）；幂等、尊重手动删除、文件缺失时从 Omarchy 默认初始化、非 Omarchy 平台跳过。shell.json 不纳入 chezmoi 管理（Omarchy CLI、栏拖拽与升级迁移会就地改写它） |
-| Omarchy 活动窗口组件启用 | `dot_config/omarchy/plugins/brightmeows.active-window/`（脚本每次 apply 运行） | `~/.config/omarchy/shell.json` | 缺条目则插到中区最左（`indicators` 之前），已存在则原地不动（尊重手动挪位）；`omarchy refresh shell` 重置后一次 apply 恢复；非 Omarchy 平台跳过 |
-
-**使用方式**：修改源文件后运行 `chezmoi apply`，脚本自动执行并同步配置。
-
-**实现机制**：合并脚本位于 `.chezmoiscripts/` 目录，统一使用 `run_onchange_after_` 前缀，自动触发合并（唯一的 `run_after_` 例外见下）。
-
-- 时序背景：chezmoi 按 entry 名字母序应用条目，`.chezmoiscripts/`（c）排在 `.gitconfig.meow`、`.pi`、`.env_common`
-  等数据源之前，脚本不加 `after_` 会先于数据文件运行、读到上一轮旧值，且触发 hash 被消耗后不再重跑，
-  合并永久滞后（已修复，参照 b52aefc 同款坑；三个脚本已同步改名）
-- 触发方式：`after_` 保证脚本在数据文件部署后执行；`onchange` 配合模板 hash（内容变化才运行）
-- `run_after_` 例外：`run_after_omarchy-active-window-enable.sh.tmpl`（活动窗口组件调和）每次 apply 运行——
-  `omarchy refresh shell` 会把 shell.json 重置为默认，模板 hash 未变时 onchange 不会重跑、无法恢复布局条目，
-  故该脚本每次重新调和
+| 模型配置 | `dot_agents_meow/models/models.toml` | `dot_pi/agent/models*.json`（生成物，随仓库提交）与 `~/.agents_meow/models/resolved.json`（本机） | `gen-models.py` 从 TOML 生成，pre-commit 用 `--check` 校验仓库产物；apply 后脚本同步到 `~/.pi/agent`。规则见 [dot_agents_meow/models/AGENTS.md](dot_agents_meow/models/AGENTS.md) |
+| Environment.d | `dot_env_common` | `~/.config/environment.d/50-meow.conf` | awk 翻译 `+=`/`<=` 为 environment.d 守卫语法 |
+| Omarchy 工作区组件 | `dot_config/omarchy/plugins/brightmeows.workspaces/manifest.json` | `~/.config/omarchy/shell.json` | 仅替换 `bar.layout` 组件 id；幂等、尊重手动删除；shell.json 不入 chezmoi 管理（Omarchy CLI 与升级迁移会就地改写） |
+| Omarchy 活动窗口组件 | `dot_config/omarchy/plugins/brightmeows.active-window/`（脚本每次 apply 运行） | `~/.config/omarchy/shell.json` | 缺条目则插到中区最左，已存在则原地不动；`omarchy refresh shell` 重置后一次 apply 恢复 |
 
 ## DeepSeek Harness 配置
 
-dsh 的用户级配置同样由本仓库托管，落在 `~/.dsh`：
-
-| 源文件 | 目标 | 说明 |
-|--------|------|------|
-| `dot_dsh/AGENTS.md.tmpl` | `~/.dsh/AGENTS.md` | 用户级指令，渲染 `dot_agents_meow/AGENTS.main.md` |
-| `dot_dsh/cordis.patch.yml.tmpl` | `~/.dsh/cordis.patch.yml` | home 级 patch：5 个 MCP server 行与 models-dev 插件挂载行 |
-| `dot_agents_meow/models/plugin.mts` 等 | `~/.agents_meow/models/` | 模型域插件：抓取 models.dev、叠加 `models.toml`、写各 profile 的模型配置生成块（含 `/models-refresh` 命令） |
-
-模型配置的唯一编辑入口是 `dot_agents_meow/models/models.toml`（流水线见 [docs/model-config-pipeline.md](docs/model-config-pipeline.md)）；`settings.yaml` 与 `.credentials.yaml` 由 dsh 运行时持有，不入仓库。细节见 [docs/deepseek-harness-config.md](docs/deepseek-harness-config.md)。
-
-## 跨平台路径映射
-
-部分应用的配置文件在各平台的实际应用位置不同（例如 Nu 在 Linux 上使用 `~/.config/nushell`，在 Windows 上使用 `%AppData%\nushell`）。chezmoi 的 `.chezmoiexternal.toml` 负责处理这些差异：
-
-```toml
-{{- if eq .chezmoi.os "windows" }}
-# Windows 上将源文件复制到 %AppData% 对应位置
-["AppData/Roaming/nushell/env.nu"]
-type = "file"
-url = "file://{{ .chezmoi.sourceDir }}/dot_config/nushell/env.nu"
-{{- end }}
-```
-
-修改此类配置文件时，需确认目标位置是否由 `.chezmoiexternal.toml` 定义，而非 `dot_` 命名约定的默认位置。
+- dsh 用户级配置由本仓库托管（`dot_dsh/` → `~/.dsh`），托管表格与迁移细节见 [docs/deepseek-harness-config.md](docs/deepseek-harness-config.md)。
+- 模型配置唯一编辑入口是 `dot_agents_meow/models/models.toml`，流水线见 [docs/model-config-pipeline.md](docs/model-config-pipeline.md)。
+- `settings.yaml` 与 `.credentials.yaml` 由 dsh 运行时持有，不入仓库。
 
 ## 环境变量配置
 
-环境变量采用“单一数据源 + 双加载路径”架构。
+数据源：`dot_env_common`（bash 与 nushell 共享，chezmoi 管理）+ 可选 `~/.env_self`（本地补充，不入仓库）。自定义语法（`KEY=` 原样 / `KEY+=` 以 `:` 追加 / `KEY<=` 前插）、shell 与 environment.d 双加载路径及踩坑点见 [docs/env-loading.md](docs/env-loading.md)。
 
-**数据源**：`dot_env_common`（bash 与 nushell 共享的静态变量，chezmoi 管理）+ 可选 `~/.env_self`（本地补充，不入仓库）。
+## 跨平台配置原则
 
-**自定义语法**（`KEY=` 原样 / `KEY+=` 以 `:` 追加 / `KEY<=` 前插）由 shell 加载器与 environment.d 生成脚本共用。
+- 路径、端口、密钥等机器相关配置（如 Pi `shellPath`、GPG `signingkey`）→ 本机直接写入目标文件，不入源文件；行为、主题、偏好等共享配置 → 写入源文件，chezmoi 分发。
+- 各平台配置位置差异由 `.chezmoiexternal.toml` 处理（如 Nu：Linux `~/.config/nushell` vs Windows `%AppData%\nushell`），其映射优先级高于 `dot_` → `.` 默认命名约定；修改配置文件前先查此文件。
 
-**双加载路径**：
+## 系统配置记录
 
-| 路径 | 消费者 | 影响范围 | 读取源 |
-|---|---|---|---|
-| ① Shell | `dot_bashrc`（`_load_env_file`）、`dot_config/nushell/env.nu`（`load-env-file`） | TTY/SSH 登录的交互式 shell | `.env_common` + `.env_self` |
-| ② systemd environment.d | `run_onchange_after_gen-environmentd.sh.tmpl` → `~/.config/environment.d/50-meow.conf` | systemd user manager 及图形会话（Hyprland/niri） | 仅 `.env_common` |
+`docs/` 目录记录关键配置决策与历史变更，新文档随提交登记于此：
 
-**踩坑点**：
-
-- environment.d **不影响** TTY/SSH 登录的 shell——纯 shell 变量只走路径①
-- `~/.env_self` **只被 shell 读取**，不进 environment.d——本地补充的变量在图形会话/服务中不可见
-- nushell 加载器不支持 `$VAR` 引用展开，含变量引用的项须保留在各 shell 配置内
-- Nu 的 `load-env-file` 的 `PATH+=` 处理器会根据 `$env.PATH` 的类型分支：list→`append`，string→`concat`。Windows 上初始为 list，但部分场景（Nu 版本/交互模式差异）可能丢失系统 PATH。`env.nu` 底部有安全兜底——保存原始 PATH 并在末尾合并缺失条目。
-
-> environment.d 生成产物 `50-meow.conf` 的同步机制见上文“自动同步机制”一节。
-
-## 跨平台注意事项
-
-本仓库管理多台机器的配置文件，部分配置项具有**平台特异性**（OS 路径、shell 位置、包管理器路径等），不应纳入共享的 dotfiles 源文件。
-
-| 配置示例 | 所属场景 | 处理方式 |
-|---------|---------|--------|
-| Pi `shellPath` | Windows Git Bash 路径，因安装方式而异 | 直接写入 `~/.pi/agent/settings.json`，不入 `settings.meow.json` |
-| GPG `signingkey` | 各机器的签名密钥不同 | 直接 `git config --global` 写入 `~/.gitconfig`，不入 `gitconfig.meow` |
-| GPG `gpgsign` / `gpg.program` | GPG 路径及签名策略因 OS 而异 | 同上，直接写入 `~/.gitconfig` |
-| `~/.env_self` | 本地补充的环境变量 | 见“环境变量配置”，**不入仓库** |
-
-**原则**：路径、端口、密钥等机器相关配置 → 本机直接写入目标文件，不入源文件；行为、主题、偏好等共享配置 → 写入源文件，通过 chezmoi 分发。
-
-> ⚠️ `.chezmoiexternal.toml` 中定义的平台路径映射优先级高于 `dot_` → `.` 默认命名约定。修改配置文件前请先检查此文件。
+| 文件 | 内容 |
+|------|------|
+| [`docs/fedora-kinoite-multimedia-repo-config.md`](docs/fedora-kinoite-multimedia-repo-config.md) | Fedora Kinoite 44 多媒体仓库布局、编解码能力分析、terra-mesa 移除记录 |
+| [`docs/audio-acp3x-es83xx-headphone.md`](docs/audio-acp3x-es83xx-headphone.md) | AMD ACP3x 音频耳机问题处理 |
+| [`docs/fedora-kinoite-obs-vaapi-encode.md`](docs/fedora-kinoite-obs-vaapi-encode.md) | OBS Studio VAAPI 硬件编码配置、VCN 单元监控方法 |
+| [`docs/fedora-kinoite-wine-galgame-setup.md`](docs/fedora-kinoite-wine-galgame-setup.md) | Wine 玩日文 Galgame 配置记录 |
+| [`docs/fedora-kinoite-wine-selinux-execmod.md`](docs/fedora-kinoite-wine-selinux-execmod.md) | Wine Galgame 的 SELinux execmod 问题排查 |
+| [`docs/fedora-nushell-repo-upgrade.md`](docs/fedora-nushell-repo-upgrade.md) | Nushell 升级至官方 Gemfury 仓库记录 |
+| [`docs/npx-skills-usage.md`](docs/npx-skills-usage.md) | npx skills 作用域机制、remove 假成功 bug、安全操作姿势与验证方法 |
+| [`docs/deepseek-harness-config.md`](docs/deepseek-harness-config.md) | DeepSeek Harness 配置托管、技能与 MCP 迁移、凭据与沙箱差异 |
+| [`docs/model-config-pipeline.md`](docs/model-config-pipeline.md) | 模型配置流水线：TOML 单一源、双消费者生成物、models.dev 刷新与映射规则 |
+| [`docs/matebook-battery-optimization.md`](docs/matebook-battery-optimization.md) | MateBook 续航优化：放电数据对比、battery-boost/power-log 改动、mihomo DoT 探测风暴处置 |
+| [`docs/pi-lsp-support.md`](docs/pi-lsp-support.md) | Pi 的 LSP 支持：pi-lsp-extension 选型决策与重审触发条件、防漂移四件套写法示范 |
+| [`docs/pi-ask-user-question-limits.md`](docs/pi-ask-user-question-limits.md) | Pi ask_user_question 上限配置化 |
+| [`docs/env-loading.md`](docs/env-loading.md) | 环境变量单一数据源 + 双加载路径、自定义语法与踩坑点 |
+| [`docs/chezmoi-sync-scripts.md`](docs/chezmoi-sync-scripts.md) | 合并脚本命名约定、触发方式与时序约束 |
+| [`docs/nvm-shim-nvm4306-script-trust.md`](docs/nvm-shim-nvm4306-script-trust.md) | （历史）NVM shim NVM4306 拦截与脚本信任修复；nvm 已退役，问题随 shim 代理层消失 |
 
 ## 边界规则
 
@@ -183,13 +99,9 @@ url = "file://{{ .chezmoi.sourceDir }}/dot_config/nushell/env.nu"
 
 ## Git Workflow
 
-- **分支策略**：日常修改直推 main（单人仓库）。大幅重构用 `git worktree` 隔离。
-- **提交格式**：Conventional Commits（`feat:` / `fix:` / `docs:` / `refactor:` / `chore:`）
-- **提交语言**：中文
-- **提交粒度**：按逻辑变更拆分提交。
-- **原生 git hook**：`git commit` 触发 `.githooks/pre-commit`（`pnpm format:check` / `pnpm lint` 全量 + markdownlint 仅暂存 md），只检查不写回。失败时先本地修复（`pnpm format` / `pnpm lint:fix`），再重新 `git add` 提交。
-- **验证命令以 hook 为准**：hook 外补验一律原样运行 `.githooks/pre-commit` 或照抄其中的命令行，不自拼检查组合、不用 `--no-verify` 绕过；确需绕过时（如存量问题阻塞提交），事后必须原样补跑全部检查并如实报告。格式工具以 package.json scripts 为准（oxfmt，非 prettier）。
-- **hook 安装**（自动）：`package.json` 的 `prepare` 脚本在 `pnpm install` 时执行
-  `git config core.hooksPath .githooks`，写入 `.git/config`（local、相对路径，仓库位置无关）；
-  不经过 chezmoi、无全局副作用，新机器 clone 后 `pnpm install` 即激活（手动可跑
-  `pnpm run prepare`）
+- **分支策略**：日常修改直推 main（单人仓库）；大幅重构用 `git worktree` 隔离。
+- **提交**：Conventional Commits（`feat:` / `fix:` / `docs:` / `refactor:` / `chore:`），中文说明，按逻辑变更拆分提交。
+- **验证以 hook 为准**：`git commit` 触发 `.githooks/pre-commit`（`pnpm format:check` / `pnpm lint` 全量 + markdownlint 仅暂存 md），只检查不写回；失败时先本地修复（`pnpm format` / `pnpm lint:fix`），再重新 `git add` 提交。
+- hook 外补验一律原样运行 `.githooks/pre-commit` 或照抄其中的命令行，不自拼检查组合、不用 `--no-verify` 绕过；确需绕过时事后必须原样补跑全部检查并如实报告。
+- 格式工具以 package.json scripts 为准（oxfmt，非 prettier）。
+- **hook 安装**：package.json 的 `prepare` 脚本在 `pnpm install` 时写入 `core.hooksPath .githooks`（local、相对路径），新机器 clone 后 `pnpm install` 即激活。
