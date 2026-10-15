@@ -16,6 +16,7 @@
     "./ext/inline-context",
     "./ext/models-dev",
     "./ext/skill-reminders",
+    "./ext/statusline",
     "./ext/subdir-agents-md",
     "./ext/thinking-flow"
   ]
