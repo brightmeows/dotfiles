@@ -1,6 +1,6 @@
 {
   "$schema": "https://pi.dev/schemas/settings.schema.json",
-  "theme": "dark",
+  "theme": "codex-slate",
   "quietStartup": true,
   "retry": { "enabled": true, "maxRetries": 3 },
   "enableSkillCommands": true,
@@ -8,7 +8,6 @@
   "packages": [
     "npm:@juicesharp/rpiv-ask-user-question",
     "npm:@narumitw/pi-goal",
-    "npm:awesome-pi-themes",
     "npm:pi-lsp-extension",
     "npm:pi-web-access",
     "./ext/aliases",

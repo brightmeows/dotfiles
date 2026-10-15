@@ -25,6 +25,7 @@ tags: [pi, mcp, settings]
 | `mcp.json` | Pi 内建 MCP server 清单 | 手改后 apply；字段与旧适配器字段的对照见下方注记 |
 | `models.json`、`models-dev.json` | 模型生成物 | 见上文，勿手改 |
 | `ext/` | Pi 扩展包 | 见 [ext/AGENTS.md](./ext/AGENTS.md) |
+| `themes/` | Pi 主题 JSON，部署到 `~/.pi/agent/themes/`（Pi 用户主题目录，自动加载、热重载） | 字段以 Pi 主题 schema 为准（`colors` 拒绝未知角色，多余字段启动时报 Theme conflicts）；新文件用 Pi 自带校验器验证：`validateThemeJson`（`/usr/lib/node_modules/pi/packages/coding-agent/dist/modes/interactive/theme/theme-schema.js`） |
 
 > Pi 已回归内建 MCP，`pi-mcp-adapter` 与 `mcp-adapter.json` 已移除。现配置源为 `mcp.json`，字段即内建格式：
 > stdio 用 `command`/`args`/`env`/`cwd`，HTTP 用 `url`/`headers`，另有 `enabled: false`、`exposure`、`timeout`、`description`。
