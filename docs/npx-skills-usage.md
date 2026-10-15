@@ -84,6 +84,54 @@ find ~ -maxdepth 4 -type d -name "<技能名>" 2>/dev/null | grep -v "\.npm\|nod
 2. 每次操作后检查 canonical 目录和 lock 文件确认实际效果，不信任 CLI 的 success 报告
 3. 本机不再提供 `skills` wrapper（2026-08-11 移除），裸跑 `npx skills` 需自己确认作用域
 
+## WorkBuddy 桥接（2026-10-15）
+
+WorkBuddy（腾讯 WorkBuddy 桌面版，CodeBuddy 的换牌构建）不读 canonical 目录。它的技能扫描根是：
+
+- 用户级：`$CODEBUDDY_CONFIG_DIR/skills`，桌面版把该变量指到 `~/.workbuddy`，实际是 `~/.workbuddy/skills`
+- 连接器：`~/.workbuddy/connectors/skills`
+- 项目级：`<workspace>/.codebuddy/skills`（代码里扫描的路径；WorkBuddy 自带技能文本写的是 `<workspace>/.workbuddy/skills`，两者不一致，未实测）
+- 插件与内置技能；内部环境变量 `CODEBUDDY_SESSION_SKILL_DIRS` 还可再追加扫描根（本机未使用）
+
+npx skills 的 agent 表里没有 workbuddy（上游 [vercel-labs/skills#1353](https://github.com/vercel-labs/skills/issues/1353) 仍开着），
+所以 `npx skills add` 不会落到它头上。腾讯官方 find-skills 插件给的也是同一条路：往 `~/.workbuddy/skills/` 建指向 canonical 的符号链接。
+
+本机把这批链接交给一对 systemd user 单元维护（源文件在仓库，chezmoi 部署）：
+
+| 单元 / 脚本 | 作用 |
+|---|---|
+| `workbuddy-skills-sync.path` | 监听 `~/.agents/skills`，目录一变就拉起服务 |
+| `workbuddy-skills-sync.service` | oneshot 执行同步脚本，挂 `default.target` 供登录时对账 |
+| `~/.local/bin/skills-sync-workbuddy` | 幂等同步脚本本体 |
+
+同步脚本的行为约定：
+
+- canonical 里每个含 `SKILL.md` 的技能在 `~/.workbuddy/skills` 建相对链接 `../../.agents/skills/<名字>`
+- 已存在的实体目录跳过不覆盖（WorkBuddy 市场装的 `grilling`、手放的 `omarchy` 保持原样）
+- 只清理指向 canonical 且源已消失的断链，别处的链接一律不碰
+- `~/.workbuddy` 不存在（WorkBuddy 未安装）时静默退出，不留下任何东西
+
+由此 `add` 后链接自动补上，`remove`（含不带 `-a` 的真删）留下的断链由同一次刷新清掉；机制与 npx skills 版本无关。
+新装的技能要在 WorkBuddy 界面里出现需重启应用或新开会话（应用自身有技能缓存）。
+
+排查用的验证姿势：
+
+```bash
+# 建探针技能，几秒内应自动出现链接；删源后链接应自动消失
+mkdir -p ~/.agents/skills/zz-probe
+printf -- '---\nname: zz-probe\ndescription: probe\n---\n' > ~/.agents/skills/zz-probe/SKILL.md
+ls -l ~/.workbuddy/skills/zz-probe
+rm -rf ~/.agents/skills/zz-probe
+journalctl --user -u workbuddy-skills-sync.service -n 6 --no-pager
+```
+
+单元启用（新机器 apply 后需手动执行一次）：
+
+```bash
+systemctl --user daemon-reload
+systemctl --user enable --now workbuddy-skills-sync.path workbuddy-skills-sync.service
+```
+
 ## 本机 agent 状态备忘
 
 | agent | 目录 | universal | 备注 |
@@ -96,6 +144,7 @@ find ~ -maxdepth 4 -type d -name "<技能名>" 2>/dev/null | grep -v "\.npm\|nod
 | openclaw | `~/.openclaw` | 否 | 根目录不存在，npx 不检测 |
 | hermes-agent | `~/.hermes` | 否 | 已弃用，根目录 2026-09-24 删除（内仅 44 项 skills 副本，原 openclaw-imports 自管区已不存在），npx 不再检测 |
 | pi | `~/.pi/agent` | 否 | `~/.pi/agent/skills` 副本区 2026-09-24 已删除（45 项均为 canonical/meow 的一致副本，Pi 原生扫描 canonical + settings skills 数组，副本无存在必要）；技能由 `~/.agents/skills`（canonical）单通道承载（settings skills 数组 2026-10-06 移除） |
+| workbuddy | `~/.workbuddy/skills` | 否（不在 agent 表） | CodeBuddy 换牌桌面版，用户技能目录由 `CODEBUDDY_CONFIG_DIR` 决定；npx 不识别它，链接由 `skills-sync-workbuddy` 单元从 canonical 桥接 |
 
 ## 本机技能目录现状（2026-10-06 盘点）
 
@@ -109,6 +158,9 @@ find ~ -maxdepth 4 -type d -name "<技能名>" 2>/dev/null | grep -v "\.npm\|nod
 
 ## 变更历史
 
+- 2026-10-15：新增 WorkBuddy 桥接。WorkBuddy 不读 canonical，npx skills 也无 workbuddy agent 条目（上游 #1353 未合并），
+  改用 systemd user 单元在 `~/.agents/skills` 变化时把技能链接进 `~/.workbuddy/skills`；本机已桥接 54 个
+  （另 2 个为 WorkBuddy 自有实体目录 grilling、omarchy）。源文件入仓库 `dot_local/bin/`、`dot_config/systemd/user/`
 - 2026-10-06：仓库技能分发退役。`dot_agents_meow/skills` 全部 5 技能（codeberg-github-migration、
   git-hash-repo-conversion、grilling、querying-clippy-lints、writing-for-agents）已迁往自有 GitHub 仓库
   （skills-scratch、rust-meta-skills、workflow-skills），本机 `~/.agents/skills` 经 npx 安装承载（4 仓库 9 技能）；
