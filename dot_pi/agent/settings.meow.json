@@ -8,8 +8,9 @@
   "packages": [
     "npm:@juicesharp/rpiv-ask-user-question",
     "npm:@narumitw/pi-goal",
-    "npm:pi-web-access",
+    "npm:awesome-pi-themes",
     "npm:pi-lsp-extension",
+    "npm:pi-web-access",
     "./ext/aliases",
     "./ext/editor-input-tweaks",
     "./ext/esc-hold",
