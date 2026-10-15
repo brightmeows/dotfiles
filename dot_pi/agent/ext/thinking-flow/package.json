@@ -1,0 +1,12 @@
+{
+  "name": "pi-meow-thinking-flow",
+  "keywords": [
+    "pi-package"
+  ],
+  "type": "module",
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}
