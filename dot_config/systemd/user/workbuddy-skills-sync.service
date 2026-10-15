@@ -1,0 +1,7 @@
+[Unit]
+Description=Bridge ~/.agents/skills into WorkBuddy user skills directory
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/skills-sync-workbuddy
+[Install]
+WantedBy=default.target

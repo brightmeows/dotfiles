@@ -1,0 +1,7 @@
+[Unit]
+Description=Watch ~/.agents/skills for the WorkBuddy bridge sync
+[Path]
+PathChanged=%h/.agents/skills
+Unit=workbuddy-skills-sync.service
+[Install]
+WantedBy=default.target

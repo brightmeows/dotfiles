@@ -1,0 +1,64 @@
+#!/bin/bash
+# WorkBuddy 技能桥接：把 npx skills 的 canonical 目录（~/.agents/skills）同步为
+# WorkBuddy 用户技能目录（~/.workbuddy/skills）里的符号链接。
+#
+# WorkBuddy 不读 canonical 目录，只扫自己的用户技能目录；官方 find-skills 插件
+# 推荐的也是同样的链接做法。机制与验证方式见仓库 docs/npx-skills-usage.md。
+#
+# 幂等，由 systemd user 单元 workbuddy-skills-sync.path 在目录变化时拉起，
+# 也在登录时由 workbuddy-skills-sync.service 对账一次。
+
+set -euo pipefail
+
+source_root="$HOME/.agents/skills"
+workbuddy_root="$HOME/.workbuddy"
+target_root="$workbuddy_root/skills"
+
+# WorkBuddy 未安装（配置目录不存在）时不留下任何痕迹
+[ -d "$workbuddy_root" ] || exit 0
+[ -d "$source_root" ] || exit 0
+mkdir -p "$target_root"
+
+linked=0
+pruned=0
+skipped=0
+
+# canonical 里每个技能建一条相对链接，指向 canonical 本体
+for skill_path in "$source_root"/*/; do
+  [ -d "$skill_path" ] || continue
+  name="$(basename "${skill_path%/}")"
+  [ -f "$skill_path/SKILL.md" ] || continue
+
+  target="$target_root/$name"
+  link_target="../../.agents/skills/$name"
+
+  if [ -L "$target" ]; then
+    # 已是同一链接时无事可做；指向别处的链接不覆盖，只计数
+    [ "$(readlink "$target")" = "$link_target" ] || skipped=$((skipped + 1))
+    continue
+  fi
+  if [ -e "$target" ]; then
+    # WorkBuddy 市场安装的实体技能目录保持原样
+    skipped=$((skipped + 1))
+    continue
+  fi
+
+  ln -s "$link_target" "$target"
+  linked=$((linked + 1))
+done
+
+# 清理指向 canonical 但源已消失的断链（例：npx skills remove 之后）
+for target in "$target_root"/*; do
+  [ -L "$target" ] || continue
+  resolved="$(readlink -f "$target" 2>/dev/null || true)"
+  case "$resolved" in
+    "$source_root"/*) ;;
+    *) continue ;;
+  esac
+  if [ ! -e "$resolved" ]; then
+    rm -f "$target"
+    pruned=$((pruned + 1))
+  fi
+done
+
+printf 'workbuddy-skills-sync: linked=%d pruned=%d skipped=%d\n' "$linked" "$pruned" "$skipped"
