@@ -63,7 +63,13 @@ function fgOr(token: string, text: string): string {
 }
 
 const THINKING_TOKEN = "thinkingText";
+const ACCENT_TOKEN = "accent";
+const DIM_TOKEN = "dim";
+const MUTED_TOKEN = "muted";
 const BAR_GLYPH = "▌";
+const COLLAPSED_LABEL = "Thinking";
+const COLLAPSED_STATE = "已折叠";
+const COLLAPSED_HINT = "点击展开";
 
 // 可见段预扫
 
@@ -96,7 +102,6 @@ interface PatchedThis {
   contentContainer: Container;
   hideThinkingBlock: boolean;
   markdownTheme: MarkdownTheme;
-  hiddenThinkingLabel: string;
   outputPad: number;
   markdownTransformers: readonly MarkdownTransformer[];
   lastMessage: AssistantMessage | undefined;
@@ -110,7 +115,6 @@ const SHAPE_MEMBERS: readonly string[] = [
   "contentContainer",
   "hideThinkingBlock",
   "markdownTheme",
-  "hiddenThinkingLabel",
   "outputPad",
   "markdownTransformers",
   "hasToolCalls",
@@ -134,7 +138,7 @@ function renderExpandedThinking(text: string, self: PatchedThis): Component {
   const bar = fgOr(THINKING_TOKEN, BAR_GLYPH);
   const theme = getTheme();
   const label = theme ? theme.fg(THINKING_TOKEN, theme.bold("Thinking")) : "Thinking";
-  section.addChild(new Text(`${bar} ${label}`, self.outputPad, 0));
+  section.addChild(new Text(label, self.outputPad, 0));
 
   const style = {
     ...(theme ? { color: (t: string) => theme.fg(THINKING_TOKEN, t) } : {}),
@@ -151,9 +155,14 @@ function renderExpandedThinking(text: string, self: PatchedThis): Component {
   return section;
 }
 
-function renderHiddenThinking(label: string, outputPad: number): Component {
-  const styled = getTheme()?.italic(fgOr(THINKING_TOKEN, label)) ?? label;
-  return new Text(styled, outputPad, 0);
+/** 折叠占位行：> 前缀 + 分层语义色（accent/thinking 粗体/dim/muted），显式已折叠状态与点击提示 */
+function renderHiddenThinking(outputPad: number): Component {
+  const theme = getTheme();
+  const chevron = theme?.fg(ACCENT_TOKEN, ">") ?? ">";
+  const label = theme?.fg(THINKING_TOKEN, theme.bold(COLLAPSED_LABEL)) ?? COLLAPSED_LABEL;
+  const state = theme?.fg(DIM_TOKEN, ` · ${COLLAPSED_STATE}`) ?? ` · ${COLLAPSED_STATE}`;
+  const hint = theme?.fg(MUTED_TOKEN, ` · ${COLLAPSED_HINT}`) ?? ` · ${COLLAPSED_HINT}`;
+  return new Text(`${chevron} ${label}${state}${hint}`, outputPad, 0);
 }
 
 interface ThinkingRunContext {
@@ -168,7 +177,7 @@ function renderThinkingRun(self: PatchedThis, run: ThinkingRunContext): Componen
   const visible = override ?? (self.hideThinkingBlock || runIndex === activeIndex);
   const inner = visible
     ? renderExpandedThinking(run.text, self)
-    : renderHiddenThinking(self.hiddenThinkingLabel, self.outputPad);
+    : renderHiddenThinking(self.outputPad);
   return new MouseRegion(inner, (event) => {
     if (event.type !== "click" || event.button !== "left") {
       return undefined;

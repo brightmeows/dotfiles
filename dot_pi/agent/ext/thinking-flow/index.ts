@@ -3,15 +3,16 @@
  *
  * 目标：重新定义 pi 助手消息中 thinking 块的默认可见性与视觉呈现。
  * 流式进行中的 thinking 完整渲染（带标题与左色带装饰），历史 thinking
- * 收起为一行占位（可鼠标点开单块）；ctrl+t 在全量展示与本默认行为间
+ * 收起为一行彩色占位（可鼠标点开单块）；ctrl+t 在全量展示与本默认行为间
  * 一键切换。
  *
  * 行为（两态）：
  * ┌ flow 态（hideThinkingBlock === false，settings 默认值）
  * │  进行中的 thinking run（流式中最后一段、其后无非空正文）
- * │    完整 Markdown 渲染 + "▌ Thinking" 加粗标题行 + thinkingText 左色带
+ * │    完整 Markdown 渲染 + "Thinking" 加粗标题行 + thinkingText 左色带
  * │  历史 thinking run
- * │    一行斜体占位（内置 hiddenThinkingLabel 样式，低调）
+ * │    一行彩色占位：> 前缀（accent）+ Thinking（thinkingText 粗体）
+ * │    + · 已折叠（dim）+ · 点击展开（muted），随主题自动适配
  * │  鼠标点击占位/展开块：单块 toggle（内置 overrides 机制保留）
  * └ expanded 态（hideThinkingBlock === true，ctrl+t 切换）
  *    全部 thinking run 完整渲染 + 同款装饰
