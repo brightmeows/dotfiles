@@ -65,9 +65,24 @@ const THINKING_TOKEN = "thinkingText";
 const ACCENT_TOKEN = "accent";
 const DIM_TOKEN = "dim";
 const MUTED_TOKEN = "muted";
-const COLLAPSED_LABEL = "Thinking";
-const COLLAPSED_STATE = "已折叠";
-const COLLAPSED_HINT = "点击展开";
+const THINKING_LABEL = "Thinking";
+const HINT_EXPAND = "点击展开";
+const HINT_COLLAPSE = "点击收起";
+
+const CJK_RE = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/gu;
+
+/** Tokens 粗估：CJK 按每字 1 token、其余按每 4 字符 1 token。
+ * 消息 usage 是整条消息的（thinking 与正文合计），拆不出单 run 精确值，
+ * 此估算只为量级指示。 */
+function estimateTokens(text: string): number {
+  const cjk = text.match(CJK_RE)?.length ?? 0;
+  return Math.ceil(cjk + (text.length - cjk) / 4);
+}
+
+/** 统计段："N 字符 · N Tokens"（千分位分隔） */
+function statsSegment(text: string): string {
+  return `${text.length.toLocaleString()} 字符 · ${estimateTokens(text).toLocaleString()} Tokens`;
+}
 
 // 可见段预扫
 
@@ -134,8 +149,9 @@ function hasRequiredShape(instance: unknown): instance is PatchedThis {
 function renderExpandedThinking(text: string, self: PatchedThis): Component {
   const section = new Container();
   const theme = getTheme();
-  const label = theme ? theme.fg(THINKING_TOKEN, theme.bold("Thinking")) : "Thinking";
-  section.addChild(new Text(label, self.outputPad, 0));
+  section.addChild(
+    renderThinkingHeader(text, self.outputPad, { hint: HINT_COLLAPSE, chevron: false }),
+  );
 
   const style = {
     ...(theme ? { color: (t: string) => theme.fg(THINKING_TOKEN, t) } : {}),
@@ -153,14 +169,19 @@ function renderExpandedThinking(text: string, self: PatchedThis): Component {
   return section;
 }
 
-/** 折叠占位行：> 前缀 + 分层语义色（accent/thinking 粗体/dim/muted），显式已折叠状态与点击提示 */
-function renderHiddenThinking(outputPad: number): Component {
+/** 标题行：[> ]Thinking · N 字符 · N Tokens · 动作提示，
+ * 分层语义色（accent/thinking 粗体/dim/muted），随主题自动适配 */
+function renderThinkingHeader(
+  text: string,
+  outputPad: number,
+  options: { hint: string; chevron: boolean },
+): Component {
   const theme = getTheme();
-  const chevron = theme?.fg(ACCENT_TOKEN, ">") ?? ">";
-  const label = theme?.fg(THINKING_TOKEN, theme.bold(COLLAPSED_LABEL)) ?? COLLAPSED_LABEL;
-  const state = theme?.fg(DIM_TOKEN, ` · ${COLLAPSED_STATE}`) ?? ` · ${COLLAPSED_STATE}`;
-  const hint = theme?.fg(MUTED_TOKEN, ` · ${COLLAPSED_HINT}`) ?? ` · ${COLLAPSED_HINT}`;
-  return new Text(`${chevron} ${label}${state}${hint}`, outputPad, 0);
+  const prefix = options.chevron ? `${theme?.fg(ACCENT_TOKEN, ">") ?? ">"} ` : "";
+  const label = theme?.fg(THINKING_TOKEN, theme.bold(THINKING_LABEL)) ?? THINKING_LABEL;
+  const stats = theme?.fg(DIM_TOKEN, ` · ${statsSegment(text)}`) ?? ` · ${statsSegment(text)}`;
+  const hintPart = theme?.fg(MUTED_TOKEN, ` · ${options.hint}`) ?? ` · ${options.hint}`;
+  return new Text(`${prefix}${label}${stats}${hintPart}`, outputPad, 0);
 }
 
 interface ThinkingRunContext {
@@ -175,7 +196,7 @@ function renderThinkingRun(self: PatchedThis, run: ThinkingRunContext): Componen
   const visible = override ?? (self.hideThinkingBlock || runIndex === activeIndex);
   const inner = visible
     ? renderExpandedThinking(run.text, self)
-    : renderHiddenThinking(self.outputPad);
+    : renderThinkingHeader(run.text, self.outputPad, { hint: HINT_EXPAND, chevron: true });
   return new MouseRegion(inner, (event) => {
     if (event.type !== "click" || event.button !== "left") {
       return undefined;

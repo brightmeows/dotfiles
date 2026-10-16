@@ -2,20 +2,21 @@
  * Thinking Flow 扩展（thinking-flow）
  *
  * 目标：重新定义 pi 助手消息中 thinking 块的默认可见性与视觉呈现。
- * 流式进行中的 thinking 完整渲染（"Thinking" 粗体标题行 + thinkingText
+ * 流式进行中的 thinking 完整渲染（标题行 + thinkingText
  * 斜体正文，无前缀符号），历史 thinking 收起为一行彩色占位（可鼠标点开
  * 单块）；ctrl+t 在全量展示与本默认行为间一键切换。
  *
  * 行为（两态）：
  * ┌ flow 态（hideThinkingBlock === false，settings 默认值）
  * │  进行中的 thinking run（流式中最后一段、其后无非空正文）
- * │    完整 Markdown 渲染 + "Thinking" 加粗标题行（与内置原生渲染同款）
+ * │    完整 Markdown 渲染 + 标题行（随流式实时增长）
  * │  历史 thinking run
  * │    一行彩色占位：> 前缀（accent）+ Thinking（thinkingText 粗体）
- * │    + · 已折叠（dim）+ · 点击展开（muted），随主题自动适配
+ * │    + · N 字符 · N Tokens（dim，Tokens 为估算）+ · 点击展开（muted），
+ * │    随主题自动适配
  * │  鼠标点击占位/展开块：单块 toggle（内置 overrides 机制保留）
  * └ expanded 态（hideThinkingBlock === true，ctrl+t 切换）
- *    全部 thinking run 完整渲染 + 同款装饰
+ *    全部 thinking run 完整渲染 + 同款标题（动作提示为“点击收起”）与斜体正文
  *
  * 模式语义（对内置的接管，以本注释为准）：
  * - 内置 hideThinkingBlock 语义是"隐藏 thinking"（true = 全部收起占位）；
@@ -35,6 +36,8 @@
  * - reload 幂等：原生方法引用存 globalThis Symbol 槽（见 thinking-flow.ts）
  * - 主题色取 globalThis 共享 theme 单例，token 用 thinkingText（主题语义色，
  *   换主题自动适配）；单例不可用（headless 等）时降级裸文本
+ * - 标题统计：字符数为精确值，Tokens 按 CJK 每字 1 token、其余每 4 字符
+ *   1 token 估算（消息 usage 无法按单 run 拆分，只作量级指示）
  * - createMarkdownTransform 为包内副本（内部模块未公开导出，家规"自备副本"）
  *
  * 已知边界：
