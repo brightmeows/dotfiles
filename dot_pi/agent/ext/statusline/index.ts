@@ -1,21 +1,26 @@
 /**
  * 状态栏扩展（statusline）
  *
- * Powerline 分段 footer，替换 Pi 内置 footer。四段从左到右：
- *   git 分支（含 dirty 标记）/ 上下文占用 / 模型·thinking 档位 / 累计 tokens·花费
- * 颜色全部取当前主题 token：段底色用 toolPendingBg（低饱和背景语义，
- * 跨主题可移植），警示态底色用 toolErrorBg；前景按信息语义取色。
+ * 两行 footer，布局复刻 pi 内置 FooterComponent（1.2.0），配色为主题点缀：
+ *   行1 pwd 行：目录（~ 化）+ (分支，含 dirty 标记 ✗) + • 会话名
+ *   行2 stats 行：左 tokens/缓存/费用/上下文占用（80/95 分档警示色），
+ *                右 (提供商) 模型 • thinking 档位（右对齐）
+ * 颜色全部取当前主题 token（无背景色块，分隔用主题色文字）。内置无的
+ * 增强：分支 dirty 标记（pi.exec 后台 30s 刷新）。
  *
  * 行为：
  * - 默认启用（状态文件缺失视为启用）；/statusline 命令切换回内置
  *   footer，开关状态持久化到 <agent-dir>/pi-meow-statusline.json
+ * - tokens/缓存/费用：sessionManager.getEntries() 全类型聚合（usage
+ *   entry、assistant/toolResult 消息、branch_summary/compaction），
+ *   缓存命中率取最新一条 assistant 的 cacheRead 占比——与内置
+ *   FooterComponent.getSessionStats 同逻辑（未复制其按会话签名缓存，
+ *   footer 每帧现算）
+ * - 上下文占用：getContextUsage 每帧现读；>90 error、>70 warning（内置
+ *   同阈值）；percent 未知（compaction 后）显示 ?
  * - git dirty 标记：footerData 只有分支名没有 dirty，用 pi.exec 后台跑
  *   git status --porcelain 缓存结果，30s 定时刷新；exec 失败按未修改
  *   处理，标记缺席为预期降级
- * - 上下文占用：getContextUsage 每帧现读；percent >= 80 警示黄、
- *   >= 95 错误红且底色换 toolErrorBg；percent 未知（compaction 后）显示 --
- * - tokens/花费：sessionManager.getBranch() 聚合 assistant usage，
- *   与官方 custom-footer 示例同款
  * - reload 幂等：session_start 重触发时 setFooter 覆盖安装；dirty
  *   定时器存模块槽，重装前先清旧
  *
@@ -23,18 +28,15 @@
  * - ctx.getContextUsage / ctx.thinkingLevel / ctx.model / ctx.ui.setFooter
  *   在 session_start ctx 上可用；exec 在 ExtensionAPI（pi.exec）上；
  *   getContextUsage 的成员名在发布物 d.ts 中被混淆，类型侧走结构化探测
- * - theme.colors 为 token -> RGB 表；theme.bg 不接语义别名 token，故
- *   背景自拼 ANSI（见 internal/powerline.ts）
+ * - theme.colors 为 token -> RGB 表；theme.fg 仅认 56 语义 token（vars
+ *   名直接 throw）且为原型方法（抽离须 bind this）
  *
  * 踩坑点（1.2.0 tmux 实测）：
- * - theme.fg 对 56 语义 token 之外的键直接 throw（vars 名如 pink、
- *   overlay2 不可用），footer.render 抛错会击穿 TUI 渲染循环令 pi
- *   静默退出——前景 token 必须取自 56 token 清单
- * - session_start 同步栈内调用 setFooter 同样令 pi 静默退出（官方
- *   示例均在命令 handler 内调用），安装经 setTimeout 推迟，render 内
- *   try/catch 兜底防渲染循环崩
- * - session_start 阶段 pi.exec会使 pi 静默退出，dirty 首刷推迟到
- *   interval 首次触发
+ * - session_start 同步栈内调用 setFooter 或 pi.exec 均会使 pi 静默退出
+ *   （官方示例在命令 handler 内调用故未暴露）：安装经 setTimeout 推迟，
+ *   dirty 首刷推迟到 interval 首次触发
+ * - footer.render 抛错会击穿 TUI 渲染循环令 pi 静默退出：render 内
+ *   try/catch 兜底为空行并落盘诊断
  */
 
 import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
@@ -42,8 +44,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { AssistantMessage } from "@earendil-works/pi-ai";
-import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
-import { renderPowerline, type StatusSegment, type ThemeColorTable } from "./internal/powerline.ts";
+import { buildFooterLines, formatCwdForFooter, type UsageTotals } from "./internal/footer-lines.ts";
 
 // 开关持久化（<agent-dir>/pi-meow-statusline.json，look-pack 同款模式）
 
@@ -51,9 +52,6 @@ const STATE_FILENAME = "pi-meow-statusline.json";
 const DIRTY_REFRESH_MS = 30_000;
 /** 会话启动的 TUI 尚未就绪，推迟安装（实测同步调用会令 pi 静默退出） */
 const FOOTER_INSTALL_DELAY_MS = 1000;
-/** 上下文占用警示阈值（percent） */
-const WARN_AT = 80;
-const ALERT_AT = 95;
 
 const DEBUG_LOG = "/tmp/sl-debug.log";
 
@@ -98,62 +96,82 @@ interface ContextUsage {
 interface StatuslineContext {
   getContextUsage?: () => ContextUsage | undefined;
   thinkingLevel?: string;
-  model?: { id?: string } | undefined;
-  sessionManager: { getBranch: () => readonly unknown[] };
+  model?: { id?: string; provider?: string } | undefined;
+  sessionManager: {
+    getBranch: () => readonly unknown[];
+    getEntries: () => readonly unknown[];
+    getCwd?: () => string;
+    getSessionName?: () => string | undefined;
+  };
 }
 
-// 数据聚合
+// 数据聚合（内置 FooterComponent.getSessionStats 同逻辑，去掉按会话签名缓存）
 
-interface UsageSummary {
-  input: number;
-  output: number;
-  cost: number;
+interface SessionStats {
+  totals: UsageTotals;
+  cacheHitRate: number | undefined;
 }
 
-function aggregateUsage(entries: readonly unknown[]): UsageSummary {
-  let input = 0;
-  let output = 0;
-  let cost = 0;
+interface UsageEntry {
+  type?: string;
+  usage?: AssistantMessage["usage"];
+  message?: { role?: string; usage?: AssistantMessage["usage"] };
+}
+
+/** 会话条目 -> 其携带的 usage（内置 getSessionStats 的聚合范围：usage/assistant/toolResult/分支与压缩） */
+function entryUsage(entry: unknown): AssistantMessage["usage"] | undefined {
+  const e = entry as UsageEntry;
+  if (e.type === "usage") {
+    return e.usage;
+  }
+  if (
+    e.type === "message" &&
+    (e.message?.role === "assistant" || e.message?.role === "toolResult")
+  ) {
+    return e.message.usage;
+  }
+  if ((e.type === "branch_summary" || e.type === "compaction") && e.usage) {
+    return e.usage;
+  }
+  return undefined;
+}
+
+function isAssistantEntry(entry: unknown): boolean {
+  return (entry as UsageEntry).message?.role === "assistant";
+}
+
+function aggregateSession(entries: readonly unknown[]): SessionStats {
+  const totals: UsageTotals = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0 };
+  let cacheHitRate: number | undefined;
   for (const entry of entries) {
-    const candidate = entry as {
-      type?: string;
-      message?: { role?: string; usage?: AssistantMessage["usage"] };
-    };
-    if (candidate.type === "message" && candidate.message?.role === "assistant") {
-      const { usage } = candidate.message;
+    addUsage(totals, entryUsage(entry));
+    if (isAssistantEntry(entry)) {
+      const { message } = entry as UsageEntry;
+      if (!message) {
+        continue;
+      }
+      const { usage } = message;
       if (usage) {
-        input += usage.input ?? 0;
-        output += usage.output ?? 0;
-        cost += usage.cost?.total ?? 0;
+        const promptTokens = (usage.input ?? 0) + (usage.cacheRead ?? 0) + (usage.cacheWrite ?? 0);
+        cacheHitRate = promptTokens > 0 ? ((usage.cacheRead ?? 0) / promptTokens) * 100 : undefined;
       }
     }
   }
-  return { input, output, cost };
+  return { totals, cacheHitRate };
 }
 
-function formatCount(n: number): string {
-  return n < 1000 ? `${n}` : `${(n / 1000).toFixed(1)}k`;
+function addUsage(totals: UsageTotals, usage: AssistantMessage["usage"] | undefined): void {
+  if (!usage) {
+    return;
+  }
+  totals.input += usage.input ?? 0;
+  totals.output += usage.output ?? 0;
+  totals.cacheRead += usage.cacheRead ?? 0;
+  totals.cacheWrite += usage.cacheWrite ?? 0;
+  totals.cost += usage.cost?.total ?? 0;
 }
 
-/** 上下文占用文案：未知显示 --，达阈值分档警示色 */
-function contextLabel(
-  pct: number | null | undefined,
-  fg: (token: string, text: string) => string,
-): string {
-  if (pct === null || pct === undefined) {
-    return fg("dim", "--");
-  }
-  const text = `${Math.round(pct)}%`;
-  if (pct >= ALERT_AT) {
-    return fg("error", text);
-  }
-  if (pct >= WARN_AT) {
-    return fg("warning", text);
-  }
-  return fg("dim", text);
-}
-
-// 脏状态缓存存模块槽（reload 重载代码后旧定时器随旧模块一并丢弃）；dirty 取自 git status
+// 说明：dirty 缓存存模块槽（reload 重载代码后旧定时器随旧模块一并丢弃）；dirty 取自 git status
 
 let dirtyCache: boolean | undefined;
 let dirtyTimer: NodeJS.Timeout | undefined;
@@ -185,59 +203,11 @@ function clearDirtyLoop(): void {
   }
 }
 
-// 段装配
-
-interface SegmentContext {
-  fg: (token: string, text: string) => string;
-  branch: string | null;
-  usage: ContextUsage | undefined;
-  modelId: string | undefined;
-  thinkingLevel: string | undefined;
-  usageSummary: UsageSummary;
-}
-
-function buildSegments(sc: SegmentContext): StatusSegment[] {
-  const { fg, branch, usage, modelId, thinkingLevel, usageSummary } = sc;
-  const segments: StatusSegment[] = [];
-  const BG = "toolPendingBg";
-
-  if (branch) {
-    const dirty = dirtyCache === true ? ` ${fg("warning", "✗")}` : "";
-    segments.push({ bgToken: BG, content: ` ${fg("accent", branch)}${dirty} ` });
-  }
-
-  if (usage) {
-    const alerting =
-      usage.percent !== null && usage.percent !== undefined && usage.percent >= ALERT_AT;
-    segments.push({
-      bgToken: alerting ? "toolErrorBg" : BG,
-      content: ` ${fg("dim", "ctx")} ${contextLabel(usage.percent, fg)} `,
-    });
-  }
-
-  if (modelId) {
-    const level =
-      thinkingLevel && thinkingLevel !== "off"
-        ? ` ${fg("thinkingXhigh", `· ${thinkingLevel}`)}`
-        : "";
-    segments.push({ bgToken: BG, content: ` ${fg("text", modelId)}${level} ` });
-  }
-
-  const { input, output, cost } = usageSummary;
-  segments.push({
-    bgToken: BG,
-    content: ` ${fg("toolDiffContext", `↑${formatCount(input)} ↓${formatCount(output)}`)} ${fg("success", `$${cost.toFixed(3)}`)} `,
-  });
-
-  return segments;
-}
-
 // 安装
 
 function install(pi: ExtensionAPI, ctx: ExtensionContext): void {
   const sl = ctx as typeof ctx & StatuslineContext;
   ctx.ui.setFooter((tui, theme, footerData) => {
-    const colors = theme.colors as unknown as ThemeColorTable;
     // 主题 fg 为原型方法，抽离须绑 this（内部走 this.tokenAnsi），类型签名放宽到任意 token 名字符串
     const fg = theme.fg.bind(theme) as (token: string, text: string) => string;
     const unsub = footerData.onBranchChange(() => tui.requestRender());
@@ -251,20 +221,29 @@ function install(pi: ExtensionAPI, ctx: ExtensionContext): void {
       invalidate() {},
       render(width: number): string[] {
         try {
-          const segments = buildSegments({
+          const cwd = sl.sessionManager.getCwd?.() ?? process.cwd();
+          const stats = aggregateSession(sl.sessionManager.getEntries());
+          const usage = sl.getContextUsage?.();
+          const lines = buildFooterLines({
             fg,
+            cwdDisplay: formatCwdForFooter(cwd, process.env["HOME"] ?? process.env["USERPROFILE"]),
             branch: footerData.getGitBranch(),
-            usage: sl.getContextUsage?.(),
+            branchDirty: dirtyCache === true,
+            sessionName: sl.sessionManager.getSessionName?.(),
+            usage: stats.totals,
+            cacheHitRate: stats.cacheHitRate,
+            contextUsage: usage,
             modelId: sl.model?.id,
+            provider: sl.model?.provider,
+            providerCount: footerData.getAvailableProviderCount(),
             thinkingLevel: sl.thinkingLevel,
-            usageSummary: aggregateUsage(sl.sessionManager.getBranch()),
+            width,
           });
-          const line = renderPowerline(segments, width, colors);
-          return visibleWidth(line) > 0 ? [truncateToWidth(line, width)] : [""];
+          return lines;
         } catch (error) {
           // 渲染抛错会击穿 TUI 渲染循环（见头注释踩坑点），兜底为空行并落盘诊断
           debugLog(`render error: ${(error as Error).stack ?? error}`);
-          return [""];
+          return ["", ""];
         }
       },
     };
@@ -279,7 +258,7 @@ export default function statusline(pi: ExtensionAPI): void {
   });
 
   pi.registerCommand("statusline", {
-    description: "切换 Powerline 状态栏（默认开，关闭后恢复内置 footer）",
+    description: "切换主题状态栏（默认开，关闭后恢复内置 footer）",
     handler: async (_args, ctx) => {
       const next = !readEnabled();
       writeEnabled(next);
@@ -288,7 +267,7 @@ export default function statusline(pi: ExtensionAPI): void {
       } else {
         ctx.ui.setFooter(undefined);
       }
-      ctx.ui.notify(next ? "Powerline 状态栏已启用" : "已恢复内置 footer", "info");
+      ctx.ui.notify(next ? "主题状态栏已启用" : "已恢复内置 footer", "info");
     },
   });
 }
