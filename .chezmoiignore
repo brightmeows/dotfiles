@@ -9,6 +9,8 @@ AGENTS.md
 .pi/agent/AGENTS.md
 # 搜索源维护记录：仓库内文档，不部署
 .pi/web-search.md
+# 机场情报记录：clash-meta 目录仓库内参考文档，不部署
+.config/clash-meta/AIRPORTS.md
 
 # docs 仅仓库维护：不再部署到 ~/docs（~/docs 内容不归本仓库管）
 docs/**
