@@ -1,7 +1,7 @@
 {
   "$schema": "https://pi.dev/schemas/settings.schema.json",
   "theme": "catppuccin-mocha",
-  "quietStartup": true,
+  "quietStartup": "header",
   "retry": { "enabled": true, "maxRetries": 3 },
   "enableSkillCommands": true,
   "codemode": { "mode": "on", "inlineBudget": 65536 },
