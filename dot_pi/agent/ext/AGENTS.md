@@ -5,7 +5,7 @@ tags: [pi, extensions, typescript]
 
 # Pi 扩展（面向代理）
 
-本目录的 `*.ts` 为 Pi 扩展（ExtensionAPI）。约定优先级：本文件 > 各文件头部注释（即设计文档，修改前完整读取）> 仓库根 [AGENTS.md](../../../AGENTS.md)（chezmoi、`pnpm check`、提交规范）> 官方文档 `/usr/lib/pi-coding-agent/docs/extensions.md`。
+本目录的 `*.ts` 为 Pi 扩展（ExtensionAPI）。约定优先级：本文件 > 各文件头部注释（即设计文档，修改前完整读取）> 仓库根 [AGENTS.md](../../../AGENTS.md)（chezmoi、`pnpm check`、提交规范）> 官方文档 `extensions.md`（npm 全局安装在 `node_modules/pi/packages/coding-agent/docs/`，路径随安装方式而变）。
 
 ## 目录结构（现状）
 

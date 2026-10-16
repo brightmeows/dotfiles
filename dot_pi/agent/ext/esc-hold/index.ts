@@ -5,7 +5,9 @@
  * 双击（或长按）才中断。空闲时完全放行，pi 原生行为原样保留
  * （双击开对话树、Esc 关闭选择器、取消 autocomplete 等）。
  *
- * 行为（按 pi 运行状态分场景）：
+ * 行为（按 pi 运行状态分场景；pi ≥1.2 起 run 启动窗口期——含
+ * before_agent_start 处理器执行期——即算 busy，isIdle() 提前翻 false，
+ * 生成中守卫比旧版更早生效，堵住了旧版空闲窗口期误打断刚启动 run 的口子）：
  *
  * ┌ 生成中（agent 运行 / 自动重试 / 自动压缩等，ctx.isIdle() === false）
  * │  单击（press → release）：吞掉（consume），不中断，
