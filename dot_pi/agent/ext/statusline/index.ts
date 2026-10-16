@@ -1,42 +1,46 @@
 /**
  * 状态栏扩展（statusline）
  *
- * 两行 footer，布局复刻 pi 内置 FooterComponent（1.2.0），配色为主题点缀：
- *   行1 pwd 行：目录（~ 化）+ (分支，含 dirty 标记 ✗) + • 会话名
- *   行2 stats 行：左 tokens/缓存/费用/上下文占用（80/95 分档警示色），
+ * 像素级复刻 pi 内置 FooterComponent（1.2.0）的三行布局，配色为主题点缀
+ * （各行元素按语义取主题色，内置统一 dim 仅 ctx%/xp 上色——点缀边界经
+ * 确认保留）：
+ *   行1 pwd 行：目录（~ 化）+ (分支) + • 会话名
+ *   行2 stats 行：左 ↑↓ R W CH% $费用[(sub)] 上下文%/窗口[(auto)] [• xp]，
  *                右 (提供商) 模型 • thinking 档位（右对齐）
- * 颜色全部取当前主题 token（无背景色块，分隔用主题色文字）。内置无的
- * 增强：分支 dirty 标记（pi.exec 后台 30s 刷新）。
+ *   行3 扩展状态行：ctx.ui.setStatus 的文本（其他扩展的提示经此行生效，
+ *                  setStatus 的全局 requestRender 链路不依赖 footer 实现）
+ *
+ * 内置有而本版省略（数据源扩展侧不可达，经确认接受）：
+ *   右侧虚拟模型路由显示（session.routedModel）、(sub) 的
+ *   isUsingSubscription 半边（保留 kimi-coding 静态判断）。
  *
  * 行为：
  * - 默认启用（状态文件缺失视为启用）；/statusline 命令切换回内置
  *   footer，开关状态持久化到 <agent-dir>/pi-meow-statusline.json
- * - tokens/缓存/费用：sessionManager.getEntries() 全类型聚合（usage
- *   entry、assistant/toolResult 消息、branch_summary/compaction），
- *   缓存命中率取最新一条 assistant 的 cacheRead 占比——与内置
- *   FooterComponent.getSessionStats 同逻辑（未复制其按会话签名缓存，
- *   footer 每帧现算）
- * - 上下文占用：getContextUsage 每帧现读；>90 error、>70 warning（内置
- *   同阈值）；percent 未知（compaction 后）显示 ?
- * - git dirty 标记：footerData 只有分支名没有 dirty，用 pi.exec 后台跑
- *   git status --porcelain 缓存结果，30s 定时刷新；exec 失败按未修改
- *   处理，标记缺席为预期降级
- * - reload 幂等：session_start 重触发时 setFooter 覆盖安装；dirty
- *   定时器存模块槽，重装前先清旧
+ * - 性能缓存：usage 全量聚合按 (sessionId, leafId, 条目数, model) 签名
+ *   缓存（内置 getSessionStats 同语义；扩展侧 ReadonlySessionManager 无
+ *   getEntryCount，用 getEntries().length 等价替代——条目 append-only）
+ * - (auto) 标记：ctx.getSettings().compaction.enabled !== false（内置取
+ *   session.autoCompactionEnabled，扩展侧经 settings 等价读取）
+ * - xp 标记：PI_EXPERIMENTAL === "1"（与内置 experimental.js 同判断）
+ * - reload 幂等：session_start 重触发时 setFooter 覆盖安装；缓存存模块槽
  *
  * 依赖事实（pi 1.2.0 实测）：
  * - ctx.getContextUsage / ctx.thinkingLevel / ctx.model / ctx.ui.setFooter
- *   在 session_start ctx 上可用；exec 在 ExtensionAPI（pi.exec）上；
- *   getContextUsage 的成员名在发布物 d.ts 中被混淆，类型侧走结构化探测
+ *   在 session_start ctx 上可用；getContextUsage 的成员名在发布物 d.ts
+ *   中被混淆，类型侧走结构化探测
  * - theme.colors 为 token -> RGB 表；theme.fg 仅认 56 语义 token（vars
  *   名直接 throw）且为原型方法（抽离须 bind this）
+ * - ctx.ui.setStatus 的重绘走全局 requestRender，与 footer 实现无关，
+ *   自定义 footer 内读 footerData.getExtensionStatuses() 即可承接
  *
  * 踩坑点（1.2.0 tmux 实测）：
- * - session_start 同步栈内调用 setFooter 或 pi.exec 均会使 pi 静默退出
- *   （官方示例在命令 handler 内调用故未暴露）：安装经 setTimeout 推迟，
- *   dirty 首刷推迟到 interval 首次触发
+ * - session_start 同步栈内调用 setFooter 会使 pi 静默退出（官方示例在
+ *   命令 handler 内调用故未暴露）：安装经 setTimeout 推迟
  * - footer.render 抛错会击穿 TUI 渲染循环令 pi 静默退出：render 内
  *   try/catch 兜底为空行并落盘诊断
+ * - pi.exec 在会话启动阶段调用同样会使 pi 静默退出（曾用于 dirty 轮询，
+ *   dirty 标记已随纯内置化移除，记录留作未来使用 pi.exec 时的警示）
  */
 
 import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
@@ -49,7 +53,6 @@ import { buildFooterLines, formatCwdForFooter, type UsageTotals } from "./intern
 // 开关持久化（<agent-dir>/pi-meow-statusline.json，look-pack 同款模式）
 
 const STATE_FILENAME = "pi-meow-statusline.json";
-const DIRTY_REFRESH_MS = 30_000;
 /** 会话启动的 TUI 尚未就绪，推迟安装（实测同步调用会令 pi 静默退出） */
 const FOOTER_INSTALL_DELAY_MS = 1000;
 
@@ -95,17 +98,20 @@ interface ContextUsage {
 
 interface StatuslineContext {
   getContextUsage?: () => ContextUsage | undefined;
+  getSettings?: () => { compaction?: { enabled?: boolean } } | undefined;
   thinkingLevel?: string;
   model?: { id?: string; provider?: string } | undefined;
   sessionManager: {
     getBranch: () => readonly unknown[];
     getEntries: () => readonly unknown[];
     getCwd?: () => string;
+    getSessionId?: () => string;
+    getLeafId?: () => string | null;
     getSessionName?: () => string | undefined;
   };
 }
 
-// 数据聚合（内置 FooterComponent.getSessionStats 同逻辑，去掉按会话签名缓存）
+// 数据聚合（内置 FooterComponent.getSessionStats 同逻辑）
 
 interface SessionStats {
   totals: UsageTotals;
@@ -118,7 +124,7 @@ interface UsageEntry {
   message?: { role?: string; usage?: AssistantMessage["usage"] };
 }
 
-/** 会话条目 -> 其携带的 usage（内置 getSessionStats 的聚合范围：usage/assistant/toolResult/分支与压缩） */
+/** 会话条目 -> 其携带的 usage（内置聚合范围：usage/assistant/toolResult/分支与压缩） */
 function entryUsage(entry: unknown): AssistantMessage["usage"] | undefined {
   const e = entry as UsageEntry;
   if (e.type === "usage") {
@@ -138,6 +144,17 @@ function entryUsage(entry: unknown): AssistantMessage["usage"] | undefined {
 
 function isAssistantEntry(entry: unknown): boolean {
   return (entry as UsageEntry).message?.role === "assistant";
+}
+
+function addUsage(totals: UsageTotals, usage: AssistantMessage["usage"] | undefined): void {
+  if (!usage) {
+    return;
+  }
+  totals.input += usage.input ?? 0;
+  totals.output += usage.output ?? 0;
+  totals.cacheRead += usage.cacheRead ?? 0;
+  totals.cacheWrite += usage.cacheWrite ?? 0;
+  totals.cost += usage.cost?.total ?? 0;
 }
 
 function aggregateSession(entries: readonly unknown[]): SessionStats {
@@ -160,82 +177,75 @@ function aggregateSession(entries: readonly unknown[]): SessionStats {
   return { totals, cacheHitRate };
 }
 
-function addUsage(totals: UsageTotals, usage: AssistantMessage["usage"] | undefined): void {
-  if (!usage) {
-    return;
+// 聚合缓存（内置 getSessionStats 的按会话签名缓存同语义；扩展侧无
+// 说明：getEntryCount，条目 append-only，用 getEntries().length 等价替代）
+
+let statsCache:
+  | {
+      sessionId: string;
+      leafId: string | null;
+      entryCount: number;
+      modelId: string | undefined;
+      stats: SessionStats;
+    }
+  | undefined;
+
+function getSessionStats(sl: StatuslineContext): SessionStats {
+  const sessionId = sl.sessionManager.getSessionId?.() ?? "";
+  const leafId = sl.sessionManager.getLeafId?.() ?? null;
+  const entries = sl.sessionManager.getEntries();
+  const entryCount = entries.length;
+  const modelId = sl.model?.id;
+  const cached = statsCache;
+  if (
+    cached &&
+    cached.sessionId === sessionId &&
+    cached.leafId === leafId &&
+    cached.entryCount === entryCount &&
+    cached.modelId === modelId
+  ) {
+    return cached.stats;
   }
-  totals.input += usage.input ?? 0;
-  totals.output += usage.output ?? 0;
-  totals.cacheRead += usage.cacheRead ?? 0;
-  totals.cacheWrite += usage.cacheWrite ?? 0;
-  totals.cost += usage.cost?.total ?? 0;
-}
-
-// 说明：dirty 缓存存模块槽（reload 重载代码后旧定时器随旧模块一并丢弃）；dirty 取自 git status
-
-let dirtyCache: boolean | undefined;
-let dirtyTimer: NodeJS.Timeout | undefined;
-
-function refreshDirty(pi: ExtensionAPI, onChanged: () => void): void {
-  pi.exec("git", ["status", "--porcelain"])
-    .then((result) => {
-      dirtyCache = result.stdout.trim().length > 0;
-      onChanged();
-    })
-    .catch(() => {
-      dirtyCache = false;
-    });
-}
-
-function ensureDirtyLoop(pi: ExtensionAPI, onChanged: () => void): void {
-  if (dirtyTimer) {
-    clearInterval(dirtyTimer);
-  }
-  // 首刷推迟到 interval 触发：会话启动阶段调用 pi.exec 会使 pi 静默退出（1.2.0 实测）
-  dirtyTimer = setInterval(() => refreshDirty(pi, onChanged), DIRTY_REFRESH_MS);
-  dirtyTimer.unref?.();
-}
-
-function clearDirtyLoop(): void {
-  if (dirtyTimer) {
-    clearInterval(dirtyTimer);
-    dirtyTimer = undefined;
-  }
+  const stats = aggregateSession(entries);
+  statsCache = { sessionId, leafId, entryCount, modelId, stats };
+  return stats;
 }
 
 // 安装
 
-function install(pi: ExtensionAPI, ctx: ExtensionContext): void {
+function install(ctx: ExtensionContext): void {
   const sl = ctx as typeof ctx & StatuslineContext;
   ctx.ui.setFooter((tui, theme, footerData) => {
     // 主题 fg 为原型方法，抽离须绑 this（内部走 this.tokenAnsi），类型签名放宽到任意 token 名字符串
     const fg = theme.fg.bind(theme) as (token: string, text: string) => string;
+    const bold = theme.bold.bind(theme);
     const unsub = footerData.onBranchChange(() => tui.requestRender());
-    ensureDirtyLoop(pi, () => tui.requestRender());
 
     return {
       dispose() {
         unsub();
-        clearDirtyLoop();
       },
       invalidate() {},
       render(width: number): string[] {
         try {
           const cwd = sl.sessionManager.getCwd?.() ?? process.cwd();
-          const stats = aggregateSession(sl.sessionManager.getEntries());
-          const usage = sl.getContextUsage?.();
+          const settings = sl.getSettings?.();
           const lines = buildFooterLines({
             fg,
+            bold,
             cwdDisplay: formatCwdForFooter(cwd, process.env["HOME"] ?? process.env["USERPROFILE"]),
             branch: footerData.getGitBranch(),
-            branchDirty: dirtyCache === true,
             sessionName: sl.sessionManager.getSessionName?.(),
-            usage: stats.totals,
-            cacheHitRate: stats.cacheHitRate,
-            contextUsage: usage,
+            usage: getSessionStats(sl).totals,
+            cacheHitRate: getSessionStats(sl).cacheHitRate,
+            contextUsage: sl.getContextUsage?.(),
             modelId: sl.model?.id,
             provider: sl.model?.provider,
             providerCount: footerData.getAvailableProviderCount(),
+            usingSubscription: sl.model?.provider === "kimi-coding",
+            autoCompactEnabled: settings?.compaction?.enabled !== false,
+            experimentalEnabled: process.env["PI_EXPERIMENTAL"] === "1",
+            statuses: footerData.getExtensionStatuses(),
             thinkingLevel: sl.thinkingLevel,
             width,
           });
@@ -253,7 +263,7 @@ function install(pi: ExtensionAPI, ctx: ExtensionContext): void {
 export default function statusline(pi: ExtensionAPI): void {
   pi.on("session_start", (_event, ctx) => {
     if (readEnabled()) {
-      setTimeout(() => install(pi, ctx), FOOTER_INSTALL_DELAY_MS);
+      setTimeout(() => install(ctx), FOOTER_INSTALL_DELAY_MS);
     }
   });
 
@@ -263,7 +273,7 @@ export default function statusline(pi: ExtensionAPI): void {
       const next = !readEnabled();
       writeEnabled(next);
       if (next) {
-        install(pi, ctx);
+        install(ctx);
       } else {
         ctx.ui.setFooter(undefined);
       }

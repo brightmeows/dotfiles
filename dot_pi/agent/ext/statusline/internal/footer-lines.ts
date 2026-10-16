@@ -1,18 +1,24 @@
 /**
- * 状态栏两行布局渲染纯库（包内自包含）。
+ * 状态栏两行+扩展状态行布局渲染纯库（包内自包含）。
  *
- * 布局复刻 pi 内置 FooterComponent（1.2.0 components/footer.js）：
+ * 像素级复刻 pi 内置 FooterComponent（1.2.0 components/footer.js）：
  *   行1 pwd 行：目录（~ 化）+ (分支) + • 会话名
- *   行2 stats 行：左侧 tokens/费用/上下文占用，右侧 (提供商) 模型·档位（右对齐）
- * 与内置的差异（主题点缀）：整行不再统一 dim，各元素按语义取主题色；
- * 分支后带 dirty 标记 ✗（内置无，pi.exec 后台刷新）。
+ *   行2 stats 行：左侧 ↑↓ R W CH% $费用[(sub)] 上下文%/窗口(auto) [• xp]，
+ *                 右侧 (提供商) 模型 • 档位（右对齐）
+ *   行3 扩展状态行：ctx.ui.setStatus 的文本（字母序、控制字符清洗、单行截断）
+ * 配色点缀（与内置的差异）：各行元素按语义取主题色（内置统一 dim 仅
+ * ctx%/xp 分档上色）；复刻范围内元素、顺序、分隔符与内置逐一对应。
+ *
+ * 内置有而本版省略（数据源扩展侧不可达，经确认接受）：
+ *   右侧虚拟模型路由显示（session.routedModel）、(sub) 的
+ *   isUsingSubscription 半边（保留 kimi-coding 静态判断）。
  *
  * 宽度降级与内置逐条同款：
  *   左段超宽 → 截断（... 兜底）；provider 括号最先丢（多提供商且空间
  *   不足时）；仍超宽 → 右段按剩余空间截断；剩余不足 → 只显示左段。
  *
- * formatTokens / formatCwdForFooter 为内置同逻辑副本（未从包入口导出，
- * 家规"自备副本"）。
+ * formatTokens / formatCwdForFooter / sanitizeStatusText 为内置同逻辑
+ * 副本（未从包入口导出，家规"自备副本"）。
  */
 
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
@@ -42,9 +48,9 @@ export interface ContextUsageInfo {
 
 interface FooterDeps {
   fg: (token: string, text: string) => string;
+  bold: (text: string) => string;
   cwdDisplay: string;
   branch: string | null;
-  branchDirty: boolean;
   sessionName: string | undefined;
   usage: UsageTotals;
   cacheHitRate: number | undefined;
@@ -53,23 +59,28 @@ interface FooterDeps {
   /** 提供商名；仅 providerCount > 1 时进入右侧 */
   provider: string | undefined;
   providerCount: number;
+  /** 走订阅计费的提供商（kimi-coding），费用后缀 (sub)，内置 isUsingSubscription 的可达半边 */
+  usingSubscription: boolean;
+  autoCompactEnabled: boolean;
+  experimentalEnabled: boolean;
+  /** 扩展状态文本（setStatus 写入；键值对，渲染前按键字母序拼单行） */
+  statuses: ReadonlyMap<string, string>;
   thinkingLevel: string | undefined;
   width: number;
 }
 
 /** 千/k/M 紧凑格式化（内置 formatTokens 同逻辑） */
 export function formatTokens(count: number): string {
-  if (count < 1000) {
-    return count.toString();
-  }
-  if (count < 10_000) {
-    return `${(count / 1000).toFixed(1)}k`;
-  }
-  if (count < 1_000_000) {
-    return `${Math.round(count / 1000)}k`;
-  }
-  if (count < 10_000_000) {
-    return `${(count / 1_000_000).toFixed(1)}M`;
+  const table: readonly [number, (n: number) => string][] = [
+    [1000, (n) => n.toString()],
+    [10_000, (n) => `${(n / 1000).toFixed(1)}k`],
+    [1_000_000, (n) => `${Math.round(n / 1000)}k`],
+    [10_000_000, (n) => `${(n / 1_000_000).toFixed(1)}M`],
+  ];
+  for (const [limit, fmt] of table) {
+    if (count < limit) {
+      return fmt(count);
+    }
   }
   return `${Math.round(count / 1_000_000)}M`;
 }
@@ -86,6 +97,14 @@ export function formatCwdForFooter(cwd: string, home: string | undefined): strin
   return resolved === "" ? "~" : resolved;
 }
 
+/** 状态文本清洗：控制字符替换为空格并折叠连续空格（内置 sanitizeStatusText 同逻辑） */
+export function sanitizeStatusText(text: string): string {
+  return text
+    .replace(/[\r\n\t]/g, " ")
+    .replace(/ +/g, " ")
+    .trim();
+}
+
 /** 上下文占用百分比文案：未知显示 ?，其余一位小数 */
 function contextPercentText(contextUsage: ContextUsageInfo | undefined): string {
   if (!contextUsage || contextUsage.percent === null) {
@@ -99,29 +118,20 @@ function contextColorToken(percentValue: number): string {
   if (percentValue > 90) {
     return "error";
   }
-  if (percentValue > 70) {
-    return "warning";
-  }
-  return "dim";
+  return percentValue > 70 ? "warning" : "dim";
 }
 
-/** 行1 pwd：目录 + (分支，含 dirty ✗) + • 会话名 */
+/** 行1 pwd：目录 + (分支) + • 会话名 */
 function buildPwdLine(deps: FooterDeps, width: number): string {
-  const { fg, cwdDisplay, branch, branchDirty, sessionName } = deps;
-  let pwd = cwdDisplay;
-  if (branch) {
-    const dirtyMark = branchDirty ? fg("warning", " ✗") : "";
-    pwd += ` ${fg("accent", `(${branch})`)}${dirtyMark}`;
-  }
-  if (sessionName) {
-    pwd += ` ${fg("muted", `• ${sessionName}`)}`;
-  }
-  return truncateToWidth(pwd, width, fg("dim", "..."));
+  const { fg, cwdDisplay, branch, sessionName } = deps;
+  const branchPart = branch ? ` ${fg("accent", `(${branch})`)}` : "";
+  const sessionPart = sessionName ? ` ${fg("muted", `• ${sessionName}`)}` : "";
+  return truncateToWidth(`${cwdDisplay}${branchPart}${sessionPart}`, width, fg("dim", "..."));
 }
 
-/** 行2 左段：↑↓ [R W CH%] $费用 上下文%/窗口 */
-function buildStatsLeft(deps: FooterDeps, width: number): string {
-  const { fg, usage, cacheHitRate, contextUsage } = deps;
+/** 左段 usage 计数部分：↑↓ R W CH% $费用[(sub)] */
+function buildUsageParts(deps: FooterDeps): string[] {
+  const { fg, usage, cacheHitRate, usingSubscription } = deps;
   const parts: string[] = [];
   if (usage.input) {
     parts.push(`↑${formatTokens(usage.input)}`);
@@ -138,15 +148,28 @@ function buildStatsLeft(deps: FooterDeps, width: number): string {
   if ((usage.cacheRead > 0 || usage.cacheWrite > 0) && cacheHitRate !== undefined) {
     parts.push(`CH${cacheHitRate.toFixed(1)}%`);
   }
-  if (usage.cost) {
-    parts.push(fg("success", `$${usage.cost.toFixed(3)}`));
+  if (usage.cost || usingSubscription) {
+    parts.push(fg("success", `$${usage.cost.toFixed(3)}${usingSubscription ? " (sub)" : ""}`));
   }
+  return parts;
+}
+
+/** 行2 左段：usage 计数部分 + 上下文%/窗口[(auto)] + [• xp] */
+function buildStatsLeft(deps: FooterDeps, width: number): string {
+  const { fg, bold, contextUsage, autoCompactEnabled, experimentalEnabled } = deps;
+  const parts = buildUsageParts(deps);
   const percentValue = contextUsage?.percent ?? 0;
   const windowText = formatTokens(contextUsage?.contextWindow ?? 0);
+  const autoIndicator = autoCompactEnabled ? " (auto)" : "";
   parts.push(
-    fg(contextColorToken(percentValue), `${contextPercentText(contextUsage)}%`),
-    fg("dim", `/${windowText}`),
+    fg(
+      contextColorToken(percentValue),
+      `${contextPercentText(contextUsage)}%/${windowText}${autoIndicator}`,
+    ),
   );
+  if (experimentalEnabled) {
+    parts.push(`${fg("dim", "•")} ${bold(fg("warning", "xp"))}`);
+  }
   const statsLeft = parts.join(" ");
   if (visibleWidth(statsLeft) > width) {
     return truncateToWidth(statsLeft, width, "...");
@@ -188,7 +211,6 @@ function colorizeRightSide(deps: FooterDeps, rightFinal: string): string {
 
 /** 行2 stats 整行：左段 + 补齐 + 右对齐右段（降级链见文件头） */
 function buildStatsLine(deps: FooterDeps, width: number): string {
-  const { width: _w } = deps;
   const statsLeft = buildStatsLeft(deps, width);
   const statsLeftWidth = visibleWidth(statsLeft);
   const rightSide = rightSideText(deps, statsLeftWidth, width);
@@ -208,7 +230,24 @@ function buildStatsLine(deps: FooterDeps, width: number): string {
   return statsLeft + padding + colorizeRightSide(deps, rightFinal);
 }
 
-/** 两行 footer：pwd 行 + stats 行 */
+/** 行3 扩展状态行：setStatus 文本按键字母序拼单行，截断带 dim 兜底（无状态时不产出行） */
+function buildStatusesLine(deps: FooterDeps, width: number): string | undefined {
+  const { fg, statuses } = deps;
+  if (statuses.size === 0) {
+    return undefined;
+  }
+  const sorted = [...statuses.entries()]
+    .toSorted(([a], [b]) => a.localeCompare(b))
+    .map(([, text]) => sanitizeStatusText(text));
+  return truncateToWidth(sorted.join(" "), width, fg("dim", "..."));
+}
+
+/** 三行 footer：pwd 行 + stats 行 + 扩展状态行（无状态时两行） */
 export function buildFooterLines(deps: FooterDeps): string[] {
-  return [buildPwdLine(deps, deps.width), buildStatsLine(deps, deps.width)];
+  const lines = [buildPwdLine(deps, deps.width), buildStatsLine(deps, deps.width)];
+  const statusesLine = buildStatusesLine(deps, deps.width);
+  if (statusesLine !== undefined) {
+    lines.push(statusesLine);
+  }
+  return lines;
 }
