@@ -170,6 +170,9 @@ pi -p -e <被测扩展入口> -e /tmp/dump-ext.ts --no-session "只回复：收�
   - packages 为并集语义，meow 源删除不传导，删包后手动从 settings.json 移除
 - `/reload`（pi 内键入）热重载扩展/技能/提示词/主题/上下文文件（非仅 keybindings，`interactive-mode.js` 重载文案含 `extensions`）；改源文件后用它加载新代码免重启。副作用：reload 后旧 `pi`/`ctx` 变 stale（`runner.js` 校验），勿跨 reload 复用
 - 验证 TUI 渲染（`renderResult`/`renderCall`/`ctx.ui.custom`）：`-p` headless 不走 TUI 渲染，须 `/reload` 后在交互会话触发该工具，人眼校验两态——如 `Ctrl+O`（`app.tools.expand`）由 `tool-execution` 重调 renderer 传 `{ expanded }` 触发展开态
+- 验证扩展触发的 custom run（pi ≥1.2 起 `sendMessage(..., { triggerTurn: true })`，如 goal 自动续跑）的 `before_agent_start`：`-p` 有两个假象——
+  `agent_end` 栈内发起时 `isStreaming` 未翻转，消息走 steer 分支进 agent 内部续 turn（不经过 `_startRun`，无 `before_agent_start`）；稍后发起则撞 stale ctx（`-p` 收尾替换 session）。
+  须 tmux 交互会话从 idle 态发起，dump 扩展记录 `event.messageType` 落盘断言；user run 侧行为（摘要投递类）`-p` 可验
 - 块注释内禁含 `*/` 序列（会提前终止注释，tsc 报 TS1443 / oxfmt 语法错；写路径如 `*/index.ts` 时改写避让；inject-notice.ts 踩坑）
 - pi 二进制的运行时结构与 npm 发布物可能不同：bun 打包把类字段降级为构造期赋值，未初始化的字段声明直接丢弃——用 `in` 探测实例属性会误报缺失。
   0.85.1 的 `Editor.autocompleteList`（d.ts 可选成员）即此类：仅补全菜单显示时才赋值，构造后不存在（editor-input-tweaks 实测 probe：`autocompleteList: false`，其余成员全部存在）。
