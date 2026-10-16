@@ -28,9 +28,14 @@
  * compat 合并（2026-10-04）：与内建重名的 provider 在模型映射时按 id|api 合并
  * pi-ai 内建模型的 compat 与档位映射（内建显式键优先），修复扩展注册整体替换
  * 导致的 thinkingFormat/strict 工具/zaiToolStream 等丢失；见 internal/mapping.ts。
+ *
+ * 启动提示通道（2026-10-16）：注册汇总改走 setWidget（编辑器上方独立槽），
+ * 弃用 ctx.ui.notify——notify info 与 pi 默认提示共用 chat 状态行单槽，背靠背
+ * 原位覆写互挤；详见文件尾挂提示处的注释。
  */
 
 import type { ExtensionAPI, ProviderModelConfig } from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
 import {
   getBuiltinModels,
   getBuiltinProviders,
@@ -88,6 +93,51 @@ function mapProviderModels(
       }),
     )
     .filter((m): m is ProviderModelConfig => m !== null);
+}
+
+/**
+ * 启动汇总提示挂到编辑器上方 widget（key: models-dev）。
+ *
+ * 通道选 setWidget 而非 ctx.ui.notify（2026-10-16）：notify info 走 chat 状态行，
+ * 该行是单槽合并（showStatus 对背靠背状态消息原位覆写，last wins），扩展提示
+ * 会挤掉 pi 默认启动提示，反之亦然；widget 是按 key 的独立区域，两条通道共存。
+ * 所有 session_start reason 都重挂：/new、/reload 重绑会话时 clearExtensionWidgets
+ * 清空 widget 区，需补挂保持可见（旧 notify 仅 startup 一次，无此问题也无此需求）。
+ */
+function mountSummaryWidget(
+  pi: ExtensionAPI,
+  names: { nativeNames: string[]; legacyNames: string[]; skippedProtected: string[] },
+): void {
+  if (
+    names.nativeNames.length === 0 &&
+    names.legacyNames.length === 0 &&
+    names.skippedProtected.length === 0
+  ) {
+    return;
+  }
+  pi.on("session_start", async (_event, ctx) => {
+    const parts: string[] = [];
+    if (names.nativeNames.length > 0) {
+      parts.push(`原生 ${names.nativeNames.length}：${names.nativeNames.join(", ")}`);
+    }
+    if (names.legacyNames.length > 0) {
+      parts.push(`legacy ${names.legacyNames.length}：${names.legacyNames.join(", ")}`);
+    }
+    const lines = [
+      parts.length > 0
+        ? `已注册 models.dev 提供商（${parts.join("；")}）`
+        : "models.dev 未注册提供商",
+    ];
+    if (names.skippedProtected.length > 0) {
+      lines.push(
+        `跳过 models.json 已声明 ${names.skippedProtected.length} 个：${names.skippedProtected.join(", ")}`,
+      );
+    }
+    ctx.ui.setWidget(
+      "models-dev",
+      (_tui, theme) => new Text(lines.map((line) => theme.fg("dim", line)).join("\n"), 1, 0),
+    );
+  });
 }
 
 export default async function (pi: ExtensionAPI) {
@@ -227,27 +277,6 @@ export default async function (pi: ExtensionAPI) {
     }
   }
 
-  // ── 启动后发一条汇总提示 ──
-  if (nativeNames.length > 0 || legacyNames.length > 0 || skippedProtected.length > 0) {
-    pi.on("session_start", async (event, ctx) => {
-      if (event.reason === "startup") {
-        const parts: string[] = [];
-        if (nativeNames.length > 0) {
-          parts.push(`原生 ${nativeNames.length}：${nativeNames.join(", ")}`);
-        }
-        if (legacyNames.length > 0) {
-          parts.push(`legacy ${legacyNames.length}：${legacyNames.join(", ")}`);
-        }
-        const registeredNote =
-          parts.length > 0
-            ? `已注册 models.dev 提供商（${parts.join("；")}）`
-            : "models.dev 未注册提供商";
-        const skippedNote =
-          skippedProtected.length > 0
-            ? `；跳过 ${skippedProtected.length} 个 models.json 已声明：${skippedProtected.join(", ")}`
-            : "";
-        ctx.ui.notify(`${registeredNote}${skippedNote}`, "info");
-      }
-    });
-  }
+  // ── 启动汇总提示：通道选型与重挂原因见 mountSummaryWidget ──
+  mountSummaryWidget(pi, { nativeNames, legacyNames, skippedProtected });
 }
