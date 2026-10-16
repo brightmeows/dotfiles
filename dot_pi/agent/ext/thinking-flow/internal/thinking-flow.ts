@@ -37,7 +37,6 @@ import {
   type Component,
   type MarkdownTheme,
 } from "@earendil-works/pi-tui";
-import { LeftBar } from "./left-bar.ts";
 import { createMarkdownTransform } from "./markdown-transform.ts";
 
 // 主题访问（globalThis 共享单例，跨 module loader）
@@ -66,7 +65,6 @@ const THINKING_TOKEN = "thinkingText";
 const ACCENT_TOKEN = "accent";
 const DIM_TOKEN = "dim";
 const MUTED_TOKEN = "muted";
-const BAR_GLYPH = "▌";
 const COLLAPSED_LABEL = "Thinking";
 const COLLAPSED_STATE = "已折叠";
 const COLLAPSED_HINT = "点击展开";
@@ -135,7 +133,6 @@ function hasRequiredShape(instance: unknown): instance is PatchedThis {
 
 function renderExpandedThinking(text: string, self: PatchedThis): Component {
   const section = new Container();
-  const bar = fgOr(THINKING_TOKEN, BAR_GLYPH);
   const theme = getTheme();
   const label = theme ? theme.fg(THINKING_TOKEN, theme.bold("Thinking")) : "Thinking";
   section.addChild(new Text(label, self.outputPad, 0));
@@ -144,14 +141,15 @@ function renderExpandedThinking(text: string, self: PatchedThis): Component {
     ...(theme ? { color: (t: string) => theme.fg(THINKING_TOKEN, t) } : {}),
     italic: true,
   };
-  const markdown = new Markdown(text, self.outputPad, 0, self.markdownTheme, style, {
-    transform: createMarkdownTransform(
-      "assistant-thinking",
-      self.isStreaming,
-      self.markdownTransformers,
-    ),
-  });
-  section.addChild(new LeftBar(markdown, bar));
+  section.addChild(
+    new Markdown(text, self.outputPad, 0, self.markdownTheme, style, {
+      transform: createMarkdownTransform(
+        "assistant-thinking",
+        self.isStreaming,
+        self.markdownTransformers,
+      ),
+    }),
+  );
   return section;
 }
 

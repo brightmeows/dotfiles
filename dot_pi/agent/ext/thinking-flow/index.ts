@@ -2,14 +2,14 @@
  * Thinking Flow 扩展（thinking-flow）
  *
  * 目标：重新定义 pi 助手消息中 thinking 块的默认可见性与视觉呈现。
- * 流式进行中的 thinking 完整渲染（带标题与左色带装饰），历史 thinking
- * 收起为一行彩色占位（可鼠标点开单块）；ctrl+t 在全量展示与本默认行为间
- * 一键切换。
+ * 流式进行中的 thinking 完整渲染（"Thinking" 粗体标题行 + thinkingText
+ * 斜体正文，无前缀符号），历史 thinking 收起为一行彩色占位（可鼠标点开
+ * 单块）；ctrl+t 在全量展示与本默认行为间一键切换。
  *
  * 行为（两态）：
  * ┌ flow 态（hideThinkingBlock === false，settings 默认值）
  * │  进行中的 thinking run（流式中最后一段、其后无非空正文）
- * │    完整 Markdown 渲染 + "Thinking" 加粗标题行 + thinkingText 左色带
+ * │    完整 Markdown 渲染 + "Thinking" 加粗标题行（与内置原生渲染同款）
  * │  历史 thinking run
  * │    一行彩色占位：> 前缀（accent）+ Thinking（thinkingText 粗体）
  * │    + · 已折叠（dim）+ · 点击展开（muted），随主题自动适配
@@ -42,7 +42,7 @@
  *   ext/AGENTS.md"运行时验证"节跑一次 tmux 实测
  * - 流式中 thinking 后紧跟 toolCall（interleaved reasoning）时该 run 视为
  *   进行中持续显示，直到正文 text 流出才收起
- * - expanded 态长会话中每个历史 run 都带标题与色带，视觉分段为预期行为
+ * - expanded 态长会话中每个历史 run 都带标题与斜体正文，视觉分段为预期行为
  */
 
 import { AssistantMessageComponent, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
