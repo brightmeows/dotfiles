@@ -31,7 +31,8 @@
  *
  * 启动提示通道（2026-10-16）：注册汇总改走 setWidget（编辑器上方独立槽），
  * 弃用 ctx.ui.notify——notify info 与 pi 默认提示共用 chat 状态行单槽，背靠背
- * 原位覆写互挤；详见文件尾挂提示处的注释。
+ * 原位覆写互挤；文案用直白中文（避开原生/legacy 黑话），显示 8 秒后自动清除；
+ * 详见 mountSummaryWidget 处的注释。
  */
 
 import type { ExtensionAPI, ProviderModelConfig } from "@earendil-works/pi-coding-agent";
@@ -95,14 +96,19 @@ function mapProviderModels(
     .filter((m): m is ProviderModelConfig => m !== null);
 }
 
+/** 提示 widget 的自动清除延时：足够读完四行文案，又不至于常驻占屏 */
+const SUMMARY_VISIBLE_MS = 8000;
+
 /**
- * 启动汇总提示挂到编辑器上方 widget（key: models-dev）。
+ * 启动汇总提示挂到编辑器上方 widget（key: models-dev），文案直白、显示约 8 秒后自动清除。
  *
  * 通道选 setWidget 而非 ctx.ui.notify（2026-10-16）：notify info 走 chat 状态行，
  * 该行是单槽合并（showStatus 对背靠背状态消息原位覆写，last wins），扩展提示
  * 会挤掉 pi 默认启动提示，反之亦然；widget 是按 key 的独立区域，两条通道共存。
- * 所有 session_start reason 都重挂：/new、/reload 重绑会话时 clearExtensionWidgets
- * 清空 widget 区，需补挂保持可见（旧 notify 仅 startup 一次，无此问题也无此需求）。
+ * 所有 session_start reason 都重挂（/new、/reload 重绑会话时 clearExtensionWidgets
+ * 清空 widget 区，需补挂）；重挂前清掉上一个延时器，避免旧定时器提前清掉新 widget。
+ * 自动清除用的 ctx 在 /reload 后会 stale（runner 校验拒绝），try/catch 吞掉即可——
+ * reload 流程自己会清空并重挂，无需旧 ctx 介。
  */
 function mountSummaryWidget(
   pi: ExtensionAPI,
@@ -115,28 +121,42 @@ function mountSummaryWidget(
   ) {
     return;
   }
+  let dismissTimer: ReturnType<typeof setTimeout> | undefined;
   pi.on("session_start", async (_event, ctx) => {
-    const parts: string[] = [];
+    const total = names.nativeNames.length + names.legacyNames.length;
+    const lines: string[] = [];
+    if (total > 0) {
+      lines.push(`模型目录：已导入 models.dev 的 ${total} 家提供商`);
+    } else {
+      lines.push("模型目录：models.dev 未导入提供商");
+    }
     if (names.nativeNames.length > 0) {
-      parts.push(`原生 ${names.nativeNames.length}：${names.nativeNames.join(", ")}`);
+      lines.push(
+        `  随官方目录自动更新（${names.nativeNames.length} 家）：${names.nativeNames.join("、")}`,
+      );
     }
     if (names.legacyNames.length > 0) {
-      parts.push(`legacy ${names.legacyNames.length}：${names.legacyNames.join(", ")}`);
+      lines.push(
+        `  与内置目录合并（${names.legacyNames.length} 家）：${names.legacyNames.join("、")}`,
+      );
     }
-    const lines = [
-      parts.length > 0
-        ? `已注册 models.dev 提供商（${parts.join("；")}）`
-        : "models.dev 未注册提供商",
-    ];
     if (names.skippedProtected.length > 0) {
       lines.push(
-        `跳过 models.json 已声明 ${names.skippedProtected.length} 个：${names.skippedProtected.join(", ")}`,
+        `  已按 models.json 配置跳过（${names.skippedProtected.length} 家）：${names.skippedProtected.join("、")}`,
       );
     }
     ctx.ui.setWidget(
       "models-dev",
       (_tui, theme) => new Text(lines.map((line) => theme.fg("dim", line)).join("\n"), 1, 0),
     );
+    clearTimeout(dismissTimer);
+    dismissTimer = setTimeout(() => {
+      try {
+        ctx.ui.setWidget("models-dev", undefined);
+      } catch {
+        // 若 ctx 已随 /reload 失效：widget 已被重绑流程清空，无需处理
+      }
+    }, SUMMARY_VISIBLE_MS);
   });
 }
 
