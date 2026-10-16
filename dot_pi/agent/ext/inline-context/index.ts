@@ -15,7 +15,11 @@
  *   不碎前缀缓存，每轮刷新方案被否决——dirty 高频变化会对折叠型 API
  *   （collapseSystemMessages 头部重放）每轮打碎全量缓存，过期风险由
  *   行尾快照标注化解
- * - 首条消息注入一条极简摘要 message（display: true），TUI 可见一行
+ * - 首条消息注入一条极简摘要 message（display: true），TUI 可见一行；
+ *   pi ≥1.2 起扩展触发的 custom run（sendMessage triggerTurn，如 goal 自动
+ *   续跑）也走 before_agent_start，摘要投递以 messageType === "user" 守卫，
+ *   避免被自动 run 吞掉首条摘要；sections 注入保持所有 run（自动 run 同样
+ *   需要环境段）
  *
  * 设计决策（可验证优先）：
  * - 检测全部异步化（execFile 而非 execFileSync）：原 inline-env 用同步
@@ -730,6 +734,12 @@ export default function (pi: ExtensionAPI) {
         display: boolean;
       };
     } = {};
+
+    // 摘要仅随用户输入的 run 投递（pi ≥1.2 扩展触发的 custom run 也走本
+    // 事件，不守卫会被自动续跑吞掉首条摘要）；section 注入保持所有 run
+    if (event.messageType !== "user") {
+      return result;
+    }
 
     // 首条消息注入一条极简摘要（TUI 可见），完整信息已进提示段
     if (!injectedMessage) {
