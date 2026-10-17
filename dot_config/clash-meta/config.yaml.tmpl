@@ -236,69 +236,69 @@ FilterDE: &FilterDE '^(?=.*((?i)🇩🇪|德国|\b(DE|Germany)(\d+)?\b))(?!.*((?
 # 不再依赖各 filter 的排除段兜底（地区 filter 里的“回国/校园”排除仍用于特殊线路归类）
 FilterOthers: &FilterOthers "^(?!.*(🇭🇰|HK|Hong|香港|🇹🇼|TW|Taiwan|Wan|台湾|🇯🇵|JP|Japan|日本|🇸🇬|SG|Singapore|狮城|新加坡|🇺🇸|US|United States|America|美国|🇩🇪|DE|Germany|德国|🇬🇧|UK|United Kingdom|英国|🇰🇷|KR|Korea|韩国|韓|🇫🇷|FR|France|法国)).*$"
 ### 策略组
-# 顶层“节点选择”是全部规则的默认出口，成员 = 订阅级自动/手动组 + 地区自动/手动组 + DIRECT：
+# 顶层“🚀 节点选择”是全部规则的默认出口，成员 = 订阅级自动/手动组 + 地区自动/手动组 + DIRECT：
 #   - X - 自动选择（url-test）：与 provider 健康检查共用 gstatic 测试 URL，共享同一份测速结果，
 #     不产生额外探测流量；tolerance 100ms 抑制出口 IP 漂移
 #     面板上可对自动组固定优先节点（fixed）：固定节点存活时一直用它，故障自动回退延迟择优
 #   - X - 手动选择（select）：显式指定订阅或地区内的节点
-# 域名分流组（AI / Telegram / 流媒体与下载 / BMS）成员含全部订阅组与地区组，
-# 可按网站指定出口（如“日本 - 自动选择”）；信息类假节点已在 provider 层 exclude-filter 剔除
+# 域名分流组（🤖 AI / ✈️ Telegram / 🎬 流媒体与下载 / 🎵 BMS）成员含全部订阅组与地区组，
+# 可按网站指定出口（如“🇯🇵 日本 - 自动选择”）；信息类假节点已在 provider 层 exclude-filter 剔除
 
 # 地区定义（名称 + 筛选 anchor）：成员列表与组定义共用，新增地区只改这里
 {{- $regions := list
-  (dict "name" "香港" "filter" "FilterHK")
-  (dict "name" "台湾" "filter" "FilterTW")
-  (dict "name" "韩国" "filter" "FilterKR")
-  (dict "name" "日本" "filter" "FilterJP")
-  (dict "name" "新加坡" "filter" "FilterSG")
-  (dict "name" "美国" "filter" "FilterUS")
-  (dict "name" "其它" "filter" "FilterOthers")
+  (dict "name" "香港" "emoji" "🇭🇰" "filter" "FilterHK")
+  (dict "name" "台湾" "emoji" "🇹🇼" "filter" "FilterTW")
+  (dict "name" "韩国" "emoji" "🇰🇷" "filter" "FilterKR")
+  (dict "name" "日本" "emoji" "🇯🇵" "filter" "FilterJP")
+  (dict "name" "新加坡" "emoji" "🇸🇬" "filter" "FilterSG")
+  (dict "name" "美国" "emoji" "🇺🇸" "filter" "FilterUS")
+  (dict "name" "其它" "emoji" "🌐" "filter" "FilterOthers")
 }}
 
-# 域名分流组成员（各分类组共用）：默认随“节点选择”，可单独指定订阅或地区出口
+# 域名分流组成员（各分类组共用）：默认随“🚀 节点选择”，可单独指定订阅或地区出口
 DomainGroupMembers: &DomainGroupMembers
-  - 节点选择
+  - 🚀 节点选择
 {{- range $name := $subNames }}
-  - {{ $name }} - 自动选择
-  - {{ $name }} - 手动选择
+  - ⚡ {{ $name }} - 自动选择
+  - ⚡ {{ $name }} - 手动选择
 {{- end }}
 {{- range $r := $regions }}
-  - {{ $r.name }} - 自动选择
-  - {{ $r.name }} - 手动选择
+  - {{ $r.emoji }} {{ $r.name }} - 自动选择
+  - {{ $r.emoji }} {{ $r.name }} - 手动选择
 {{- end }}
   - DIRECT
 
 # 顶层：选择订阅 / 地区 / 直连
 proxy-groups:
-  - name: 节点选择
+  - name: 🚀 节点选择
     type: select
     proxies:
 {{- range $name := $subNames }}
-      - {{ $name }} - 自动选择
-      - {{ $name }} - 手动选择
+      - ⚡ {{ $name }} - 自动选择
+      - ⚡ {{ $name }} - 手动选择
 {{- end }}
 {{- range $r := $regions }}
-      - {{ $r.name }} - 自动选择
-      - {{ $r.name }} - 手动选择
+      - {{ $r.emoji }} {{ $r.name }} - 自动选择
+      - {{ $r.emoji }} {{ $r.name }} - 手动选择
 {{- end }}
       - DIRECT
 
   # 订阅级自动/手动选择（use 精确引用各自订阅，不混入其它订阅节点）
 {{- range $name := $subNames }}
-  - { name: {{ $name }} - 自动选择, type: url-test, use: [{{ $name }}], url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 100 }
-  - { name: {{ $name }} - 手动选择, type: select, use: [{{ $name }}] }
+  - { name: ⚡ {{ $name }} - 自动选择, type: url-test, use: [{{ $name }}], url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 100 }
+  - { name: ⚡ {{ $name }} - 手动选择, type: select, use: [{{ $name }}] }
 {{- end }}
 
-  # 域名分流组（默认随“节点选择”，可按网站单独指定订阅或地区出口）
-  - { name: AI, type: select, proxies: *DomainGroupMembers }
-  - { name: Telegram, type: select, proxies: *DomainGroupMembers }
-  - { name: 流媒体与下载, type: select, proxies: *DomainGroupMembers }
-  - { name: BMS, type: select, proxies: *DomainGroupMembers }
+  # 域名分流组（默认随“🚀 节点选择”，可按网站单独指定订阅或地区出口）
+  - { name: 🤖 AI, type: select, proxies: *DomainGroupMembers }
+  - { name: ✈️ Telegram, type: select, proxies: *DomainGroupMembers }
+  - { name: 🎬 流媒体与下载, type: select, proxies: *DomainGroupMembers }
+  - { name: 🎵 BMS, type: select, proxies: *DomainGroupMembers }
 
   # 地区自动/手动选择（跨订阅汇入；自动组与 provider 健康检查共用 gstatic URL，零额外测速）
 {{- range $r := $regions }}
-  - { name: {{ $r.name }} - 自动选择, type: url-test, include-all: true, filter: *{{ $r.filter }}, url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 100 }
-  - { name: {{ $r.name }} - 手动选择, type: select, include-all: true, filter: *{{ $r.filter }} }
+  - { name: {{ $r.emoji }} {{ $r.name }} - 自动选择, type: url-test, include-all: true, filter: *{{ $r.filter }}, url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 100 }
+  - { name: {{ $r.emoji }} {{ $r.name }} - 手动选择, type: select, include-all: true, filter: *{{ $r.filter }} }
 {{- end }}
 
 ### 规则配置
@@ -308,7 +308,7 @@ RuleSet_classical:
     behavior: classical,
     interval: 43200,
     format: text,
-    proxy: 节点选择,
+    proxy: 🚀 节点选择,
   }
 RuleSet_domain:
   &RuleSet_domain {
@@ -316,7 +316,7 @@ RuleSet_domain:
     behavior: domain,
     interval: 43200,
     format: text,
-    proxy: 节点选择,
+    proxy: 🚀 节点选择,
   }
 RuleSet_ipcidr:
   &RuleSet_ipcidr {
@@ -324,7 +324,7 @@ RuleSet_ipcidr:
     behavior: ipcidr,
     interval: 43200,
     format: text,
-    proxy: 节点选择,
+    proxy: 🚀 节点选择,
   }
 
 # 订阅规则
@@ -484,36 +484,36 @@ rules:
   - DOMAIN-SUFFIX,rustdesk.com,DIRECT
 
   # BMS 谱面站（manbow.nothing.sh）：日本源站、谱面包下载场景，独立出口组便于指定节点
-  - DOMAIN-SUFFIX,manbow.nothing.sh,BMS
+  - DOMAIN-SUFFIX,manbow.nothing.sh,🎵 BMS
 
   ### 非 IP 类规则
   - RULE-SET,reject_non_ip,REJECT
   - RULE-SET,reject_domainset,REJECT
   - RULE-SET,reject_non_ip_drop,REJECT-DROP
   - RULE-SET,reject_non_ip_no_drop,REJECT
-  - RULE-SET,cdn_domainset,节点选择
-  - RULE-SET,cdn_non_ip,节点选择
-  - RULE-SET,stream_non_ip,流媒体与下载
-  - RULE-SET,telegram_non_ip,Telegram
+  - RULE-SET,cdn_domainset,🚀 节点选择
+  - RULE-SET,cdn_non_ip,🚀 节点选择
+  - RULE-SET,stream_non_ip,🎬 流媒体与下载
+  - RULE-SET,telegram_non_ip,✈️ Telegram
   - RULE-SET,apple_cdn,DIRECT
-  - RULE-SET,download_domainset,流媒体与下载
-  - RULE-SET,download_non_ip,流媒体与下载
+  - RULE-SET,download_domainset,🎬 流媒体与下载
+  - RULE-SET,download_non_ip,🎬 流媒体与下载
   - RULE-SET,microsoft_cdn_non_ip,DIRECT
   - RULE-SET,apple_cn_non_ip,DIRECT
-  - RULE-SET,apple_services,节点选择
-  - RULE-SET,microsoft_non_ip,节点选择
-  - RULE-SET,ai_non_ip,AI
-  - RULE-SET,global_non_ip,节点选择
+  - RULE-SET,apple_services,🚀 节点选择
+  - RULE-SET,microsoft_non_ip,🚀 节点选择
+  - RULE-SET,ai_non_ip,🤖 AI
+  - RULE-SET,global_non_ip,🚀 节点选择
   - RULE-SET,domestic_non_ip,DIRECT
   - RULE-SET,direct_non_ip,DIRECT
   - RULE-SET,lan_non_ip,DIRECT
 
   ### IP 类规则
   - RULE-SET,reject_ip,REJECT
-  - RULE-SET,telegram_ip,Telegram
-  - RULE-SET,stream_ip,流媒体与下载
+  - RULE-SET,telegram_ip,✈️ Telegram
+  - RULE-SET,stream_ip,🎬 流媒体与下载
   - RULE-SET,lan_ip,DIRECT
   - RULE-SET,domestic_ip,DIRECT
   - RULE-SET,china_ip,DIRECT
 
-  - MATCH,节点选择
+  - MATCH,🚀 节点选择

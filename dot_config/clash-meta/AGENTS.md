@@ -47,15 +47,16 @@ tags: [mihomo, clash-meta, proxy, tun]
 
 ## 策略组结构
 
-命名约定“对象 - 模式”：`<订阅名> - 自动选择` / `<订阅名> - 手动选择` / `<地区> - 自动选择` / `<地区> - 手动选择`。
+命名约定“emoji + 空格 + 对象 - 模式”：`⚡ <订阅名> - 自动选择`、`🇯🇵 日本 - 手动选择`；顶层为 `🚀 节点选择`，分流组为 `🤖 AI` / `✈️ Telegram` / `🎬 流媒体与下载` / `🎵 BMS`。
 
-- “节点选择”（select，全部规则的默认出口）= 订阅组 ×4 + 地区组 ×14 + DIRECT（19 项）
-- 域名分流组 `AI` / `Telegram` / `流媒体与下载` / `BMS` 共用 `&DomainGroupMembers` 锚（节点选择 + 全部订阅组 + 全部地区组 + DIRECT，20 项），
-  默认随“节点选择”，可按网站指定订阅或地区出口；分别承接 `ai_non_ip`、`telegram_*`、`stream_*` + `download_*` 与 `manbow.nothing.sh` 规则
+- `🚀 节点选择`（select，全部规则的默认出口）= 订阅组 ×4 + 地区组 ×14 + DIRECT（19 项）
+- 域名分流组共用 `&DomainGroupMembers` 锚（🚀 节点选择 + 全部订阅组 + 全部地区组 + DIRECT，20 项），
+  默认随“🚀 节点选择”，可按网站指定订阅或地区出口；分别承接 `ai_non_ip`、`telegram_*`、`stream_*` + `download_*` 与 `manbow.nothing.sh` 规则
+- 组名出现在 `rules` 出口、`RuleSet_*` 锚的 `proxy` 字段与 `DomainGroupMembers` 三处，改名须全量同步（grep 无 emoji 的旧名确认零残留）
 
 维护约定：
 
-- 地区列表由模板 `$regions`（名称 + filter anchor）一处定义，循环生成 14 个地区组与两处成员列表；新增地区只改 `$regions`
+- 地区列表由模板 `$regions`（名称 + emoji + filter anchor）一处定义，循环生成 14 个地区组与两处成员列表；新增地区只改 `$regions`
 - 订阅级组用 `use: [<订阅名>]` 精确引用各自 provider；地区组用 `include-all + filter` 跨订阅汇入
 - 自动组 `url` 必须与 provider 健康检查 URL 一致（gstatic）：相同 URL 共享测速、不注册额外检查任务；改成其它 URL 会让每轮健康检查对同批节点多测一遍
 - 信息类假节点在 provider 层 `exclude-filter` 剔除（`剩余|到期|过期|重置|官网|订阅`）：改词表前先拉 `/providers/proxies` 的真实节点名做命中验证，确认零误伤（真实节点名含“下载”“流媒体”等字样，勿进词表）
@@ -68,7 +69,7 @@ tags: [mihomo, clash-meta, proxy, tun]
 url-test / fallback 组支持 fixed（固定优先节点）：`PUT /proxies/{组名}` body `{"name":"节点名"}` 固定；
 `DELETE /proxies/{组名}` 清除；对组做延迟测试（`GET /group/{组名}/delay`）也会清除 fixed。
 fixed 节点存活时一直使用（不比较延迟），不存活时回退正常逻辑，恢复后自动切回；随 `profile.store-selected` 持久化在 cache.db，重启保留。
-fixed 是组级共享状态：对“日本 - 自动选择”固定会同时影响所有引用它的组（“节点选择”与各分类组）。
+fixed 是组级共享状态：对“🇯🇵 日本 - 自动选择”固定会同时影响所有引用它的组（“🚀 节点选择”与各分类组）。
 
 ### 测速机制：url-test 为何不增加探测流量
 
