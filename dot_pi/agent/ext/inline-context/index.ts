@@ -15,6 +15,12 @@
  *   不碎前缀缓存，每轮刷新方案被否决——dirty 高频变化会对折叠型 API
  *   （collapseSystemMessages 头部重放）每轮打碎全量缓存，过期风险由
  *   行尾快照标注化解
+ * - Jujutsu 标注（2026-10-17）：jj 管理的仓库（colocated）在 Git 行尾追加
+ *   @ change 标注与冲突标记，并提示 git 快照的基准失真——colocated 下
+ *   git HEAD 停在 @-，工作副本改动已被 jj 快照进 @，git status 的
+ *   "未提交"实为相对 git HEAD 的差异；检测与数据一条模板命令拿到
+ *   （escape_json 转义描述），--no-integrate-operation 保证只读（不产生
+ *   快照与操作日志条目，0.41+ 全局 flag）；非 jj 仓库自动省略
  * - 首条消息注入一条极简摘要 message（display: true），TUI 可见一行；
  *   pi ≥1.2 起扩展触发的 custom run（sendMessage triggerTurn，如 goal 自动
  *   续跑）也走 before_agent_start，摘要投递以 messageType === "user" 守卫，
@@ -315,6 +321,14 @@ export interface GitContext {
   info: GitStatus | null;
   ignoredWorktreeDir: string | null;
   snapshot: GitSnapshot | null;
+  jj: JjStatus | null;
+}
+
+// @ 工作副本 change 的轻量状态（colocated 标注用）
+export interface JjStatus {
+  changeId: string; // @ 的短 change ID
+  description: string; // 描述首行（可能为空串）
+  conflict: boolean; // @ 是否含冲突
 }
 
 // 执行 git 命令，失败（非仓库 / 命令不存在）返回 null
@@ -332,6 +346,48 @@ async function runGit(
   } catch {
     return null;
   }
+}
+
+// 执行 jj 命令，失败（非 jj 仓库 / 命令不存在）返回 null
+// --no-integrate-operation：检测调用不快照工作副本、不写操作日志（纯只读）
+async function runJj(cwd: string, args: string[]): Promise<string | null> {
+  try {
+    const { stdout } = await execFileAsync("jj", ["--no-integrate-operation", ...args], {
+      cwd,
+      encoding: "utf8",
+    });
+    return String(stdout).trim();
+  } catch {
+    return null;
+  }
+}
+
+// 检测 jujutsu 管理（colocated 场景），非 jj 仓库返回 null；
+// 描述经 escape_json 转义，按 tab 分列后 JSON.parse 还原（描述可含任意字符）
+export async function detectJjStatus(cwd: string): Promise<JjStatus | null> {
+  const root = await runJj(cwd, ["workspace", "root"]);
+  if (!root) {
+    return null;
+  }
+  const out = await runJj(cwd, [
+    "log",
+    "-r",
+    "@",
+    "--no-graph",
+    "-T",
+    String.raw`change_id.short() ++ "\t" ++ if(conflict, "1", "0") ++ "\t" ++ description.first_line().escape_json()`,
+  ]);
+  if (!out) {
+    return null;
+  }
+  const [changeId = "", conflictFlag = "", escapedDesc = '""'] = out.split("\t");
+  let description = "";
+  try {
+    description = JSON.parse(escapedDesc) as string;
+  } catch {
+    description = "";
+  }
+  return { changeId, description, conflict: conflictFlag === "1" };
 }
 
 // 不在 Git 仓库时返回 null
@@ -476,15 +532,16 @@ export async function detectGitSnapshot(cwd: string): Promise<GitSnapshot> {
 export async function detectGitContext(cwd: string): Promise<GitContext> {
   const info = await detectGitStatus(cwd);
   if (!info) {
-    return { info: null, ignoredWorktreeDir: null, snapshot: null };
+    return { info: null, ignoredWorktreeDir: null, snapshot: null, jj: null };
   }
-  const [ignoredWorktreeDir, snapshot] = await Promise.all([
+  const [ignoredWorktreeDir, snapshot, jj] = await Promise.all([
     (info.branch === "main" || info.branch === "master") && !info.isWorktree && !info.isSubmodule
       ? findIgnoredWorktreeDir(cwd)
       : Promise.resolve(null),
     detectGitSnapshot(cwd),
+    detectJjStatus(cwd),
   ]);
-  return { info, ignoredWorktreeDir, snapshot };
+  return { info, ignoredWorktreeDir, snapshot, jj };
 }
 
 export function formatGitLine(ctx: GitContext): string {
@@ -501,7 +558,7 @@ export function formatGitLine(ctx: GitContext): string {
   } else {
     text = `[Git 状态] 当前位于 Git 仓库（根目录 ${root}，分支 ${branch ?? "detached HEAD"}）。`;
   }
-  if (!branch) {
+  if (!branch && !ctx.jj) {
     text += " 处于 detached HEAD，由外部管理，收尾时需创建分支。";
   }
   if (ignoredWorktreeDir) {
@@ -547,6 +604,12 @@ export function formatGitLine(ctx: GitContext): string {
     if (parts.length > 0) {
       text += ` ${parts.join("；")}。Git 快照为会话启动时状态，操作后以实时命令为准。`;
     }
+  }
+  if (ctx.jj) {
+    const desc = ctx.jj.description || "（无描述）";
+    const conflict = ctx.jj.conflict ? "，存在冲突" : "";
+    const headNote = info.branch ? "" : "；git HEAD detached 在 @- 属 colocated 正常形态";
+    text += ` 仓库由 jujutsu colocated 管理（@ ${ctx.jj.changeId} ${desc}${conflict}${headNote}）；git 侧状态以 git HEAD 为基准，比 jj 工作副本落后一个 change，提交推送用 jj 命令。`;
   }
   return text;
 }
@@ -650,7 +713,9 @@ export function buildSummary(opts: {
     }
   }
   if (git?.info) {
-    parts.push(`git ${basename(git.info.root)}@${git.info.branch ?? "detached"}`);
+    parts.push(
+      `git ${basename(git.info.root)}@${git.info.branch ?? "detached"}${git.jj ? "+jj" : ""}`,
+    );
   } else {
     parts.push("不在 Git 仓库");
   }
