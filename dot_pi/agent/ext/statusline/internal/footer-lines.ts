@@ -1,21 +1,18 @@
 /**
  * 状态栏两行+扩展状态行布局渲染纯库（包内自包含）。
  *
- * 像素级复刻 pi 内置 FooterComponent（1.2.0 components/footer.js）：
- *   行1 pwd 行：目录（~ 化）+ (分支) + • 会话名
- *   行2 stats 行：左侧 ↑↓ R W CH% $费用[(sub)] 上下文%/窗口(auto) [• xp]，
- *                 右侧 (提供商) 模型 • 档位（右对齐）
+ * 布局（自 2026-10 起与内置 FooterComponent 分道的自定义布局）：
+ *   行1 pwd 行：左 目录（~ 化）+ (分支) + • 会话名，
+ *              右 (提供商) 模型 • 档位（自行2右段上移）
+ *   行2 stats 行：左 ↑↓ R W CH% $费用[(sub)] [• xp]，
+ *              右 上下文%/窗口[(auto)]（自行2左段右移，分档色保留）
  *   行3 扩展状态行：ctx.ui.setStatus 的文本（字母序、控制字符清洗、单行截断）
  * 配色点缀（与内置的差异）：各行元素按语义取主题色（内置统一 dim 仅
- * ctx%/xp 分档上色）；复刻范围内元素、顺序、分隔符与内置逐一对应。
+ * ctx%/xp 分档上色）。
  *
- * 内置有而本版省略（数据源扩展侧不可达，经确认接受）：
- *   右侧虚拟模型路由显示（session.routedModel）、(sub) 的
- *   isUsingSubscription 半边（保留 kimi-coding 静态判断）。
- *
- * 宽度降级与内置逐条同款：
- *   左段超宽 → 截断（... 兜底）；provider 括号最先丢（多提供商且空间
- *   不足时）；仍超宽 → 右段按剩余空间截断；剩余不足 → 只显示左段。
+ * 宽度降级（两行同款思路）：
+ *   左段超宽 → 截断（... 兜底）；行1右段空间不足 → provider 括号最先丢；
+ *   仍超宽 → 右段按剩余空间截断；剩余不足 → 只显示左段。
  *
  * formatTokens / formatCwdForFooter / sanitizeStatusText 为内置同逻辑
  * 副本（未从包入口导出，家规"自备副本"）。
@@ -121,12 +118,76 @@ function contextColorToken(percentValue: number): string {
   return percentValue > 70 ? "warning" : "dim";
 }
 
-/** 行1 pwd：目录 + (分支) + • 会话名 */
+/** 左段 + 补齐 + 右对齐右段；右段超宽按剩余空间截断，剩余不足只显示左段 */
+function joinTwoSides(left: string, right: string, width: number): string {
+  const leftWidth = visibleWidth(left);
+  const rightWidth = visibleWidth(right);
+  const minPadding = 2;
+  if (leftWidth + minPadding + rightWidth <= width) {
+    return left + " ".repeat(width - leftWidth - rightWidth) + right;
+  }
+  const availableForRight = width - leftWidth - minPadding;
+  if (availableForRight <= 0) {
+    return left;
+  }
+  const rightFinal = truncateToWidth(right, availableForRight, "");
+  const padding = " ".repeat(Math.max(0, width - leftWidth - visibleWidth(rightFinal)));
+  return left + padding + rightFinal;
+}
+
+/** 行1 右段文本：(提供商) 模型 • 档位（自行2右段上移） */
+function rightSideText(deps: FooterDeps, withProvider: boolean): string {
+  const { modelId, provider, providerCount, thinkingLevel } = deps;
+  let rightSide = modelId ?? "no-model";
+  if (thinkingLevel && thinkingLevel !== "off") {
+    rightSide = `${rightSide} • ${thinkingLevel}`;
+  }
+  if (withProvider && provider && providerCount > 1) {
+    return `(${provider}) ${rightSide}`;
+  }
+  return rightSide;
+}
+
+/** 右段点缀色：provider 括号 dim、model 用 text、档位用 thinkingXhigh；截断后 prefix 不完整时自然降级 */
+function colorizeRightSide(deps: FooterDeps, rightFinal: string): string {
+  const { fg, provider } = deps;
+  const providerPrefix =
+    provider && rightFinal.startsWith(`(${provider}) `) ? `(${provider}) ` : "";
+  const body = rightFinal.slice(providerPrefix.length);
+  const bulletAt = body.indexOf(" • ");
+  const modelPart = bulletAt !== -1 ? body.slice(0, bulletAt) : body;
+  const levelPart = bulletAt !== -1 ? body.slice(bulletAt + 3) : "";
+  return (
+    (providerPrefix ? fg("dim", providerPrefix) : "") +
+    fg("text", modelPart) +
+    (levelPart ? fg("dim", " • ") + fg("thinkingXhigh", levelPart) : "")
+  );
+}
+
+/** 行1 pwd：左 目录 (分支) • 会话名 + 右 (提供商) 模型 • 档位 */
 function buildPwdLine(deps: FooterDeps, width: number): string {
   const { fg, cwdDisplay, branch, sessionName } = deps;
   const branchPart = branch ? ` ${fg("accent", `(${branch})`)}` : "";
   const sessionPart = sessionName ? ` ${fg("muted", `• ${sessionName}`)}` : "";
-  return truncateToWidth(`${cwdDisplay}${branchPart}${sessionPart}`, width, fg("dim", "..."));
+  const left = truncateToWidth(`${cwdDisplay}${branchPart}${sessionPart}`, width, fg("dim", "..."));
+  const leftWidth = visibleWidth(left);
+  const minPadding = 2;
+
+  const full = rightSideText(deps, true);
+  const bare = rightSideText(deps, false);
+  const fitsFull = leftWidth + minPadding + visibleWidth(full) <= width;
+  const chosen = fitsFull ? full : bare;
+
+  const availableForRight = width - leftWidth - minPadding;
+  if (availableForRight <= 0 || visibleWidth(chosen) === 0) {
+    return left;
+  }
+  const rightFinal =
+    visibleWidth(chosen) <= availableForRight
+      ? chosen
+      : truncateToWidth(chosen, availableForRight, "");
+  const padding = " ".repeat(Math.max(0, width - leftWidth - visibleWidth(rightFinal)));
+  return left + padding + colorizeRightSide(deps, rightFinal);
 }
 
 /** 左段 usage 计数部分：↑↓ R W CH% $费用[(sub)] */
@@ -154,19 +215,10 @@ function buildUsageParts(deps: FooterDeps): string[] {
   return parts;
 }
 
-/** 行2 左段：usage 计数部分 + 上下文%/窗口[(auto)] + [• xp] */
+/** 行2 左段：usage 计数部分 + [• xp]（上下文段已右移） */
 function buildStatsLeft(deps: FooterDeps, width: number): string {
-  const { fg, bold, contextUsage, autoCompactEnabled, experimentalEnabled } = deps;
+  const { fg, bold, experimentalEnabled } = deps;
   const parts = buildUsageParts(deps);
-  const percentValue = contextUsage?.percent ?? 0;
-  const windowText = formatTokens(contextUsage?.contextWindow ?? 0);
-  const autoIndicator = autoCompactEnabled ? " (auto)" : "";
-  parts.push(
-    fg(
-      contextColorToken(percentValue),
-      `${contextPercentText(contextUsage)}%/${windowText}${autoIndicator}`,
-    ),
-  );
   if (experimentalEnabled) {
     parts.push(`${fg("dim", "•")} ${bold(fg("warning", "xp"))}`);
   }
@@ -177,57 +229,22 @@ function buildStatsLeft(deps: FooterDeps, width: number): string {
   return statsLeft;
 }
 
-/** 行2 右段文本：(提供商) 模型 • 档位；空间不足时 provider 括号最先丢（内置同款） */
-function rightSideText(deps: FooterDeps, statsLeftWidth: number, width: number): string {
-  const { modelId, provider, providerCount, thinkingLevel } = deps;
-  let rightSide = modelId ?? "no-model";
-  if (thinkingLevel && thinkingLevel !== "off") {
-    rightSide = `${rightSide} • ${thinkingLevel}`;
-  }
-  if (provider && providerCount > 1) {
-    const withProvider = `(${provider}) ${rightSide}`;
-    if (statsLeftWidth + 2 + visibleWidth(withProvider) <= width) {
-      return withProvider;
-    }
-  }
-  return rightSide;
-}
-
-/** 右段点缀色：provider 括号 dim、model 用 text、档位用 thinkingXhigh；截断后 prefix 不完整时自然降级 */
-function colorizeRightSide(deps: FooterDeps, rightFinal: string): string {
-  const { fg, provider } = deps;
-  const providerPrefix =
-    provider && rightFinal.startsWith(`(${provider}) `) ? `(${provider}) ` : "";
-  const body = rightFinal.slice(providerPrefix.length);
-  const bulletAt = body.indexOf(" • ");
-  const modelPart = bulletAt !== -1 ? body.slice(0, bulletAt) : body;
-  const levelPart = bulletAt !== -1 ? body.slice(bulletAt + 3) : "";
-  return (
-    (providerPrefix ? fg("dim", providerPrefix) : "") +
-    fg("text", modelPart) +
-    (levelPart ? fg("dim", " • ") + fg("thinkingXhigh", levelPart) : "")
+/** 行2 右段：上下文%/窗口[(auto)]，分档色（自行2左段右移） */
+function buildContextSegment(deps: FooterDeps): string {
+  const { fg, contextUsage, autoCompactEnabled } = deps;
+  const percentValue = contextUsage?.percent ?? 0;
+  const windowText = formatTokens(contextUsage?.contextWindow ?? 0);
+  const autoIndicator = autoCompactEnabled ? " (auto)" : "";
+  return fg(
+    contextColorToken(percentValue),
+    `${contextPercentText(contextUsage)}%/${windowText}${autoIndicator}`,
   );
 }
 
-/** 行2 stats 整行：左段 + 补齐 + 右对齐右段（降级链见文件头） */
+/** 行2 stats：左 usage 计数 [• xp] + 右 上下文%/窗口[(auto)] */
 function buildStatsLine(deps: FooterDeps, width: number): string {
-  const statsLeft = buildStatsLeft(deps, width);
-  const statsLeftWidth = visibleWidth(statsLeft);
-  const rightSide = rightSideText(deps, statsLeftWidth, width);
-  const rightSideWidth = visibleWidth(rightSide);
-  const minPadding = 2;
-
-  if (statsLeftWidth + minPadding + rightSideWidth <= width) {
-    const padding = " ".repeat(width - statsLeftWidth - rightSideWidth);
-    return statsLeft + padding + colorizeRightSide(deps, rightSide);
-  }
-  const availableForRight = width - statsLeftWidth - minPadding;
-  if (availableForRight <= 0) {
-    return statsLeft;
-  }
-  const rightFinal = truncateToWidth(rightSide, availableForRight, "");
-  const padding = " ".repeat(Math.max(0, width - statsLeftWidth - visibleWidth(rightFinal)));
-  return statsLeft + padding + colorizeRightSide(deps, rightFinal);
+  const left = buildStatsLeft(deps, width);
+  return joinTwoSides(left, buildContextSegment(deps), width);
 }
 
 /** 行3 扩展状态行：setStatus 文本按键字母序拼单行，截断带 dim 兜底（无状态时不产出行） */
