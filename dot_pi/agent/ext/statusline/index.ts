@@ -109,15 +109,30 @@ const speed = createStreamSpeed();
 
 const THEME_KEY = Symbol.for("@earendil-works/pi-coding-agent:theme");
 
-function speedBorderText(): string | undefined {
-  const raw = formatSpeedText(speed.snapshot());
-  if (raw === undefined) {
-    return undefined;
+const SPEED_REFRESH_MS = 1000;
+/** 每帧渲染都会取速度文本，1s 节流让数字每秒跳一次（经确认）；
+ * streaming 状态翻转时立即刷新（回合结束 1s 段不拖延消失） */
+const speedTextCache: { text: string | undefined; at: number; streaming: boolean } = {
+  text: undefined,
+  at: 0,
+  streaming: false,
+};
+
+function speedBorderText(now = Date.now()): string | undefined {
+  const snapshot = speed.snapshot(now);
+  const stateFlipped = snapshot.streaming !== speedTextCache.streaming;
+  if (!stateFlipped && now - speedTextCache.at < SPEED_REFRESH_MS) {
+    return speedTextCache.text;
   }
+  const raw = formatSpeedText(snapshot);
   const theme = (globalThis as unknown as Record<symbol, unknown>)[THEME_KEY] as
     | { fg?: (token: string, text: string) => string }
     | undefined;
-  return typeof theme?.fg === "function" ? theme.fg("dim", raw) : raw;
+  speedTextCache.text =
+    typeof theme?.fg === "function" && raw !== undefined ? theme.fg("dim", raw) : raw;
+  speedTextCache.at = now;
+  speedTextCache.streaming = snapshot.streaming;
+  return speedTextCache.text;
 }
 
 // 下边框 patch（pi 无下边框定制钩子；装卸管理与 reload 幂等同 thinking-flow）
@@ -372,6 +387,16 @@ export default function statusline(pi: ExtensionAPI): void {
     if (event.message.role === "assistant") {
       speed.onAssistantDone(event.message.usage?.output);
     }
+  });
+  pi.on("agent_end", (_event, ctx) => {
+    // 回合收尾后补一帧重绘：message_end 已把速度切到「保留平均」态，
+    // 但若此后再无渲染帧，下边框会冻结在流式末帧（1s 段残留）。
+    // 此刻必然 idle，setWorkingVisible(true) 仅触发 requestRender
+    setTimeout(() => {
+      if (ctx.isIdle()) {
+        ctx.ui.setWorkingVisible(true);
+      }
+    }, 100);
   });
 
   pi.registerCommand("statusline", {
