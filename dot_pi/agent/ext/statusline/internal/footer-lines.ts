@@ -190,28 +190,18 @@ function buildPwdLine(deps: FooterDeps, width: number): string {
   return left + padding + colorizeRightSide(deps, rightFinal);
 }
 
-/** 左段 usage 计数部分：↑↓ R W CH% $费用[(sub)] */
+/** 左段 usage 计数部分：↑↓ R W CH% $费用[(sub)]；零值也显示（新对话不空，经确认） */
 function buildUsageParts(deps: FooterDeps): string[] {
   const { fg, usage, cacheHitRate, usingSubscription } = deps;
-  const parts: string[] = [];
-  if (usage.input) {
-    parts.push(`↑${formatTokens(usage.input)}`);
-  }
-  if (usage.output) {
-    parts.push(`↓${formatTokens(usage.output)}`);
-  }
-  if (usage.cacheRead) {
-    parts.push(`R${formatTokens(usage.cacheRead)}`);
-  }
-  if (usage.cacheWrite) {
-    parts.push(`W${formatTokens(usage.cacheWrite)}`);
-  }
-  if ((usage.cacheRead > 0 || usage.cacheWrite > 0) && cacheHitRate !== undefined) {
-    parts.push(`CH${cacheHitRate.toFixed(1)}%`);
-  }
-  if (usage.cost || usingSubscription) {
-    parts.push(fg("success", `$${usage.cost.toFixed(3)}${usingSubscription ? " (sub)" : ""}`));
-  }
+  const parts: string[] = [
+    `↑${formatTokens(usage.input)}`,
+    `↓${formatTokens(usage.output)}`,
+    `R${formatTokens(usage.cacheRead)}`,
+    `W${formatTokens(usage.cacheWrite)}`,
+    `CH${(cacheHitRate ?? 0).toFixed(1)}%`,
+  ];
+  const subSuffix = usingSubscription ? " (sub)" : "";
+  parts.push(fg("success", `$${usage.cost.toFixed(3)}${subSuffix}`));
   return parts;
 }
 
