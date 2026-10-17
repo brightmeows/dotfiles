@@ -8,6 +8,8 @@
  * - override：内置单块点击 toggle（MouseRegion），优先级最高
  * - hideThinkingBlock：true 时全量展示（expanded 态，语义已反转，见
  *   index.ts 头注释）；false 时进入 flow 态，仅进行中 run 显示
+ * - expanded 渲染带上下双标题行；流式进行中的块（runIndex === activeIndex）
+ *   仅上方标题，避免统计随流式增长时上下两行同步跳动
  *
  * 渲染等价性（与 pi 1.2.0 assistant-message.js 对照）：
  * - segments 预扫合并连续 thinking 块（join "\n\n"），text 打断；
@@ -146,7 +148,7 @@ function hasRequiredShape(instance: unknown): instance is PatchedThis {
 
 // 思考块渲染
 
-function renderExpandedThinking(text: string, self: PatchedThis): Component {
+function renderExpandedThinking(text: string, self: PatchedThis, showFooter: boolean): Component {
   const section = new Container();
   const theme = getTheme();
   section.addChild(
@@ -166,6 +168,14 @@ function renderExpandedThinking(text: string, self: PatchedThis): Component {
       ),
     }),
   );
+
+  // 流式进行中的块（runIndex === activeIndex）不加下方标题：
+  // 统计随流式增长，上下两行同步跳动视觉噪
+  if (showFooter) {
+    section.addChild(
+      renderThinkingHeader(text, self.outputPad, { hint: HINT_COLLAPSE, chevron: true }),
+    );
+  }
   return section;
 }
 
@@ -195,7 +205,7 @@ function renderThinkingRun(self: PatchedThis, run: ThinkingRunContext): Componen
   const override = self.thinkingVisibilityOverrides.get(runIndex);
   const visible = override ?? (self.hideThinkingBlock || runIndex === activeIndex);
   const inner = visible
-    ? renderExpandedThinking(run.text, self)
+    ? renderExpandedThinking(run.text, self, runIndex !== activeIndex)
     : renderThinkingHeader(run.text, self.outputPad, { hint: HINT_EXPAND, chevron: true });
   return new MouseRegion(inner, (event) => {
     if (event.type !== "click" || event.button !== "left") {

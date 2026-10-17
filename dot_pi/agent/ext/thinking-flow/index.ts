@@ -16,8 +16,9 @@
  * │    随主题自动适配
  * │  鼠标点击占位/展开块：单块 toggle（内置 overrides 机制保留）
  * └ expanded 态（hideThinkingBlock === true，ctrl+t 切换）
- *    全部 thinking run 完整渲染 + 同款标题（> 前缀同构，动作提示
- *    为“点击收起”）与斜体正文
+ *    全部 thinking run 完整渲染 + 上下双标题行（同构，展开态动作提示
+ *    为“点击收起”，点击任一行等效收起）与斜体正文；流式进行中的块
+ *    仅上方标题（统计实时跳动，下方再渲染一行会双重抖动）
  *
  * 模式语义（对内置的接管，以本注释为准）：
  * - 内置 hideThinkingBlock 语义是"隐藏 thinking"（true = 全部收起占位）；
