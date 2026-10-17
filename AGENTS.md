@@ -78,6 +78,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | [`docs/Edge与Firefox书签合并经验.md`](docs/Edge与Firefox书签合并经验.md) | Edge 与 Firefox 书签合并：同步引擎与文件层两套真相、去重映射与两地手术 |
 | [`docs/lark-cli技能环境与维护记录.md`](docs/lark-cli技能环境与维护记录.md) | lark-cli 技能环境：安装来源差异、版本对齐与 skills CLI 已知 bug |
 | [`docs/terra-mesa-setup.md`](docs/terra-mesa-setup.md) | terra-mesa 硬件解码部署记录（Fedora Kinoite、AMD Ryzen 5 5500U） |
+| [`docs/omarchy-monitors-lua-除管记录.md`](docs/omarchy-monitors-lua-除管记录.md) | Omarchy 缩放切档器就地改写 monitors.lua 与 chezmoi 的主权冲突：证据链、除管裁决、政策承接与恢复方法 |
 | [`docs/jujutsu-migration.md`](docs/jujutsu-migration.md) | Jujutsu 试验记录与回退：特性谱系、混用边界与失效模式速查（供将来重用参考） |
 
 ## 边界规则
