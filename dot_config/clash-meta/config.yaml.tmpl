@@ -289,17 +289,18 @@ proxy-groups:
   - { name: ⚡ {{ $name }} - 手动选择, type: select, use: [{{ $name }}] }
 {{- end }}
 
-  # 域名分流组（默认随“🚀 节点选择”，可按网站单独指定订阅或地区出口）
-  - { name: 🤖 AI, type: select, proxies: *DomainGroupMembers }
-  - { name: ✈️ Telegram, type: select, proxies: *DomainGroupMembers }
-  - { name: 🎬 流媒体与下载, type: select, proxies: *DomainGroupMembers }
-  - { name: 🎵 BMS, type: select, proxies: *DomainGroupMembers }
-
   # 地区自动/手动选择（跨订阅汇入；自动组与 provider 健康检查共用 gstatic URL，零额外测速）
 {{- range $r := $regions }}
   - { name: {{ $r.emoji }} {{ $r.name }} - 自动选择, type: url-test, include-all: true, filter: *{{ $r.filter }}, url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 100 }
   - { name: {{ $r.emoji }} {{ $r.name }} - 手动选择, type: select, include-all: true, filter: *{{ $r.filter }} }
 {{- end }}
+
+  # 域名分流组（默认随“🚀 节点选择”，可按网站单独指定订阅或地区出口）
+  # 定义在地区组之后：面板组顺序由配置定义顺序决定，保持“订阅源、地区、领域”三段
+  - { name: 🤖 AI, type: select, proxies: *DomainGroupMembers }
+  - { name: ✈️ Telegram, type: select, proxies: *DomainGroupMembers }
+  - { name: 🎬 流媒体与下载, type: select, proxies: *DomainGroupMembers }
+  - { name: 🎵 BMS, type: select, proxies: *DomainGroupMembers }
 
 ### 规则配置
 RuleSet_classical:

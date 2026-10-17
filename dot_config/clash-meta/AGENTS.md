@@ -57,6 +57,7 @@ tags: [mihomo, clash-meta, proxy, tun]
 维护约定：
 
 - 地区列表由模板 `$regions`（名称 + emoji + filter anchor）一处定义，循环生成 14 个地区组与两处成员列表；新增地区只改 `$regions`
+- 面板组顺序 = 配置里 `proxy-groups` 的定义顺序（metacubexd 以 `GLOBAL.all` 为索引排序）：保持“订阅源、地区、领域”三段，新增组按归属插到对应段内
 - 订阅级组用 `use: [<订阅名>]` 精确引用各自 provider；地区组用 `include-all + filter` 跨订阅汇入
 - 自动组 `url` 必须与 provider 健康检查 URL 一致（gstatic）：相同 URL 共享测速、不注册额外检查任务；改成其它 URL 会让每轮健康检查对同批节点多测一遍
 - 信息类假节点在 provider 层 `exclude-filter` 剔除（`剩余|到期|过期|重置|官网|订阅`）：改词表前先拉 `/providers/proxies` 的真实节点名做命中验证，确认零误伤（真实节点名含“下载”“流媒体”等字样，勿进词表）
