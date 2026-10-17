@@ -1,13 +1,26 @@
 {{- /*
   mihomo (clash-meta) 配置模板。
-  静态主体搬运自 MiyakoMeow/nixos-config（curl raw 保留精确缩进），改动三处：
+  静态主体搬运自 MiyakoMeow/nixos-config（curl raw 保留精确缩进），相对上游的改动：
     1. 移除原硬编码私人订阅（Node），proxy-providers 改为下方模板循环
     2. dns.listen 注释（避开 systemd-resolved 抢占 53，靠 tun dns-hijack 接管）
     3. proxy-providers 由 ~/.env_self 的 *_SUBSCRIPTION 合法 http(s) URL 自动注入
+    4. 策略组重写为订阅级自动/手动选择 + 域名分流组（原地区手动组保留）
+    5. 信息类假节点由 provider 层 exclude-filter 统一剔除
   渲染产物含明文订阅 URL，仅落在 $HOME（~/.config/clash-meta/config.yaml），不进 git。
 */ -}}
 {{- /* 用 bash 的 $HOME（chezmoi 执行命令时继承），不依赖 .chezmoi.homedir 变量（该 key 不存在） */ -}}
 {{- $subs := output "bash" "-c" "set -a; . $HOME/.env_self 2>/dev/null; env | grep '_SUBSCRIPTION=' || true" | splitList "\n" -}}
+{{- /* 物化订阅名列表（变量名去掉 _SUBSCRIPTION 后缀）：策略组生成统一消费，避免模板逻辑再复制一份 */ -}}
+{{- $subNames := list }}
+{{- range $sub := $subs }}
+{{- $kv := splitList "=" $sub }}
+{{- if ge (len $kv) 2 }}
+{{- $url := join "=" (rest $kv) }}
+{{- if and (ne (trim $url) "") (or (hasPrefix "http://" $url) (hasPrefix "https://" $url)) }}
+{{- $subNames = append $subNames (trimSuffix "_SUBSCRIPTION" (index $kv 0)) }}
+{{- end }}
+{{- end }}
+{{- end }}
 external-controller: "127.0.0.1:9090"
 external-ui: ./ui
 external-ui-name: metacubexd
@@ -178,6 +191,9 @@ NodeParam:
   &NodeParam {
     type: http,
     interval: 86400,
+    # 信息类假节点（剩余流量/套餐到期/官网公告等）在 provider 层统一剔除：不是可用出口，
+    # 混进手动组会被误选、也白耗健康检查连接；词表按两家机场实测节点名定稿，零误伤
+    exclude-filter: "剩余|到期|过期|重置|官网|订阅",
     health-check:
       {
         enable: true,
@@ -216,20 +232,35 @@ FilterUS: &FilterUS '^(?=.*((?i)🇺🇸|美国|波特兰|达拉斯|俄勒冈|�
 FilterUK: &FilterUK '^(?=.*((?i)🇬🇧|英国|伦敦|\b(UK|United Kingdom)(\d+)?\b))(?!.*((?i)回国|校园|网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$'
 FilterFR: &FilterFR '^(?=.*((?i)🇫🇷|法国|\b(FR|France)(\d+)?\b))(?!.*((?i)回国|校园|网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$'
 FilterDE: &FilterDE '^(?=.*((?i)🇩🇪|德国|\b(DE|Germany)(\d+)?\b))(?!.*((?i)回国|校园|网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$'
-# 特意保留现状：未含“剩余/过期/时间”等信息节点排除项（对比其它地区 filter 都有负向 lookahead）
-# 已知副作用：手动选中信息类条目（如“剩余流量:100GB”“过期时间”）会连接失败，仅影响显式手动选择
-# 若日后要排除，给本 filter 追加与 FilterHK 相同的 (?!.*回国|校园|...) 负向 lookahead 段即可
+# 负向 lookahead 只列已知地区词：信息类假节点已在 provider 层 exclude-filter 统一剔除，
+# 不再依赖各 filter 的排除段兜底（地区 filter 里的“回国/校园”排除仍用于特殊线路归类）
 FilterOthers: &FilterOthers "^(?!.*(🇭🇰|HK|Hong|香港|🇹🇼|TW|Taiwan|Wan|台湾|🇯🇵|JP|Japan|日本|🇸🇬|SG|Singapore|狮城|新加坡|🇺🇸|US|United States|America|美国|🇩🇪|DE|Germany|德国|🇬🇧|UK|United Kingdom|英国|🇰🇷|KR|Korea|韩国|韓|🇫🇷|FR|France|法国)).*$"
 ### 策略组
-# 特意全手动（type: select），不设 url-test/fallback 自动组：偏好显式控制节点选择，
-# 避免自动测速组在节点波动时频繁切换导致出口 IP 漂移（影响需要稳定 IP 的会话场景）
-# 副作用：当前节点故障时需手动切换，不会自动 fallback；可接受
+# 顶层“节点选择”是全部规则的默认出口，成员 = 订阅级自动/手动组 + 地区手动组 + DIRECT：
+#   - 自动选择——X（url-test）：与 provider 健康检查共用 gstatic 测试 URL，共享同一份测速结果，
+#     不产生额外探测流量；tolerance 100ms 抑制出口 IP 漂移
+#     面板上可对自动组固定优先节点（fixed）：固定节点存活时一直用它，故障自动回退延迟择优
+#   - 手动选择——X（select）：显式指定该订阅内的节点
+# 信息类假节点已在 provider 层 exclude-filter 剔除，组内不再出现
 
-# 顶层：选择地区
+# 域名分流组成员（各分类组共用）：默认随“节点选择”，可在面板单独指定出口
+DomainGroupMembers: &DomainGroupMembers
+  - 节点选择
+{{- range $name := $subNames }}
+  - 自动选择——{{ $name }}
+  - 手动选择——{{ $name }}
+{{- end }}
+  - DIRECT
+
+# 顶层：选择订阅 / 地区 / 直连
 proxy-groups:
   - name: 节点选择
     type: select
     proxies:
+{{- range $name := $subNames }}
+      - 自动选择——{{ $name }}
+      - 手动选择——{{ $name }}
+{{- end }}
       - 香港 - 手动选择
       - 台湾 - 手动选择
       - 韩国 - 手动选择
@@ -238,6 +269,18 @@ proxy-groups:
       - 美国 - 手动选择
       - 其它 - 手动选择
       - DIRECT
+
+  # 订阅级自动/手动选择（use 精确引用各自订阅，不混入其它订阅节点）
+{{- range $name := $subNames }}
+  - { name: 自动选择——{{ $name }}, type: url-test, use: [{{ $name }}], url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 100 }
+  - { name: 手动选择——{{ $name }}, type: select, use: [{{ $name }}] }
+{{- end }}
+
+  # 域名分流组（默认随“节点选择”，行为与改造前一致）
+  - { name: AI, type: select, proxies: *DomainGroupMembers }
+  - { name: Telegram, type: select, proxies: *DomainGroupMembers }
+  - { name: 流媒体与下载, type: select, proxies: *DomainGroupMembers }
+  - { name: BMS, type: select, proxies: *DomainGroupMembers }
 
   # 地区手动选择
   - { name: 香港 - 手动选择, type: select, include-all: true, filter: *FilterHK }
@@ -430,6 +473,9 @@ rules:
   # 须置于 global_non_ip 等 RULE-SET 之前，防止 rustdesk.com 被全局列表先匹配到节点
   - DOMAIN-SUFFIX,rustdesk.com,DIRECT
 
+  # BMS 谱面站（manbow.nothing.sh）：日本源站、谱面包下载场景，独立出口组便于指定节点
+  - DOMAIN-SUFFIX,manbow.nothing.sh,BMS
+
   ### 非 IP 类规则
   - RULE-SET,reject_non_ip,REJECT
   - RULE-SET,reject_domainset,REJECT
@@ -437,16 +483,16 @@ rules:
   - RULE-SET,reject_non_ip_no_drop,REJECT
   - RULE-SET,cdn_domainset,节点选择
   - RULE-SET,cdn_non_ip,节点选择
-  - RULE-SET,stream_non_ip,节点选择
-  - RULE-SET,telegram_non_ip,节点选择
+  - RULE-SET,stream_non_ip,流媒体与下载
+  - RULE-SET,telegram_non_ip,Telegram
   - RULE-SET,apple_cdn,DIRECT
-  - RULE-SET,download_domainset,节点选择
-  - RULE-SET,download_non_ip,节点选择
+  - RULE-SET,download_domainset,流媒体与下载
+  - RULE-SET,download_non_ip,流媒体与下载
   - RULE-SET,microsoft_cdn_non_ip,DIRECT
   - RULE-SET,apple_cn_non_ip,DIRECT
   - RULE-SET,apple_services,节点选择
   - RULE-SET,microsoft_non_ip,节点选择
-  - RULE-SET,ai_non_ip,节点选择
+  - RULE-SET,ai_non_ip,AI
   - RULE-SET,global_non_ip,节点选择
   - RULE-SET,domestic_non_ip,DIRECT
   - RULE-SET,direct_non_ip,DIRECT
@@ -454,8 +500,8 @@ rules:
 
   ### IP 类规则
   - RULE-SET,reject_ip,REJECT
-  - RULE-SET,telegram_ip,节点选择
-  - RULE-SET,stream_ip,节点选择
+  - RULE-SET,telegram_ip,Telegram
+  - RULE-SET,stream_ip,流媒体与下载
   - RULE-SET,lan_ip,DIRECT
   - RULE-SET,domestic_ip,DIRECT
   - RULE-SET,china_ip,DIRECT

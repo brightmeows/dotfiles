@@ -27,7 +27,22 @@ PEIQIANJICHANG_SUBSCRIPTION=   # 空值会被自动跳过
 
 - provider 名 = 变量名去掉 `_SUBSCRIPTION` 后缀（如 `AKKCLOUD`、`AKKCLOUD_VLESS`）
 - 节点缓存路径 = `./proxy_provider/<name 小写>.yaml`（相对 mihomo 工作目录 `/var/lib/clash-meta`）
-- `proxy-groups` 无需手动改：所有地区组用 `include-all: true` + 地区正则 filter 自动汇入全部 provider 节点
+- 信息类假节点（“剩余流量：xxx”“套餐到期：xxx”等）由 provider 层 `exclude-filter` 统一剔除，不出现在任何策略组
+- `proxy-groups` 无需手动改：订阅级自动/手动组按订阅名自动生成，地区组用 `include-all: true` + 地区正则 filter 自动汇入全部 provider 节点
+
+## 策略组与节点选择
+
+“节点选择”是全部规则的默认出口，成员分三类：
+
+| 成员 | 类型 | 说明 |
+|---|---|---|
+| `自动选择——<订阅名>` | url-test | 订阅内延迟最低的节点（tolerance 100ms 抑制切换抖动）；与 provider 健康检查共用 gstatic 测试 URL，不产生额外探测流量 |
+| `手动选择——<订阅名>` | select | 显式指定该订阅内的节点 |
+| `<地区> - 手动选择` | select | 跨订阅按地区筛选（香港/台湾/韩国/日本/新加坡/美国/其它） |
+
+**固定优先节点（fixed）**：在面板（metacubexd）对“自动选择——X”点选某个节点即固定，固定节点存活期间一直使用，故障自动回退延迟择优，恢复后自动切回；再点一次或对组执行测速可解除。选择随 `profile.store-selected` 持久化，重启保留。
+
+域名分流组（`AI`、`Telegram`、`流媒体与下载`、`BMS`）默认跟随“节点选择”，可在面板单独指定出口；对应规则集见 `config.yaml.tmpl` 的 `rules` 段。
 
 ## 部署步骤
 

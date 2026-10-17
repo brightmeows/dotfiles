@@ -29,22 +29,46 @@ tags: [mihomo, clash-meta, proxy, tun]
 
 下文凡提 `/var/lib/clash-meta`（如 `PUT /configs` path 模式安全限制），Arch 上对应 `/etc/mihomo`。
 
-## 订阅注入：三处模板必须同步
+## 订阅注入：消费点必须同步
 
-订阅来自 `~/.env_self` 的 `*_SUBSCRIPTION` 变量。`config.yaml.tmpl` 开头用 `output` 提取为 `$subs`，下列三处**共同消费 `$subs`**，改一处必须同步其余两处：
+订阅来自 `~/.env_self` 的 `*_SUBSCRIPTION` 变量。`config.yaml.tmpl` 开头用 `output` 提取为 `$subs`，并物化 `$subNames`（合法条目的变量名，供策略组生成消费）。下列位置共同消费订阅列表，改提取/过滤逻辑必须同步：
 
-| 位置 | 作用 | 缺失的后果 |
-|---|---|---|
-| `proxy-providers` | 生成 provider 条目 | 无节点来源 |
-| `rules` 头部 `DOMAIN,host,DIRECT` | 订阅域名直连 | 连接死锁：下载订阅走 MATCH→节点→无节点 |
-| `dns.nameserver-policy` | 订阅域名用国内 DoH | DNS 死锁：解析境外 IP 触发 fallback→走节点→无节点 |
+| 位置 | 消费 | 作用 | 缺失的后果 |
+|---|---|---|---|
+| `proxy-providers` | `$subs` | 生成 provider 条目 | 无节点来源 |
+| `proxy-groups` | `$subNames` | 生成订阅级自动/手动组与“节点选择”成员 | 订阅组缺失，入口无订阅可选 |
+| `rules` 头部 `DOMAIN,host,DIRECT` | `$subs` | 订阅域名直连 | 连接死锁：下载订阅走 MATCH→节点→无节点 |
+| `dns.nameserver-policy` | `$subs` | 订阅域名用国内 DoH | DNS 死锁：解析境外 IP 触发 fallback→走节点→无节点 |
 
 域名提取统一用 `urlParse $url | .host`。`nameserver-policy` 是 mapping，须用 `dict` / `hasKey` 去重
 （同一域名多个订阅会生成重复 key 导致 mihomo 报错）。`rules` 头部 `DOMAIN,host,DIRECT` 现在同样使用
 `dict` / `hasKey` 去重（与 nameserver-policy 一致的 `$seen` dict 模式，但 rules 是序列而非 mapping，
 去重目的是消除冗余规则而非避免报错）。
 
+## 策略组结构
+
+“节点选择”（select，全部规则的默认出口）成员 = 订阅级自动/手动组（按 `$subNames` 生成，自动在前）+ 7 个地区组 + DIRECT。
+域名分流组 `AI` / `Telegram` / `流媒体与下载` / `BMS` 共用 `&DomainGroupMembers` 锚（节点选择 + 全部订阅组 + DIRECT），默认随“节点选择”，分别承接 `ai_non_ip`、`telegram_*`、`stream_*` + `download_*` 与 `manbow.nothing.sh` 规则。
+
+维护约定：
+
+- 订阅级组用 `use: [<订阅名>]` 精确引用各自 provider；地区组保留 `include-all + filter` 跨订阅汇入
+- 自动组 `url` 必须与 provider 健康检查 URL 一致（gstatic）：相同 URL 共享测速、不注册额外检查任务；改成其它 URL 会让每轮健康检查对同批节点多测一遍
+- 信息类假节点在 provider 层 `exclude-filter` 剔除（`剩余|到期|过期|重置|官网|订阅`）：改词表前先拉 `/providers/proxies` 的真实节点名做命中验证，确认零误伤（真实节点名含“下载”“流媒体”等字样，勿进词表）
+
 ## 踩坑点
+
+### 自动组固定节点（fixed）与其解除
+
+url-test / fallback 组支持 fixed（固定优先节点）：`PUT /proxies/{组名}` body `{"name":"节点名"}` 固定；
+`DELETE /proxies/{组名}` 清除；对组做延迟测试（`GET /group/{组名}/delay`）也会清除 fixed。
+fixed 节点存活时一直使用（不比较延迟），不存活时回退正常逻辑，恢复后自动切回；随 `profile.store-selected` 持久化在 cache.db，重启保留。
+
+### 测速机制：url-test 为何不增加探测流量
+
+mihomo 无 ICMP 测速，组延迟与 provider 健康检查都是 HTTP GET 到 `url`（gstatic），数值含 TCP/TLS 握手。
+`use: [provider]` 的组不自行调度测速：创建时把组 `url` 注册给 provider 健康检查（与 provider URL 相同则忽略，不同则每轮多测一套并按组 filter 限定成员）。
+provider 每 `interval` 全量测速，`lazy: true`（默认）时一个周期内无流量经过则跳过；`tolerance` 只影响切换频率、不减少探测。
 
 ### 抓取 yaml 参考必须 curl，禁用 web_fetch
 
@@ -163,7 +187,7 @@ curl -s http://127.0.0.1:9090/proxies | python3 -c "import json,sys;d=json.load(
 
 ### Always
 
-- 改订阅注入逻辑时，三处模板（proxy-providers / rules DIRECT / nameserver-policy）同步
+- 改订阅注入逻辑时，同步 `$subs` / `$subNames` 的全部消费点（proxy-providers / proxy-groups / rules DIRECT / nameserver-policy）
 - 静态主体改动后跑 `mihomo -t`
 - 抓远程 yaml 用 `curl`，不用 web_fetch
 
