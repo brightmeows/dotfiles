@@ -78,7 +78,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | [`docs/Edge与Firefox书签合并经验.md`](docs/Edge与Firefox书签合并经验.md) | Edge 与 Firefox 书签合并：同步引擎与文件层两套真相、去重映射与两地手术 |
 | [`docs/lark-cli技能环境与维护记录.md`](docs/lark-cli技能环境与维护记录.md) | lark-cli 技能环境：安装来源差异、版本对齐与 skills CLI 已知 bug |
 | [`docs/terra-mesa-setup.md`](docs/terra-mesa-setup.md) | terra-mesa 硬件解码部署记录（Fedora Kinoite、AMD Ryzen 5 5500U） |
-| [`docs/jujutsu-migration.md`](docs/jujutsu-migration.md) | Jujutsu colocated 迁移：决策总表、接入形态与操作流谱系、混用边界与失效模式、配置托管结构 |
+| [`docs/jujutsu-migration.md`](docs/jujutsu-migration.md) | Jujutsu 试验记录与回退：特性谱系、混用边界与失效模式速查（供将来重用参考） |
 
 ## 边界规则
 
@@ -102,15 +102,13 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 - 修改 `node_modules` 内容
 - 删除 `.chezmoiignore` 中标记的非部署文件
 
-## 版本控制工作流（jj 日常主力）
+## Git Workflow
 
-本仓库由 jujutsu colocated 管理（git 为兼容层），决策依据与使用方式谱系见 [docs/jujutsu-migration.md](docs/jujutsu-migration.md)。
-
-- **分支策略**：日常修改直推 main（单人仓库），jj 流程为收尾检查通过后 `jj bookmark set main -r @` 再 `jj git push`；大幅重构用 `jj workspace add` 隔离（git worktree 的等价物）。
-- **提交**：Conventional Commits（`feat:` / `fix:` / `docs:` / `refactor:` / `chore:`），中文说明，按逻辑变更拆分提交；拆分用 `jj split <路径>`。
-- **验证以检查为准**：jj 提交不触发 git hooks（jj 不执行 git hooks），收尾必须手动跑 `.githooks/pre-commit`（`pnpm format:check` / `pnpm lint` 全量 + markdownlint 仅暂存 md），只检查不写回；
-  失败时先本地修复（`pnpm format` / `pnpm lint:fix`）再提交。git 路径提交（如未装 jj 的机器）仍由 hook 覆盖。
-- 补验一律原样运行 `.githooks/pre-commit` 或照抄其中的命令行，不自拼检查组合；绕过 hook 时事后必须原样补跑全部检查并如实报告。
+- **分支策略**：日常修改直推 main（单人仓库）；大幅重构用 `git worktree` 隔离。
+- **提交**：Conventional Commits（`feat:` / `fix:` / `docs:` / `refactor:` / `chore:`），中文说明，按逻辑变更拆分提交。
+- **验证以 hook 为准**：`git commit` 触发 `.githooks/pre-commit`（`pnpm format:check` / `pnpm lint` 全量 + markdownlint 仅暂存 md），只检查不写回；失败时先本地修复（`pnpm format` / `pnpm lint:fix`），再重新 `git add` 提交。
+- hook 外补验一律原样运行 `.githooks/pre-commit` 或照抄其中的命令行，不自拼检查组合、不用 `--no-verify` 绕过；确需绕过时事后必须原样补跑全部检查并如实报告。
 - 格式工具以 package.json scripts 为准（oxfmt，非 prettier）。
 - **hook 安装**：package.json 的 `prepare` 脚本在 `pnpm install` 时写入 `core.hooksPath .githooks`（local、相对路径），新机器 clone 后 `pnpm install` 即激活。
-- **新机器接入**：clone 后裸跑 `jj git init` 即恢复 colocated 形态，`jj bookmark track main@origin` 建立跟踪；jj 身份与签名策略由本仓库托管（`dot_config/jj/config.toml`），签名密钥按机器放 `~/.config/jj/conf.d/`。
+
+> 本仓库曾于 2026-10 短暂试验 jujutsu colocated 后回退，试验记录与 jj 特性速查见 [docs/jujutsu-migration.md](docs/jujutsu-migration.md)。
