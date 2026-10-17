@@ -9,7 +9,7 @@
  * 行为（两态）：
  * ┌ flow 态（hideThinkingBlock === false，settings 默认值）
  * │  进行中的 thinking run（流式中最后一段、其后无非空正文）
- * │    完整 Markdown 渲染 + 标题行（随流式实时增长）
+ * │    完整 Markdown 渲染 + 上下双标题行（随流式实时增长）
  * │  历史 thinking run
  * │    一行彩色占位：> 前缀（accent）+ Thinking（thinkingText 粗体）
  * │    + · N 字符 · N Tokens（dim，Tokens 为估算）+ · 点击展开（muted），
@@ -18,7 +18,7 @@
  * └ expanded 态（hideThinkingBlock === true，ctrl+t 切换）
  *    全部 thinking run 完整渲染 + 上下双标题行（同构，展开态动作提示
  *    为“点击收起”，点击任一行等效收起）与斜体正文；流式进行中的块
- *    仅上方标题（统计实时跳动，下方再渲染一行会双重抖动）
+ *    同样上下双行，统计随流式同步跳动属预期（2026-10-17 决策）
  *
  * 模式语义（对内置的接管，以本注释为准）：
  * - 内置 hideThinkingBlock 语义是"隐藏 thinking"（true = 全部收起占位）；
