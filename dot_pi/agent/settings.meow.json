@@ -13,6 +13,7 @@
     "./ext/aliases",
     "./ext/editor-input-tweaks",
     "./ext/esc-hold",
+    "./ext/git-hooks",
     "./ext/inline-context",
     "./ext/models-dev",
     "./ext/skill-reminders",

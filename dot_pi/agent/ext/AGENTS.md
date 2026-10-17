@@ -20,10 +20,11 @@ tags: [pi, extensions, typescript]
 |------|------|------|------|
 | `aliases/` | `pi-meow-aliases` | 斜杠命令别名 | /clear → /new、/exit → /quit |
 | `esc-hold/` | `pi-meow-esc-hold` | Esc 防误触 | 单击提示不中断，双击/长按才中断；terminal 输入层；以 `ctx.isIdle()` 分场景：生成中守卫、空闲全放行 |
+| `git-hooks/` | `pi-meow-git-hooks` | git hooks 自动配置 | session_start 检测 cwd 所属仓库一次：`.githooks/` 含可执行脚本则补设 `core.hooksPath=.githooks`（githooks 优先；已设 `.githooks` 静默、指向别处不动仅提示）；`.pre-commit-config.yaml` + 系统有 pre-commit 命令则 hook 缺失时跑 `pre-commit install`（已装看 hook 头部标记，外来 hook 交工具 migration mode，工具缺失静默）；互斥锚定：hooksPath 已设时 pre-commit install 上游拒绝执行（实测 4.6.2），githooks 命中即分流；提示 setWidget（激活 8s 清、失败不自动清，models-dev 同款理由），已就绪零输出，非 tui 打 stderr；hooks 目录用 `--git-path hooks` 解析（兼容 worktree）；中途 cd 不检测，Windows 执行位退化可接受 |
 | `editor-input-tweaks/` | `pi-meow-editor-input-tweaks` | 编辑器输入增强 | /@ 标记符着色 + / 补全停留；独占编辑器槽位（`ctx.ui.setEditorComponent` 全局单例，后设覆盖先设，新增编辑器类扩展须链式包装或并入本包） |
 | `inline-context/` | `pi-meow-inline-context` | 环境摘要注入 | 日期/系统环境（含 WSL/SSH/提权/代理 TUN 信号，只陈述事实）/Git 状态/工具与 gh，写入结构化 `sections.inline_context`；Git 快照：remote（URL 剥 userinfo 凭据）/dirty/ahead-behind/stash/进行中操作/最近提交，session_start 快照零缓存损伤、resume 自动重算、行尾标注过期语义；首条摘要消息走默认渲染 |
 | `subdir-agents-md/` | `pi-meow-subdir-agents-md` | 子目录规则懒加载 | 触发在 `tool_result` 收集、投递在 `turn_end` 边界条目（短通知 display: true + 全文 display: false，`details.subdirAgents` 标记持久去重；设计原因：codemode 嵌套下脚本可能丢弃拼接内容，条目通道保证送达）；结构化 `input.path` + bash 白名单启发式双通道；已注入规则文件被 read 时追加提示；含包内 `internal/path-extract.ts` |
-| `thinking-flow/` | `pi-meow-thinking-flow` | thinking 呈现接管 | 接管 `AssistantMessageComponent.updateContent`：flow 态（默认）进行中 thinking 完整渲染、历史收起分层色占位“> Thinking · N 字符 · N Tokens · 点击展开”（N Tokens 为估算，展开态上下双标题行同构 > 前缀、提示点击收起，流式进行中的块仅上方标题；鼠标单块展开）；expanded 态（`hideThinkingBlock=true`，语义反转内置“隐藏”开关）全量展示；ctrl+t 两态切换（内置传导链白得）；私有成员形状守卫回退原生渲染；reload 幂等（原生方法 globalThis 槽）；含包内 `internal/`（thinking-flow / markdown-transform；left-bar 色带已随符号移除删除）；pi 升级须 tmux 实测 |
+| `thinking-flow/` | `pi-meow-thinking-flow` | thinking 呈现接管 | 接管 `AssistantMessageComponent.updateContent`：flow 态（默认）进行中 thinking 完整渲染、历史收起分层色占位“> Thinking · N 字符 · N Tokens · 点击展开”（N Tokens 为估算，展开态上下双标题行同构 > 前缀、提示点击收起，流式进行中的块同样双行；鼠标单块展开）；expanded 态（`hideThinkingBlock=true`，语义反转内置“隐藏”开关）全量展示；ctrl+t 两态切换（内置传导链白得）；私有成员形状守卫回退原生渲染；reload 幂等（原生方法 globalThis 槽）；含包内 `internal/`（thinking-flow / markdown-transform；left-bar 色带已随符号移除删除）；pi 升级须 tmux 实测 |
 | `statusline/` | `pi-meow-statusline` | 状态栏 footer + 下边框速度（2026-10 起自定义布局，与内置分道） | 行1 pwd（左 目录+分支+会话名，右 (提供商) 模型·档位）、行2 stats（左 tokens/缓存/费用含 (sub)，右 上下文分档色%/窗口含 (auto)）、行3 扩展状态行（承接 `ctx.ui.setStatus`）；下边框流式速度：monkey-patch `CustomEditor.renderBottomBorder` 嵌入「平均 N · 1s N tok/s」（当前回合口径，流式中 delta 估算、结束时精确 usage 校准保留，空闲隐 1s 段；滚动提示优先；装卸随 /statusline 开关，reload 幂等 globalThis 槽）；两行宽度降级：行1右 provider 括号先丢→右截→只左段；省略 routed 路由与 (sub) 订阅半边（扩展侧不可达，经确认接受）；默认启用，`/statusline` 切换持久化；踩坑（session_start 时机、56 token、bind this、patch 报错回退）见文件头；含包内 `internal/`（footer-lines / stream-speed） |
 | `working-status/` | `pi-meow-working-status` | Working 行多状态计时文案 | 事件驱动切 `ctx.ui.setWorkingMessage`：agent_start/before_provider_request→等待模型响应、assistant message_start→生成中、tool_execution_start→执行工具 <toolName>（嵌套调用 parentToolCallId 结束后回退父工具名）；全状态带计时（状态切换重置秒表，interval 每秒刷新，前 1s 显示（1s）防（0s）），无省略号；agent_end 复位内置默认；文案不变不重设（避免逐 delta 重渲染）；timer 存 globalThis 槽（reload 幂等）；retry/compaction/branchSummary 由内置指示器接管不干预；转圈帧不动、不附中断键提示 |
 | `models-dev/` | `pi-meow-models-dev` | 模型目录导入 | models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await；注册按内建重名分流（非重名走原生 createProvider + fetchModels/ModelsStore，重名保留 legacy 合成，即 M2-hybrid 分流）；重名 provider 映射时按 id\|api 合并内建 compat 与档位表（内建优先，见下文）；纯库模块（registry / config / mapping / thinking / custom-models / native）归 `internal/` 子目录；配置 schema 见下文 |
@@ -35,16 +36,19 @@ tags: [pi, extensions, typescript]
 "packages": [
   "npm:@juicesharp/rpiv-ask-user-question",
   "npm:@narumitw/pi-goal",
-  "npm:pi-web-access",
   "npm:pi-lsp-extension",
+  "npm:pi-web-access",
   "./ext/aliases",
   "./ext/editor-input-tweaks",
   "./ext/esc-hold",
+  "./ext/git-hooks",
   "./ext/inline-context",
   "./ext/models-dev",
   "./ext/skill-reminders",
+  "./ext/statusline",
   "./ext/subdir-agents-md",
-  "./ext/thinking-flow"
+  "./ext/thinking-flow",
+  "./ext/working-status"
 ]
 ```
 
