@@ -1,6 +1,11 @@
-{{- /* 全部代理指令通过 APPEND_SYSTEM.md 追加至系统提示词：人设在前，工程准则在后 */ -}}
+{{- /* 全部代理指令通过 APPEND_SYSTEM.md 追加至系统提示词：人设在前，工程准则随后，Pi 专属纪律段在末尾 */ -}}
 **系统**: {{ with .chezmoi.osRelease }}{{ .prettyName }}{{ else }}Windows{{ end }} ({{ .chezmoi.arch }})
 
 {{ include "dot_agents_meow/AGENTS.persona.md" }}
 
-{{ include "dot_agents_meow/AGENTS.main.md" -}}
+{{ include "dot_agents_meow/AGENTS.main.md" }}
+
+## Codemode 使用纪律
+
+- 3 个以上独立工具调用合并进一个 codemode 脚本并行执行；预期大输出的检索类调用先过滤再输出
+- MCP 工具（context7、cratesio-mcp、paper-search-mcp）只能通过 codemode 调用，相关场景优先使用
