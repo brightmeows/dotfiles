@@ -150,7 +150,7 @@ function renderExpandedThinking(text: string, self: PatchedThis): Component {
   const section = new Container();
   const theme = getTheme();
   section.addChild(
-    renderThinkingHeader(text, self.outputPad, { hint: HINT_COLLAPSE, chevron: false }),
+    renderThinkingHeader(text, self.outputPad, { hint: HINT_COLLAPSE, chevron: true }),
   );
 
   const style = {

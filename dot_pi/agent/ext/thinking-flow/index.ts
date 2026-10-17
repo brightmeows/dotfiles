@@ -3,7 +3,7 @@
  *
  * 目标：重新定义 pi 助手消息中 thinking 块的默认可见性与视觉呈现。
  * 流式进行中的 thinking 完整渲染（标题行 + thinkingText
- * 斜体正文，无前缀符号），历史 thinking 收起为一行彩色占位（可鼠标点开
+ * 斜体正文），历史 thinking 收起为一行彩色占位（可鼠标点开
  * 单块）；ctrl+t 在全量展示与本默认行为间一键切换。
  *
  * 行为（两态）：
@@ -16,7 +16,8 @@
  * │    随主题自动适配
  * │  鼠标点击占位/展开块：单块 toggle（内置 overrides 机制保留）
  * └ expanded 态（hideThinkingBlock === true，ctrl+t 切换）
- *    全部 thinking run 完整渲染 + 同款标题（动作提示为“点击收起”）与斜体正文
+ *    全部 thinking run 完整渲染 + 同款标题（> 前缀同构，动作提示
+ *    为“点击收起”）与斜体正文
  *
  * 模式语义（对内置的接管，以本注释为准）：
  * - 内置 hideThinkingBlock 语义是"隐藏 thinking"（true = 全部收起占位）；
