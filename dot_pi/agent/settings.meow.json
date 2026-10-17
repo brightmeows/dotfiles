@@ -18,6 +18,7 @@
     "./ext/skill-reminders",
     "./ext/statusline",
     "./ext/subdir-agents-md",
-    "./ext/thinking-flow"
+    "./ext/thinking-flow",
+    "./ext/working-status"
   ]
 }
