@@ -177,6 +177,10 @@ pi -p -e <被测扩展入口> -e /tmp/dump-ext.ts --no-session "只回复：收�
 - pi 二进制的运行时结构与 npm 发布物可能不同：bun 打包把类字段降级为构造期赋值，未初始化的字段声明直接丢弃——用 `in` 探测实例属性会误报缺失。
   0.85.1 的 `Editor.autocompleteList`（d.ts 可选成员）即此类：仅补全菜单显示时才赋值，构造后不存在（editor-input-tweaks 实测 probe：`autocompleteList: false`，其余成员全部存在）。
   探测扩展依赖的 private 成员时，以 d.ts 可选性 + 运行时守卫读取为准，勿把可选成员纳入硬性自检
+- tmux 交互实测会污染持久化状态：ctrl+t（hideThinkingBlock）、/statusline、/settings 各开关经 settingsManager
+  立即写回 settings.json，测试遗留会改变用户日常会话行为（2026-10-17 实际踩中：测试遗留 expanded 态，
+  用户重启后 thinking 全部平铺）。测完复位原值，或彻底隔离：`PI_CODING_AGENT_DIR=$(mktemp -d)` 并软链
+  `auth.json` 与 `models.json` 两文件（认证与模型可用，settings 从零生成不带用户态）
 - 验证 TUI 着色/渲染类扩展的真实画面：`tmux new-session -d -s <name> -x 140 -y 42 "bash -lc '<cmd>'"` 跑交互 pi，`tmux capture-pane -p -e` 捕获带 ANSI 的画面，
   grep 颜色序列（如 `\x1b[33m`）与降级通知文本；源文件改动须先 `chezmoi apply` 部署再测（`-e` 传入的扩展排最前、会被 settings 包覆盖，测不到目标版本）
 - 本文件列表行宽 ≤200 字符（markdownlint MD013 豁免表格，列表不豁免）
