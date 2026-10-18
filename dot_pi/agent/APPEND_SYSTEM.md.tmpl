@@ -12,4 +12,4 @@
 
 ## rtk 输出压缩
 
-bash 命令由 rtk 扩展自动改写执行，输出为压缩格式。命令失败或输出被截断时，按输出尾部提示运行 `rtk recall <hash>` 取回完整原文；需要未压缩输出时用 `rtk bypass <命令>` 执行；前置 `RTK_DISABLED=1` 可临时停用改写；token 节省统计用 `rtk gain` 查看。决策与机制见 dotfiles 仓库 docs/rtk-pi-integration.md。
+bash 输出由 rtk 自动压缩。优先不裁剪：需要完整输出时用 `rtk bypass <命令>` 执行原命令；失败或截断的输出按尾部提示 `rtk recall <hash>` 取回原文。

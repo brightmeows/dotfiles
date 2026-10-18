@@ -54,7 +54,8 @@ Pi 生态第三方 rtk 集成至少六个（`pi-rtk-optimizer`、`pi-rtk-rewrite
 rtk 的 Pi 集成是 hook-only，无 awareness 注入通道（上游 `run_pi_mode` 注释明写 `no AGENTS.md injection`，Installation Modes 表 Pi 行 Patches 列为空）；
 `[awareness] level` 配置对 Pi 无消费方，改了不生效。
 `full` 档的“每条命令前缀 rtk”是给无 hook、需模型自己敲 rtk 的 agent 设计的，对带 hook 的 Pi 是冗余动作（stock 扩展显式跳过已带 `rtk` 前缀的命令）。
-故自管一段中文 high 语义说明（recall/bypass/RTK_DISABLED/gain 四个抓手，不教主动前缀），写入 `dot_pi/agent/APPEND_SYSTEM.md.tmpl` 末尾——仓库单一源头，chezmoi 分发，与其他 Pi 专属纪律段同构。
+故自管一段精简说明（优先不裁剪：完整输出用 `rtk bypass`，截断或失败按尾部提示 `rtk recall`；
+gain 为人用统计、RTK_DISABLED 为会话级逃生口，模型用不上，不入提示），写入 `dot_pi/agent/APPEND_SYSTEM.md.tmpl` 末尾——仓库单一源头，chezmoi 分发，与其他 Pi 专属纪律段同构。
 
 ### 改写范围全量交给 rtk，下游提取库配套修 rtk 前缀
 
