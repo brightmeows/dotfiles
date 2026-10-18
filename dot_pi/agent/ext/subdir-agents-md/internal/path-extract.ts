@@ -111,8 +111,8 @@ const BASH_FILE_CMDS = new Set([
 /** 会创建目标的命令：目标不存在时回落到最深已存在祖先目录（mkdir -p / cp 新目标） */
 const BASH_CREATORS = new Set(["mkdir", "touch", "ln", "cp", "mv", "install"]);
 
-/** 命令包装器：跳过其自身与选项后再取真实命令（sudo -u root rm …） */
-const BASH_WRAPPERS = new Set(["sudo", "command", "nice", "nohup", "time", "env", "exec"]);
+/** 命令包装器：跳过其自身与选项后再取真实命令（sudo -u root rm …）；rtk 为 rtk Pi 扩展对 bash 命令的自动改写前缀（rtk cat foo.md），不入集则整段静默漏报 */
+const BASH_WRAPPERS = new Set(["sudo", "command", "nice", "nohup", "time", "env", "exec", "rtk"]);
 
 /** 去除 token 首尾成对引号（无引号级 shell 解析，尽力而为） */
 function stripSurroundQuotes(tok: string): string {
