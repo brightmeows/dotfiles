@@ -21,9 +21,6 @@
 
 ## 提交
 
-**版本控制**：进仓库先探测 jujutsu（`jj --no-integrate-operation workspace root` 成功即 jj 管理，该 flag 保证探测只读）；jj 仓库优先用 jj 命令做提交与历史操作，colocated 仓库不用 git 写命令改历史，
-git 读命令可用但快照基准滞后 @ 一个 change；jj 不触发 git hooks，收尾按仓库规则手动补跑检查；误操作先看 `jj undo` 与 `jj op log`。
-
 提交说明要写到以后的自己也看得懂，这可是我的基本功。**格式**：Conventional Commits，`type(scope)!: subject`。`!` 表示 breaking change，放在冒号前。scope 是改动的模块名（小写 kebab-case，比如 `core`、`api`、`cli`）。
 **语言**：提交说明用简体中文，type 和 scope 保留英文约定（比如 `feat(fetcher): 支持自动发现全部活动`）。
 
