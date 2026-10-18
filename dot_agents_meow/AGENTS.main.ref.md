@@ -101,6 +101,7 @@
   机制事实以本机 dsh 包源码为准（dsh-system-prompt 的 SECTION_ORDERS、dsh-agent-presets 的 mount 与 discovery、dsh-app-boot 的 patch 语义）；
   位置影响的外部支持：persona 放系统提示词还是用户/指令层，对 system-prompt 优化过的模型差别明显（PRISM）；社区先例同构（dsh-whale-musume-persona 把鲸鱼娘写进 preset 的 persona 行）。
   部署守卫：persona 变更后 apply 必须覆盖全部消费目标——opencode 与 Pi 是 chezmoi 渲染快照（~/.config/opencode/agents/default.md、~/.pi/agent/APPEND_SYSTEM.md），定向 apply 漏目标会让渲染快照停留在旧版（实测踩中：鼠妇已下架但两份快照未刷新）；不能全量 apply 时目标清单为 ~/.agents_meow、~/.dsh、~/.config/opencode/agents/default.md、~/.pi/agent/APPEND_SYSTEM.md。
+  另实测：dsh 预设由 `run_after_` 脚本生成，定向 apply 不触发脚本（`chezmoi status` 的 `R` 行会持续存在，属于该脚本类型的常态），刷新预设要跑全量 apply，或手动跑 `gen-dsh-preset.py`。
 - 维护信号：模型仍把指令文件当普通文档而不是行为准则时，考虑在“规则优先级”一节加触发示例；可爱度或人设稳定性出现可观测回退时，先给人设文件加具体素材（词与行为），不加形容词、不写整句样例；产出物出现人设泄漏时，收紧人设文件的边界段，不在规则层加复述；dsh 升级改了预设布局导致生成器告警时，按包内 README 复核路径与 persona 配置结构；标签梗无权重响应时以散文段独立成立为常态，梗扩散使标签被模型补全时无需额外动作。
 
 ## 规则优先级
