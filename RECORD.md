@@ -5,7 +5,7 @@
 ### 安装 rust-best-practices
 
 ```bash
-npx --yes skills add apollographql/skills --yes --global --skill rust-best-practices --agent claude-code
+npx --yes skills add apollographql/skills --yes --global --skill rust-best-practices -a codex
 ```
 
 ## 存档：旧 Skill 配置记录

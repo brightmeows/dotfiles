@@ -5,7 +5,7 @@
 ## 应用步骤
 
 ```bash
-git clone git@github.com:MiyakoMeow/dotfiles
+git clone git@github.com:brightmeows/dotfiles
 cd dotfiles
 ln -s "$PWD" ~/.local/share/chezmoi
 chezmoi apply
