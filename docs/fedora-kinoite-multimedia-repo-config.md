@@ -89,25 +89,25 @@ EVR 比较时带 epoch 的版本胜出（`1:26.1.3` > `26.1.3`），不需要设
 
 ### 硬件解码（VAAPI）— AMD Renoir VCN 2.x
 
-| 编码 | 解码 | 编码 | 驱动 |
+| 格式 | 解码 | 编码 | 驱动 |
 |------|------|------|------|
-| H.264 | ✅ VLD + EncSlice | ✅ VLD + EncSlice | radeonsi |
-| HEVC | ✅ VLD + EncSlice | ✅ VLD + EncSlice | radeonsi |
-| HEVC 10-bit | ✅ VLD | ✅ VLD | radeonsi |
-| VP9 | ✅ VLD | ❌ | radeonsi |
-| JPEG | ✅ VLD | ❌ | radeonsi |
+| H.264 | 支持（VLD + EncSlice） | 支持（VLD + EncSlice） | radeonsi |
+| HEVC | 支持（VLD + EncSlice） | 支持（VLD + EncSlice） | radeonsi |
+| HEVC 10-bit | 支持（VLD） | 支持（VLD + EncSlice） | radeonsi |
+| VP9 | 支持（VLD） | 不支持 | radeonsi |
+| JPEG | 支持（VLD） | 不支持 | radeonsi |
 
 驱动路径：`radeonsi_drv_video.so` → `libgallium-26.1.3.so`（Fedora base 的 `mesa-dri-drivers` 提供）
 
 ### 软件解码 — 不同仓库方案对比
 
-| 编码 | 仅 Fedora base | + rpmfusion-free |
+| 格式 | 仅 Fedora base | + rpmfusion-free |
 |------|---------------|------------------|
-| H.264 Baseline | ✅ noopenh264 | ✅ native + openh264 |
-| H.264 High/Main | ❌ **不可解** | ✅ native |
-| H.264 10-bit | ❌ | ✅ native |
-| HEVC | ❌ | ✅ native |
-| HEVC 10-bit | ❌ | ✅ native |
+| H.264 Baseline | 可解（noopenh264） | 可解（native + openh264） |
+| H.264 High/Main | 不可解 | 可解（native） |
+| H.264 10-bit | 不可解 | 可解（native） |
+| HEVC | 不可解 | 可解（native） |
+| HEVC 10-bit | 不可解 | 可解（native） |
 
 ffmpeg-free 编译配置中的关键开关：
 
@@ -120,12 +120,12 @@ ffmpeg-free 编译配置中的关键开关：
 
 | 场景 | 仅 Fedora base | + rpmfusion |
 |------|---------------|-------------|
-| mpv --hwdec=vaapi | ✅ AVC/HEVC 正常 | ✅ |
-| VLC 默认设置 | ✅ AVC/HEVC 正常 | ✅ |
-| GNOME Videos (Totem) | ⚠️ 需 gstreamer1-vaapi | ✅ |
-| Firefox 在线视频 | ⚠️ H.264 仅 Baseline | ✅ |
-| ffmpeg CLI 转码 x264/x265 | ❌ | ✅ |
-| OBS 软件编码 | ❌ | ✅ |
+| mpv --hwdec=vaapi | AVC/HEVC 正常 | 正常 |
+| VLC 默认设置 | AVC/HEVC 正常 | 正常 |
+| GNOME Videos（Totem） | 需 gstreamer1-vaapi | 正常 |
+| Firefox 在线视频 | H.264 仅 Baseline | 正常 |
+| ffmpeg CLI 转码 x264/x265 | 不可用 | 正常 |
+| OBS 软件编码 | 不可用 | 正常 |
 
 ## VA-API 验证命令
 
