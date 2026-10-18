@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 仓库原生 git hook（core.hooksPath 指向本目录，安装命令见 AGENTS.md Git Workflow）
-# 与旧 .pre-commit-config.yaml 等价：format-check/lint 全量，markdownlint 仅暂存 md
+# 与旧 .pre-commit-config.yaml 等价：format-check/lint 全量，markdownlint 与中文引号检查仅暂存 md
 # 只检查不写回；失败时本地修复（pnpm format / pnpm lint:fix）后重新 git add 提交
 
 set -euo pipefail
@@ -30,6 +30,10 @@ mapfile -t md_files < <(git diff --cached --name-only --diff-filter=ACM -- '*.md
 if ((${#md_files[@]} > 0)); then
   echo "markdownlint: ${md_files[*]}"
   markdownlint --config .markdownlint.toml "${md_files[@]}"
+
+  # 中文引号：GB/T 15834-2011，弯引号规范（脚本有代码围栏豁免）
+  echo "cn-quotes: ${md_files[*]}"
+  python3 dot_agents_meow/scripts/check-cn-quotes.py "${md_files[@]}"
 fi
 
 # 模型域：models.toml、生成器或生成物被暂存时校验仓库产物一致性

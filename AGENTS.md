@@ -108,7 +108,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 - **分支策略**：日常修改直推 main（单人仓库）；大幅重构用 `git worktree` 隔离。
 - **提交**：Conventional Commits（`feat:` / `fix:` / `docs:` / `refactor:` / `chore:`），中文说明，按逻辑变更拆分提交。
-- **验证以 hook 为准**：`git commit` 触发 `.githooks/pre-commit`（`pnpm format:check` / `pnpm lint` 全量 + markdownlint 仅暂存 md），只检查不写回；失败时先本地修复（`pnpm format` / `pnpm lint:fix`），再重新 `git add` 提交。
+- **验证以 hook 为准**：`git commit` 触发 `.githooks/pre-commit`（`pnpm format:check` / `pnpm lint` 全量 + markdownlint 与中文引号检查仅暂存 md），只检查不写回；失败时先本地修复（`pnpm format` / `pnpm lint:fix`），再重新 `git add` 提交。
 - hook 外补验一律原样运行 `.githooks/pre-commit` 或照抄其中的命令行，不自拼检查组合、不用 `--no-verify` 绕过；确需绕过时事后必须原样补跑全部检查并如实报告。
 - 格式工具以 package.json scripts 为准（oxfmt，非 prettier）。
 - **hook 安装**：package.json 的 `prepare` 脚本在 `pnpm install` 时写入 `core.hooksPath .githooks`（local、相对路径），新机器 clone 后 `pnpm install` 即激活。
