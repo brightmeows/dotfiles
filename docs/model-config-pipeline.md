@@ -69,14 +69,14 @@ node dot_agents_meow/models/cli.mts render            # 干跑打印生成块
 
 ```bash
 python3 dot_agents_meow/models/gen-models.py --check
-node dot_agents_meow/models/cli.mts check          # 期望：约 186 条路由、约 5700 个模型条目、本地校验 0 问题
+node dot_agents_meow/models/cli.mts check          # 期望：约 185 条路由、约 5540 个模型条目、本地校验 0 问题
 node dot_agents_meow/models/cli.mts write          # 需要时重写生成块（修复用）
 node --test dot_agents_meow/models/*.test.mts      # 映射与写入逻辑单测
 dsh --profile web --dump-config                    # 组合可加载，llm-pi-ai 行存在
 dsh web --no-open --port 3081                      # 冷启动，观察插件日志与生成块写入
 ```
 
-浏览器内确认：模型选择器出现 command-code 与常用 provider 组；`/models-refresh` 可手动刷新；技能目录与 MCP 工具正常。
+浏览器内确认：模型选择器出现常用 provider 组；`/models-refresh` 可手动刷新；技能目录与 MCP 工具正常。
 
 ## 已知差异与非目标
 

@@ -54,9 +54,9 @@ dsh 的系统提示词有专用 persona 段位：`DEPLOYMENT_PERSONA_PREFIX` 序
 
 ## 凭据与沙箱
 
-- 凭据优先级：启动环境快照 > `~/.dsh/.credentials.yaml` > 启动目录 `.env` > `~/.dsh/.env`。`~/.env_self` 只被 shell 加载，因此从终端启动 `dsh web` 时才有 `COMMAND_CODE_API_KEY` 等变量；图形启动器启动时不可见。
+- 凭据优先级：启动环境快照 > `~/.dsh/.credentials.yaml` > 启动目录 `.env` > `~/.dsh/.env`。`~/.env_self` 只被 shell 加载，因此从终端启动 `dsh web` 时才有 `ANYSEARCH_API_KEY`、`ZHIPU_API_KEY` 等变量；图形启动器启动时不可见。
 - 沙箱：读取不受限；`workspace-write` 模式可写会话工作区、`/tmp` 与 `os.tmpdir()`；越界写会被拒并触发审批升级。`~/.agents_tmp` 不在可写范围。
-- 默认模型保持 dsh 出厂的 DeepSeek 官方模型（`deepseek-flash`）；command-code 模型在会话内选择。
+- 默认模型保持 dsh 出厂的 DeepSeek 官方模型（`deepseek-flash`）。
 
 ## 验证方法
 
@@ -70,7 +70,7 @@ dsh --profile web --dump-config | rg -A3 'id: agent-presets'   # 默认预设应
 dsh web --no-open --port 3081                            # 冷启动校验（验证后关闭）
 ```
 
-浏览器内确认：技能目录含 grilling 与 lark 系技能；模型选择器出现 command-code 组；MCP 工具可调用。
+浏览器内确认：技能目录含 grilling 与 lark 系技能；MCP 工具可调用。
 
 ## 非目标与已知差异
 
