@@ -42,8 +42,7 @@ oxlint 复杂度规则（全局严阈值 complexity 15 / depth 4 / 函数 100 �
 
 单段 `[providers.<id>]`：`id` 与 models.dev 同名表示覆盖外部数据，未收录表示完整定义。
 
-- 判定方式：条目里出现任一“定义类字段”即按完整定义处理（Pi 写进 `models.json`，dsh 直接构造路由）；否则按覆盖处理（Pi 写进 `models-dev.json`，dsh 叠加到外部数据上）。
-- 定义类字段：模型级 `reasoning`、`input`、`context_window`、`max_tokens`、`cost`、`thinking_levels`、`thinking_wire`、`compat`。
+- 判定方式：条目里出现下表任一定义类字段即按完整定义处理（Pi 写进 `models.json`，dsh 直接构造路由）；否则按覆盖处理（Pi 写进 `models-dev.json`，dsh 叠加到外部数据上）。
 - provider 级禁用只写顶层 `disabled_providers` 数组；条目里写 `disabled` 会被校验拒绝。
 - 完整定义必填 provider 级 `api`、`base_url`，每个模型必填 `context_window`、`max_tokens`、`cost`。
 - 未知键、未知 compat 键、未知档位一律报错拒绝（不做静默忽略）。
