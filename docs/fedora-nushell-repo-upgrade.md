@@ -45,9 +45,9 @@ rpm-ostree install nushell
 
 | 检查项 | 结果 |
 |--------|------|
-| RPM 包自身 PGP 签名 | ❌ 无（仅 Header/Payload SHA256 摘要校验） |
-| repomd.xml 仓库元数据签名 | ❌ 无 |
-| GPG 公钥 (`https://yum.fury.io/nushell/gpg.key`) | ✅ 存在但未实际用于签名 |
+| RPM 包自身 PGP 签名 | 无（仅 Header/Payload SHA256 摘要校验） |
+| repomd.xml 仓库元数据签名 | 无 |
+| GPG 公钥 (`https://yum.fury.io/nushell/gpg.key`) | 存在但未实际用于签名 |
 
 SHA256 摘要只能保证下载完整性（文件没损坏），**不能验证发布者身份**。不过传输层走 HTTPS（TLS），中间人篡改已有较高门槛。对于 nushell 官方指定的分发渠道，日常使用风险可接受。
 

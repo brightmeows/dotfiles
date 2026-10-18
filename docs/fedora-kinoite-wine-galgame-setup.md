@@ -99,7 +99,7 @@ Steam 上存在的游戏可加 `GAMEID=<steam appid> STORE=steam` 让 protonfixe
 | 动画 OP 黑屏/卡死 | 顺序试：wine 11 MF FFmpeg 后端（注册表 `DisableGstByteStreamHandler=1`）→ `winetricks wmp11 quartz` → 上 GE-Proton |
 | 字体乱码/方框 | `winetricks cjkfonts` → MS 日文字体包复制进前缀 Fonts |
 | Nitroplus 引擎（村正/沙耶/素晴日）巨慢 | Proton 通病，改用 vanilla 裸 wine + 关 esync/fsync + `winetricks xact` |
-| 报"游戏未安装" | 绿色版注册表检查，重装到该前缀或换带注册表信息的版本 |
+| 报“游戏未安装” | 绿色版注册表检查，重装到该前缀或换带注册表信息的版本 |
 | 独占全屏拉伸/花屏 | `file game.exe` 确认架构，窗口化运行；不行再 gamescope |
 
 ## 参考链接

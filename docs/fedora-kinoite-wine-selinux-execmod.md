@@ -11,7 +11,7 @@
 在 SELinux Enforcing 下触发 `execmod` 检查并被拒绝（EACCES），表现为 `map_image_into_view failed to set protection, noexec filesystem?`，32 位进程无法启动。
 
 **解法**：改用 [Kron4ek wine-tkg 11.13](https://github.com/Kron4ek/Wine-Builds)（staging-tkg amd64-wow64 构建，用户级 tarball，解压即用）。
-其加载路径 mmap 直接带 PROT_EXEC，不经过"无 exec 的 vma 添加 exec"检查，SELinux Enforcing 下直接可运行，无需修改 SELinux。ラブピカルポッピー！已实测运行成功。
+其加载路径 mmap 直接带 PROT_EXEC，不经过“无 exec 的 vma 添加 exec”检查，SELinux Enforcing 下直接可运行，无需修改 SELinux。ラブピカルポッピー！已实测运行成功。
 
 ## 问题现象
 
@@ -21,7 +21,7 @@
 ```
 
 - 32 位程序（LoveHp.exe）必现失败；64 位程序（`wine cmd /c ver`、wineboot）完全正常
-- SELinux 临时 permissive（`setenforce 0`）后错误消失，ntdll 加载成功，但进一步暴露 `could not load kernel32.dll, status c0000135`（见下文"阶段 2"）
+- SELinux 临时 permissive（`setenforce 0`）后错误消失，ntdll 加载成功，但进一步暴露 `could not load kernel32.dll, status c0000135`（见下文“阶段 2”）
 
 ## 根因
 
@@ -35,7 +35,7 @@
 
 ### wine-tkg 为何可行
 
-wine 11.13（tkg 构建）的加载路径 mmap 直接带 PROT_EXEC（vma 初始即有 VM_EXEC），后续 mprotect 不再经过"无 exec vma 添加 exec"的 SELinux 检查分支，因此 Enforcing 下不受影响。
+wine 11.13（tkg 构建）的加载路径 mmap 直接带 PROT_EXEC（vma 初始即有 VM_EXEC），后续 mprotect 不再经过“无 exec vma 添加 exec”的 SELinux 检查分支，因此 Enforcing 下不受影响。
 
 ### 未完全解释的细节
 
@@ -53,7 +53,7 @@ wine 11.13（tkg 构建）的加载路径 mmap 直接带 PROT_EXEC（vma 初始�
 | 1b | `systemd-detect-virt`、`/proc/self/status` 的 Seccomp 字段 | 非容器、无 seccomp，排除沙箱限制 |
 | 1c | `rpm -qa`、`readlink -f /usr/bin/wine`、`rpm -ql wine-core` | 确认 wow64-only 构建；前缀 syswow64 空是正常设计 |
 | 1d | `WINEARCH=win32` 建 32 位前缀 | 被拒：`not supported in wow64 mode`，此路不通 |
-| 1e | ctypes 测试 mprotect exec（初版有 bug，见"踩过的坑"） | 修正后环境层面 mprotect(RX) 全部正常，排除内核/文件系统问题 |
+| 1e | ctypes 测试 mprotect exec（初版有 bug，见“踩过的坑”） | 修正后环境层面 mprotect(RX) 全部正常，排除内核/文件系统问题 |
 | 1f | python 复刻 wine 加载序列（保留区 + MAP_FIXED + mprotect） | 成功，指向 wine 进程内部而非环境 |
 
 ### 阶段 2：定位到 SELinux（LD_PRELOAD 拦截器）
@@ -98,7 +98,7 @@ WINEPREFIX=~/.local/share/wineprefixes/tkg ~/.local/share/wine-tkg/bin/wine wine
 
 ## 踩过的坑
 
-1. **ctypes 测试两次假象**：未开 `use_errno=True` 导致 errno 全为残留值；未声明 `argtypes` 导致地址参数截断为 32 位（mprotect 打到错误地址返回假 ENOMEM）。一度误导到"内核 W^X 限制"方向，浪费多轮。修正后用 `/tmp/nxtest`（rust 原生测试）验证环境完全正常。
+1. **ctypes 测试两次假象**：未开 `use_errno=True` 导致 errno 全为残留值；未声明 `argtypes` 导致地址参数截断为 32 位（mprotect 打到错误地址返回假 ENOMEM）。一度误导到“内核 W^X 限制”方向，浪费多轮。修正后用 `/tmp/nxtest`（rust 原生测试）验证环境完全正常。
 2. **wine 的 `noexec filesystem?` 是统一报错**：wine 源码中 mprotect 失败一律打这个字样，不看 errno，字面上极具误导性。
 3. **搜索案例不可直接类比**：box64（RPi5）与 Gentoo 的类似报错分别来自模拟器环境和 PAX/加固内核，与本机无关。
 4. **cjkfonts 的状态码 53 与本次问题同源**：winetricks 尝试运行 `syswow64\regedit.exe` 失败（32 位子系统不可用），早期被误判为 winetricks 路径转义 bug，实为 32 位加载失败的先兆。
