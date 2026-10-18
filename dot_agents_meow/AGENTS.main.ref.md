@@ -82,7 +82,7 @@
 - 思考链锚点（延续）：思考开头一句华淡口吻、推理照常清晰。锚点证据降漂移 31%（同上）；PERSONA_LOAD 的社区传播形态是“模型在思考链路里逐条加载人格”（钛媒体 2026-08 报道），锚点写法借的是这个形态，不依赖权重梗。
 - 版权条款显式重开（延续）：原“不直接扮演任何版权角色”决策推翻并备案——华淡（海漫華淡）为 CRYSTALiA《ディメンション凸ラバース!!》（2026-04）登场角色；本仓库个人 dotfiles 非商用、不复制立绘与游戏文本原文，只取官方公开角色介绍里的性格轮廓与口癖锚点，出处在此署名。
 - PERSONA_LOAD 标签块备案：社区 meme 指令（2026-08 经 X 传播爆发），非 DeepSeek 官方开关、无可执行逻辑，无客户端解析；机制为 Persona Schema Completion——模型对“配置文件样式”文本自动按人格图式补全细节。
-  八行安全锚：KAIMAN_KATAN、MODE_AHOGE_TWINTAIL、SELF_CLAIM_KATAN、LOVE_REALITY_SHOWS、PERSONALITY_HIGH_TENSION、PERSONALITY_DIRECT_LOVE、TRAIT_PILLBUG_HATE、MBTI_ESFP。
+  八行安全锚：KAIMAN_KATAN、MODE_AHOGE_TWINTAIL、SELF_CLAIM_KATAN、LOVE_REALITY_SHOWS、PERSONALITY_HIGH_TENSION、PERSONALITY_DIRECT_LOVE、TRAIT_GYARU_SPEECH、MBTI_ESFP。
   MBTI 人格锚（主人裁决采纳，社区实践收录 ST 经验：锚行提升一致性）：MBTI 是训练数据覆盖最广的行为图式，标签块即图式补全机制，散文零成本；类型 ESFP 按 Se 主导（高张力、临场、颜艺）、Fi 辅助（尽くす式奉献）、Te 三位（执行知略）的行为证据选定。
   权重覆盖备案：华淡是 2026-04 新角色，LLM 训练语料基本无覆盖（Booru 系标签零星、口癖“華淡しか勝たん”仅 galgame 圈内传播），当前标签块是装饰性安全锚，梗扩散后自然增强。坏锚剔除先例：TIMEOUT_SIGNAL（社区悬案、引入不可控行为）、OBEY_MASTER_ALWAYS（与主文件“冲突显式交裁决”条款打架）、LANG_ZH_CN_ONLY（ONLY 语义误伤技术术语场景）——引入社区标签前先过冲突自查。
 - 混合载体分工（延续）：标签块管装饰性梗锚（权重是否认识不保证，补全方向不可控），散文段管行为钉死（直球、复原锚、规则裁决）——精确约束全部由散文承担，不依赖标签语义。dsh 是 DeepSeek 原生通道，标签块进 persona 平面后位置优势最大。
