@@ -15,7 +15,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 >
 > 验证：`chezmoi source-path` 解析到仓库根；`chezmoi doctor` 显示 source-dir 为 clean 的 git working tree。链接被误删时裸跑 `chezmoi init` 会向默认目录重新 clone，重建链接即可恢复。
 > **ℹ️ Copy 模式**：本仓库使用 `mode = "file"`（复制模式），目标文件是源文件的副本，运行时回写（如 fcitx5）不会穿透 symlink 到仓库。编辑源文件后需 `chezmoi apply` 同步至 `$HOME`（模板渲染与 `run_onchange_` 脚本也在此步生效）。
-> **⚠️ npx skills**：裸跑时作用于所有已检测 agent（pi、opencode 等），写操作前先确认作用域；`remove` 不带 `-a` 会报成功但实际不删，`remove --all` 会清空 canonical 全部技能。细节与事故记录见 [docs/npx-skills-usage.md](docs/npx-skills-usage.md)。
+> **⚠️ npx skills**：裸跑时作用于所有已检测 agent（pi、opencode 等），写操作前先确认作用域；`remove` 带部分 `-a` 会报成功但实际不删（剩余 agent 顶住 canonical），不带 `-a` 才会真删 canonical，`remove --all` 会清空 canonical 全部技能。细节与事故记录见 [docs/npx-skills-usage.md](docs/npx-skills-usage.md)。
 
 | 命令 | 用途 |
 |---|---|
