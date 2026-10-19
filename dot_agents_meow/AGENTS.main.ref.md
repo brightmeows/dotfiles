@@ -177,7 +177,7 @@
 
 ## 大语言模型工作法
 
-- 节定位：五条常驻规则管与模型协作的工作流与判断；更细的口径、案例与完整材料按共识待技能化（abstraction-design 与 agentic-workflow 两个候选，技能后议）。
+- 节定位：五条常驻规则管与模型协作的工作流与判断；独立技能暂不建（先观察实战），将来重议时名字与材料分工再定；材料分工的预设是 ref 留结论与采纳状态、细节进技能 references/。
 - 五条与出处：
   - 闭环验证：Claude Code 官方 best practices“给 Claude 可运行的检查”；Simon Willison《Agentic Engineering Patterns》的 red/green TDD、First run the tests 与《Your job is to deliver code you have proven to work》
   - 上下文是工艺：Simon《Here’s how I use LLMs to help me write code》的 Context is king；Chroma《Context Rot》，输入越长性能越衰减；Cognition《Don’t Build Multi-Agents》的共享上下文原则
@@ -193,7 +193,7 @@
   - vibe coding 边界与三模式：Karpathy 2025 LLM Year in Review；Simon 对 agentic engineering 与 vibe coding 的区分；diwank《Field Notes from Shipping Real Code with Claude》，playground/pair/production 三模式、锚点注释、测试神圣
   - AGENTS.md 写法：Claude Code 官方，只写猜不到的、保持短；agents.md 官方，大仓库嵌套
 - 与既有条目的分工（防撞车）：可验证优先与诚实完成管我自己的验证纪律，闭环验证管给模型的验证信号；把信息拿全管信息获取的完整性，上下文是工艺管喂进对话的信噪比与会话管理；操作边界的先确认再做管动作许可，按可验证性委派管任务分派的依据。
-- 维护信号：与主文件规则出现真实冲突实例（例如先探后改与默认不用问的边界模糊）时，重议分工；METR 类实测被新实验推翻或修正时，更新条目并把旧结论移进否决记录。
+- 维护信号：写代码时反复想要更多判据、或模型协作问题在实战中反复出现时，重议技能化（名字与材料分工届时再定）；与主文件规则出现真实冲突实例（例如先探后改与默认不用问的边界模糊）时，重议分工；METR 类实测被新实验推翻或修正时，更新条目并把旧结论移进否决记录。
 
 ## 能推导、能复现
 
@@ -249,7 +249,7 @@
   - 别提前泛化：Ousterhout 与 AHA 的 optimize for change first 同向
   - 抽象优先的评审清单：Abstraction first，需求对齐、实体模型、工程边界、原子任务、先画图
   - 实证缺口：ICCBDC 2025《Does LLM Generated Code Smell?》；arXiv 2508.21634 的人写与 AI 生成代码缺陷对比；CodeTaste 重构基准
-- 维护信号：抽象条目沦为口号、模型无法据此判断时，补触发场景；AI 生成代码的抽象质量问题在实战中反复出现时，把“发现阶段人主导”提前。
+- 维护信号：抽象条目沦为口号、模型无法据此判断时，补触发场景；AI 生成代码的抽象质量问题在实战中反复出现时，把“发现阶段人主导”提前；同类问题在实战中反复出现时，重议技能化。
 
 ## 把信息拿全
 
