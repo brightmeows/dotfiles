@@ -1,6 +1,6 @@
 # Clash Party / Verge Rev 覆写壳（由 gen-party-override.sh 生成，勿手改）
 # 分发：https://raw.githubusercontent.com/brightmeows/dotfiles/main/dot_config/clash-meta/party-override.yaml
-# 用法：Clash Party「覆写」页导入上述 URL 并挂到目标订阅；Verge Rev 作为全局扩展配置导入
+# 用法：Clash Party 在“覆写”页导入上述 URL 并挂到目标订阅；Verge Rev 作为全局扩展配置导入
 #       （两家对列表字段均为整体替换：机场订阅自带的 rules / proxy-groups 被本壳完整换掉）
 # 共享事实源：.chezmoidata/clash-meta.yaml + .fragments/，与主配置 config.yaml.tmpl 同源
 # 共享片段：地区筛选锚定义。
