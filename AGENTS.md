@@ -62,6 +62,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 |------|------|
 | [`docs/fedora-kinoite-multimedia-repo-config.md`](docs/fedora-kinoite-multimedia-repo-config.md) | Fedora Kinoite 44 多媒体仓库布局、编解码能力分析、terra-mesa 移除记录 |
 | [`docs/audio-acp3x-es83xx-headphone.md`](docs/audio-acp3x-es83xx-headphone.md) | AMD ACP3x 音频耳机问题处理 |
+| [`docs/bof-venue-ip-policy.md`](docs/bof-venue-ip-policy.md) | BOF 会场 IP 管控性质、mihomo 实测出口与 BOF 组直连计划 |
 | [`docs/fedora-kinoite-obs-vaapi-encode.md`](docs/fedora-kinoite-obs-vaapi-encode.md) | OBS Studio VAAPI 硬件编码配置、VCN 单元监控方法 |
 | [`docs/fedora-kinoite-wine-galgame-setup.md`](docs/fedora-kinoite-wine-galgame-setup.md) | Wine 玩日文 Galgame 配置记录 |
 | [`docs/fedora-kinoite-wine-selinux-execmod.md`](docs/fedora-kinoite-wine-selinux-execmod.md) | Wine Galgame 的 SELinux execmod 问题排查 |
