@@ -241,8 +241,9 @@ FilterOthers: &FilterOthers "^(?!.*(🇭🇰|HK|Hong|香港|🇹🇼|TW|Taiwan|W
 #     不产生额外探测流量；tolerance 100ms 抑制出口 IP 漂移
 #     面板上可对自动组固定优先节点（fixed）：固定节点存活时一直用它，故障自动回退延迟择优
 #   - X - 手动选择（select）：显式指定订阅或地区内的节点
-# 域名分流组（🤖 AI / ✈️ Telegram / 🎬 流媒体与下载 / 🎵 BMS）成员含全部订阅组与地区组，
+# 域名分流组（🤖 AI / ✈️ Telegram / 🎬 流媒体与下载）成员含全部订阅组与地区组，
 # 可按网站指定出口（如“🇯🇵 日本 - 自动选择”）；信息类假节点已在 provider 层 exclude-filter 剔除
+# BOF 组默认直连（投稿来源须为住宅 IP），成员单独定义，可按需切到订阅或地区节点
 
 # 地区定义（名称 + 筛选 anchor）：成员列表与组定义共用，新增地区只改这里
 {{- $regions := list
@@ -300,7 +301,21 @@ proxy-groups:
   - { name: 🤖 AI, type: select, proxies: *DomainGroupMembers }
   - { name: ✈️ Telegram, type: select, proxies: *DomainGroupMembers }
   - { name: 🎬 流媒体与下载, type: select, proxies: *DomainGroupMembers }
-  - { name: 🎵 BMS, type: select, proxies: *DomainGroupMembers }
+  # BOF 组首项 DIRECT 即默认出口：BOF 投稿要求住宅 IP 来源；
+  # 其余成员与域名分流组一致，需要时可在面板切到订阅或地区节点
+  - name: 🎵 BOF
+    type: select
+    proxies:
+      - DIRECT
+      - 🚀 节点选择
+{{- range $name := $subNames }}
+      - ⚡ {{ $name }} - 自动选择
+      - ⚡ {{ $name }} - 手动选择
+{{- end }}
+{{- range $r := $regions }}
+      - {{ $r.emoji }} {{ $r.name }} - 自动选择
+      - {{ $r.emoji }} {{ $r.name }} - 手动选择
+{{- end }}
 
 ### 规则配置
 RuleSet_classical:
@@ -484,8 +499,10 @@ rules:
   # 须置于 global_non_ip 等 RULE-SET 之前，防止 rustdesk.com 被全局列表先匹配到节点
   - DOMAIN-SUFFIX,rustdesk.com,DIRECT
 
-  # BMS 谱面站（manbow.nothing.sh）：日本源站、谱面包下载场景，独立出口组便于指定节点
-  - DOMAIN-SUFFIX,manbow.nothing.sh,🎵 BMS
+  # BOF 会场与 BMS 谱面站：BOF 组默认直连，投稿来源须为住宅 IP；
+  # manbow 是日本源站，需要时可从组内切到节点
+  - DOMAIN-SUFFIX,bmsoffighters.net,🎵 BOF
+  - DOMAIN-SUFFIX,manbow.nothing.sh,🎵 BOF
 
   ### 非 IP 类规则
   - RULE-SET,reject_non_ip,REJECT

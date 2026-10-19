@@ -47,12 +47,14 @@ tags: [mihomo, clash-meta, proxy, tun]
 
 ## 策略组结构
 
-命名约定“emoji + 空格 + 对象 - 模式”：`⚡ <订阅名> - 自动选择`、`🇯🇵 日本 - 手动选择`；顶层为 `🚀 节点选择`，分流组为 `🤖 AI` / `✈️ Telegram` / `🎬 流媒体与下载` / `🎵 BMS`。
+命名约定“emoji + 空格 + 对象 - 模式”：`⚡ <订阅名> - 自动选择`、`🇯🇵 日本 - 手动选择`；顶层为 `🚀 节点选择`，分流组为 `🤖 AI` / `✈️ Telegram` / `🎬 流媒体与下载` / `🎵 BOF`。
 
 - `🚀 节点选择`（select，全部规则的默认出口）= 订阅组 ×4 + 地区组 ×14 + DIRECT（19 项）
-- 域名分流组共用 `&DomainGroupMembers` 锚（🚀 节点选择 + 全部订阅组 + 全部地区组 + DIRECT，20 项），
-  默认随“🚀 节点选择”，可按网站指定订阅或地区出口；分别承接 `ai_non_ip`、`telegram_*`、`stream_*` + `download_*` 与 `manbow.nothing.sh` 规则
-- 组名出现在 `rules` 出口、`RuleSet_*` 锚的 `proxy` 字段与 `DomainGroupMembers` 三处，改名须全量同步（grep 无 emoji 的旧名确认零残留）
+- 域名分流组（AI / Telegram / 流媒体与下载）共用 `&DomainGroupMembers` 锚（🚀 节点选择 + 全部订阅组 + 全部地区组 + DIRECT，20 项），
+  默认随“🚀 节点选择”，可按网站指定订阅或地区出口；分别承接 `ai_non_ip`、`telegram_*`、`stream_*` + `download_*` 规则
+- `🎵 BOF` 组单独定义成员，首项 DIRECT 为默认出口，承接 `bmsoffighters.net` 与 `manbow.nothing.sh`；
+  BOF 投稿来源必须是住宅 IP，故默认直连，需要时可从组内切到订阅或地区节点
+- 组名出现在 `rules` 出口与 `DomainGroupMembers` 锚（BOF 组不在锚内），改名须全量同步（grep 无 emoji 的旧名确认零残留）
 
 维护约定：
 

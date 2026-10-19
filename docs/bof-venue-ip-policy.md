@@ -1,6 +1,6 @@
 # BOF 会场 IP 管控与 mihomo 分流记录
 
-记录日期：2026-10-20。本文是发现记录与改动计划，截至记录时配置尚未修改。
+记录日期：2026-10-20。配置已修改并热加载验证；系统侧部署执行 `sudo bash ~/.config/clash-meta/deploy.sh`，重启服务后生效。
 
 ## 结论
 
@@ -39,10 +39,12 @@ bmsoffighters.net
 
 本机接入：有线，网关 192.168.101.1，公网 IPv6 2408:825c（联通段），特征像联通家宽；若实际是校园网、宿舍公共网或移动热点，直连也会命中禁则 13，需另行确认。
 
-## 计划改动
+## 改动与实测
 
-- `🎵 BMS` 组改名 `🎵 BOF`，成员单独定义，首项 DIRECT 作为默认出口。
+- `🎵 BMS` 组改名 `🎵 BOF`，成员单独定义，首项 DIRECT 作为默认出口，共 20 项。
 - 规则加入 `DOMAIN-SUFFIX,bmsoffighters.net,🎵 BOF`；`manbow.nothing.sh` 保留在同一组。
+- 热加载后 `/proxies["🎵 BOF"].now` 为 `DIRECT`；`/connections` 中 bmsoffighters.net 的 chains 为 `DIRECT <- 🎵 BOF`，规则命中 `DomainSuffix`。
+- 直连出口实测：临时把顶层组切到 DIRECT，公网 IP 为 182.89.74.94，CN，AS4837 CHINA UNICOM China169 Backbone；随后已切回 `⚡ LIANGXINYUN - 自动选择`。
 - 副作用：manbow 谱面站默认也走直连（日本源站，直连可能变慢）；需要时从组内切到订阅或地区节点。
 - 投稿时浏览器不要另开代理扩展或其它 VPN；保持 IPv4 单栈。
 
@@ -57,8 +59,11 @@ curl -s http://127.0.0.1:9090/connections | jq -r '.connections[] | select((.met
 
 `/connections` 的 chains 应为 DIRECT，destinationIP 为 59.106.171.86。
 
+本次热加载实测：BOF 组 now=DIRECT，连接 chains 为 `DIRECT <- 🎵 BOF`，直连出口 AS4837 中国联通。系统侧重启后是否保持，取决于 deploy.sh 是否执行。
+
 ## 未决
 
+- 系统侧部署：`sudo bash ~/.config/clash-meta/deploy.sh`，重启服务后配置持久化。
 - 确认本机接入是住宅固网而非校园网、公共设施或移动网络。
 - 直连无法消除 CGNAT 共享 IP、同 provider 他人违规连坐、运营裁量等残留风险。
 - 投稿时间窗口以当届规则为准；BOF22 规则页最后更新 2026-09-28。
