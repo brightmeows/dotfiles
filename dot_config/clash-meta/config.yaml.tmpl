@@ -7,6 +7,8 @@
     4. 策略组重写为订阅级自动/手动选择 + 域名分流组（原地区手动组保留）
     5. 信息类假节点由 provider 层 exclude-filter 统一剔除
   渲染产物含明文订阅 URL，仅落在 $HOME（~/.config/clash-meta/config.yaml），不进 git。
+  规则主体（地区筛选 / rule-providers / 静态规则行）为 .fragments/ 共享片段，
+  与 party-override.yaml.tmpl（Clash Party 覆写壳，生成物进仓库走 raw 分发）同源 include。
 */ -}}
 {{- /* 用 bash 的 $HOME（chezmoi 执行命令时继承），不依赖 .chezmoi.homedir 变量（该 key 不存在） */ -}}
 {{- $subs := output "bash" "-c" "set -a; . $HOME/.env_self 2>/dev/null; env | grep '_SUBSCRIPTION=' || true" | splitList "\n" -}}
@@ -221,20 +223,8 @@ proxy-providers:
 {{- end }}
 {{- end }}
 
-# 节点筛选
-# 按地区筛选
-FilterHK: &FilterHK '^(?=.*((?i)🇭🇰|香港|\b(HK|Hong)(\d+)?\b))(?!.*((?i)回国|校园|网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$'
-FilterTW: &FilterTW '^(?=.*((?i)🇹🇼|台湾|\b(TW|Tai|Taiwan)(\d+)?\b))(?!.*((?i)回国|校园|网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$'
-FilterJP: &FilterJP '^(?=.*((?i)🇯🇵|日本|川日|东京|大阪|泉日|埼玉|\b(JP|Japan)(\d+)?\b))(?!.*((?i)回国|校园|网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$'
-FilterKR: &FilterKR '^(?=.*((?i)🇰🇷|韩国|韓|首尔|\b(KR|Korea)(\d+)?\b))(?!.*((?i)回国|校园|网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$'
-FilterSG: &FilterSG '^(?=.*((?i)🇸🇬|新加坡|狮|\b(SG|Singapore)(\d+)?\b))(?!.*((?i)回国|校园|网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$'
-FilterUS: &FilterUS '^(?=.*((?i)🇺🇸|美国|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|\b(US|United States)(\d+)?\b))(?!.*((?i)回国|校园|网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$'
-FilterUK: &FilterUK '^(?=.*((?i)🇬🇧|英国|伦敦|\b(UK|United Kingdom)(\d+)?\b))(?!.*((?i)回国|校园|网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$'
-FilterFR: &FilterFR '^(?=.*((?i)🇫🇷|法国|\b(FR|France)(\d+)?\b))(?!.*((?i)回国|校园|网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$'
-FilterDE: &FilterDE '^(?=.*((?i)🇩🇪|德国|\b(DE|Germany)(\d+)?\b))(?!.*((?i)回国|校园|网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$'
-# 负向 lookahead 只列已知地区词：信息类假节点已在 provider 层 exclude-filter 统一剔除，
-# 不再依赖各 filter 的排除段兜底（地区 filter 里的“回国/校园”排除仍用于特殊线路归类）
-FilterOthers: &FilterOthers "^(?!.*(🇭🇰|HK|Hong|香港|🇹🇼|TW|Taiwan|Wan|台湾|🇯🇵|JP|Japan|日本|🇸🇬|SG|Singapore|狮城|新加坡|🇺🇸|US|United States|America|美国|🇩🇪|DE|Germany|德国|🇬🇧|UK|United Kingdom|英国|🇰🇷|KR|Korea|韩国|韓|🇫🇷|FR|France|法国)).*$"
+# 地区筛选（Filter* 锚定义）：共享片段，与 party-override.yaml.tmpl 同源
+{{ include "dot_config/clash-meta/.fragments/filters.part.yaml" }}
 ### 策略组
 # 顶层“🚀 节点选择”是全部规则的默认出口，成员 = 订阅级自动/手动组 + 地区自动/手动组 + DIRECT：
 #   - X - 自动选择（url-test）：与 provider 健康检查共用 gstatic 测试 URL，共享同一份测速结果，
@@ -245,16 +235,9 @@ FilterOthers: &FilterOthers "^(?!.*(🇭🇰|HK|Hong|香港|🇹🇼|TW|Taiwan|W
 # 可按网站指定出口（如“🇯🇵 日本 - 自动选择”）；信息类假节点已在 provider 层 exclude-filter 剔除
 # BOF 组默认直连（投稿来源须为住宅 IP），成员单独定义，可按需切到订阅或地区节点
 
-# 地区定义（名称 + 筛选 anchor）：成员列表与组定义共用，新增地区只改这里
-{{- $regions := list
-  (dict "name" "香港" "emoji" "🇭🇰" "filter" "FilterHK")
-  (dict "name" "台湾" "emoji" "🇹🇼" "filter" "FilterTW")
-  (dict "name" "韩国" "emoji" "🇰🇷" "filter" "FilterKR")
-  (dict "name" "日本" "emoji" "🇯🇵" "filter" "FilterJP")
-  (dict "name" "新加坡" "emoji" "🇸🇬" "filter" "FilterSG")
-  (dict "name" "美国" "emoji" "🇺🇸" "filter" "FilterUS")
-  (dict "name" "其它" "emoji" "🌐" "filter" "FilterOthers")
-}}
+# 地区定义（名称 + emoji + 筛选 anchor）迁移至 .chezmoidata/clash-meta.yaml：
+# 主模板与 party 覆写壳模板共享同一份数据，新增地区只改数据文件
+{{- $regions := $.regions }}
 
 # 域名分流组成员（各分类组共用）：默认随“🚀 节点选择”，可单独指定订阅或地区出口
 DomainGroupMembers: &DomainGroupMembers
@@ -317,160 +300,8 @@ proxy-groups:
       - {{ $r.emoji }} {{ $r.name }} - 手动选择
 {{- end }}
 
-### 规则配置
-RuleSet_classical:
-  &RuleSet_classical {
-    type: http,
-    behavior: classical,
-    interval: 43200,
-    format: text,
-    proxy: 🚀 节点选择,
-  }
-RuleSet_domain:
-  &RuleSet_domain {
-    type: http,
-    behavior: domain,
-    interval: 43200,
-    format: text,
-    proxy: 🚀 节点选择,
-  }
-RuleSet_ipcidr:
-  &RuleSet_ipcidr {
-    type: http,
-    behavior: ipcidr,
-    interval: 43200,
-    format: text,
-    proxy: 🚀 节点选择,
-  }
-
-# 订阅规则
-rule-providers:
-  reject_non_ip_no_drop:
-    <<: *RuleSet_classical
-    url: "https://ruleset.skk.moe/Clash/non_ip/reject-no-drop.txt"
-    path: "./rule_set/sukkaw_ruleset/reject_non_ip_no_drop.txt"
-
-  reject_non_ip_drop:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/reject-drop.txt
-    path: ./rule_set/sukkaw_ruleset/reject_non_ip_drop.txt
-
-  reject_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/reject.txt
-    path: ./rule_set/sukkaw_ruleset/reject_non_ip.txt
-
-  reject_domainset:
-    <<: *RuleSet_domain
-    url: https://ruleset.skk.moe/Clash/domainset/reject.txt
-    path: ./rule_set/sukkaw_ruleset/reject_domainset.txt
-
-  reject_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/ip/reject.txt
-    path: ./rule_set/sukkaw_ruleset/reject_ip.txt
-
-  cdn_domainset:
-    <<: *RuleSet_domain
-    url: https://ruleset.skk.moe/Clash/domainset/cdn.txt
-    path: ./rule_set/sukkaw_ruleset/cdn_domainset.txt
-
-  cdn_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/cdn.txt
-    path: ./rule_set/sukkaw_ruleset/cdn_non_ip.txt
-
-  # 所有流媒体（包括上述所有流媒体）
-  stream_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/stream.txt
-    path: ./rule_set/sukkaw_ruleset/stream_non_ip.txt
-  stream_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/ip/stream.txt
-    path: ./rule_set/sukkaw_ruleset/stream_ip.txt
-
-  ai_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/ai.txt
-    path: ./rule_set/sukkaw_ruleset/ai_non_ip.txt
-
-  telegram_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/telegram.txt
-    path: ./rule_set/sukkaw_ruleset/telegram_non_ip.txt
-
-  telegram_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/ip/telegram.txt
-    path: ./rule_set/sukkaw_ruleset/telegram_ip.txt
-
-  apple_cdn:
-    <<: *RuleSet_domain
-    url: https://ruleset.skk.moe/Clash/domainset/apple_cdn.txt
-    path: ./rule_set/sukkaw_ruleset/apple_cdn.txt
-
-  apple_services:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/apple_services.txt
-    path: ./rule_set/sukkaw_ruleset/apple_services.txt
-
-  apple_cn_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/apple_cn.txt
-    path: ./rule_set/sukkaw_ruleset/apple_cn_non_ip.txt
-
-  microsoft_cdn_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/microsoft_cdn.txt
-    path: ./rule_set/sukkaw_ruleset/microsoft_cdn_non_ip.txt
-
-  microsoft_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/microsoft.txt
-    path: ./rule_set/sukkaw_ruleset/microsoft_non_ip.txt
-
-  # 软件更新、操作系统等大文件下载
-  download_domainset:
-    <<: *RuleSet_domain
-    url: https://ruleset.skk.moe/Clash/domainset/download.txt
-    path: ./rule_set/sukkaw_ruleset/download_domainset.txt
-  download_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/download.txt
-    path: ./rule_set/sukkaw_ruleset/download_non_ip.txt
-
-  # 内网域名和局域网 IP
-  lan_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/lan.txt
-    path: ./rule_set/sukkaw_ruleset/lan_non_ip.txt
-  lan_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/ip/lan.txt
-    path: ./rule_set/sukkaw_ruleset/lan_ip.txt
-
-  domestic_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/domestic.txt
-    path: ./rule_set/sukkaw_ruleset/domestic_non_ip.txt
-  direct_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/direct.txt
-    path: ./rule_set/sukkaw_ruleset/direct_non_ip.txt
-  global_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/global.txt
-    path: ./rule_set/sukkaw_ruleset/global_non_ip.txt
-  domestic_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/ip/domestic.txt
-    path: ./rule_set/sukkaw_ruleset/domestic_ip.txt
-
-  china_ip:
-    <<: *RuleSet_ipcidr
-    url: https://ruleset.skk.moe/Clash/ip/china_ip.txt
-    path: ./rule_set/sukkaw_ruleset/china_ip.txt
+### 规则配置（锚定义与 rule-providers 为共享片段，party 覆写壳同源消费）
+{{ include "dot_config/clash-meta/.fragments/rule-providers.part.yaml" }}
 
 # 分流规则
 rules:
@@ -490,48 +321,5 @@ rules:
 {{- end }}
 {{- end }}
 {{- end }}
-  # SSH 直连：机场普遍封出站 22 端口（防 SSH 跳板），SSH 走代理必然超时
-  # 一条端口规则覆盖所有 SSH 目标，无需逐域名添加
-  - DST-PORT,22,DIRECT
-
-  # RustDesk 注册与打洞直连：rendezvous 的 register_pk/UDP 打洞经节点转发时
-  # 响应回不来（节点 UDP 黑洞），key 永不确认，对端显示“设备离线或不存在”
-  # 须置于 global_non_ip 等 RULE-SET 之前，防止 rustdesk.com 被全局列表先匹配到节点
-  - DOMAIN-SUFFIX,rustdesk.com,DIRECT
-
-  # BOF 会场与 BMS 谱面站：BOF 组默认直连，投稿来源须为住宅 IP；
-  # manbow 是日本源站，需要时可从组内切到节点
-  - DOMAIN-SUFFIX,bmsoffighters.net,🎵 BOF
-  - DOMAIN-SUFFIX,manbow.nothing.sh,🎵 BOF
-
-  ### 非 IP 类规则
-  - RULE-SET,reject_non_ip,REJECT
-  - RULE-SET,reject_domainset,REJECT
-  - RULE-SET,reject_non_ip_drop,REJECT-DROP
-  - RULE-SET,reject_non_ip_no_drop,REJECT
-  - RULE-SET,cdn_domainset,🚀 节点选择
-  - RULE-SET,cdn_non_ip,🚀 节点选择
-  - RULE-SET,stream_non_ip,🎬 流媒体与下载
-  - RULE-SET,telegram_non_ip,✈️ Telegram
-  - RULE-SET,apple_cdn,DIRECT
-  - RULE-SET,download_domainset,🎬 流媒体与下载
-  - RULE-SET,download_non_ip,🎬 流媒体与下载
-  - RULE-SET,microsoft_cdn_non_ip,DIRECT
-  - RULE-SET,apple_cn_non_ip,DIRECT
-  - RULE-SET,apple_services,🚀 节点选择
-  - RULE-SET,microsoft_non_ip,🚀 节点选择
-  - RULE-SET,ai_non_ip,🤖 AI
-  - RULE-SET,global_non_ip,🚀 节点选择
-  - RULE-SET,domestic_non_ip,DIRECT
-  - RULE-SET,direct_non_ip,DIRECT
-  - RULE-SET,lan_non_ip,DIRECT
-
-  ### IP 类规则
-  - RULE-SET,reject_ip,REJECT
-  - RULE-SET,telegram_ip,✈️ Telegram
-  - RULE-SET,stream_ip,🎬 流媒体与下载
-  - RULE-SET,lan_ip,DIRECT
-  - RULE-SET,domestic_ip,DIRECT
-  - RULE-SET,china_ip,DIRECT
-
-  - MATCH,🚀 节点选择
+  # 静态规则行（SSH/RustDesk/BOF 直连 + RULE-SET 分流）为共享片段，party 覆写壳同源消费
+{{ include "dot_config/clash-meta/.fragments/rules.part.yaml" }}

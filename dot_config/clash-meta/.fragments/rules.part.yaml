@@ -1,0 +1,48 @@
+# 共享片段：静态分流规则行（位于 rules: 列表内，两空格缩进）。
+# 消费点：config.yaml.tmpl（订阅域名直连循环之后）与 party-override.yaml.tmpl（rules: 键头之后）。
+# 出口组名依赖组结构段：主配置含订阅级组，壳版仅地区组；🚀 节点选择、🎵 BOF 两边同名。
+  # SSH 直连：机场普遍封出站 22 端口（防 SSH 跳板），SSH 走代理必然超时
+  # 一条端口规则覆盖所有 SSH 目标，无需逐域名添加
+  - DST-PORT,22,DIRECT
+
+  # RustDesk 注册与打洞直连：rendezvous 的 register_pk/UDP 打洞经节点转发时
+  # 响应回不来（节点 UDP 黑洞），key 永不确认，对端显示“设备离线或不存在”
+  # 须置于 global_non_ip 等 RULE-SET 之前，防止 rustdesk.com 被全局列表先匹配到节点
+  - DOMAIN-SUFFIX,rustdesk.com,DIRECT
+
+  # BOF 会场与 BMS 谱面站：BOF 组默认直连，投稿来源须为住宅 IP；
+  # manbow 是日本源站，需要时可从组内切到节点
+  - DOMAIN-SUFFIX,bmsoffighters.net,🎵 BOF
+  - DOMAIN-SUFFIX,manbow.nothing.sh,🎵 BOF
+
+  ### 非 IP 类规则
+  - RULE-SET,reject_non_ip,REJECT
+  - RULE-SET,reject_domainset,REJECT
+  - RULE-SET,reject_non_ip_drop,REJECT-DROP
+  - RULE-SET,reject_non_ip_no_drop,REJECT
+  - RULE-SET,cdn_domainset,🚀 节点选择
+  - RULE-SET,cdn_non_ip,🚀 节点选择
+  - RULE-SET,stream_non_ip,🎬 流媒体与下载
+  - RULE-SET,telegram_non_ip,✈️ Telegram
+  - RULE-SET,apple_cdn,DIRECT
+  - RULE-SET,download_domainset,🎬 流媒体与下载
+  - RULE-SET,download_non_ip,🎬 流媒体与下载
+  - RULE-SET,microsoft_cdn_non_ip,DIRECT
+  - RULE-SET,apple_cn_non_ip,DIRECT
+  - RULE-SET,apple_services,🚀 节点选择
+  - RULE-SET,microsoft_non_ip,🚀 节点选择
+  - RULE-SET,ai_non_ip,🤖 AI
+  - RULE-SET,global_non_ip,🚀 节点选择
+  - RULE-SET,domestic_non_ip,DIRECT
+  - RULE-SET,direct_non_ip,DIRECT
+  - RULE-SET,lan_non_ip,DIRECT
+
+  ### IP 类规则
+  - RULE-SET,reject_ip,REJECT
+  - RULE-SET,telegram_ip,✈️ Telegram
+  - RULE-SET,stream_ip,🎬 流媒体与下载
+  - RULE-SET,lan_ip,DIRECT
+  - RULE-SET,domestic_ip,DIRECT
+  - RULE-SET,china_ip,DIRECT
+
+  - MATCH,🚀 节点选择

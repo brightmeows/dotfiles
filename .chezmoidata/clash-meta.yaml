@@ -1,0 +1,11 @@
+# clash-meta 地区定义（chezmoi 模板共享数据）：
+# config.yaml.tmpl 与 party-override.yaml.tmpl 的地区组循环、组成员列表共同消费。
+# 新增地区只改这里；filter 值引用 .fragments/filters.part.yaml 中的锚名。
+regions:
+  - { name: 香港, emoji: "🇭🇰", filter: FilterHK }
+  - { name: 台湾, emoji: "🇹🇼", filter: FilterTW }
+  - { name: 韩国, emoji: "🇰🇷", filter: FilterKR }
+  - { name: 日本, emoji: "🇯🇵", filter: FilterJP }
+  - { name: 新加坡, emoji: "🇸🇬", filter: FilterSG }
+  - { name: 美国, emoji: "🇺🇸", filter: FilterUS }
+  - { name: 其它, emoji: "🌐", filter: FilterOthers }

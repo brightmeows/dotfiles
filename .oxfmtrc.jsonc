@@ -13,5 +13,7 @@
     "**/fcitx5/rime/**",
     "dot_pi/agent/models.json",
     "dot_pi/agent/models-dev.json",
+    "dot_config/clash-meta/.fragments/**",
+    "dot_config/clash-meta/party-override.yaml",
   ],
 }
