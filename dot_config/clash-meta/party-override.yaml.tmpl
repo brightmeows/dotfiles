@@ -1,0 +1,61 @@
+{{- /*
+  Clash Party / Verge Rev 系覆写壳模板。
+  gen-party-override.sh 用 chezmoi execute-template 渲染为 party-override.yaml（生成物进仓库，
+  GitHub raw URL 分发）；模板与生成物均在 .chezmoiignore 排除部署，仅作仓库内/raw 消费。
+
+  与 config.yaml.tmpl 共享：.chezmoidata/clash-meta.yaml（地区列表）+ .fragments/（filters /
+  rule-providers / rules）。必要差异：不含订阅级组（party 侧订阅 URL 未知，include-all 地区组
+  已覆盖选节点）、不含 dns/tun/sniffer（客户端接管配置管辖）、不含订阅域名直连与 nameserver-policy。
+*/ -}}
+# Clash Party / Verge Rev 覆写壳（由 gen-party-override.sh 生成，勿手改）
+# 分发：https://raw.githubusercontent.com/brightmeows/dotfiles/main/dot_config/clash-meta/party-override.yaml
+# 用法：Clash Party「覆写」页导入上述 URL 并挂到目标订阅；Verge Rev 作为全局扩展配置导入
+#       （两家对列表字段均为整体替换：机场订阅自带的 rules / proxy-groups 被本壳完整换掉）
+# 共享事实源：.chezmoidata/clash-meta.yaml + .fragments/，与主配置 config.yaml.tmpl 同源
+{{ include "dot_config/clash-meta/.fragments/filters.part.yaml" }}
+
+# 域名分流组成员锚（壳版：无订阅级组，默认随“🚀 节点选择”，可按网站指定地区出口）
+DomainGroupMembers: &DomainGroupMembers
+  - 🚀 节点选择
+{{- range $r := $.regions }}
+  - {{ $r.emoji }} {{ $r.name }} - 自动选择
+  - {{ $r.emoji }} {{ $r.name }} - 手动选择
+{{- end }}
+  - DIRECT
+
+# 策略组：顶层选择 / 地区自动手动 / 域名分流 / BOF
+proxy-groups:
+  - name: 🚀 节点选择
+    type: select
+    proxies:
+{{- range $r := $.regions }}
+      - {{ $r.emoji }} {{ $r.name }} - 自动选择
+      - {{ $r.emoji }} {{ $r.name }} - 手动选择
+{{- end }}
+      - DIRECT
+
+  # 地区自动/手动选择（include-all 跨订阅汇入；自动组 gstatic URL 与主配置同构）
+{{- range $r := $.regions }}
+  - { name: {{ $r.emoji }} {{ $r.name }} - 自动选择, type: url-test, include-all: true, filter: *{{ $r.filter }}, url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 100 }
+  - { name: {{ $r.emoji }} {{ $r.name }} - 手动选择, type: select, include-all: true, filter: *{{ $r.filter }} }
+{{- end }}
+
+  # 域名分流组（定义在地区组之后：面板组顺序 = 配置定义顺序，保持“地区、领域”两段）
+  - { name: 🤖 AI, type: select, proxies: *DomainGroupMembers }
+  - { name: ✈️ Telegram, type: select, proxies: *DomainGroupMembers }
+  - { name: 🎬 流媒体与下载, type: select, proxies: *DomainGroupMembers }
+  # BOF 组首项 DIRECT 即默认出口：BOF 投稿要求住宅 IP 来源
+  - name: 🎵 BOF
+    type: select
+    proxies:
+      - DIRECT
+      - 🚀 节点选择
+{{- range $r := $.regions }}
+      - {{ $r.emoji }} {{ $r.name }} - 自动选择
+      - {{ $r.emoji }} {{ $r.name }} - 手动选择
+{{- end }}
+
+{{ include "dot_config/clash-meta/.fragments/rule-providers.part.yaml" }}
+
+rules:
+{{ include "dot_config/clash-meta/.fragments/rules.part.yaml" }}

@@ -11,6 +11,11 @@ AGENTS.md
 .pi/web-search.md
 # 机场情报记录：clash-meta 目录仓库内参考文档，不部署
 .config/clash-meta/AIRPORTS.md
+# 覆写壳：模板与生成物仅作仓库内/raw 分发（生成物由 gen-party-override.sh 从模板生成），
+# 不部署到 $HOME —— 两源条目映射同一目标路径，chezmoi 会报 inconsistent state
+.config/clash-meta/party-override.yaml
+# 覆写壳生成脚本：仓库内维护，不部署
+.config/clash-meta/gen-party-override.sh
 
 # docs 仅仓库维护：不再部署到 ~/docs（~/docs 内容不归本仓库管）
 docs/**
