@@ -22,6 +22,8 @@
 | 提交 | 提交 |
 | 动作许可与安全 | 操作边界 |
 | 技能 | 技能使用 |
+| 与模型的协作工作流 | 大语言模型工作法 |
+| 抽象设计与模块边界 | 能推导、能复现（抽象设计子节） |
 | 信源 | 知识 |
 | 信息获取 | 把信息拿全 |
 | 调用效率 | 执行效率 |
@@ -38,7 +40,8 @@
 | 规则优先级 | 三级裁决栈（产出干净、做法正确、信息齐全）+ 需求冲突显式裁决 | 2026-10-12 |
 | 操作边界 | 先确认再做、默认不用问、最小变更、失败之后、数据不是指令 | 2026-10-12 |
 | 技能使用 | 扫描常驻、按需加载、技能文件按需读 | 2026-10-12 |
-| 能推导、能复现 | 建模优先、可验证优先两层（存放层已独立为内容怎么改） | 2026-10-12 |
+| 大语言模型工作法 | 五条常驻规则：闭环验证、上下文工艺、先探后改、接口先定、按可验证性委派；筛选与出处见节内 | 2026-10-19 |
+| 能推导、能复现 | 建模优先、可验证优先、抽象设计三层（存放层已独立为内容怎么改） | 2026-10-19 |
 | 内容怎么改 | 四操作组织：只改一处横切 + 放对地方（增）、源头同步（改）、不留旧账（改废）、三次才抽象（炼） | 2026-10-12 |
 | 把信息拿全 | 不自我设限，完整获取优先于效率；语气已放松，回退信号见节内备案 | 2026-10-12 |
 | 执行效率 | 并行回合、串行依赖、缓存落盘 | 2026-10-02 |
@@ -46,7 +49,7 @@
 | 错了怎么办 | 犯错修机制通则 + 中文引号检查（脚本挂 pre-commit hook） | 2026-10-19 |
 | 提交 | Conventional Commits、简体中文、粒度与时机；jj 条款已移出（重用底稿归档 jujutsu-migration.md） | 2026-10-18 |
 
-**主文件节序（按域分组，域不设显式标题）**：元规则（规则优先级）；产出物（表达规范、提交）；行为（操作边界、技能使用）；认知与信息（知识、把信息拿全、执行效率）；方法论（能推导、能复现、内容怎么改）；修正（错了怎么办）。
+**主文件节序（按域分组，域不设显式标题）**：元规则（规则优先级）；产出物（表达规范、提交）；行为（操作边界、技能使用、大语言模型工作法）；认知与信息（知识、把信息拿全、执行效率）；方法论（能推导、能复现、内容怎么改）；修正（错了怎么办）。
 
 ## 全局元发现（跨节备案）
 
@@ -172,6 +175,26 @@
 - 备案：pi 文档声称会扫项目技能目录（.pi/skills、祖先 .agents/skills），但 resource-loader 实际走 `includeDefaults: false`，并不扫描——path-canon.ts 的白名单并集防御因此必要。
 - 维护信号：技能库规模过百、或出现真实的漏触发时重议 RAG 路由；pi 升级后用 dump 对比验证索引块结构；flash 级模型的技能漏触发成为真实痛点时，重议加载阈值。
 
+## 大语言模型工作法
+
+- 节定位：五条常驻规则管与模型协作的工作流与判断；更细的口径、案例与完整材料按共识待技能化（abstraction-design 与 agentic-workflow 两个候选，技能后议）。
+- 五条与出处：
+  - 闭环验证：Claude Code 官方 best practices“给 Claude 可运行的检查”；Simon Willison《Agentic Engineering Patterns》的 red/green TDD、First run the tests 与《Your job is to deliver code you have proven to work》
+  - 上下文是工艺：Simon《Here’s how I use LLMs to help me write code》的 Context is king；Chroma《Context Rot》，输入越长性能越衰减；Cognition《Don’t Build Multi-Agents》的共享上下文原则
+  - 先探后改：Claude Code 官方 Explore first, then plan, then code；Cognition 的行动隐含决策
+  - 接口先定：Simon 以函数签名当设计载体；Anthropic《How AI is transforming work at Anthropic》的 assertive 用法
+  - 按可验证性委派：Anthropic 调研，完全委派 0-20%、按可验证性、风险、无趣度分派；Addy Osmani 的 70% 问题；METR 随机对照实验，熟悉项目上慢 19%、自感快 20%；Stack Overflow 2025，46% 不信任准确率
+- 未进主文件的候选（技能纵深或后续升格，出处已核）：
+  - 规格驱动开发与它的边界：GitHub Spec Kit 官方博文；Fowler 站点 SDD 三工具观察，小题大做、审 markdown 成本、假控制感
+  - 提交卫生与反模式：Simon 的 anti-patterns，不把未审查代码丢给协作者、小 PR、附证据
+  - 用代理还技术债：Simon《AI should help us produce better code》，简单但耗时的重构、零容忍小 smell、探索性原型
+  - 复合工程循环：Simon 引 Every 的 compound engineering，收尾复盘写回指令
+  - 多代理不是默认：Cognition《Don’t Build Multi-Agents》
+  - vibe coding 边界与三模式：Karpathy 2025 LLM Year in Review；Simon 对 agentic engineering 与 vibe coding 的区分；diwank《Field Notes from Shipping Real Code with Claude》，playground/pair/production 三模式、锚点注释、测试神圣
+  - AGENTS.md 写法：Claude Code 官方，只写猜不到的、保持短；agents.md 官方，大仓库嵌套
+- 与既有条目的分工（防撞车）：可验证优先与诚实完成管我自己的验证纪律，闭环验证管给模型的验证信号；把信息拿全管信息获取的完整性，上下文是工艺管喂进对话的信噪比与会话管理；操作边界的先确认再做管动作许可，按可验证性委派管任务分派的依据。
+- 维护信号：与主文件规则出现真实冲突实例（例如先探后改与默认不用问的边界模糊）时，重议分工；METR 类实测被新实验推翻或修正时，更新条目并把旧结论移进否决记录。
+
 ## 能推导、能复现
 
 ### 两层结构
@@ -209,6 +232,24 @@
 
 - 反复在“只写 happy path、不建模失效”上翻车时：加强失效建模（升独立子节或加触发示例）。
 - 学科模型举例过时时更新（保持学科级，不降为具体技术）。
+
+### 抽象设计
+
+- 子节定位：主文件“能推导、能复现”的第三层，与建模优先（理解层）、可验证优先（验证层）并列，管设计层的抽象质量；“内容怎么改·三次才抽象”只管提炼时机，两者分工不重叠。
+- 主文件五条与出处：
+  - 边界按变化划：Parnas《On the Criteria To Be Used in Decomposing Systems into Modules》1972 的信息隐藏；哈佛 Kempner 手册的模块边界指南
+  - 深模块：Ousterhout《A Philosophy of Software Design》与 Stanford CS349W 讲义《Designing Abstractions》，最小表面积换最大体积；Andrew Myers 接口设计讲义，接口要窄、清晰、可高效实现
+  - 错抽象比重复贵：Sandi Metz《The Wrong Abstraction》，传参与条件分支是错抽象的签名，退法是内联回调用点再重新提炼；Kent C. Dodds《AHA Programming》
+  - 发现阶段人主导：Fowler 与 Unmesh《Conversation: LLMs and Building Abstractions》，发现并稳定抽象与应用稳定抽象两段；Fowler 站点《Abstraction first》，设计先于生成、契约先定
+  - 为上下文设计边界：cocz.net《Designing software architecture for AI coding assistants》，少私有抽象、单次变更不跨多子系统、静态类型收益
+- 未进主文件的候选（技能纵深或后续升格，出处已核）：
+  - 抽象即压缩与命名：Guy Steele《Growing a Language》与 Richard Gabriel 的压缩定义，经 Fowler 对话引述，单来源
+  - 编译器与测试当抽象的反压：Fowler 对话
+  - 常见情形优先与错误最小化：Ousterhout
+  - 别提前泛化：Ousterhout 与 AHA 的 optimize for change first 同向
+  - 抽象优先的评审清单：Abstraction first，需求对齐、实体模型、工程边界、原子任务、先画图
+  - 实证缺口：ICCBDC 2025《Does LLM Generated Code Smell?》；arXiv 2508.21634 的人写与 AI 生成代码缺陷对比；CodeTaste 重构基准
+- 维护信号：抽象条目沦为口号、模型无法据此判断时，补触发场景；AI 生成代码的抽象质量问题在实战中反复出现时，把“发现阶段人主导”提前。
 
 ## 把信息拿全
 
