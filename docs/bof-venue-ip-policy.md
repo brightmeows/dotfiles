@@ -1,6 +1,6 @@
 # BOF 会场 IP 管控与 mihomo 分流记录
 
-记录日期：2026-10-20。配置已修改并热加载验证；系统侧部署执行 `sudo bash ~/.config/clash-meta/deploy.sh`，重启服务后生效。
+记录日期：2026-10-20。配置已修改，热加载与系统侧部署均完成并验证。
 
 ## 结论
 
@@ -59,11 +59,10 @@ curl -s http://127.0.0.1:9090/connections | jq -r '.connections[] | select((.met
 
 `/connections` 的 chains 应为 DIRECT，destinationIP 为 59.106.171.86。
 
-本次热加载实测：BOF 组 now=DIRECT，连接 chains 为 `DIRECT <- 🎵 BOF`，直连出口 AS4837 中国联通。系统侧重启后是否保持，取决于 deploy.sh 是否执行。
+部署后实测：BOF 组 now=DIRECT，连接 chains 为 `DIRECT <- 🎵 BOF`，直连出口 AS4837 中国联通；mihomo -t 通过，deploy.sh 的 TUN 数据路径验证返回 HTTP 204。
 
 ## 未决
 
-- 系统侧部署：`sudo bash ~/.config/clash-meta/deploy.sh`，重启服务后配置持久化。
 - 确认本机接入是住宅固网而非校园网、公共设施或移动网络。
 - 直连无法消除 CGNAT 共享 IP、同 provider 他人违规连坐、运营裁量等残留风险。
 - 投稿时间窗口以当届规则为准；BOF22 规则页最后更新 2026-09-28。
