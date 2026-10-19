@@ -9,13 +9,14 @@ tags: [mihomo, clash-meta, proxy, tun]
 
 仓库根 [AGENTS.md](../../../AGENTS.md) 的通用约定（chezmoi 默认源目录、提交规范、中文引号）此处不重复。
 
-## 三层架构
+## 分层架构
 
 | 层 | 载体 | 职责 |
 |---|---|---|
 | 配置源 | `config.yaml.tmpl` | chezmoi 模板 → 渲染到 `~/.config/clash-meta/config.yaml` |
 | 部署桥梁 | `deploy.sh` | 手动 sudo：渲染产物 → 系统配置目录 + 重载服务（自动探测发行版布局） |
 | 运行 | `mihomo.service`（Arch）/ `clash-meta.service`（Fedora） | root + CAP_NET_ADMIN，读系统配置目录 |
+| 分发壳 | `party-override.yaml.tmpl` → `gen-party-override.sh` → `party-override.yaml`（进仓库） | Clash Party / Verge Rev 覆写包，GitHub raw URL 分发，不部署到 `$HOME` |
 
 订阅明文仅落在 `$HOME`（渲染产物），**不进 git**。
 
@@ -58,12 +59,30 @@ tags: [mihomo, clash-meta, proxy, tun]
 
 维护约定：
 
-- 地区列表由模板 `$regions`（名称 + emoji + filter anchor）一处定义，循环生成 14 个地区组与两处成员列表；新增地区只改 `$regions`
+- 地区列表在 `.chezmoidata/clash-meta.yaml`（仓库根，模板变量 `$.regions`）一处定义，主配置与覆写壳的双模板循环共享；新增地区只改数据文件，正则锚在 `.fragments/filters.part.yaml` 同步
 - 面板组顺序 = 配置里 `proxy-groups` 的定义顺序（metacubexd 以 `GLOBAL.all` 为索引排序）：保持“订阅源、地区、领域”三段，新增组按归属插到对应段内
 - 订阅级组用 `use: [<订阅名>]` 精确引用各自 provider；地区组用 `include-all + filter` 跨订阅汇入
 - 自动组 `url` 必须与 provider 健康检查 URL 一致（gstatic）：相同 URL 共享测速、不注册额外检查任务；改成其它 URL 会让每轮健康检查对同批节点多测一遍
 - 信息类假节点在 provider 层 `exclude-filter` 剔除（`剩余|到期|过期|重置|官网|订阅`）：改词表前先拉 `/providers/proxies` 的真实节点名做命中验证，确认零误伤（真实节点名含“下载”“流媒体”等字样，勿进词表）
 - “韩国”“其它”两个池在当前订阅里无匹配节点，组回退为 COMPATIBLE 占位（直连语义），属预期行为
+
+## 共享事实源与覆写壳
+
+规则主体与地区数据由主配置和覆写壳两个消费点共享，改动必须保双端同步：
+
+| 事实源 | 消费点 |
+|---|---|
+| `.chezmoidata/clash-meta.yaml`（仓库根，`$.regions`） | 双模板的地区组循环与成员列表 |
+| `.fragments/filters.part.yaml`（Filter* 锚定义） | 双模板 include |
+| `.fragments/rule-providers.part.yaml`（RuleSet* 锚 + providers） | 双模板 include |
+| `.fragments/rules.part.yaml`（静态规则行，两空格缩进文本碎片） | 双模板 include 拼进 `rules:` |
+| `party-override.yaml.tmpl`（壳版组结构） | `gen-party-override.sh` 渲染 → `party-override.yaml`（生成物进仓库） |
+
+- 壳的必要差异仅一处：组结构无订阅级组（party 侧订阅 URL 未知，include-all 地区组覆盖选节点）；组名、地区组字段、规则行与主配置逐字段同源
+- 壳不含 dns / tun / sniffer / 订阅注入：本机强耦合段，且客户端接管配置优先级高于覆写
+- 改片段或地区数据后跑 `bash dot_config/clash-meta/gen-party-override.sh` 重新生成；忘跑会被 pre-commit 的 `--check` 拦下
+- `.fragments/` 与生成物在 `.oxfmtrc.jsonc` 排除格式化（碎片非完整 yaml，格式化会破坏缩进）；模板与生成物在 `.chezmoiignore` 排除部署（两源条目映射同一目标，chezmoi 报 inconsistent state）
+- raw 分发地址、导入姿势与验证命令见 [docs/clash-meta-party-override.md](../../../docs/clash-meta-party-override.md)
 
 ## 踩坑点
 

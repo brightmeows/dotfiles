@@ -7,10 +7,14 @@
 | 文件 | 归属 | 职责 |
 |---|---|---|
 | `config.yaml.tmpl` | chezmoi 模板 | 渲染为 `~/.config/clash-meta/config.yaml`，含订阅注入逻辑 |
+| `.fragments/` | 共享片段（不部署） | 规则主体（地区筛选 / rule-providers / 静态规则行），双模板 include |
+| `party-override.yaml.tmpl` | 壳模板（不部署） | Clash Party / Verge Rev 覆写壳，与主配置共享片段与地区数据 |
+| `party-override.yaml` | 生成物（进仓库，不部署） | 壳生成产物，GitHub raw URL 供其他设备导入 |
+| `gen-party-override.sh` | 仓库内脚本（不部署） | 渲染壳模板 → 生成物；`--check` 供 pre-commit 校验 |
 | `deploy.sh` | 手动 sudo 脚本 | 把渲染产物搬运到 `/etc/clash-meta/` 并重载服务 |
 | `README.md` | 文档 | 本文件 |
 
-模板源文件不含订阅明文，可安全进 git；渲染产物含明文订阅 URL，仅落在 `$HOME`，不进 git。
+模板源文件不含订阅明文，可安全进 git；渲染产物含明文订阅 URL，仅落在 `$HOME`，不进 git。地区列表在仓库根 `.chezmoidata/clash-meta.yaml`，机制与导入方法见 [docs/clash-meta-party-override.md](../../../docs/clash-meta-party-override.md)。
 
 ## 订阅管理
 
@@ -67,6 +71,13 @@ sudo bash ~/.config/clash-meta/deploy.sh
 chezmoi diff        # 预览差异
 chezmoi apply       # 渲染
 sudo bash ~/.config/clash-meta/deploy.sh   # 部署 + 重载
+```
+
+改规则主体（`.fragments/` 片段）或地区数据（`.chezmoidata/clash-meta.yaml`）后，需重新生成覆写壳并提交：
+
+```bash
+bash dot_config/clash-meta/gen-party-override.sh   # 重新生成 party-override.yaml
+git add -A && git commit   # 忘跑生成时 pre-commit 的 --check 会拦下
 ```
 
 ## 管理面板
