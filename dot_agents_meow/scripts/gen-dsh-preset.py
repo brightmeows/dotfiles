@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""从 dsh 自带的 standard 预设派生“華淡モード”预设。
+"""从 dsh 自带的 standard 预设派生“白小喵モード”预设。
 
 为什么必须整份派生：dsh 的 persona 平面（DEPLOYMENT_PERSONA_PREFIX，系统提示词最前）
 由 preset 的 persona 行承载，preset 会遮蔽部署级 persona，而 preset 之间没有继承机制
@@ -185,12 +185,12 @@ def main() -> int:
     parser.add_argument("--dsh-home", type=Path,
                         default=Path(os.environ.get("DSH_HOME", Path.home() / ".dsh")),
                         help="dsh home（默认 $DSH_HOME 或 ~/.dsh）")
-    parser.add_argument("--preset-id", default="kaiman-katan", help="预设 id（默认 kaiman-katan）")
+    parser.add_argument("--preset-id", default="bai-xiaomiao", help="预设 id（默认 bai-xiaomiao）")
     args = parser.parse_args()
 
     pkg = find_dsh_package()
     if pkg is None:
-        print("dsh 未安装，跳过华淡预设生成")
+        print("dsh 未安装，跳过白小喵预设生成")
         return 0
     composition = find_composition(pkg)
     if composition is None:
@@ -230,8 +230,8 @@ def main() -> int:
 
     preset_dir = args.dsh_home / ".agent-presets" / args.preset_id
     metadata = (
-        "name: 華淡モード\n"
-        "description: 标准模式 + 白喵斯家的海漫华淡人设（persona 平面承载）。\n"
+        "name: 白小喵モード\n"
+        "description: 标准模式 + 白喵斯家的白小喵人设（persona 平面承载）。\n"
         "order: 2\n"
     )
     changed = [
