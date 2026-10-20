@@ -26,7 +26,8 @@ echo "lint: pnpm lint"
 pnpm lint
 
 # markdownlint：仅暂存且存在的 md 文件（--diff-filter=ACM 排除已删除的）
-mapfile -t md_files < <(git diff --cached --name-only --diff-filter=ACM -- '*.md')
+# core.quotepath=off：非 ASCII 文件名（如中文）原样输出，避免下游拿到带引号转义的假路径
+mapfile -t md_files < <(git -c core.quotepath=off diff --cached --name-only --diff-filter=ACM -- '*.md')
 if ((${#md_files[@]} > 0)); then
   echo "markdownlint: ${md_files[*]}"
   markdownlint --config .markdownlint.toml "${md_files[@]}"
@@ -37,7 +38,7 @@ if ((${#md_files[@]} > 0)); then
 fi
 
 # 模型域：models.toml、生成器或生成物被暂存时校验仓库产物一致性
-if git diff --cached --name-only --diff-filter=ACM -- \
+if git -c core.quotepath=off diff --cached --name-only --diff-filter=ACM -- \
   dot_agents_meow/models/models.toml dot_agents_meow/models/gen-models.py \
   dot_pi/agent/models.json dot_pi/agent/models-dev.json | grep -q .; then
   echo "check: Pi 模型生成物与 models.toml 一致"
@@ -45,7 +46,7 @@ if git diff --cached --name-only --diff-filter=ACM -- \
 fi
 
 # clash-meta 域：覆写壳模板、片段、地区数据、生成器或生成物被暂存时校验仓库产物一致性
-if git diff --cached --name-only --diff-filter=ACM -- \
+if git -c core.quotepath=off diff --cached --name-only --diff-filter=ACM -- \
   dot_config/clash-meta/party-override.yaml.tmpl dot_config/clash-meta/gen-party-override.sh \
   dot_config/clash-meta/.fragments dot_config/clash-meta/party-override.yaml \
   .chezmoidata/clash-meta.yaml | grep -q .; then
