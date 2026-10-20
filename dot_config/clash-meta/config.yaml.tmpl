@@ -10,7 +10,9 @@
   规则主体（地区筛选 / rule-providers / 静态规则行）为 .fragments/ 共享片段，
   与 party-override.yaml.tmpl（Clash Party 覆写壳，生成物进仓库走 raw 分发）同源 include。
 */ -}}
-{{- /* 用 bash 的 $HOME（chezmoi 执行命令时继承），不依赖 .chezmoi.homedir 变量（该 key 不存在） */ -}}
+{{- /* 订阅提取在 output 子进程内读 ~/.env_self：子进程需要环境变量形式的 $HOME
+  （chezmoi 执行命令时继承），模板变量（.chezmoi.homeDir / rawHomeDir）替代不了；
+  勿改用环境变量名以外的路径拼接方式，避免依赖 chezmoi 模板数据里的 home 拼写 */ -}}
 {{- $subs := output "bash" "-c" "set -a; . $HOME/.env_self 2>/dev/null; env | grep '_SUBSCRIPTION=' || true" | splitList "\n" -}}
 {{- /* 物化订阅名列表（变量名去掉 _SUBSCRIPTION 后缀）：策略组生成统一消费，避免模板逻辑再复制一份 */ -}}
 {{- $subNames := list }}

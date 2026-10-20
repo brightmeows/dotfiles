@@ -10,7 +10,8 @@ dst="dot_config/clash-meta/party-override.yaml"
 
 render() {
   # --source 指向仓库根：不依赖 ~/.local/share/chezmoi 建链，hook / 任意 clone 均可运行
-  chezmoi execute-template --source "$root" < "$root/$src"
+  # --file 直读模板（2.62+），免 stdin 重定向
+  chezmoi execute-template --file "$root/$src" --source "$root"
 }
 
 if [[ "${1:-}" == "--check" ]]; then
