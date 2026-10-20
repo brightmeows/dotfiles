@@ -4,7 +4,7 @@
 
 `~/.config/hypr/monitors.lua` 自 2026-10-18 起退出 chezmoi 管理，文件主权移交 omarchy 运行时（缩放切档器）。`.chezmoiignore` 已相应排除；原文件注释块承载的政策依据由本文承接，恢复入口见文末。
 
-hypr 目录其余文件维持纳管，Omarchy 迁移就地修补仍走“chezmoi re-add 回填”策略。monitors.lua 是唯一例外：切档器（`SUPER + SLASH`）每次按键都会 sed 联写通配值，属常态性带外写手，不是一次性迁移修补，re-add 回填会与用户运行时选择永久打架。
+hypr 目录其余文件维持纳管，Omarchy 迁移就地修补仍走“chezmoi 回填”策略：chezmoi 2.73 起优先用 `push` 命令（把目标变更推回源文件），`re-add` 作为重建源条目的备选。monitors.lua 是唯一例外：切档器（`SUPER + SLASH`）每次按键都会 sed 联写通配值，属常态性带外写手，不是一次性迁移修补，回填会与用户运行时选择永久打架。
 
 ## 事件（2026-10-17 22:05:15）
 

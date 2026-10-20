@@ -30,7 +30,8 @@ node_modules
 tsconfig.json
 
 # ~/.config/hypr 已纳管（含工作区决策表 WORKSPACES.md）；Omarchy 升级迁移若
-# 就地修补部署文件，用 chezmoi re-add 回填源。shell.json 仍不入管，由
+# 就地修补部署文件，用 chezmoi push（2.73+，把目标变更推回源）或 chezmoi re-add 回填。
+# shell.json 仍不入管，由
 # brightmeows 插件的合并脚本在 apply 时恢复 bar 条目
 # monitors.lua 例外：缩放切档器（SUPER+SLASH）每次按键都 sed 联写通配值，
 # 属常态性带外写手，除管移交 omarchy（裁决与恢复见 docs/omarchy-monitors-lua-除管记录.md）
