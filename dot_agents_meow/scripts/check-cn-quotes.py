@@ -27,6 +27,8 @@ def check_file(path: str) -> int:
                 continue
             # 行内代码（反引号包裹）视为代码字符串，跳过
             text = re.sub(r"`[^`]*`", "", line)
+            # 英文所有格撇号（字母之间，如 Author's Note）不是引号，豁免
+            text = re.sub(r"(?<=[A-Za-z])'(?=[A-Za-z])", "", text)
             if re.search(_BAD_QUOTES, text):
                 print(f"{path}:{i}: {line.rstrip()}")
                 violations += 1
