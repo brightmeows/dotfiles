@@ -81,7 +81,6 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | [`docs/terra-mesa-setup.md`](docs/terra-mesa-setup.md) | terra-mesa 硬件解码部署记录（Fedora Kinoite、AMD Ryzen 5 5500U） |
 | [`docs/omarchy-monitors-lua-除管记录.md`](docs/omarchy-monitors-lua-除管记录.md) | Omarchy 缩放切档器就地改写 monitors.lua 与 chezmoi 的主权冲突：证据链、除管裁决、政策承接与恢复方法 |
 | [`docs/jujutsu-migration.md`](docs/jujutsu-migration.md) | Jujutsu 试验记录与回退：特性谱系、混用边界与失效模式速查（供将来重用参考） |
-| [`docs/rtk-pi-integration.md`](docs/rtk-pi-integration.md) | rtk Pi 集成：stock 扩展选型、内建 recall 承担原始输出恢复、awareness 自管（Pi 无注入通道）、bash 提取库 rtk 前缀兼容 |
 
 ## 边界规则
 

@@ -9,7 +9,3 @@
 
 - 3 个以上独立工具调用合并进一个 codemode 脚本并行执行；预期大输出的检索类调用先过滤再输出
 - MCP 工具（context7、cratesio-mcp、paper-search-mcp）只能通过 codemode 调用，相关场景优先使用
-
-## rtk 输出压缩
-
-bash 输出由 rtk 自动压缩。优先不裁剪：需要完整输出时用 `rtk bypass <命令>` 执行原命令；失败或截断的输出按尾部提示 `rtk recall <hash>` 取回原文。
