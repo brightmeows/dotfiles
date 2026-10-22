@@ -1,6 +1,7 @@
 {
   "searchRouting": {
     "providers": [
+      "deepseek",
       "exa",
       "duckduckgo",
       "anysearch",
