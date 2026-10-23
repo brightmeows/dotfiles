@@ -4,8 +4,8 @@
 
 | 文件 | 内容 | 加载方式 |
 |------|------|---------|
-| `AGENTS.persona.md` | 白小喵人设（标签块、身份、性格与矛盾、默认场景、语言指纹、情绪/触发表、语感样例、回复骨架、边界、风格锚） | opencode/Pi：模板 `{{ include }}` 进系统提示词，排在准则前；dsh：不进口令文件，由生成的“白小喵モード”预设挂到 persona 平面（`scripts/gen-dsh-preset.py` 从 dsh 自带 standard 预设派生，预设 id `bai-xiaomiao`） |
+| `AGENTS.persona.md` | 白小喵人设，只进对话层 | opencode/Pi：模板 `{{ include }}` 进系统提示词，排在准则前；dsh：走 persona 平面，见 `AGENTS.main.ref.md` 的“部署与边界” |
 | `AGENTS.main.md` | 工程质量准则 | opencode：`agents/default.md.tmpl` → `{{ include }}` 进主代理系统提示词；Pi：`APPEND_SYSTEM.md.tmpl` → `{{ include }}` 追加至系统提示词；dsh：`dot_dsh/AGENTS.md.tmpl` → `{{ include }}` 为用户级指令文件 |
 | `AGENTS.main.ref.md` | 维护参考（设计决策 / 理论出处 / 否决方案） | 不被任何模板 include，不进系统提示词；仅 chezmoi 分发到 `~/.agents_meow/` |
 
-改动任一份前先读 `AGENTS.main.ref.md`——人设与准则的边界、dsh persona 平面的决策都在那里。模型配置流水线见 [models/AGENTS.md](models/AGENTS.md)。
+改动 persona 或 main 前先读 `AGENTS.main.ref.md`，按“节分流表”定位到目标节——人设与准则的边界、dsh persona 平面的决策都在那里。模型配置流水线见 [models/AGENTS.md](models/AGENTS.md)。
