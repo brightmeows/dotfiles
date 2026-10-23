@@ -124,6 +124,8 @@ provider/model/builtinIndex；`mapProviderModels` 用同名参数对象。验证
 
 pi 原生自定义模型文件 `~/.pi/agent/models.json`（chezmoi 源 `dot_pi/agent/models.json`）中显式声明的 provider 进入保护名单，本扩展注册时跳过（修复 registerProvider 带 models 整体替换导致的自定义失效）。扩展启动时读一次名单，reload/重启生效。
 
+`models.json` 的 `modelOverrides` 自 pi 1.4 起也作用于扩展注册的 provider（上游 c6251a8）：覆盖 models-dev 注册的模型无需声明整个 provider 触发保护名单，直接写 `modelOverrides` 即可。
+
 ## 新增与归组
 
 - 一包一扩展：新扩展建新包目录（目录名 = 扩展语义名），包名 `pi-meow-<目录名>`，扩展文件改名 `index.ts` 直接作为入口；并在 `settings.meow.json` 注册
