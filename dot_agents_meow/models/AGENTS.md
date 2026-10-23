@@ -1,8 +1,3 @@
----
-description: 模型配置域（TOML 单一源，Pi 与 dsh 双消费者）的维护约定
-tags: [models, models-dev, pi, dsh]
----
-
 # 模型配置域（面向代理）
 
 本目录是模型配置的单一编辑域：`models.toml` 是唯一手改入口，Pi 与 dsh 两侧的模型配置都由它派生。models.dev 的目录数据是外部事实，由两侧各自在运行时获取（Pi 扩展 24 小时缓存；dsh 插件写本机缓存），不落仓库。
@@ -40,7 +35,7 @@ oxlint 复杂度规则（全局严阈值 complexity 15 / depth 4 / 函数 100 �
 
 ## TOML 规则
 
-单段 `[providers.<id>]`：`id` 与 models.dev 同名表示覆盖外部数据，未收录表示完整定义。
+每个 `[providers.<id>]` 段：`id` 与 models.dev 同名表示覆盖外部数据，未收录表示完整定义。
 
 - 判定方式：条目里出现下表任一定义类字段即按完整定义处理（Pi 写进 `models.json`，dsh 直接构造路由）；否则按覆盖处理（Pi 写进 `models-dev.json`，dsh 叠加到外部数据上）。
 - provider 级禁用只写顶层 `disabled_providers` 数组；条目里写 `disabled` 会被校验拒绝。
@@ -62,7 +57,7 @@ oxlint 复杂度规则（全局严阈值 complexity 15 / depth 4 / 函数 100 �
 1. 编辑 `models.toml`；
 2. `python3 dot_agents_meow/models/gen-models.py` 生成仓库产物与本机 `resolved.json`；
 3. `chezmoi apply` 部署 TOML 与产物，并在 apply 之后把同一结果同步到 `~/.pi/agent`；
-4. 验证：`--check` 通过；dsh 侧看插件日志与 `/models-refresh`；Pi 侧 `/reload` 后确认模型列表；
+4. 验证：`--check` 通过、`pnpm check` 通过；dsh 侧看插件日志与 `/models-refresh`；Pi 侧 `/reload` 后确认模型列表；
 5. 提交（TOML 与两份 JSON 同提交，pre-commit 会拦截漂移）。
 
 ## 与 dsh 的关系
