@@ -25,6 +25,9 @@ pnpm format:check
 echo "lint: pnpm lint"
 pnpm lint
 
+echo "check: Pi 运行时与 devDeps 版本"
+pnpm check:pi
+
 # markdownlint：仅暂存且存在的 md 文件（--diff-filter=ACM 排除已删除的）
 # core.quotepath=off：非 ASCII 文件名（如中文）原样输出，避免下游拿到带引号转义的假路径
 mapfile -t md_files < <(git -c core.quotepath=off diff --cached --name-only --diff-filter=ACM -- '*.md')
