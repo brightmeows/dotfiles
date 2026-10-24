@@ -73,8 +73,9 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | [`docs/model-config-pipeline.md`](docs/model-config-pipeline.md) | 模型配置流水线：TOML 单一源、双消费者生成物、models.dev 刷新与映射规则 |
 | [`docs/matebook-battery-optimization.md`](docs/matebook-battery-optimization.md) | MateBook 续航优化：放电数据对比、battery-boost/power-log 改动、mihomo DoT 探测风暴处置 |
 | [`docs/pi-lsp-support.md`](docs/pi-lsp-support.md) | Pi 的 LSP 支持：pi-lsp-extension 选型决策与重审触发条件、防漂移四件套写法示范 |
-| [`docs/pi-ask-user-question-limits.md`](docs/pi-ask-user-question-limits.md) | Pi ask_user_question 上限配置化 |
+| [`docs/pi-ask-user-question-limits.md`](docs/pi-ask-user-question-limits.md) | Pi ask_user_question vendor 化、题数上限移除、依赖锁与漂移门禁 |
 | [`docs/env-loading.md`](docs/env-loading.md) | 环境变量单一数据源 + 双加载路径、自定义语法与踩坑点 |
+| [`docs/pnpm-store-version.md`](docs/pnpm-store-version.md) | pnpm 版本切换、store 布局与 ERR_PNPM_UNEXPECTED_STORE 重链记录 |
 | [`docs/chezmoi-sync-scripts.md`](docs/chezmoi-sync-scripts.md) | 合并脚本命名约定、触发方式与时序约束 |
 | [`docs/nvm-shim-nvm4306-script-trust.md`](docs/nvm-shim-nvm4306-script-trust.md) | （历史）NVM shim NVM4306 拦截与脚本信任修复；nvm 已退役，问题随 shim 代理层消失 |
 | [`docs/Edge与Firefox书签合并经验.md`](docs/Edge与Firefox书签合并经验.md) | Edge 与 Firefox 书签合并：同步引擎与文件层两套真相、去重映射与两地手术 |
