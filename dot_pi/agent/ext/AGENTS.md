@@ -35,7 +35,6 @@ tags: [pi, extensions, typescript]
 ```json
 "packages": [
   "npm:@juicesharp/rpiv-ask-user-question",
-  "npm:@narumitw/pi-goal",
   "npm:pi-lsp-extension",
   "npm:pi-web-access",
   "./ext/aliases",

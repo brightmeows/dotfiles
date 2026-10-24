@@ -7,7 +7,6 @@
   "codemode": { "mode": "on", "inlineBudget": 65536 },
   "packages": [
     "npm:@juicesharp/rpiv-ask-user-question",
-    "npm:@narumitw/pi-goal",
     "npm:pi-lsp-extension",
     "npm:pi-web-access",
     "./ext/aliases",
