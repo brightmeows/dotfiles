@@ -1,5 +1,6 @@
 {
   "name": "pi-meow-ask-user-question",
+  "private": true,
   "description": "Structured questionnaire tool for Pi, vendored from @juicesharp/rpiv-ask-user-question@2.15.0 (MIT, juicesharp/rpiv-mono) with the question-count limit removed.",
   "keywords": [
     "pi-extension",
@@ -10,6 +11,17 @@
   "exports": {
     ".": "./index.ts",
     "./events": "./events.ts"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*",
+    "@juicesharp/rpiv-i18n": "*",
+    "typebox": "*"
+  },
+  "peerDependenciesMeta": {
+    "@juicesharp/rpiv-i18n": {
+      "optional": true
+    }
   },
   "pi": {
     "extensions": [
