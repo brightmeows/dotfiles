@@ -4,7 +4,7 @@ import { renderInlineInputRow } from "./inline-input.ts";
 
 /**
  * Row-intent discriminated union. `kind` is the single discriminator —
- * pre-1.0.3 boolean flags have been removed (see `banned-flags.test.ts`).
+ * the pre-1.0.3 boolean flags are gone.
  * Modeled after `QuestionnaireAction` (`key-router.ts:13-32`) and `Effect`
  * (`state-reducer.ts:26-32`) — pure literal-tagged variants, no shared base,
  * exhaustive-`switch` enforcement via non-`void` returns.

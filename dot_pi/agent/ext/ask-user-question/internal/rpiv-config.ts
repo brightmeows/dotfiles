@@ -10,7 +10,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { isAbsolute, join } from "node:path";
-import { Type } from "typebox";
 
 // ---------------------------------------------------------------------------
 // Path resolution
@@ -85,7 +84,7 @@ function legacyConfigPath(name: string, file: string = "config.json"): string {
  * @param file — config filename (defaults to "config.json")
  * @returns absolute path to the config file
  */
-export function configPath(name: string, file: string = "config.json"): string {
+function configPath(name: string, file: string = "config.json"): string {
   return join(resolveConfigDir(), name, file);
 }
 
@@ -102,7 +101,7 @@ export function configPath(name: string, file: string = "config.json"): string {
  * rejected — `typeof [] === "object"` in JavaScript, but config files are
  * always plain objects.
  */
-export function loadJsonConfig<T>(path: string): T {
+function loadJsonConfig<T>(path: string): T {
   if (!existsSync(path)) return {} as T;
   try {
     const parsed = JSON.parse(readFileSync(path, "utf-8")) as unknown;
@@ -150,23 +149,6 @@ export interface GuidanceFields {
   promptGuidelines?: string[];
   description?: string;
 }
-
-// TypeBox form of GuidanceFields. Mirrors the interface 1:1 — same fields,
-// same optionality. `additionalProperties: true` lets consumers compose
-// wrappers that may carry sibling-specific keys without those leaking back
-// into the config. The runtime invariants (string fields must be non-empty,
-// the array field must be non-empty and contain only non-empty strings) are
-// still enforced by `validateGuidanceFields`; the schema is a structural
-// type-narrowing aid for callers that bake guidance into a larger
-// TypeBox-validated config object.
-export const GuidanceFieldsSchema = Type.Object(
-  {
-    promptSnippet: Type.Optional(Type.String()),
-    promptGuidelines: Type.Optional(Type.Array(Type.String())),
-    description: Type.Optional(Type.String()),
-  },
-  { additionalProperties: true },
-);
 
 /**
  * Validate and extract guidance fields from an unknown value.

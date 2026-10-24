@@ -29,7 +29,7 @@ export type SentinelLabel = (typeof SENTINEL_LABELS)[SentinelKind];
  * Reserved unconditionally — every question mode rejects these labels, even
  * when a given runtime sentinel is not appended in that mode.
  *
- * Order is pinned by `types.test.ts:292` — keep the explicit
+ * Order is part of the public surface — keep the explicit
  * `["Other", other, next]` literal so consumers using
  * `RESERVED_LABELS[i]` indexing or `Set` membership see no behavior change.
  */
@@ -96,7 +96,7 @@ export type QuestionParams = Static<typeof QuestionParamsSchema>;
 
 /**
  * Answer-intent discriminated union. `kind` is the single discriminator —
- * pre-1.0.3 boolean flags have been removed (see `banned-flags.test.ts`).
+ * the pre-1.0.3 boolean flags are gone.
  * Mirrors the row-side `WrappingSelectItem.kind` vocabulary where possible;
  * `multi` is the multi-select variant (no row-side analog).
  *
