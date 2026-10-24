@@ -67,8 +67,9 @@ if git -c core.quotepath=off diff --cached --name-only --diff-filter=ACM -- \
   bash dot_config/clash-meta/gen-party-override.sh --check
 fi
 
-# 模型域插件变更：跑 patch-writer 单测
-if git diff --cached --name-only --diff-filter=ACM -- dot_agents_meow/models | grep -q .; then
-  echo "test: 模型域单测"
-  node --test dot_agents_meow/models/*.test.mts >/dev/null
+# 单测：扩展与模型域代码、依赖变更时运行
+if git -c core.quotepath=off diff --cached --name-only --diff-filter=ACM -- \
+  dot_pi/agent/ext dot_agents_meow/models package.json pnpm-lock.yaml | grep -q .; then
+  echo "test: 扩展与模型域单测"
+  pnpm test
 fi
