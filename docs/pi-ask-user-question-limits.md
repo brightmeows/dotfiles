@@ -45,3 +45,10 @@ Pi 的 `ask_user_question` 组件原为第三方包 `@juicesharp/rpiv-ask-user-q
 - 配置文件 `~/.config/rpiv-ask-user-question/config.json` 与 chezmoi 托管 `dot_config/rpiv-ask-user-question/` 已删除（原 `maxQuestions: 8` 随上限移除失去意义）；包内 config 加载逻辑保留（collapseKey 等仍可用，无配置文件走默认）
 - settings.json 的 packages 为并集语义：npm 条目删除不自动传导，已手动从 `~/.pi/agent/settings.json` 移除 `npm:@juicesharp/rpiv-ask-user-question`，并清理 `~/.pi/agent/npm/node_modules/@juicesharp/` 安装残留
 - 部署副本 `~/.pi/agent/ext/ask-user-question/` 与源目录保持一致；修改源文件后仍需 `chezmoi apply`
+
+## 验证记录（2026-10-24）
+
+- 静态检查：`pnpm check`（漂移检查与 tsc）、`pnpm lint`、`pnpm test`（当前 44 项）、`pnpm format:check` 全绿。
+- headless：`pi -p --no-session -e /tmp/agent-cache/dump-tools.ts "只回复：收到"`，`agent_start` 写出的活动工具列表不含 `ask_user_question`，确认无 UI 时的剥离分支生效。
+- TUI：tmux 120x40 交互会话提交 10 题（header 10-14 字符）。初始 tab 条显示前 5 题、右省略号与固定 Submit；按 7 次 Tab 后截获 `← … □ HeaderSix006 … ✓ Submit →`，活动 tab 跟随开窗；Esc 取消后转录显示 `no answer`，无崩溃。
+- 部署：`chezmoi apply ~/.pi/agent/ext/ask-user-question` 后部署副本与源目录一致；单测文件按 `.chezmoiignore` 不进入部署副本。
