@@ -33,8 +33,18 @@ if ((${#md_files[@]} > 0)); then
   markdownlint --config .markdownlint.toml "${md_files[@]}"
 
   # 中文引号：GB/T 15834-2011，弯引号规范（脚本有代码围栏豁免）
-  echo "cn-quotes: ${md_files[*]}"
-  python3 dot_agents_meow/scripts/check-cn-quotes.py "${md_files[@]}"
+  # cn-quotes 仅适用于中文文档；.markdownlintignore 命中的 vendored 英文文档
+  # （如 ext/ask-user-question/）不在中文引号规范适用范围内，同源过滤
+  cq_files=()
+  if [[ -f .markdownlintignore ]]; then
+    mapfile -t cq_files < <(printf '%s\n' "${md_files[@]}" | grep -v -F -f .markdownlintignore)
+  else
+    cq_files=("${md_files[@]}")
+  fi
+  if ((${#cq_files[@]} > 0)); then
+    echo "cn-quotes: ${cq_files[*]}"
+    python3 dot_agents_meow/scripts/check-cn-quotes.py "${cq_files[@]}"
+  fi
 fi
 
 # 模型域：models.toml、生成器或生成物被暂存时校验仓库产物一致性

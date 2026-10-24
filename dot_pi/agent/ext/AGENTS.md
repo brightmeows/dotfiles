@@ -19,6 +19,7 @@ tags: [pi, extensions, typescript]
 | 路径 | 包名 | 角色 | 要点 |
 |------|------|------|------|
 | `aliases/` | `pi-meow-aliases` | 斜杠命令别名 | /clear → /new、/exit → /quit |
+| `ask-user-question/` | `pi-meow-ask-user-question` | 结构化问卷工具（vendor） | 自 @juicesharp/rpiv-ask-user-question@2.15.0 vendored、冻结不跟上游，见 [docs/pi-ask-user-question-limits.md](../../../docs/pi-ask-user-question-limits.md)；题数上限已移除（常量/schema/校验/提示词四处全删）；rpiv-config 内联 internal/、i18n 为 optional peer 运行时软加载；包名与入口保持本仓惯例，上游代码风格不动——oxlint 冲突规则包级豁免见 `.oxlintrc.json` overrides |
 | `esc-hold/` | `pi-meow-esc-hold` | Esc 防误触 | 单击提示不中断，双击/长按才中断；terminal 输入层；以 `ctx.isIdle()` 分场景：生成中守卫、空闲全放行 |
 | `git-hooks/` | `pi-meow-git-hooks` | git hooks 自动配置 | session_start 检测 cwd 所属仓库一次：`.githooks/` 含可执行脚本则补设 `core.hooksPath=.githooks`（githooks 优先；已设 `.githooks` 静默、指向别处不动仅提示）；`.pre-commit-config.yaml` + 系统有 pre-commit 命令则 hook 缺失时跑 `pre-commit install`（已装看 hook 头部标记，外来 hook 交工具 migration mode，工具缺失静默）；互斥锚定：hooksPath 已设时 pre-commit install 上游拒绝执行（实测 4.6.2），githooks 命中即分流；提示 setWidget（激活 8s 清、失败不自动清，models-dev 同款理由），已就绪零输出，非 tui 打 stderr；hooks 目录用 `--git-path hooks` 解析（兼容 worktree）；中途 cd 不检测，Windows 执行位退化可接受 |
 | `editor-input-tweaks/` | `pi-meow-editor-input-tweaks` | 编辑器输入增强 | /@ 标记符着色 + / 补全停留；独占编辑器槽位（`ctx.ui.setEditorComponent` 全局单例，后设覆盖先设，新增编辑器类扩展须链式包装或并入本包） |
@@ -34,10 +35,10 @@ tags: [pi, extensions, typescript]
 
 ```json
 "packages": [
-  "npm:@juicesharp/rpiv-ask-user-question",
   "npm:pi-lsp-extension",
   "npm:pi-web-access",
   "./ext/aliases",
+  "./ext/ask-user-question",
   "./ext/editor-input-tweaks",
   "./ext/esc-hold",
   "./ext/git-hooks",
@@ -130,7 +131,7 @@ pi 原生自定义模型文件 `~/.pi/agent/models.json`（chezmoi 源 `dot_pi/a
 - 一包一扩展：新扩展建新包目录（目录名 = 扩展语义名），包名 `pi-meow-<目录名>`，扩展文件改名 `index.ts` 直接作为入口；并在 `settings.meow.json` 注册
 - 技能域：better-skill 合集包（技能索引重写 / skill 工具 / read 兜底增强）已移除，技能加载回归 Pi 内置机制（Pi 默认建议式索引 + read 加载，`/skill:name` 手动命令保留）；专项提醒注入归 `skill-reminders/` 独立包
 - 编辑器槽位例外：替换主编辑器的扩展（`ctx.ui.setEditorComponent` 全局单例）不可与 `editor-input-tweaks` 并存，新编辑器功能并入其 `SlashAtHighlightEditor` 或链式包装
-- npm 扩展：`rpiv-todo` 已移除、不再引入（主人确认）；任务跟踪不用固定工具。
+- npm 扩展：`rpiv-todo` 已移除、不再引入（主人确认）；任务跟踪不用固定工具。`rpiv-ask-user-question` 已 vendor 成本地包（见 ask-user-question/ 行），不再走 npm 安装
 - 各包完全自包含：包间零 import、无 lib 类共享目录；包内模块用 `./xxx.ts` 写法（tsconfig 已开 `allowImportingTsExtensions`）；需复用的模块在各包自备副本，副本间无同步义务
 - 新增包须在 `settings.meow.json` 的 `packages` 数组注册路径
 - 新增/移动扩展须实测加载：`pnpm check` 不查 default factory 契约，须 `pi -p -e <入口> --no-session` 验证（组目录传 `xxx/index.ts`）

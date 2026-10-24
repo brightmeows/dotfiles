@@ -60,6 +60,35 @@
         "max-depth": ["deny", 5],
         "max-lines-per-function": ["deny", 165]
       }
+    },
+    {
+      "files": ["dot_pi/agent/ext/ask-user-question/**"],
+      "rules": {
+        "complexity": ["deny", 50],
+        "curly": "off",
+        "capitalized-comments": "off",
+        "max-params": "off",
+        "prefer-destructuring": "off",
+        "no-await-in-loop": "off",
+        "no-control-regex": "off",
+        "no-duplicate-imports": "off",
+        "eslint/no-nested-ternary": "off",
+        "typescript/array-type": "off",
+        "typescript/method-signature-style": "off",
+        "typescript/consistent-type-definitions": "off",
+        "typescript/consistent-type-imports": "off",
+        "typescript/no-inferrable-types": "off",
+        "typescript/consistent-indexed-object-style": "off",
+        "unicorn/switch-case-braces": "off",
+        "unicorn/max-nested-calls": "off",
+        "unicorn/consistent-existence-index-check": "off",
+        "unicorn/prefer-export-from": "off",
+        "unicorn/prefer-logical-operator-over-ternary": "off",
+        "unicorn/catch-error-name": "off",
+        "unicorn/text-encoding-identifier-case": "off",
+        "unicorn/no-nested-ternary": "off",
+        "oxc/no-map-spread": "off"
+      }
     }
   ]
 }

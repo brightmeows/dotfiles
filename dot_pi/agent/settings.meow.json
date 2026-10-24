@@ -6,10 +6,10 @@
   "enableSkillCommands": true,
   "codemode": { "mode": "on", "inlineBudget": 65536 },
   "packages": [
-    "npm:@juicesharp/rpiv-ask-user-question",
     "npm:pi-lsp-extension",
     "npm:pi-web-access",
     "./ext/aliases",
+    "./ext/ask-user-question",
     "./ext/editor-input-tweaks",
     "./ext/esc-hold",
     "./ext/git-hooks",
