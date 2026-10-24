@@ -6,7 +6,7 @@
  * 默认，不附中断键提示）：
  *   等待模型响应（3s） / 生成中（12s） / 执行工具 bash（2s）
  *
- * 状态机（事件驱动，基础文案相同不重复设置）：
+ * 状态机（事件驱动，文案相同不重复设置）：
  *   agent_start / before_provider_request → 等待模型响应
  *   message_start（仅 assistant 消息）     → 生成中
  *   tool_execution_start                   → 执行工具 <toolName>
@@ -17,14 +17,19 @@
  * 刷新，前 1 秒内显示（1s）避免（0s）；秒表仅状态活跃时运行。
  *
  * 设计说明：
- * - message_start 对 user/toolResult 消息也触发，仅 assistant 切“生成中”；
+ * - 计时重锚定：每次状态切换重建 interval，tick 落在 since+k 秒整点，
+ *   消除沿用旧相位导致的显示偏晚（最多 1 秒）
+ * - 工具计时按调用者计：start 时记录各 callId 真实起点，显示谁就用谁的
+ *   起点——嵌套子工具用子起点、回退父工具恢复父起点（真实父耗时）；
+ *   相邻同名顶层调用 callId 不同，计时各自重置（旧实现按文案判重，
+ *   并行同名工具的连续计时会跨调用累加）
+ * - retry / compaction / branchSummary 阶段由内置指示器整体接管
+ *   （指示器 kind 不同，实测 500 重试退避窗口本扩展文案被整体替换），
+ *   本扩展不干预；agent_end 复位保证下一轮干净
+ * - message_start 对 user/toolResult 消息也触发，仅 assistant 切生成中；
  *   后续 delta（message_update）不重复设置，状态切换只在事件边界发生
  * - codemode 嵌套工具调用（parentToolCallId 存在）结束后回退显示父工具，
- *   避免状态闪成嵌套工具名后回不去；父子映射随 start 记录、end 清理
- * - 准备窗口（agent_start 到 before_provider_request 之间，毫秒级）
- *   并入“等待模型响应”，不单独设状态
- * - retry / compaction / branchSummary 阶段由内置指示器整体接管
- *   （指示器 kind 不同），本扩展不干预；agent_end 复位保证下一轮干净
+ *   避免状态闪成嵌套工具名后回不去
  * - setWorkingMessage 不带参数即恢复内置默认；文案变化才调用，
  *   避免逐 delta 触发无谓重渲染
  * - 秒表 timer 存 globalThis 槽，重装先清旧（reload 幂等，旧闭包
@@ -43,7 +48,8 @@ export default function workingStatus(pi: ExtensionAPI): void {
   let current: string | undefined;
   let since = 0;
   let lastCtx: ExtensionContext | undefined;
-  const parents = new Map<string, string>();
+  const names = new Map<string, string>();
+  const starts = new Map<string, number>();
 
   const label = (base: string): string =>
     `${base}（${Math.max(1, Math.floor((Date.now() - since) / TICK_MS))}s）`;
@@ -70,20 +76,22 @@ export default function workingStatus(pi: ExtensionAPI): void {
     }, TICK_MS);
   };
 
-  const setStatus = (ctx: ExtensionContext, base: string): void => {
+  const setStatus = (ctx: ExtensionContext, base: string, clockStart?: number): void => {
     if (current === base) {
       return;
     }
     current = base;
-    since = Date.now();
+    since = clockStart ?? Date.now();
     lastCtx = ctx;
+    stopTimer();
     ctx.ui.setWorkingMessage(label(base));
     ensureTimer();
   };
 
   const reset = (ctx: ExtensionContext): void => {
     stopTimer();
-    parents.clear();
+    names.clear();
+    starts.clear();
     if (current === undefined) {
       return;
     }
@@ -100,14 +108,20 @@ export default function workingStatus(pi: ExtensionAPI): void {
     }
   });
   pi.on("tool_execution_start", (event, ctx) => {
-    parents.set(event.toolCallId, event.toolName);
-    setStatus(ctx, `执行工具 ${event.toolName}`);
+    names.set(event.toolCallId, event.toolName);
+    starts.set(event.toolCallId, Date.now());
+    setStatus(ctx, `执行工具 ${event.toolName}`, starts.get(event.toolCallId));
   });
   pi.on("tool_execution_end", (event, ctx) => {
-    parents.delete(event.toolCallId);
-    const parentName = event.parentToolCallId ? parents.get(event.parentToolCallId) : undefined;
+    starts.delete(event.toolCallId);
+    names.delete(event.toolCallId);
+    const parentId = event.parentToolCallId;
+    if (parentId === undefined) {
+      return;
+    }
+    const parentName = names.get(parentId);
     if (parentName !== undefined) {
-      setStatus(ctx, `执行工具 ${parentName}`);
+      setStatus(ctx, `执行工具 ${parentName}`, starts.get(parentId));
     }
   });
   pi.on("agent_end", (_event, ctx) => reset(ctx));
