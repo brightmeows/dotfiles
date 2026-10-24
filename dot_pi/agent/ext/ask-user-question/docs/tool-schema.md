@@ -21,7 +21,7 @@ ask_user_question({
       ],
       multiSelect?: boolean,       // default false
     },
-    // … 1-4 questions total
+    // … one or more questions
   ]
 })
 ```
@@ -30,7 +30,7 @@ ask_user_question({
 
 | Field | Constraint | Enforced by |
 | --- | --- | --- |
-| `questions` | 1-4 entries | TypeBox schema + `validateQuestionnaire` |
+| `questions` | one or more entries | TypeBox schema (`minItems: 1`) + `validateQuestionnaire` |
 | `questions[].header` | max 16 characters | TypeBox schema only |
 | `questions[].options` | 2-4 entries | TypeBox schema (both bounds) + `validateQuestionnaire` (minimum only) |
 | `options[].label` | max 60 characters | TypeBox schema only |
@@ -55,7 +55,6 @@ code. The `content[0].text` string is written for the model, not for a log.
 | `error` | Cause |
 | --- | --- |
 | `no_questions` | `questions` was empty |
-| `too_many_questions` | more than 4 questions in one call |
 | `duplicate_question` | two questions with identical text |
 | `empty_options` | a question carried fewer than 2 options |
 | `reserved_label` | an option used a reserved label |

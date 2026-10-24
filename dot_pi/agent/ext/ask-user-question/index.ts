@@ -9,6 +9,12 @@
  *   and error code, and the "up to N questions" prompt copy are all gone.
  * - `@juicesharp/rpiv-config` dependency inlined at `internal/rpiv-config.ts`,
  *   trimmed to the config-load + guidance-validation surface used here.
+ * - TabBar windows the question tabs around the active tab when they overflow
+ *   (Submit stays pinned), and the reconciler strips the tool in headless runs
+ *   only instead of re-adding it over `--tools`/`-xt` (upstream #149).
+ * - Tool guidance states the header and label hard limits (upstream #309).
+ * - `node:test` suites cover validation, normalization, envelopes, TabBar and
+ *   reconciliation; run `pnpm test` from the repo root.
  *
  * Upstream summary: Pi extension registering the `ask_user_question` tool
  * — a structured option selector with an automatically appended
