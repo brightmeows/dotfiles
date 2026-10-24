@@ -25,7 +25,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-PERSONA_MARKER = "【PERSONA_LOAD】"
+PERSONA_SENTINEL = "## Style Anchor"
 ROW_HEADER = "- id: persona"
 PERSONA_PLUGIN = "@deepseek-ai/dsh-persona"
 SHIPPED_SUFFIX = "Your working directory is {{cwd}}."
@@ -103,8 +103,8 @@ def load_persona(path: Path) -> str:
     while lines and not lines[0].strip():
         lines.pop(0)
     body = "\n".join(lines).rstrip("\n") + "\n"
-    if PERSONA_MARKER not in body:
-        raise ValueError(f"{path} 里找不到 {PERSONA_MARKER}，人设源文件不完整")
+    if PERSONA_SENTINEL not in body:
+        raise ValueError(f"{path} 里找不到 {PERSONA_SENTINEL}，人设源文件不完整")
     return body
 
 
@@ -218,8 +218,8 @@ def main() -> int:
         return fail(f"行 id 序列发生变化：{row_ids(shipped)} -> {row_ids(generated)}")
     if generated == shipped:
         return fail("persona 行没有被替换")
-    if PERSONA_MARKER not in generated:
-        return fail("生成物里找不到人设标记")
+    if PERSONA_SENTINEL not in generated:
+        return fail("生成物里找不到人设尾锚")
     if SHIPPED_SUFFIX not in old_row:
         warn(f"自带 persona 行的 suffix 与预期不同（{SHIPPED_SUFFIX!r} 不在其中），dsh 可能改了默认值")
     if old_row.count("\n") and "prefix:" not in old_row:
