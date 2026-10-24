@@ -1,41 +1,36 @@
 /**
  * reconcile — mid-session lifecycle reconciliation for ask_user_question.
  *
- * Strips or re-adds the tool to the active set so it is invisible to the LLM
- * in non-interactive runs (no UI) and present in interactive ones. Mirrors the
- * advisor's reconcileAdvisorTool / registerAdvisorBeforeAgentStart pattern
- * (packages/rpiv-advisor/advisor/handlers.ts), simplified: ask_user_question's
- * only gating signal is ctx.hasUI (no model or executor blocklist), so it
- * reads the flag directly and omits the notify.
+ * Strips the tool from the active set when the run has no UI, so headless runs
+ * never see it. Interactive activation is left to Pi: `model-only` tools are
+ * activated when they are registered, and Pi 1.4 restores the branch's active
+ * set on resume and `/tree`.
  *
- * RPC hosts (ctx.mode === "rpc": VSCode pendant, Zed, Paseo) are deliberately
- * NOT stripped: since PR #100 the tool renders there via the select/input
- * dialog walker (rpc-fallback.ts), so hasUI is the honest signal again. The
- * brief period where RPC was stripped (872ef1c) predates that fallback.
+ * The old force-add branch (`hasUI && !hasTool` → add) is gone. It could not
+ * distinguish a tool Pi lost from one the user disabled with `--tools`/`-xt`
+ * or a toolset-manager extension, so it overrode explicit configuration on
+ * every turn (upstream #149). The in-handler guards in `ask-user-question.ts`
+ * (`!hasUI`, the `custom()`-undefined backstop, `no_custom_ui`) remain as
+ * one-turn backstops if the host cannot render the dialog.
+ *
+ * RPC hosts (`ctx.mode === "rpc"`) keep the tool: since PR #100 it renders
+ * there through the select/input dialog walker (`rpc-fallback.ts`), so
+ * `hasUI` is the honest signal.
  */
 
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { ASK_USER_QUESTION_TOOL_NAME } from "./ask-user-question.ts";
 
 /**
- * Strip-or-restore `ask_user_question` to match `ctx.hasUI`. Reads the active
- * tool list itself. Idempotent: when the tool is already in the right state it
- * leaves the active set (and sibling tools) untouched.
+ * Strip `ask_user_question` from the active set when there is no UI. Idempotent:
+ * when the tool is already absent, the active set (and sibling tools) is left
+ * untouched.
  */
 export function reconcileAskUserQuestionTool(pi: ExtensionAPI, ctx: ExtensionContext): void {
+  if (ctx.hasUI) return;
   const active = pi.getActiveTools();
-  const hasTool = active.includes(ASK_USER_QUESTION_TOOL_NAME);
-  // !hasUI → strip so the tool never reaches the LLM's tool list in
-  // non-interactive runs; hasUI → restore. The in-handler guards in
-  // ask-user-question.ts (!hasUI, and the custom()-undefined → dialog-walker /
-  // no_custom_ui backstop) remain as one-turn backstops if a future Pi change
-  // reorders the tool-list snapshot ahead of before_agent_start, or a host
-  // reports hasUI without any usable rendering primitive.
-  if (!ctx.hasUI && hasTool) {
-    pi.setActiveTools(active.filter((n) => n !== ASK_USER_QUESTION_TOOL_NAME));
-  } else if (ctx.hasUI && !hasTool) {
-    pi.setActiveTools([...active, ASK_USER_QUESTION_TOOL_NAME]);
-  }
+  if (!active.includes(ASK_USER_QUESTION_TOOL_NAME)) return;
+  pi.setActiveTools(active.filter((name) => name !== ASK_USER_QUESTION_TOOL_NAME));
 }
 
 /**
