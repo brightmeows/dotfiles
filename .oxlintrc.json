@@ -64,7 +64,7 @@
     {
       "files": ["dot_pi/agent/ext/ask-user-question/**"],
       "rules": {
-        "complexity": ["deny", 50],
+        "complexity": ["deny", 25],
         "curly": "off",
         "capitalized-comments": "off",
         "max-params": "off",
