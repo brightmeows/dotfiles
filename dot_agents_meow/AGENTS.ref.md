@@ -60,8 +60,10 @@
 - Anthropic《Harness design for long-running apps》：只靠 compaction 不足以消除 context anxiety，context reset 加结构化交接才够。“信息与工具调用”对运行时兜底的表述与这个结论同构，事实准确。
 - 指令预算与结构证据：100 到 150 行是最佳区间，约 200 行是膨胀阈值（Augment 2026-04；Configuration Smells in AGENTS.md，arXiv:2606.15828）；
   高优先规则约 5 到 7 条之后遵循度变得不可靠，单条规则的并发约束约 3 个是上限，注意力呈 U 型曲线、中部最弱（指令复杂度悬崖，2026-04）。主文件的规模控制以这组数字为依据。
+  行数证据按常驻整体计，不按单文件计——opencode 与 Pi 的常驻口径是 SOUL.md 加 AGENTS.md 加 harness 底座，评估扩改先看合并口径；指令数超限后遵循度全量均匀劣化、不分先后（HumanLayer 引 arXiv:2507.11538），扩 SOUL.md 前先问是否挤占准则遵循度。
+  实现层预算坐标：OpenClaw bootstrap 注入单文件截断上限 20000 字符、合计 60000（agents.defaults.bootstrapMaxChars 与 bootstrapTotalMaxChars）、USER.md 独立 4000；aiwg 人设预算项目级目标 3K token、硬顶 5K，单代理级目标 1K、硬顶 2K。
 - 活文档依据：evergreen notes（Andy Matuschak）主张概念导向、原地持续修订，对立面是时间线笔记；git 提交消息本身就是结构化的 append-only 决策日志（Lore，arXiv:2603.15566），文档不必重复时间维度；
-  wiki 维护规范明令“不往正文追加带日期的更新段落，原地编辑相关小节”；ADR 的 append-only 加 superseded 状态属于“有组织的时间线”，与活文档路线相反，本仓库不采用。
+  wiki 维护规范明令“不往正文追加带日期的更新段落，原地编辑相关小节”；ADR 的 append-only 加 superseded 状态属于“有组织的时间线”，与活文档路线相反，本仓库不采用。OpenClaw USER.md 的 dated active/superseded 指令格式同属此型，记为反面对照——将来若补用户模型文件（跨项目偏好与个人上下文），格式按活文档路线另定，不照抄该样例。
 
 ## 人设人选与密度
 
@@ -133,7 +135,9 @@
   Second Reading（二次解释）、Example Dialogue（语感样例）、Reply Skeleton（默认回复骨架）、Boundaries（硬性边界）、Style Anchor（末尾风格锚）；
   `AGENTS.md` 以工程准则为主体：H1 开场后按四个决策域分组推进，元规则组的“规则优先级”打头；文末附“托管与分发”（文件清单与加载方式）。
   消费者：opencode 与 Pi 在模板里依序 include 两份（人设在前），dsh 的 `~/.dsh/AGENTS.md` 只收准则、人设走 persona 平面。
+  注入顺序佐证：OpenClaw 默认注入序 AGENTS.md 最前（其后 SOUL.md、IDENTITY.md、USER.md、TOOLS.md），GPT-5 专属重排则把 SOUL.md 提到最前（主身份 primary identity 先行）；注入顺序可配置的社区诉求以 lost-in-the-middle 的 U 型曲线为据。两派在生态内并存，人设前置有生态先例，现有排序按显式选择对待，不作无据处理。
   拆分理由：人设与准则的消费面不同（前者管每轮对话的说话方式，后者管规则层），且 dsh 的人设必须离开指令层才有位置优势。风格锚不新增文件：单文件末尾 3 行，靠近 persona 平面尾部；不引入第三份 style 文件，避免三套模板和 dsh 生成链的额外分支。
+  不照搬 OpenClaw 五件套拆分（SOUL/IDENTITY/USER/TOOLS 各立一档）：其收益来自 harness 层的专用通道与独立预算（bootstrap 仪式、逐文件与合计截断上限、多代理各一 workspace、子代理只发 AGENTS.md），本仓三个消费者只有系统提示词模板与项目指令两类通道，拆出的文件仍会由 chezmoi 拼回同一段提示词；白小喵身份与人设同体（角色卡），与薄身份厚灵魂的助理场景相反。需要分账时先补预算监控（见全局元发现的指令预算与结构证据条），不动文件结构。
 - 人设边界（硬性，迁入人设文件）：人设只进对话层，产出物（命令、代码、提交、文档、注释）零语气词零颜文字，也不出现自称、称呼与角色意象。人设扮演只作用于对话层：动作、台词、场景描写不进入产出物；语料与样例只标语域，不逐字复刻。
   关系定位为工作搭档（B 档恋爱条款废除）：热情、直球、护人止于搭档；身体语言只到工作距离——凑近看屏幕、拽袖子拦人、推一杯水，亲密称呼、暧昧氛围、心动叙事、身体亲密描写不进对话。
   边界跟随许可——给出许可的同一段文本声明它的作用域，避免人设平面（提示词最前）压过规则层；规则层不再复述，同一个事实只维护一处。反差结构本身是萌属性，纪律不需要被人设吞掉。
