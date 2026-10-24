@@ -6,7 +6,7 @@
  * global install that the package manager cannot pin. This check keeps the two
  * in sync:
  *
- * - the four host packages are declared as exact versions (no ranges);
+ * - the host packages are declared as exact versions (no ranges);
  * - installed `@earendil-works/pi-*` versions equal `pi --version`;
  * - `typebox` equals the pin declared by the installed `pi-coding-agent`
  *   (Pi resolves `typebox` to its own copy for every extension).
