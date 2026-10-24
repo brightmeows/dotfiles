@@ -7,8 +7,11 @@
 # no-op once the clone is in use. An entry the user removed on purpose stays
 # removed.
 #
-# Trigger: reruns when the plugin manifest changes.
-# plugin manifest hash: {{ include "dot_config/omarchy/plugins/brightmeows.workspaces/manifest.json" | sha256sum }}
+# Trigger: run_after_ — runs on every apply, same as active-window. A
+# run_onchange_ trigger keyed on the manifest hash would not fire again after
+# `omarchy refresh shell` resets shell.json (the rendered script is unchanged),
+# so the clone entry would stay lost until the manifest changed. The cmp guard
+# below keeps regular applies from touching shell.json.
 set -euo pipefail
 
 omarchy_path="${OMARCHY_PATH:-/usr/share/omarchy}"
