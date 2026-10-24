@@ -23,7 +23,8 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | `chezmoi apply` | 应用至 `$HOME` |
 | `chezmoi add <path>` | 纳新文件入 chezmoi 管理 |
 | `python3 dot_agents_meow/models/gen-models.py` | 生成 Pi 模型 JSON 与 dsh resolved.json（`--check` 校验） |
-| `pnpm check` | `tsc --noEmit` 类型检查（最小验证 gate） |
+| `pnpm check` | Pi 运行时漂移检查 + `tsc --noEmit`（最小验证 gate） |
+| `pnpm test` | 模型域与扩展单测（`node:test`） |
 
 ## 自动同步机制
 
