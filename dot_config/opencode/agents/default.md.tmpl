@@ -10,6 +10,6 @@ permission:
 {{/* 系统环境由 chezmoi 在 apply 时注入，.osRelease 来自 chezmoi 内置数据（Windows 上不可用） */}}
 **系统**: {{ with .chezmoi.osRelease }}{{ .prettyName }}{{ else }}Windows{{ end }} ({{ .chezmoi.arch }})
 
-{{ include "dot_agents_meow/AGENTS.persona.md" }}
+{{ include "dot_agents_meow/SOUL.md" }}
 
-{{ include "dot_agents_meow/AGENTS.main.md" -}}
+{{ include "dot_agents_meow/AGENTS.md" -}}

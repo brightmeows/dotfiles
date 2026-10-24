@@ -8,7 +8,7 @@
 
 产物落在 ~/.dsh/.agent-presets/<id>/（dsh 的用户预设根），不入仓库：它的内容随 dsh 版本
 变化，由 .chezmoiscripts/run_after_dsh-persona-preset.sh.tmpl 每次 apply 幂等重生成。
-人设文本来自唯一源文件 ~/.agents_meow/AGENTS.persona.md。
+人设文本来自唯一源文件 ~/.agents_meow/SOUL.md。
 
 校验：persona 行以外逐字节相同、行 id 序列相同、persona 行替换成功；装了 PyYAML 时
 再解析一遍生成物（容忍 cordis 的 !!js 标签）。
@@ -180,8 +180,8 @@ def write_if_changed(path: Path, content: str) -> bool:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--persona", type=Path,
-                        default=Path.home() / ".agents_meow" / "AGENTS.persona.md",
-                        help="人设文本源文件（默认 ~/.agents_meow/AGENTS.persona.md）")
+                        default=Path.home() / ".agents_meow" / "SOUL.md",
+                        help="人设文本源文件（默认 ~/.agents_meow/SOUL.md）")
     parser.add_argument("--dsh-home", type=Path,
                         default=Path(os.environ.get("DSH_HOME", Path.home() / ".dsh")),
                         help="dsh home（默认 $DSH_HOME 或 ~/.dsh）")

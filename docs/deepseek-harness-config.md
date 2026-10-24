@@ -25,9 +25,9 @@
 
 | 源文件 | 目标 | 说明 |
 |---|---|---|
-| `dot_dsh/AGENTS.md.tmpl` | `~/.dsh/AGENTS.md` | 渲染 `dot_agents_meow/AGENTS.main.md`（工程准则），与 Pi/opencode 同源；人设不在其中 |
+| `dot_dsh/AGENTS.md.tmpl` | `~/.dsh/AGENTS.md` | 渲染 `dot_agents_meow/AGENTS.md`（工程准则），与 Pi/opencode 同源；人设不在其中 |
 | `dot_dsh/cordis.patch.yml.tmpl` | `~/.dsh/cordis.patch.yml` | home 级 patch：5 个 MCP server 行、models-dev 插件挂载行，以及 `agent-presets` 行（默认预设换成白小喵モード） |
-| `.chezmoiscripts/run_after_dsh-persona-preset.sh.tmpl` + `dot_agents_meow/scripts/gen-dsh-preset.py` | `~/.dsh/.agent-presets/bai-xiaomiao/` | 每次 apply 幂等生成：读 dsh 自带 standard composition，只换 persona 行，persona 文本取自 `dot_agents_meow/AGENTS.persona.md` |
+| `.chezmoiscripts/run_after_dsh-persona-preset.sh.tmpl` + `dot_agents_meow/scripts/gen-dsh-preset.py` | `~/.dsh/.agent-presets/bai-xiaomiao/` | 每次 apply 幂等生成：读 dsh 自带 standard composition，只换 persona 行，persona 文本取自 `dot_agents_meow/SOUL.md` |
 | `dot_agents_meow/models/plugin.mts` 等 | `~/.agents_meow/models/` | 模型域插件：抓取 models.dev、叠加用户配置、写各 profile 的模型配置生成块 |
 
 `settings.yaml` 与 `.credentials.yaml` 由 dsh 持有，不入仓库；GUI 内的偏好（主题、默认模型等）因而不随仓库分发。
@@ -36,7 +36,7 @@
 
 dsh 的系统提示词有专用 persona 段位：`DEPLOYMENT_PERSONA_PREFIX` 序号 0（整条提示词最前），`dsh-base` 里默认空着；而 Web 会话用的 preset 自带的 `persona` 行会**遮蔽**部署级 persona。所以人设只写在 home 级 persona 配置里不生效，必须落在预设里；而预设之间没有继承机制（composition 就是一份平铺的插件行列表），取的是派生路线：
 
-- `dot_agents_meow/AGENTS.persona.md` 是唯一人设源（与 Pi/opencode 同源）。
+- `dot_agents_meow/SOUL.md` 是唯一人设源（与 Pi/opencode 同源）。
 - `gen-dsh-preset.py` 读 dsh 自带 `standard` composition，只换 `persona` 行，其余字节原样保留，写到 `~/.dsh/.agent-presets/bai-xiaomiao/`；写盘前校验“persona 行以外逐字节相同”与行 id 序列不变。
 - home 级 patch 的 `agent-presets` 行把默认预设指到 `bai-xiaomiao`（patch 按 id 命中、整份覆盖 config，所以该行要写全）。
 - 预设不入仓库（内容随 dsh 版本变）；生成脚本每次 apply 幂等重跑，dsh 升级换掉自带预设后由下一次 apply 拉齐。

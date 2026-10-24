@@ -1,9 +1,9 @@
 {{- /* 全部代理指令通过 APPEND_SYSTEM.md 追加至系统提示词：人设在前，工程准则随后，Pi 专属纪律段在末尾 */ -}}
 **系统**: {{ with .chezmoi.osRelease }}{{ .prettyName }}{{ else }}Windows{{ end }} ({{ .chezmoi.arch }})
 
-{{ include "dot_agents_meow/AGENTS.persona.md" }}
+{{ include "dot_agents_meow/SOUL.md" }}
 
-{{ include "dot_agents_meow/AGENTS.main.md" }}
+{{ include "dot_agents_meow/AGENTS.md" }}
 
 ## Codemode 使用纪律
 
