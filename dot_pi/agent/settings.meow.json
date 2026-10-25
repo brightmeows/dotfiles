@@ -9,8 +9,8 @@
   "packages": [
     "npm:pi-lsp-extension",
     "npm:pi-web-access",
-    "npm:@d3ara1n/pi-apply-patch",
     "./ext/aliases",
+    "./ext/apply-patch",
     "./ext/ask-user-question",
     "./ext/editor-input-tweaks",
     "./ext/esc-hold",

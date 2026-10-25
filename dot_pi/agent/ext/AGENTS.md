@@ -19,6 +19,7 @@ tags: [pi, extensions, typescript]
 | 路径 | 包名 | 角色 | 要点 |
 |------|------|------|------|
 | `aliases/` | `pi-meow-aliases` | 斜杠命令别名 | /clear → /new、/exit → /quit |
+| `apply-patch/` | `pi-meow-apply-patch` | Codex apply_patch 编辑（vendor） | 自 @d3ara1n/pi-apply-patch@0.2.0 vendored（Apache-2.0，d3ara1n/pi-extensions）；执行层与上游逐字一致（仅类型适配零语义变化，升级基线时重审执行层 diff）；渲染层重写：流式混合预览（封口 hunk 真匹配磁盘出真 diff + 写入中 glimpse + 匹配失败黄警）与执行后默认全量 diff（上游为折叠+120 行 cap），设计文档在 `index.ts` 与 `src/tool.ts`、`src/stream-preview.ts` 头注释；流式预览只在参数阶段画（`executionStarted` 分割，实测 renderResult 晚于末次 renderCall，executed 标志不能作分割依据）；`@@ 锚点` 是前导上下文、改动从锚点后匹配（验证补丁锚行与 `-` 行相同会正确 unmatched）；npm 包已撤换为本地包，上游收录渲染增强则撤 fork 回 npm 包；oxlint 包级豁免同 ask-user-question 模式（complexity 57 为 parser 现状棘轮） |
 | `ask-user-question/` | `pi-meow-ask-user-question` | 结构化问卷工具（vendor） | 自 @juicesharp/rpiv-ask-user-question@2.15.0 vendored、冻结不跟上游，见 [docs/ai/pi-ask-user-question-limits.md](../../../docs/ai/pi-ask-user-question-limits.md)；题数上限已移除（常量/schema/校验/提示词四处全删）；本地补丁：TabBar 多题开窗、reconcile 只剥离（#149）、提示词硬限制（#309）、勾选符号改用 U+2713（U+2714 无字体回退，kitty 下空白）；rpiv-config 内联 internal/、i18n 为 optional peer 运行时软加载；pi 三包与 typebox 精确锁，`pnpm check:pi` 在 pre-commit 硬门禁；单测随 `pnpm test`；包名与入口保持本仓惯例；上游排版已由 oxfmt 统一为 2 空格，语义差异见 `index.ts` 头注释——oxlint 冲突规则包级豁免见 `.oxlintrc.json` overrides |
 | `esc-hold/` | `pi-meow-esc-hold` | Esc 防误触 | 单击提示不中断，双击/长按才中断；terminal 输入层；以 `ctx.isIdle()` 分场景：生成中守卫、空闲全放行 |
 | `git-hooks/` | `pi-meow-git-hooks` | git hooks 自动配置 | session_start 检测 cwd 所属仓库一次：`.githooks/` 含可执行脚本则补设 `core.hooksPath=.githooks`（githooks 优先；已设 `.githooks` 静默、指向别处不动仅提示）；`.pre-commit-config.yaml` + 系统有 pre-commit 命令则 hook 缺失时跑 `pre-commit install`（已装看 hook 头部标记，外来 hook 交工具 migration mode，工具缺失静默）；互斥锚定：hooksPath 已设时 pre-commit install 上游拒绝执行（实测 4.6.2），githooks 命中即分流；提示 setWidget（激活 8s 清、失败不自动清，models-dev 同款理由），已就绪零输出，非 tui 打 stderr；hooks 目录用 `--git-path hooks` 解析（兼容 worktree）；中途 cd 不检测，Windows 执行位退化可接受 |
@@ -39,6 +40,7 @@ tags: [pi, extensions, typescript]
   "npm:pi-lsp-extension",
   "npm:pi-web-access",
   "./ext/aliases",
+  "./ext/apply-patch",
   "./ext/ask-user-question",
   "./ext/editor-input-tweaks",
   "./ext/esc-hold",
