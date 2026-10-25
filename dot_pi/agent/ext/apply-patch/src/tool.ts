@@ -28,11 +28,14 @@ import { CODEX_APPLY_PATCH_GRAMMAR } from "./grammar.ts";
 import { buildPreview, emptyPreviewState, type PreviewBlock } from "./stream-preview.ts";
 import {
   countPatchFiles,
+  cropDiff,
   makeDetails,
   summarize,
   type FileDetails,
   type PatchDetails,
   type PatchSummary,
+  type PreviewCropConfig,
+  DEFAULT_CROP_CONFIG,
 } from "./render.ts";
 
 const schema = Type.Object({
@@ -50,6 +53,8 @@ interface PatchRenderState {
   summary?: PatchSummary;
   preview?: { inputLen: number; blocks: readonly PreviewBlock[] };
   previewState: ReturnType<typeof emptyPreviewState>;
+  /** 由 renderResult 每帧回写；renderCall 读取以决定预览是否折叠（一帧延迟，流式 delta 驱动对齐）。 */
+  expanded?: boolean;
 }
 
 function renderState(context: { state: Record<string, unknown> }): PatchRenderState {
@@ -82,11 +87,25 @@ function fileLabel(block: { kind: PreviewBlock["kind"]; path: string; moveTo?: s
   return block.moveTo ? `${block.path} → ${block.moveTo}` : block.path;
 }
 
+/** 折叠态限行，展开态原样。预览块与执行后结果共用。 */
+function cropForDisplay(
+  diff: string,
+  expanded: boolean | undefined,
+  config: PreviewCropConfig,
+): string {
+  return expanded ? diff : cropDiff(diff, config).text;
+}
+
 /** 单个预览块：文件行 + 真 diff / glimpse / 警告。 */
-function renderBlock(block: PreviewBlock, theme: Theme): string[] {
+function renderBlock(
+  block: PreviewBlock,
+  theme: Theme,
+  expanded: boolean,
+  cropConfig: PreviewCropConfig,
+): string[] {
   const rows = [theme.fg("accent", `${MARKERS[block.kind]} ${fileLabel(block)}`)];
   if (block.state === "ready" && block.diff !== undefined) {
-    rows.push(renderDiff(block.diff));
+    rows.push(renderDiff(cropForDisplay(block.diff, expanded, cropConfig)));
     return rows;
   }
   if (block.state === "partial" && block.glimpse) {
@@ -114,6 +133,7 @@ function previewBody(
   theme: Theme,
   cwd: string,
   state: PatchRenderState,
+  cropConfig: PreviewCropConfig,
 ): string[] {
   if (typeof args.input !== "string" || args.input.length === 0) return [];
   const input = args.input;
@@ -124,13 +144,15 @@ function previewBody(
     };
   }
   const rows: string[] = [];
-  for (const block of state.preview.blocks) rows.push(...renderBlock(block, theme));
+  for (const block of state.preview.blocks)
+    rows.push(...renderBlock(block, theme, state.expanded === true, cropConfig));
   return rows;
 }
 
 /** @internal */
 export function makeApplyPatchTool(
   dependencies: Dependencies = { fs: nodeFileSystem, withFileQueue: withFileMutationQueue },
+  getCropConfig: () => PreviewCropConfig = () => DEFAULT_CROP_CONFIG,
 ): ToolDefinition<typeof schema, PatchDetails> {
   return {
     name: "apply_patch",
@@ -171,7 +193,7 @@ export function makeApplyPatchTool(
       // 会与 renderResult 的真 diff 重复（实测：最后一次 renderCall 先于
       // renderResult，executed 标志彼时未设，不能作分割依据）。
       if (!settled && !context.executionStarted) {
-        const body = previewBody(args, theme, context.cwd, state);
+        const body = previewBody(args, theme, context.cwd, state, getCropConfig());
         if (body.length > 0) {
           box.addChild(new Text("", 0, 0));
           box.addChild(new Text(body.join("\n"), 0, 0));
@@ -181,6 +203,7 @@ export function makeApplyPatchTool(
     },
     renderResult(result, { isPartial, expanded }, theme, context) {
       const state = renderState(context);
+      state.expanded = expanded;
       if (isPartial) return new Text(theme.fg("muted", "Applying patch…"), 0, 0);
       const isError = context.isError;
       const text = result.content
@@ -225,7 +248,7 @@ export function makeApplyPatchTool(
         if (file.diff === undefined) {
           rows.push(theme.fg("dim", "Diff unavailable: previous content could not be read."));
         } else {
-          rows.push(renderDiff(file.diff));
+          rows.push(renderDiff(cropForDisplay(file.diff, expanded, getCropConfig())));
         }
       }
       return new Text(rows.join("\n"), 0, 0);

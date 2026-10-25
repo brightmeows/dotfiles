@@ -5,6 +5,7 @@
   "retry": { "enabled": true, "maxRetries": 3 },
   "enableSkillCommands": true,
   "codemode": { "mode": "on", "inlineBudget": 65536 },
+  "applyPatchPreview": { "contextLines": 1, "maxChangedLines": 10 },
   "defaultTools": ["-edit", "-write"],
   "packages": [
     "npm:pi-lsp-extension",

@@ -83,3 +83,97 @@ export function summarize(files: readonly FileDetails[]): PatchSummary {
     removed: files.reduce((total, file) => total + (file.removed ?? 0), 0),
   };
 }
+
+/** 折叠态限行配置（settings 键 applyPatchPreview，见 readCropConfig）。 */
+export interface PreviewCropConfig {
+  /** 每个改动块前后的 context 行数，默认 1。 */
+  readonly contextLines: number;
+  /** 单个改动块内 -/+ 行合计上限，超出截断并加省略行，默认 10。 */
+  readonly maxChangedLines: number;
+}
+
+export const DEFAULT_CROP_CONFIG: PreviewCropConfig = { contextLines: 1, maxChangedLines: 10 };
+
+/**
+ * 从 settings 读折叠限行配置（settings.json 不校验未知键，pi 自身不受影响）。
+ * 非法值（非数字/负数/NaN）逐项回退默认；整键缺失或非对象则全默认。
+ * 工厂期读取一次（src/index.ts），/reload 重建工厂后生效。
+ */
+export function readCropConfig(settings: unknown): PreviewCropConfig {
+  const raw = settings as { applyPatchPreview?: unknown } | undefined;
+  const value = raw?.applyPatchPreview;
+  if (typeof value !== "object" || value === null) return DEFAULT_CROP_CONFIG;
+  const pick = (key: keyof PreviewCropConfig, fallback: number): number => {
+    const n = (value as Record<string, unknown>)[key];
+    return typeof n === "number" && Number.isFinite(n) && n >= 0 ? Math.floor(n) : fallback;
+  };
+  return {
+    contextLines: pick("contextLines", DEFAULT_CROP_CONFIG.contextLines),
+    maxChangedLines: Math.max(1, pick("maxChangedLines", DEFAULT_CROP_CONFIG.maxChangedLines)),
+  };
+}
+
+/** renderDiff 同款行前缀约定："+123 内容" / "-123 内容" / " 123 内容"。 */
+function isChangedDiffLine(line: string): boolean {
+  return line.startsWith("+") || line.startsWith("-");
+}
+
+/**
+ * 折叠态限行：把全文 diff 裁成「每块 context 前后各 contextLines 行 + 改动行
+ * 合计 ≤ maxChangedLines」的紧凑形态。展开态不经过本函数。
+ *
+ * 规则（2026-10-25 与主人敲定）：
+ * - 相邻改动块间隔 ≤ 2×contextLines 行 context 时整体保留（归并，避免跳变）；
+ *   更长的 context 中段以省略行注明行数；
+ * - 改动块内 -/+ 行按原序保留前 maxChangedLines 行（- 组与 + 组的对齐不被
+ *   破坏，renderDiff 的词级高亮照常工作），尾部插入省略行；
+ * - 首尾改动块外侧的 context 同样只留 contextLines 行；
+ * - 多文件时每份 diff 独立裁剪（调用方逐文件调用）。
+ *
+ * 省略行首字符用「…」：renderDiff 的 parseDiffLine 不匹配，回落 context 色，
+ * 不会被误染成增删行。header 的 +a -r tally 来自真实统计，不受裁剪影响。
+ */
+export function cropDiff(
+  diff: string,
+  config: PreviewCropConfig,
+): { text: string; omittedChanged: number } {
+  const ctxN = Math.max(0, Math.floor(config.contextLines));
+  const maxChanged = Math.max(1, Math.floor(config.maxChangedLines));
+  const all = diff.split("\n");
+  type Seg = { changed: boolean; lines: string[] };
+  const segments: Seg[] = [];
+  for (const line of all) {
+    const changed = isChangedDiffLine(line);
+    const last = segments.at(-1);
+    if (last && last.changed === changed) last.lines.push(line);
+    else segments.push({ changed, lines: [line] });
+  }
+  let omittedChanged = 0;
+  const out: string[] = [];
+  for (let index = 0; index < segments.length; index++) {
+    const segment = segments[index]!;
+    if (segment.changed) {
+      if (segment.lines.length > maxChanged) {
+        const hidden = segment.lines.length - maxChanged;
+        omittedChanged += hidden;
+        out.push(...segment.lines.slice(0, maxChanged));
+        out.push(`… 还有 ${hidden} 行改动（Ctrl+O 展开全量）`);
+      } else {
+        out.push(...segment.lines);
+      }
+      continue;
+    }
+    const needHead = index > 0 ? ctxN : 0;
+    const needTail = index < segments.length - 1 ? ctxN : 0;
+    if (needHead + needTail === 0) continue;
+    if (segment.lines.length <= needHead + needTail) {
+      out.push(...segment.lines);
+      continue;
+    }
+    if (needHead > 0) out.push(...segment.lines.slice(0, needHead));
+    const omittedContext = segment.lines.length - needHead - needTail;
+    if (omittedContext > 0) out.push(`… 中间省略 ${omittedContext} 行`);
+    if (needTail > 0) out.push(...segment.lines.slice(segment.lines.length - needTail));
+  }
+  return { text: out.join("\n"), omittedChanged };
+}
