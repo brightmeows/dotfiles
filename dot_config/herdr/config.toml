@@ -1,7 +1,8 @@
 onboarding = false
 # 键位基准：zellij 字母系（Alt+hjkl 焦点 / Alt+Shift+hjkl 移窗格 / Alt+u/o 切标签 /
 # Alt+Shift+u/o 移标签），与 zellij、tmux（dot_config/tmux/tmux.conf.tmpl 字母系追加段）
-# 三应用统一。方向键系只保留 zellij 无对应的增强层：分屏、数字直达、resize、workspace 切换。
+# 三应用统一。prefix 为 Alt+i，对齐 zellij 模式入口；Ctrl+Space 让给 fcitx5 中英文切换。
+# 方向键系只保留 zellij 无对应的增强层：分屏、数字直达、resize、workspace 切换。
 # tmux 服务器话术见仓库 docs/omarchy-tmux-chezmoi拼接与refresh覆盖恢复.md。
 
 [theme]
@@ -18,7 +19,8 @@ panel_bg = "black"
 new_cwd = "follow"
 
 [keys]
-prefix = "ctrl+space"
+# Alt+i 对齐 zellij 模式入口；Ctrl+Space 让给 fcitx5 中英文切换（输入法层拦截，TUI 收不到）
+prefix = "alt+i"
 
 # Config and help
 reload_config = "prefix+q"
