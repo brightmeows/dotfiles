@@ -82,7 +82,7 @@ tags: [mihomo, clash-meta, proxy, tun]
 - 壳不含 dns / tun / sniffer / 订阅注入：本机强耦合段，且客户端接管配置优先级高于覆写
 - 改片段或地区数据后跑 `bash dot_config/clash-meta/gen-party-override.sh` 重新生成；忘跑会被 pre-commit 的 `--check` 拦下
 - `.fragments/` 与生成物在 `.oxfmtrc.jsonc` 排除格式化（碎片非完整 yaml，格式化会破坏缩进）；模板与生成物在 `.chezmoiignore` 排除部署（两源条目映射同一目标，chezmoi 报 inconsistent state）
-- raw 分发地址、导入姿势与验证命令见 [docs/clash-meta-party-override.md](../../../docs/clash-meta-party-override.md)
+- raw 分发地址、导入姿势与验证命令见 [docs/network/clash-meta-party-override.md](../../../docs/network/clash-meta-party-override.md)
 
 ## 踩坑点
 

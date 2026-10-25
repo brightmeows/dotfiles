@@ -62,7 +62,7 @@ pi-web-access 的搜索路由（`searchRouting` 顺序回退链）源文件现�
 ## LSP 扩展（pi-lsp-extension）
 
 `packages` 含 `npm:pi-lsp-extension`（LSP 导航工具）。选型依据、机制事实与重审触发条件见
-[docs/pi-lsp-support.md](../../docs/pi-lsp-support.md)——该文按防漂移四件套写法，版本与
+[docs/ai/pi-lsp-support.md](../../docs/ai/pi-lsp-support.md)——该文按防漂移四件套写法，版本与
 状态类事实以探针为准，本文不复述其值。
 
 维护要点：

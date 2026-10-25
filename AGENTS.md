@@ -15,7 +15,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 >
 > 验证：`chezmoi source-path` 解析到仓库根；`chezmoi doctor` 显示 source-dir 为 clean 的 git working tree。链接被误删时裸跑 `chezmoi init` 会向默认目录重新 clone，重建链接即可恢复。
 > **ℹ️ Copy 模式**：本仓库使用 `mode = "file"`（复制模式），目标文件是源文件的副本，运行时回写（如 fcitx5）不会穿透 symlink 到仓库。编辑源文件后需 `chezmoi apply` 同步至 `$HOME`（模板渲染与 `run_onchange_` 脚本也在此步生效）。
-> **⚠️ npx skills**：裸跑时作用于所有已检测 agent（pi、opencode 等），写操作前先确认作用域；`remove` 带部分 `-a` 会报成功但实际不删（剩余 agent 顶住 canonical），不带 `-a` 才会真删 canonical，`remove --all` 会清空 canonical 全部技能。细节与事故记录见 [docs/npx-skills-usage.md](docs/npx-skills-usage.md)。
+> **⚠️ npx skills**：裸跑时作用于所有已检测 agent（pi、opencode 等），写操作前先确认作用域；`remove` 带部分 `-a` 会报成功但实际不删（剩余 agent 顶住 canonical），不带 `-a` 才会真删 canonical，`remove --all` 会清空 canonical 全部技能。细节与事故记录见 [docs/skills/npx-skills-usage.md](docs/skills/npx-skills-usage.md)。
 
 | 命令 | 用途 |
 |---|---|
@@ -28,7 +28,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 ## 自动同步机制
 
-修改源文件后运行 `chezmoi apply`，`.chezmoiscripts/` 的合并脚本自动执行同步。脚本统一使用 `run_onchange_after_` 前缀（数据文件部署后执行 + 内容变化才运行）；三个 `run_after_` 例外（触发条件不在模板 hash 里）见 [docs/chezmoi-sync-scripts.md](docs/chezmoi-sync-scripts.md)。
+修改源文件后运行 `chezmoi apply`，`.chezmoiscripts/` 的合并脚本自动执行同步。脚本统一使用 `run_onchange_after_` 前缀（数据文件部署后执行 + 内容变化才运行）；三个 `run_after_` 例外（触发条件不在模板 hash 里）见 [docs/dev/chezmoi-sync-scripts.md](docs/dev/chezmoi-sync-scripts.md)。
 
 | 配置文件 | 源文件 | 目标文件 | 合并策略 |
 |---------|--------|---------|---------|
@@ -38,17 +38,17 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | Environment.d | `dot_env_common` | `~/.config/environment.d/50-meow.conf` | awk 翻译 `+=`/`<=` 为 environment.d 守卫语法 |
 | Omarchy 工作区组件 | `dot_config/omarchy/plugins/brightmeows.workspaces/manifest.json` | `~/.config/omarchy/shell.json` | 仅替换 `bar.layout` 组件 id（脚本每次 apply 运行）；幂等、尊重手动删除；shell.json 不入 chezmoi 管理（Omarchy CLI 与升级迁移会就地改写） |
 | Omarchy 活动窗口组件 | `dot_config/omarchy/plugins/brightmeows.active-window/`（脚本每次 apply 运行） | `~/.config/omarchy/shell.json` | 缺条目则插到中区最左，已存在则原地不动；`omarchy refresh shell` 重置后一次 apply 恢复 |
-| dsh 人设预设 | `dot_agents_meow/SOUL.md`（脚本每次 apply 运行） | `~/.dsh/.agent-presets/bai-xiaomiao/`（生成物，不入仓库） | `gen-dsh-preset.py` 从 dsh 自带 standard 预设派生，只换 persona 行、其余字节原样保留；默认预设由 home 级 patch 指向它。规则见 [docs/deepseek-harness-config.md](docs/deepseek-harness-config.md) |
+| dsh 人设预设 | `dot_agents_meow/SOUL.md`（脚本每次 apply 运行） | `~/.dsh/.agent-presets/bai-xiaomiao/`（生成物，不入仓库） | `gen-dsh-preset.py` 从 dsh 自带 standard 预设派生，只换 persona 行、其余字节原样保留；默认预设由 home 级 patch 指向它。规则见 [docs/ai/deepseek-harness-config.md](docs/ai/deepseek-harness-config.md) |
 
 ## DeepSeek Harness 配置
 
-- dsh 用户级配置由本仓库托管（`dot_dsh/` → `~/.dsh`），托管表格与迁移细节见 [docs/deepseek-harness-config.md](docs/deepseek-harness-config.md)。
-- 模型配置唯一编辑入口是 `dot_agents_meow/models/models.toml`，流水线见 [docs/model-config-pipeline.md](docs/model-config-pipeline.md)。
+- dsh 用户级配置由本仓库托管（`dot_dsh/` → `~/.dsh`），托管表格与迁移细节见 [docs/ai/deepseek-harness-config.md](docs/ai/deepseek-harness-config.md)。
+- 模型配置唯一编辑入口是 `dot_agents_meow/models/models.toml`，流水线见 [docs/ai/model-config-pipeline.md](docs/ai/model-config-pipeline.md)。
 - `settings.yaml` 与 `.credentials.yaml` 由 dsh 运行时持有，不入仓库。
 
 ## 环境变量配置
 
-数据源：`dot_env_common`（bash 与 nushell 共享，chezmoi 管理）+ 可选 `~/.env_self`（本地补充，不入仓库）。自定义语法（`KEY=` 原样 / `KEY+=` 以 `:` 追加 / `KEY<=` 前插）、shell 与 environment.d 双加载路径及踩坑点见 [docs/env-loading.md](docs/env-loading.md)。
+数据源：`dot_env_common`（bash 与 nushell 共享，chezmoi 管理）+ 可选 `~/.env_self`（本地补充，不入仓库）。自定义语法（`KEY=` 原样 / `KEY+=` 以 `:` 追加 / `KEY<=` 前插）、shell 与 environment.d 双加载路径及踩坑点见 [docs/dev/env-loading.md](docs/dev/env-loading.md)。
 
 ## 跨平台配置原则
 
@@ -57,35 +57,57 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 ## 系统配置记录
 
-`docs/` 目录记录关键配置决策与历史变更，新文档随提交登记于此；该目录仅仓库维护，不再部署到 `~/docs`（各机 `~/docs` 内容不归本仓库管理）：
+`docs/` 按主题分子目录：`legacy/`、`omarchy/`、`terminal/`、`ai/`、`skills/`、`dev/`、`network/`、`misc/`，各类主题见下文小节标题。新文档随提交按类登记于下表；该目录仅仓库维护，不再部署到 `~/docs`（各机 `~/docs` 内容不归本仓库管理）。
 
-| 文件 | 内容 |
-|------|------|
-| [`docs/fedora-kinoite-multimedia-repo-config.md`](docs/fedora-kinoite-multimedia-repo-config.md) | Fedora Kinoite 44 多媒体仓库布局、编解码能力分析、terra-mesa 移除记录 |
-| [`docs/audio-acp3x-es83xx-headphone.md`](docs/audio-acp3x-es83xx-headphone.md) | AMD ACP3x 音频耳机问题处理 |
-| [`docs/bof-venue-ip-policy.md`](docs/bof-venue-ip-policy.md) | BOF 会场 IP 管控性质、mihomo 实测出口与 BOF 组直连计划 |
-| [`docs/fedora-kinoite-obs-vaapi-encode.md`](docs/fedora-kinoite-obs-vaapi-encode.md) | OBS Studio VAAPI 硬件编码配置、VCN 单元监控方法 |
-| [`docs/fedora-kinoite-wine-galgame-setup.md`](docs/fedora-kinoite-wine-galgame-setup.md) | Wine 玩日文 Galgame 配置记录 |
-| [`docs/fedora-kinoite-wine-selinux-execmod.md`](docs/fedora-kinoite-wine-selinux-execmod.md) | Wine Galgame 的 SELinux execmod 问题排查 |
-| [`docs/fedora-nushell-repo-upgrade.md`](docs/fedora-nushell-repo-upgrade.md) | Nushell 升级至官方 Gemfury 仓库记录 |
-| [`docs/npx-skills-usage.md`](docs/npx-skills-usage.md) | npx skills 作用域机制、remove 假成功 bug、安全操作姿势与验证方法、WorkBuddy 技能桥接单元 |
-| [`docs/deepseek-harness-config.md`](docs/deepseek-harness-config.md) | DeepSeek Harness 配置托管、技能与 MCP 迁移、凭据与沙箱差异 |
-| [`docs/model-config-pipeline.md`](docs/model-config-pipeline.md) | 模型配置流水线：TOML 单一源、双消费者生成物、models.dev 刷新与映射规则 |
-| [`docs/matebook-battery-optimization.md`](docs/matebook-battery-optimization.md) | MateBook 续航优化：放电数据对比、battery-boost/power-log 改动、mihomo DoT 探测风暴处置 |
-| [`docs/pi-lsp-support.md`](docs/pi-lsp-support.md) | Pi 的 LSP 支持：pi-lsp-extension 选型决策与重审触发条件、防漂移四件套写法示范 |
-| [`docs/pi-ask-user-question-limits.md`](docs/pi-ask-user-question-limits.md) | Pi ask_user_question vendor 化、题数上限移除、依赖锁与漂移门禁 |
-| [`docs/env-loading.md`](docs/env-loading.md) | 环境变量单一数据源 + 双加载路径、自定义语法与踩坑点 |
-| [`docs/pnpm-store-version.md`](docs/pnpm-store-version.md) | pnpm 12 版本、store 布局、安全策略（minimumReleaseAge/allowBuilds）与重链记录 |
-| [`docs/chezmoi-sync-scripts.md`](docs/chezmoi-sync-scripts.md) | 合并脚本命名约定、触发方式与时序约束 |
-| [`docs/nvm-shim-nvm4306-script-trust.md`](docs/nvm-shim-nvm4306-script-trust.md) | （历史）NVM shim NVM4306 拦截与脚本信任修复；nvm 已退役，问题随 shim 代理层消失 |
-| [`docs/Edge与Firefox书签合并经验.md`](docs/Edge与Firefox书签合并经验.md) | Edge 与 Firefox 书签合并：同步引擎与文件层两套真相、去重映射与两地手术 |
-| [`docs/lark-cli技能环境与维护记录.md`](docs/lark-cli技能环境与维护记录.md) | lark-cli 技能环境：安装来源差异、版本对齐与 skills CLI 已知 bug |
-| [`docs/terra-mesa-setup.md`](docs/terra-mesa-setup.md) | terra-mesa 硬件解码部署记录（Fedora Kinoite、AMD Ryzen 5 5500U） |
-| [`docs/omarchy-monitors-lua-除管记录.md`](docs/omarchy-monitors-lua-除管记录.md) | Omarchy 缩放切档器就地改写 monitors.lua 与 chezmoi 的主权冲突：证据链、除管裁决、政策承接与恢复方法 |
-| [`docs/omarchy-shell-refresh-定制恢复清单.md`](docs/omarchy-shell-refresh-定制恢复清单.md) | Omarchy shell.json 手动定制清单（时钟格式、托盘 pinned、右区顺序）、refresh shell 恢复步骤与升级核对提示 |
-| [`docs/omarchy-tmux-chezmoi拼接与refresh覆盖恢复.md`](docs/omarchy-tmux-chezmoi拼接与refresh覆盖恢复.md) | 三应用键位统一（zellij 字母系基准）：tmux 上游配置的 chezmoi 模板拼接、refresh 覆盖恢复步骤、herdr 键位映射 |
-| [`docs/zellij-tmux-herdr键位统一速查.md`](docs/zellij-tmux-herdr键位统一速查.md) | 三应用键位对照全表、两层结构与已知差异、herdr 上游缺口（#5551）、tmux socket 操作安全 |
-| [`docs/jujutsu-migration.md`](docs/jujutsu-migration.md) | Jujutsu 试验记录与回退：特性谱系、混用边界与失效模式速查（供将来重用参考） |
+### legacy/（Fedora 时期与退役工具）
+
+| [`docs/legacy/fedora-kinoite-multimedia-repo-config.md`](docs/legacy/fedora-kinoite-multimedia-repo-config.md) | Fedora Kinoite 44 多媒体仓库布局、编解码能力分析、terra-mesa 移除记录 |
+| [`docs/legacy/fedora-kinoite-obs-vaapi-encode.md`](docs/legacy/fedora-kinoite-obs-vaapi-encode.md) | OBS Studio VAAPI 硬件编码配置、VCN 单元监控方法 |
+| [`docs/legacy/fedora-kinoite-wine-galgame-setup.md`](docs/legacy/fedora-kinoite-wine-galgame-setup.md) | Wine 玩日文 Galgame 配置记录 |
+| [`docs/legacy/fedora-kinoite-wine-selinux-execmod.md`](docs/legacy/fedora-kinoite-wine-selinux-execmod.md) | Wine Galgame 的 SELinux execmod 问题排查 |
+| [`docs/legacy/fedora-nushell-repo-upgrade.md`](docs/legacy/fedora-nushell-repo-upgrade.md) | Nushell 升级至官方 Gemfury 仓库记录 |
+| [`docs/legacy/terra-mesa-setup.md`](docs/legacy/terra-mesa-setup.md) | terra-mesa 硬件解码部署记录（Fedora 时期的 MateBook/5500U） |
+| [`docs/legacy/audio-acp3x-es83xx-headphone.md`](docs/legacy/audio-acp3x-es83xx-headphone.md) | AMD ACP3x 音频耳机问题处理（Fedora 时期） |
+| [`docs/legacy/nvm-shim-nvm4306-script-trust.md`](docs/legacy/nvm-shim-nvm4306-script-trust.md) | （历史）NVM shim NVM4306 拦截与脚本信任修复；nvm 已退役，问题随 shim 代理层消失 |
+
+### omarchy/（桌面环境与现役机器）
+
+| [`docs/omarchy/omarchy-monitors-lua-除管记录.md`](docs/omarchy/omarchy-monitors-lua-除管记录.md) | Omarchy 缩放切档器就地改写 monitors.lua 与 chezmoi 的主权冲突：证据链、除管裁决、政策承接与恢复方法 |
+| [`docs/omarchy/omarchy-shell-refresh-定制恢复清单.md`](docs/omarchy/omarchy-shell-refresh-定制恢复清单.md) | Omarchy shell.json 手动定制清单（时钟格式、托盘 pinned、右区顺序）、refresh shell 恢复步骤与升级核对提示 |
+| [`docs/omarchy/matebook-battery-optimization.md`](docs/omarchy/matebook-battery-optimization.md) | MateBook 续航优化：放电数据对比、battery-boost/power-log 改动、mihomo DoT 探测风暴处置（Omarchy 现役机器） |
+
+### terminal/（终端与多路复用体系）
+
+| [`docs/terminal/zellij-tmux-herdr键位统一速查.md`](docs/terminal/zellij-tmux-herdr键位统一速查.md) | 三应用键位对照全表、两层结构与已知差异、herdr 上游缺口（#5551）、tmux socket 操作安全 |
+| [`docs/terminal/omarchy-tmux-chezmoi拼接与refresh覆盖恢复.md`](docs/terminal/omarchy-tmux-chezmoi拼接与refresh覆盖恢复.md) | tmux 上游配置的 chezmoi 模板拼接、refresh 覆盖恢复步骤、字母系追加段设计 |
+
+### ai/（AI 工具链与模型配置）
+
+| [`docs/ai/deepseek-harness-config.md`](docs/ai/deepseek-harness-config.md) | DeepSeek Harness 配置托管、技能与 MCP 迁移、凭据与沙箱差异 |
+| [`docs/ai/model-config-pipeline.md`](docs/ai/model-config-pipeline.md) | 模型配置流水线：TOML 单一源、双消费者生成物、models.dev 刷新与映射规则 |
+| [`docs/ai/pi-lsp-support.md`](docs/ai/pi-lsp-support.md) | Pi 的 LSP 支持：pi-lsp-extension 选型决策与重审触发条件、防漂移四件套写法示范 |
+| [`docs/ai/pi-ask-user-question-limits.md`](docs/ai/pi-ask-user-question-limits.md) | Pi ask_user_question vendor 化、题数上限移除、依赖锁与漂移门禁 |
+
+### skills/（技能与工具接入）
+
+| [`docs/skills/npx-skills-usage.md`](docs/skills/npx-skills-usage.md) | npx skills 作用域机制、remove 假成功 bug、安全操作姿势与验证方法、WorkBuddy 技能桥接单元 |
+| [`docs/skills/lark-cli技能环境与维护记录.md`](docs/skills/lark-cli技能环境与维护记录.md) | lark-cli 技能环境：安装来源差异、版本对齐与 skills CLI 已知 bug |
+
+### dev/（开发环境与工具链）
+
+| [`docs/dev/chezmoi-sync-scripts.md`](docs/dev/chezmoi-sync-scripts.md) | 合并脚本命名约定、触发方式与时序约束 |
+| [`docs/dev/env-loading.md`](docs/dev/env-loading.md) | 环境变量单一数据源 + 双加载路径、自定义语法与踩坑点 |
+| [`docs/dev/pnpm-store-version.md`](docs/dev/pnpm-store-version.md) | pnpm 12 版本、store 布局、安全策略（minimumReleaseAge/allowBuilds）与重链记录 |
+| [`docs/dev/jujutsu-migration.md`](docs/dev/jujutsu-migration.md) | Jujutsu 试验记录与回退：特性谱系、混用边界与失效模式速查（供将来重用参考） |
+
+### network/（网络与代理）
+
+| [`docs/network/clash-meta-party-override.md`](docs/network/clash-meta-party-override.md) | clash-meta party 覆写配置 |
+| [`docs/network/bof-venue-ip-policy.md`](docs/network/bof-venue-ip-policy.md) | BOF 会场 IP 管控性质、mihomo 实测出口与 BOF 组直连计划 |
+
+### misc/（生活杂项）
+
+| [`docs/misc/Edge与Firefox书签合并经验.md`](docs/misc/Edge与Firefox书签合并经验.md) | Edge 与 Firefox 书签合并：同步引擎与文件层两套真相、去重映射与两地手术 |
 
 ## 边界规则
 
@@ -119,4 +141,4 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 - 格式工具以 package.json scripts 为准（oxfmt，非 prettier）。
 - **hook 安装**：package.json 的 `prepare` 脚本在 `pnpm install` 时写入 `core.hooksPath .githooks`（local、相对路径），新机器 clone 后 `pnpm install` 即激活。
 
-> 本仓库曾于 2026-10 短暂试验 jujutsu colocated 后回退，试验记录与 jj 特性速查见 [docs/jujutsu-migration.md](docs/jujutsu-migration.md)。
+> 本仓库曾于 2026-10 短暂试验 jujutsu colocated 后回退，试验记录与 jj 特性速查见 [docs/dev/jujutsu-migration.md](docs/dev/jujutsu-migration.md)。

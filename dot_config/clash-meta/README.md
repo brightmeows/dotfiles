@@ -14,7 +14,7 @@
 | `deploy.sh` | 手动 sudo 脚本 | 把渲染产物搬运到 `/etc/clash-meta/` 并重载服务 |
 | `README.md` | 文档 | 本文件 |
 
-模板源文件不含订阅明文，可安全进 git；渲染产物含明文订阅 URL，仅落在 `$HOME`，不进 git。地区列表在仓库根 `.chezmoidata/clash-meta.yaml`，机制与导入方法见 [docs/clash-meta-party-override.md](../../../docs/clash-meta-party-override.md)。
+模板源文件不含订阅明文，可安全进 git；渲染产物含明文订阅 URL，仅落在 `$HOME`，不进 git。地区列表在仓库根 `.chezmoidata/clash-meta.yaml`，机制与导入方法见 [docs/network/clash-meta-party-override.md](../../../docs/network/clash-meta-party-override.md)。
 
 ## 订阅管理
 

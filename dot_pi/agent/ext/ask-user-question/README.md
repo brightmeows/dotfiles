@@ -3,7 +3,7 @@
 结构化问卷工具：模型把需要用户决定的事情一次性摊开，用户在终端对话框里选选项、写自定义答案、加备注，选择以结构化的形式回到模型。
 
 本包 vendored 自 [`@juicesharp/rpiv-ask-user-question@2.15.0`](https://www.npmjs.com/package/@juicesharp/rpiv-ask-user-question)（MIT，[juicesharp/rpiv-mono](https://github.com/juicesharp/rpiv-mono)），在本仓内冻结维护。上游代码基线不再跟进，
-本地改动见下文与 [`docs/pi-ask-user-question-limits.md`](../../../../docs/pi-ask-user-question-limits.md)。
+本地改动见下文与 [`docs/ai/pi-ask-user-question-limits.md`](../../../../docs/ai/pi-ask-user-question-limits.md)。
 
 ## 本地注册
 

@@ -3,7 +3,7 @@ onboarding = false
 # Alt+Shift+u/o 移标签），与 zellij、tmux（dot_config/tmux/tmux.conf.tmpl 字母系追加段）
 # 三应用统一。prefix 为 Alt+i，对齐 zellij 模式入口；Ctrl+Space 让给 fcitx5 中英文切换。
 # 方向键系只保留 zellij 无对应的增强层：分屏、数字直达、resize、workspace 切换。
-# tmux 服务器话术见仓库 docs/omarchy-tmux-chezmoi拼接与refresh覆盖恢复.md。
+# tmux 服务器话术见仓库 docs/terminal/omarchy-tmux-chezmoi拼接与refresh覆盖恢复.md。
 
 [theme]
 # tmux ran on the terminal's own palette (bg=default, fg=default, ANSI blue accents)
