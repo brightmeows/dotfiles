@@ -1,0 +1,12 @@
+{
+  "name": "pi-meow-herdr-blocked",
+  "keywords": [
+    "pi-package"
+  ],
+  "type": "module",
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}
