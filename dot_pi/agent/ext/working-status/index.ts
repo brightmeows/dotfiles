@@ -20,9 +20,11 @@
  *   tool_execution_end                       → 嵌套调用回退父工具名，顶层保持
  *   agent_end                                → 复位为内置默认文案
  *
- * 计时：每次状态切换重置秒表（显示当前状态的持续秒数），interval 每秒
- * 刷新且每次切换重建（tick 落在 since+k 秒整点），前 1 秒内显示（1s）
- * 避免（0s）；秒表仅状态活跃时运行。
+ * 计时：每次状态切换重置秒表，显示当前状态已进入的第 N 秒（N = 已过
+ * 整秒数 + 1）：t=0 即第 1 秒，t=1s 的 tick 直接进位到 2s，避免（0s）
+ * 且不落后。旧实现用 floor 最低 1s，把 0-1 秒折叠进 1s，1s 要顶两拍、
+ * 整条秒表恒定落后一拍。interval 每秒刷新且每次切换重建（tick 落在
+ * since+k 秒整点）；秒表仅状态活跃时运行。
  *
  * 请求段三段切分的机制事实（pi 1.4.0 源码 + node 26 undici 本地实测）：
  * - 扩展事件面只有三刀：before_provider_request（发出前）、
@@ -137,8 +139,10 @@ const createTicker = (): Ticker => {
   let since = 0;
   let lastCtx: ExtensionContext | undefined;
 
+  // 当前处于第 N 秒：已过整秒数 + 1。floor 语义会把 0-1 秒折叠进 1s
+  // （最低 1s 兜底），使 1s 持续两拍、整条秒表落后一拍
   const label = (base: string): string =>
-    `${base}（${Math.max(1, Math.floor((Date.now() - since) / TICK_MS))}s）`;
+    `${base}（${Math.floor((Date.now() - since) / TICK_MS) + 1}s）`;
 
   const stopTimer = (): void => {
     const globals = globalThis as unknown as Record<symbol, unknown>;
