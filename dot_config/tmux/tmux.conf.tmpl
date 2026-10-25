@@ -31,3 +31,10 @@ bind -n M-o next-window
 # 移动标签：Alt+Shift+u/o（对齐 zellij MoveTab，焦点跟切，与上游 M-S-Left/Right 同语义）
 bind -n M-U swap-window -t -1 \; select-window -t -1
 bind -n M-O swap-window -t +1 \; select-window -t +1
+
+# 清理 prefix 冗余切换路径：切换统一走直接键（标签 Alt+u/o，session Alt+Up/Down）。
+# p/n 是 tmux 出厂默认残留（上游未清），P/N 是上游所设的 session 切换。
+unbind p
+unbind n
+unbind P
+unbind N
