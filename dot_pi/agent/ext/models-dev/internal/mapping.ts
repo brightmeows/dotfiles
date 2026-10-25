@@ -115,7 +115,7 @@ function expandEnvVars(url: string): string | null {
     return url;
   }
   let missing = false;
-  const replaced = url.replace(/\$\{([^}]+)\}/g, (_, name: string) => {
+  const replaced = url.replaceAll(/\$\{([^}]+)\}/gu, (_, name: string) => {
     const value = process.env[name];
     if (value === undefined || value === "") {
       missing = true;

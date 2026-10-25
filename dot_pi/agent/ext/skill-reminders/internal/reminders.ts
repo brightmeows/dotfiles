@@ -42,7 +42,7 @@ export interface SkillReminder {
 /** 判断是否 agent-browser 技能的 SKILL.md：basename 为 SKILL.md 且路径组件含
  * agent-browser（兼容 / 与 \ 分隔符，不锁绝对路径） */
 export function isAgentBrowserSkill(filePath: string): boolean {
-  const parts = filePath.split(/[\\/]/);
+  const parts = filePath.split(/[\\/]/u);
   return parts.at(-1) === "SKILL.md" && parts.includes("agent-browser");
 }
 
@@ -51,7 +51,7 @@ export function isAgentBrowserSkill(filePath: string): boolean {
  * writing-for-agents 技能自己的 SKILL.md 排除：读它自己时再建议激活
  * 它自己是冗余（组件匹配语义，与其余 matches 一致） */
 export function isAgentsDocPath(filePath: string): boolean {
-  const parts = filePath.split(/[\\/]/);
+  const parts = filePath.split(/[\\/]/u);
   const base = parts.at(-1);
   if (base === "SKILL.md") {
     return !parts.includes("writing-for-agents");

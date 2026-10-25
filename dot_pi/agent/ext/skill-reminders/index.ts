@@ -183,7 +183,7 @@ function collectBashHits(command: unknown, root: string, pending: Set<string>): 
 
 /** 解析手动技能命令名（/skill:<name> 后仅空白与参数；非技能命令返回 null） */
 function skillCommandName(text: string): string | null {
-  const matched = /^\/skill:([^\s]+)(\s[\s\S]*)?$/.exec(text);
+  const matched = /^\/skill:([^\s]+)(\s[\s\S]*)?$/u.exec(text);
   return matched?.[1] ?? null;
 }
 

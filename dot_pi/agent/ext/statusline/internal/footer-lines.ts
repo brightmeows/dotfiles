@@ -97,8 +97,8 @@ export function formatCwdForFooter(cwd: string, home: string | undefined): strin
 /** 状态文本清洗：控制字符替换为空格并折叠连续空格（内置 sanitizeStatusText 同逻辑） */
 export function sanitizeStatusText(text: string): string {
   return text
-    .replace(/[\r\n\t]/g, " ")
-    .replace(/ +/g, " ")
+    .replaceAll(/[\r\n\t]/gu, " ")
+    .replaceAll(/ +/gu, " ")
     .trim();
 }
 

@@ -144,7 +144,7 @@ function findAtPositions(text: string): Set<number> {
   const positions = new Set<number>();
   let i = 0;
   while (i < text.length) {
-    while (i < text.length && /\s/.test(text.charAt(i))) {
+    while (i < text.length && /\s/u.test(text.charAt(i))) {
       i++;
     }
     if (i >= text.length) {
@@ -153,7 +153,7 @@ function findAtPositions(text: string): Set<number> {
     if (text.charAt(i) === "@") {
       positions.add(i);
     }
-    while (i < text.length && !/\s/.test(text.charAt(i))) {
+    while (i < text.length && !/\s/u.test(text.charAt(i))) {
       i++;
     }
   }

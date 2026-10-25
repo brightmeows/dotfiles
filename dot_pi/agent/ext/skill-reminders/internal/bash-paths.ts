@@ -145,8 +145,8 @@ export function extractBashPaths(command: string, absRoot: string): string[] {
     found.add(rel);
   };
 
-  for (const segment of command.split(/&&|\|\||;|\||\n/)) {
-    const tokens = segment.trim().split(/\s+/).filter(Boolean).map(stripSurroundQuotes);
+  for (const segment of command.split(/&&|\|\||;|\||\n/u)) {
+    const tokens = segment.trim().split(/\s+/u).filter(Boolean).map(stripSurroundQuotes);
     let i = 0;
     // 跳过包装命令与其选项（sudo -u root …）
     while (i < tokens.length) {

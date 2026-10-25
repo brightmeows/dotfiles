@@ -25,7 +25,7 @@ const HOST_PACKAGES = [
   "@earendil-works/pi-coding-agent",
   "@earendil-works/pi-tui",
 ];
-const EXACT_VERSION = /^\d+\.\d+\.\d+$/;
+const EXACT_VERSION = /^\d+\.\d+\.\d+$/u;
 
 function readJson(relativePath) {
   return JSON.parse(readFileSync(join(ROOT, relativePath), "utf8"));
@@ -47,7 +47,7 @@ function detectPiVersion() {
       shell: process.platform === "win32",
       stdio: ["ignore", "pipe", "ignore"],
     });
-    return output.match(/\b(\d+\.\d+\.\d+)\b/)?.[1];
+    return output.match(/\b(\d+\.\d+\.\d+)\b/u)?.[1];
   } catch {
     return undefined;
   }

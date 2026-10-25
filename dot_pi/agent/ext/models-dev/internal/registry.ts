@@ -194,6 +194,6 @@ function saveCache(data: Record<string, RawProvider>): void {
 /** 标准化 baseUrl：去掉 pi 会追加的路径段 */
 export function normalizeBaseUrl(url: string): string {
   return url
-    .replace(/\/chat\/completions\/?$/, "") // Pi 追加 /chat/completions
-    .replace(/\/$/, ""); // 去尾斜杠
+    .replace(/\/chat\/completions\/?$/u, "") // Pi 追加 /chat/completions
+    .replace(/\/$/u, ""); // 去尾斜杠
 }

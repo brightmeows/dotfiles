@@ -47,7 +47,7 @@ function normalizeHead(head: string): string {
       .trimEnd();
     return comments === "" ? "" : `${comments}\n`;
   }
-  return `${head.replace(/\s*$/, "")}\n\n`;
+  return `${head.replace(/\s*$/u, "")}\n\n`;
 }
 
 /**
@@ -60,7 +60,7 @@ export function composeManagedBlock(existing: string, blockText: string): string
   if (start !== -1) {
     const end = existing.indexOf(MARKER_END, start);
     const lineEnd = end === -1 ? -1 : existing.indexOf("\n", end);
-    const tail = lineEnd < 0 ? "" : existing.slice(lineEnd + 1).replace(/\s*$/, "");
+    const tail = lineEnd < 0 ? "" : existing.slice(lineEnd + 1).replace(/\s*$/u, "");
     const head = normalizeHead(existing.slice(0, start));
     return tail === "" ? `${head}${full}` : `${head}${full}${tail}\n`;
   }

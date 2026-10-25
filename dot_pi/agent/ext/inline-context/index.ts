@@ -120,9 +120,9 @@ async function detectWslInfo(
   const release = await exec("cat", ["/proc/sys/kernel/osrelease"]);
   // WSL2 内核含 "microsoft-standard-WSL2"；WSL1 为 "…-Microsoft"
   let version = "WSL";
-  if (release && /wsl2/i.test(release)) {
+  if (release && /wsl2/iu.test(release)) {
     version = "WSL2";
-  } else if (release && /microsoft/i.test(release)) {
+  } else if (release && /microsoft/iu.test(release)) {
     version = "WSL1";
   }
   return { version, distro: env["WSL_DISTRO_NAME"] ?? null };
@@ -146,8 +146,8 @@ async function readOsRelease(exec: EnvContext["exec"]): Promise<{
   if (!text) {
     return { pretty: null, variantId: null };
   }
-  const pretty = text.match(/^PRETTY_NAME="?([^"\n]*)"?/m)?.[1] ?? null;
-  const variantId = text.match(/^VARIANT_ID="?([^"\n]*)"?/m)?.[1] ?? null;
+  const pretty = text.match(/^PRETTY_NAME="?([^"\n]*)"?/mu)?.[1] ?? null;
+  const variantId = text.match(/^VARIANT_ID="?([^"\n]*)"?/mu)?.[1] ?? null;
   return { pretty, variantId };
 }
 
@@ -196,7 +196,7 @@ export async function detectEnv(ctx: EnvContext): Promise<SystemInfo> {
     }
     // Mihomo TUN fake-ip：默认路由网关落 198.18.0.0/16 即命中
     const routes = await exec("ip", ["route", "show", "default"]);
-    for (const m of routes?.matchAll(/\bvia\s+(\d+\.\d+\.\d+\.\d+)/g) ?? []) {
+    for (const m of routes?.matchAll(/\bvia\s+(\d+\.\d+\.\d+\.\d+)/gu) ?? []) {
       const [a, b] = m[1]!.split(".").map(Number);
       if (a === 198 && b === 18) {
         tun = true;
@@ -282,7 +282,7 @@ export function formatEnvLine(info: SystemInfo): string {
 function shortEnvLabel(info: SystemInfo): string {
   const osLabel = info.os ?? platformLabel(info.platform);
   // "Fedora Linux 44.x (Kinoite)" → "Fedora Kinoite"
-  const m = info.os?.match(/^([^\s]+).*\(([^)]+)\)$/);
+  const m = info.os?.match(/^([^\s]+).*\(([^)]+)\)$/u);
   const base = m ? `${m[1]!} ${m[2]!}` : osLabel;
   const name = info.wsl?.distro ?? base;
   const wslTag = info.wsl ? ` (${info.wsl.version})` : "";
@@ -328,7 +328,7 @@ async function runGit(
   try {
     const { stdout } = await execFileAsync("git", args, { cwd, encoding: "utf8" });
     const text = String(stdout);
-    return opts?.trimEnd ? text.replace(/[\s\u00a0]+$/, "") : text.trim();
+    return opts?.trimEnd ? text.replace(/[\s\u00a0]+$/u, "") : text.trim();
   } catch {
     return null;
   }
@@ -373,7 +373,7 @@ export async function findIgnoredWorktreeDir(cwd: string): Promise<string | null
 // 剥除 URL userinfo 凭据（https://user:token@host/... → https://host/...；
 // SSH 形态 git@host:... 无 // 前缀不受影响）
 function stripUrlCredentials(url: string): string {
-  return url.replace(/\/\/[^/@]+@/, "//");
+  return url.replace(/\/\/[^/@]+@/u, "//");
 }
 
 // 进行中操作：git-dir 下标志文件/目录存在性（并行探测，rebase 两目录去重）
@@ -413,7 +413,7 @@ export async function detectGitSnapshot(cwd: string): Promise<GitSnapshot> {
   // 远程列表：每个 remote 取 fetch 行，URL 剥凭据
   const remotes: string[] = [];
   for (const line of remotesOut?.split("\n") ?? []) {
-    const m = line.match(/^(\S+)\t(.+) \(fetch\)$/);
+    const m = line.match(/^(\S+)\t(.+) \(fetch\)$/u);
     if (m) {
       remotes.push(`${m[1]!} ${stripUrlCredentials(m[2]!)}`);
     }
@@ -608,7 +608,7 @@ export async function detectGh(): Promise<GhStatus | null> {
     const text = await readFile(configPath, "utf8");
     // Hosts.yml 中账号键为 8 空格缩进，形如 "        MiyakoMeow:"
     for (const line of text.split("\n")) {
-      const m = line.match(/^ {8}([^:\s]+):/);
+      const m = line.match(/^ {8}([^:\s]+):/u);
       if (m) {
         storedAccounts.push(m[1]!);
       }

@@ -32,7 +32,7 @@ const SUPPORTED_PROTOCOLS = new Set([
   "anthropic-messages",
 ]);
 /** Dsh 凭据名（环境变量名）的合法形式。 */
-const CREDENTIAL_REF = /^[A-Za-z_][A-Za-z0-9_]*$/;
+const CREDENTIAL_REF = /^[A-Za-z_][A-Za-z0-9_]*$/u;
 /** 档位顺序固定，保证输出确定性。 */
 const EFFORT_ORDER = ["off", "minimal", "low", "medium", "high", "xhigh", "max"];
 
@@ -56,7 +56,7 @@ export function expandEnvUrl(
     return value;
   }
   let missing = false;
-  const replaced = value.replace(/\$\{([^}]+)\}/g, (_match, name: string) => {
+  const replaced = value.replaceAll(/\$\{([^}]+)\}/gu, (_match, name: string) => {
     const found = env[name];
     if (found === undefined || found === "") {
       missing = true;
@@ -448,7 +448,7 @@ export function buildRoutes(inputs: MappingInputs): MappingResult {
   return { routes, stats };
 }
 
-const PLAIN_KEY = /^[A-Za-z_][A-Za-z0-9_-]*$/;
+const PLAIN_KEY = /^[A-Za-z_][A-Za-z0-9_-]*$/u;
 const RESERVED_KEYS = new Set(["true", "false", "yes", "no", "on", "off", "null", "~"]);
 
 function yamlKey(key: string): string {
