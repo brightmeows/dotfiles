@@ -65,9 +65,10 @@ new_tab = "prefix+c"
 rename_tab = "prefix+r"
 close_tab = "prefix+k"
 switch_tab = ["prefix+1..9", "alt+1..9"]
-# 切标签：Alt+u/o（对齐 zellij GoToPreviousTab/GoToNextTab；prefix 路径 p/n 为冗余，不设）
-previous_tab = "alt+u"
-next_tab = "alt+o"
+# 切标签：Alt+u/o（对齐 zellij GoToPreviousTab/GoToNextTab；prefix 路径 p/n 为冗余，不设）；
+# prefix+H/L 近似 zellij normal 模式的 H/L 切标签，与 tmux 同步
+previous_tab = ["alt+u", "prefix+shift+h"]
+next_tab = ["alt+o", "prefix+shift+l"]
 
 # 移动标签：Alt+Shift+u/o（对齐 zellij MoveTab）
 move_tab_previous = "alt+shift+u"
@@ -80,6 +81,11 @@ close_workspace = "prefix+shift+k"
 # 切 workspace：Alt+Up/Down（prefix 路径 shift+p/n 为冗余，不设）
 previous_workspace = "alt+up"
 next_workspace = "alt+down"
+
+# agent 切换：左右切 agent、上下切 workspace，正交；索引直达用 herdr 文档示例键位
+previous_agent = "alt+left"
+next_agent = "alt+right"
+focus_agent = "prefix+alt+1..9"
 
 [ui]
 accent = "blue"
