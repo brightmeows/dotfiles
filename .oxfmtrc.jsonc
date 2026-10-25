@@ -15,5 +15,6 @@
     "dot_pi/agent/models-dev.json",
     "dot_config/clash-meta/.fragments/**",
     "dot_config/clash-meta/party-override.yaml",
+    "**/.chezmoiexternal.toml",
   ],
 }
