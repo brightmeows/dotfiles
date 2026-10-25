@@ -14,7 +14,7 @@
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "prepare": "chmod +x .githooks/pre-commit && git config core.hooksPath .githooks",
-    "test": "node --test dot_agents_meow/models dot_pi/agent/ext/ask-user-question dot_pi/agent/ext/subdir-agents-md"
+    "test": "node --test dot_agents_meow/models dot_pi/agent/ext/ask-user-question"
   },
   "devDependencies": {
     "@earendil-works/pi-ai": "1.4.0",

@@ -26,12 +26,15 @@
  * - 原生基准（2026-10-25 补，第三路）：内容已由 Pi 原生启动加载进系统提
  *   示词的规则文件不再注入——root 内嵌套 linked worktree（如
  *   proj/.worktrees/wt）检出的副本与主树根规则文件同内容时，此前会重复
- *   注入（原生那份不在扩展去重集合内）。基准集按 ctx.cwd 惰性构建并缓存
- *   （cwd 变化重建，覆盖嵌套/平级/cwd 在 wt 内三种布局与会话内切换），
- *   复刻 loadProjectContextFiles 语义（agentDir 全局 + 祖先链 + shadow
- *   按位置不按内容 + 候选名含大小写变体），见 internal/native-context.ts。
- *   命中跳过时投单行通知（同 rel 会话一次；通知不带持久标记，不挡“内容
- *   变化后可注入”；compact 后允许重发一次）。
+ *   注入（原生那份不在扩展去重集合内）。判定：ctx.getSystemPrompt()
+ *   （ExtensionContext 基接口）返回的会话系统提示词包含原生加载的
+ *   contextFiles 全文（renderProjectContext 原样嵌入、无转义、去 BOM，
+ *   与 readContent 口径一致），对候选内容做 includes 判定即可——shadow、
+ *   agentDir、大小写变体等加载语义全部由 pi 本体负责，pi 升级自动跟随
+ *   （曾用复刻 loadProjectContextFiles 的方案，已废）。trim 后不足 20
+ *   字符的病态短内容不做判定直接放行（防误判）。命中跳过时投单行通知
+ *   （同 rel 会话一次；通知不带持久标记，不挡“内容变化后可注入”；
+ *   compact 后允许重发一次）。
  * - read 语义：代理 read 规则文件本身 → 内容已作为本次 tool_result 返回，
  *   标记 details 不再注入（防同文件两份进上下文）；此前已注入过的再 read
  *   → 结果尾部追加“已注入勿重复读”提示（内容仍真实返回）。
@@ -59,15 +62,9 @@
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { createHash } from "node:crypto";
 import * as fs from "node:fs";
-import * as os from "node:os";
 import * as path from "node:path";
-import {
-  collectNativeContextHashes,
-  hashOf,
-  stripBom,
-  type Hash,
-} from "./internal/native-context.ts";
 import {
   anchorDirs,
   expandHome,
@@ -92,10 +89,14 @@ const readHint = (rel: string): string => `[自动注入] ./${rel}：内容已�
 /** 命中原生已加载内容（同内容已在系统提示词）而跳过注入时的通知单行 */
 const injectSkipNotice = (rel: string): string => `[自动注入] ./${rel}：内容与已加载规则相同，跳过`;
 
-/** Pi agentDir 解析（对齐原生 getAgentDir：env PI_CODING_AGENT_DIR 覆盖 → ~/.pi/agent） */
-function resolveAgentDir(): string {
-  const envDir = process.env["PI_CODING_AGENT_DIR"];
-  return envDir ? expandHome(envDir) : path.join(os.homedir(), ".pi", "agent");
+// ── 内容哈希（品牌类型，同内容多来源去重） ──
+
+/** SHA256 十六进制摘要的品牌类型；仅由 hashOf 构造，禁止任意字符串冒充 */
+type Hash = string & { readonly __brand: "Hash" };
+
+/** 计算内容的 sha256 摘要（唯一构造 Hash 的入口） */
+function hashOf(content: string): Hash {
+  return createHash("sha256").update(content).digest("hex") as Hash;
 }
 
 // ── 注入标记（details.subdirAgents） ──
@@ -240,10 +241,11 @@ function collectAccessed(
 
 // ── 内容读取 ──
 
-/** 读取文件内容（去 BOM，与原生加载口径对齐保证 hash 可比；失败返回 null，调用方据此跳过并允许下次重试） */
+/** 读取文件内容（去 BOM，与原生嵌入口径一致保证判定可比；失败返回 null，调用方据此跳过并允许下次重试） */
 function readContent(absPath: string): string | null {
   try {
-    return stripBom(fs.readFileSync(absPath, "utf8"));
+    const content = fs.readFileSync(absPath, "utf8");
+    return content.startsWith("\uFEFF") ? content.slice(1) : content;
   } catch {
     return null;
   }
@@ -258,17 +260,21 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
   const injectedHashes = new Set<Hash>();
   /** 本回合 tool_result 收集到的待投 rel（turn_end 处理并清空） */
   const pendingRels = new Set<string>();
-  /** 原生已加载内容指纹缓存（cwd 未变复用；变化重建，覆盖会话内跨工作树） */
-  let nativeCache: { cwd: string; hashes: Set<Hash> } | null = null;
   /** 已发过“跳过”通知的 rel（实例级；compact 清空允许重发一次） */
   const skippedNoticedRels = new Set<string>();
 
-  /** 原生已加载内容指纹集（惰性构建 + 按 ctx.cwd 原值缓存） */
-  const nativeHashesFor = (cwd: string): Set<Hash> => {
-    if (nativeCache === null || nativeCache.cwd !== cwd) {
-      nativeCache = { cwd, hashes: collectNativeContextHashes(cwd, resolveAgentDir()) };
-    }
-    return nativeCache.hashes;
+  /**
+   * 原生基准判定：内容是否已在当前系统提示词里（原生加载的规则文件经
+   * renderProjectContext 原样嵌入，与 readContent 去重口径一致）。每次
+   * 现调不缓存（提示词可能被 before_agent_start 改写，缓存会过期）；
+   * trim 后不足 20 字符的病态短内容不做判定直接放行，防误判。
+   */
+  const alreadyInSystemPrompt = (
+    ctx: { getSystemPrompt: () => string },
+    content: string,
+  ): boolean => {
+    const trimmed = content.trim();
+    return trimmed.length >= 20 && ctx.getSystemPrompt().includes(trimmed);
   };
 
   // 触发：tool_result 只收集被访问路径，投递统一到 turn_end（见文件头设计）
@@ -318,7 +324,6 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
 
     const root = realpathOr(ctx.cwd);
     const scanned = scanSessionMarks(ctx);
-    const nativeHashes = nativeHashesFor(ctx.cwd);
     const newMarks: Mark[] = [];
     const notices: string[] = [];
     const skipNotices: string[] = [];
@@ -337,7 +342,7 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
           if (injectedHashes.has(hash) || scanned.hashes.has(hash)) {
             continue; // 同内容已注入（别的 rel），跳过；不标记 rel，内容变化后仍可注入
           }
-          if (nativeHashes.has(hash)) {
+          if (alreadyInSystemPrompt(ctx, content)) {
             // 同内容已由原生加载进系统提示词（嵌套 worktree 副本等场景）；
             // 不标记 rel，内容变化后仍可注入；通知同 rel 会话只发一次
             if (!skippedNoticedRels.has(found)) {
