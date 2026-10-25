@@ -83,6 +83,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | [`docs/terra-mesa-setup.md`](docs/terra-mesa-setup.md) | terra-mesa 硬件解码部署记录（Fedora Kinoite、AMD Ryzen 5 5500U） |
 | [`docs/omarchy-monitors-lua-除管记录.md`](docs/omarchy-monitors-lua-除管记录.md) | Omarchy 缩放切档器就地改写 monitors.lua 与 chezmoi 的主权冲突：证据链、除管裁决、政策承接与恢复方法 |
 | [`docs/omarchy-shell-refresh-定制恢复清单.md`](docs/omarchy-shell-refresh-定制恢复清单.md) | Omarchy shell.json 手动定制清单（时钟格式、托盘 pinned、右区顺序）、refresh shell 恢复步骤与升级核对提示 |
+| [`docs/omarchy-tmux-chezmoi拼接与refresh覆盖恢复.md`](docs/omarchy-tmux-chezmoi拼接与refresh覆盖恢复.md) | 三应用键位统一（zellij 字母系基准）：tmux 上游配置的 chezmoi 模板拼接、refresh 覆盖恢复步骤、herdr 键位映射 |
 | [`docs/jujutsu-migration.md`](docs/jujutsu-migration.md) | Jujutsu 试验记录与回退：特性谱系、混用边界与失效模式速查（供将来重用参考） |
 
 ## 边界规则

@@ -1,0 +1,26 @@
+# 本文件由 chezmoi 模板生成：上游 Omarchy tmux.conf 原文 + 字母系追加段。
+# 上游源：/usr/share/omarchy/config/tmux/tmux.conf（omarchy-refresh-tmux 覆盖本文件后，
+# 跑 `chezmoi apply` 恢复；模板每次 apply 实时拉取最新上游，不产生漂移）。
+# 设计与覆盖恢复记录见 docs/omarchy-tmux-chezmoi拼接与refresh覆盖恢复.md。
+{{ output "cat" "/usr/share/omarchy/config/tmux/tmux.conf" }}
+# ===== 字母系追加段（zellij 手感对齐；与上游方向键系并存，物理正交零冲突）=====
+
+# 焦点：Alt+hjkl（对齐 zellij MoveFocus）
+bind -n M-h select-pane -L
+bind -n M-j select-pane -D
+bind -n M-k select-pane -U
+bind -n M-l select-pane -R
+
+# 移动窗格：Alt+Shift+hjkl（对齐 zellij MovePane；tmux 用 {left-of} 等标记与邻格交换）
+bind -n M-H swap-pane -s '{left-of}'
+bind -n M-J swap-pane -s '{down-of}'
+bind -n M-K swap-pane -s '{up-of}'
+bind -n M-L swap-pane -s '{right-of}'
+
+# 切标签：Alt+u/o（对齐 zellij GoToPreviousTab/GoToNextTab）
+bind -n M-u previous-window
+bind -n M-o next-window
+
+# 移动标签：Alt+Shift+u/o（对齐 zellij MoveTab，焦点跟切，与上游 M-S-Left/Right 同语义）
+bind -n M-U swap-window -t -1 \; select-window -t -1
+bind -n M-O swap-window -t +1 \; select-window -t +1
