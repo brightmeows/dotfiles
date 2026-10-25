@@ -38,3 +38,20 @@ unbind p
 unbind n
 unbind P
 unbind N
+
+# ===== 标签细节补齐（对齐 zellij 的 t 模式内操作；herdr 缺对应键位动作，已向上游提需求）=====
+
+# 最近标签：prefix+Tab（对齐 zellij tab 键语义）。覆盖 tmux 3.4+ 默认的 popup Tab；
+# tmux 默认残留 prefix+l 也是 last-window，留作双路径。
+bind Tab last-window
+
+# 拆窗格到标签：prefix+b 拆到新标签（zellij b）；prefix+j / J 拆到前/后相邻标签
+# （zellij [ / ] 的语义错，[ 在 tmux 是 copy-mode 入口让位，j 助记 join；
+# join-pane 默认焦点跟随到新位置）。
+bind b break-pane
+bind j join-pane -t -1
+bind J join-pane -t +1
+
+# 同步输入：prefix+s 开关 synchronize-panes（setw 对 flag 选项省略值 = toggle，已实测）。
+# 覆盖 tmux 默认的 choose-tree session 树；session 切换已有 Alt+Up/Down 直接键。
+bind s setw synchronize-panes
