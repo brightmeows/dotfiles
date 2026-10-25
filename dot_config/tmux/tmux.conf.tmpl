@@ -28,6 +28,11 @@ bind -n M-L swap-pane -s '{right-of}'
 bind -n M-u previous-window
 bind -n M-o next-window
 
+# prefix+H/L 切标签：近似 zellij normal 模式的 H/L，与 herdr prefix+shift+h/l 同步；
+# L 覆盖 tmux 默认残留 switch-client -l（切上个 client，冷门）
+bind H previous-window
+bind L next-window
+
 # 移动标签：Alt+Shift+u/o（对齐 zellij MoveTab，焦点跟切，与上游 M-S-Left/Right 同语义）
 bind -n M-U swap-window -t -1 \; select-window -t -1
 bind -n M-O swap-window -t +1 \; select-window -t +1
