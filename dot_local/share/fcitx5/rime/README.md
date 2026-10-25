@@ -101,7 +101,7 @@ keyboard-us ↔ rime   ascii_mode reset: 0
 - **双拼默认中文**（`switches/@0/reset: 0`，键级 patch 保留雾凇全部开关）
 - **Rime 内中英切换全部禁用**（`ascii_composer` 所有键设为 `noop`）
 - **候选词 9 个**（`menu/page_size: 9`）
-- **候选全手动确认**（`auto_select: false`）：四码满、唯一候选均不自动上屏，空格/enter/数字确认即上屏（`_auto_commit`）；唯一残留为四码满继续打字时顶出首选（librime 码长机制，无开关）
+- **候选全手动确认**（`auto_select: false`）：四码满、唯一候选均不自动上屏，空格/enter/数字确认；唯一残留为四码满继续打字时顶出首选（librime 码长机制，无开关）
 - **关闭自学习**（`enable_user_dict: false`），词序固定为词库权重，不记录用户词典、不自动调频
 - **中文状态全程中文标点**（半角表对齐 fcitx5 中文标点表，全角表为真全角；中英标点无快捷键、每次会话重置回中文，见“标点符号”节）
 
