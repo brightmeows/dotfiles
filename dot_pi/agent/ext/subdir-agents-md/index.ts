@@ -18,11 +18,20 @@
  *   内容）时拼接会丢、边界条目仍送达——脚本输出不可控，条目通道是唯一
  *   保证送达的通道。不用 continue: true：实测会在回合本会停止时强制多
  *   一轮模型请求，本场景不需要。
- * - 去重（两态）：实例集 injectedRels/injectedHashes ∪ 扫库。扫库读
- *   toolResult 消息 details.subdirAgents（read 自读标记）与 custom_message
- *   条目同键标记（2026-10-03 起注入条目；2026-09-26 前旧版 details.rel/hash
- *   直挂形态的兼容路径保留），compact 后随条目消失自然回到可注入态。
- *   同内容跨 rel 去重靠 hash 标记。
+ * - 去重（三路）：实例集 injectedRels/injectedHashes ∪ 扫库 ∪ 原生基准。
+ *   扫库读 toolResult 消息 details.subdirAgents（read 自读标记）与
+ *   custom_message 条目同键标记（2026-10-03 起注入条目；2026-09-26 前旧
+ *   版 details.rel/hash 直挂形态的兼容路径保留），compact 后随条目消失
+ *   自然回到可注入态。同内容跨 rel 去重靠 hash 标记。
+ * - 原生基准（2026-10-25 补，第三路）：内容已由 Pi 原生启动加载进系统提
+ *   示词的规则文件不再注入——root 内嵌套 linked worktree（如
+ *   proj/.worktrees/wt）检出的副本与主树根规则文件同内容时，此前会重复
+ *   注入（原生那份不在扩展去重集合内）。基准集按 ctx.cwd 惰性构建并缓存
+ *   （cwd 变化重建，覆盖嵌套/平级/cwd 在 wt 内三种布局与会话内切换），
+ *   复刻 loadProjectContextFiles 语义（agentDir 全局 + 祖先链 + shadow
+ *   按位置不按内容 + 候选名含大小写变体），见 internal/native-context.ts。
+ *   命中跳过时投单行通知（同 rel 会话一次；通知不带持久标记，不挡“内容
+ *   变化后可注入”；compact 后允许重发一次）。
  * - read 语义：代理 read 规则文件本身 → 内容已作为本次 tool_result 返回，
  *   标记 details 不再注入（防同文件两份进上下文）；此前已注入过的再 read
  *   → 结果尾部追加“已注入勿重复读”提示（内容仍真实返回）。
@@ -50,9 +59,15 @@
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { createHash } from "node:crypto";
 import * as fs from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
+import {
+  collectNativeContextHashes,
+  hashOf,
+  stripBom,
+  type Hash,
+} from "./internal/native-context.ts";
 import {
   anchorDirs,
   expandHome,
@@ -74,14 +89,13 @@ const injectNotice = (rel: string): string => `[自动注入] ./${rel}：子目�
 /** 已注入规则文件被 read 时的 tool_result 追加提示（统一 [自动注入] 格式） */
 const readHint = (rel: string): string => `[自动注入] ./${rel}：内容已自动注入上下文，无需重复读取`;
 
-// ── 内容哈希（品牌类型，同内容多子包去重） ──
+/** 命中原生已加载内容（同内容已在系统提示词）而跳过注入时的通知单行 */
+const injectSkipNotice = (rel: string): string => `[自动注入] ./${rel}：内容与已加载规则相同，跳过`;
 
-/** SHA256 十六进制摘要的品牌类型；仅由 hashOf 构造，禁止任意字符串冒充 */
-type Hash = string & { readonly __brand: "Hash" };
-
-/** 计算内容的 sha256 摘要（唯一构造 Hash 的入口） */
-function hashOf(content: string): Hash {
-  return createHash("sha256").update(content).digest("hex") as Hash;
+/** Pi agentDir 解析（对齐原生 getAgentDir：env PI_CODING_AGENT_DIR 覆盖 → ~/.pi/agent） */
+function resolveAgentDir(): string {
+  const envDir = process.env["PI_CODING_AGENT_DIR"];
+  return envDir ? expandHome(envDir) : path.join(os.homedir(), ".pi", "agent");
 }
 
 // ── 注入标记（details.subdirAgents） ──
@@ -226,10 +240,10 @@ function collectAccessed(
 
 // ── 内容读取 ──
 
-/** 读取文件内容（读取失败返回 null，调用方据此跳过并允许下次重试） */
+/** 读取文件内容（去 BOM，与原生加载口径对齐保证 hash 可比；失败返回 null，调用方据此跳过并允许下次重试） */
 function readContent(absPath: string): string | null {
   try {
-    return fs.readFileSync(absPath, "utf8");
+    return stripBom(fs.readFileSync(absPath, "utf8"));
   } catch {
     return null;
   }
@@ -244,6 +258,18 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
   const injectedHashes = new Set<Hash>();
   /** 本回合 tool_result 收集到的待投 rel（turn_end 处理并清空） */
   const pendingRels = new Set<string>();
+  /** 原生已加载内容指纹缓存（cwd 未变复用；变化重建，覆盖会话内跨工作树） */
+  let nativeCache: { cwd: string; hashes: Set<Hash> } | null = null;
+  /** 已发过“跳过”通知的 rel（实例级；compact 清空允许重发一次） */
+  const skippedNoticedRels = new Set<string>();
+
+  /** 原生已加载内容指纹集（惰性构建 + 按 ctx.cwd 原值缓存） */
+  const nativeHashesFor = (cwd: string): Set<Hash> => {
+    if (nativeCache === null || nativeCache.cwd !== cwd) {
+      nativeCache = { cwd, hashes: collectNativeContextHashes(cwd, resolveAgentDir()) };
+    }
+    return nativeCache.hashes;
+  };
 
   // 触发：tool_result 只收集被访问路径，投递统一到 turn_end（见文件头设计）
   pi.on("tool_result", async (event, ctx) => {
@@ -281,7 +307,8 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
     return undefined;
   });
 
-  // 投递：本回合有访问则查找并注入规则条目（短通知 + 全文两条一起出）
+  // 投递：本回合有访问则查找并注入规则条目（短通知 + 全文两条一起出；
+  // 命中原生基准的只投跳过通知单条，无全文、无持久标记）
   pi.on("turn_end", async (event, ctx) => {
     if (pendingRels.size === 0) {
       return undefined;
@@ -291,8 +318,10 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
 
     const root = realpathOr(ctx.cwd);
     const scanned = scanSessionMarks(ctx);
+    const nativeHashes = nativeHashesFor(ctx.cwd);
     const newMarks: Mark[] = [];
     const notices: string[] = [];
+    const skipNotices: string[] = [];
     const blocks: string[] = [];
     for (const relPath of rels) {
       for (const anchor of anchorDirs(path.resolve(root, relPath))) {
@@ -308,6 +337,15 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
           if (injectedHashes.has(hash) || scanned.hashes.has(hash)) {
             continue; // 同内容已注入（别的 rel），跳过；不标记 rel，内容变化后仍可注入
           }
+          if (nativeHashes.has(hash)) {
+            // 同内容已由原生加载进系统提示词（嵌套 worktree 副本等场景）；
+            // 不标记 rel，内容变化后仍可注入；通知同 rel 会话只发一次
+            if (!skippedNoticedRels.has(found)) {
+              skippedNoticedRels.add(found);
+              skipNotices.push(injectSkipNotice(found));
+            }
+            continue;
+          }
           injectedRels.add(found);
           injectedHashes.add(hash);
           newMarks.push({ rel: found, hash });
@@ -317,8 +355,22 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
       }
     }
 
-    if (newMarks.length === 0) {
+    if (newMarks.length === 0 && skipNotices.length === 0) {
       return undefined;
+    }
+    if (newMarks.length === 0) {
+      // 纯跳过：只投通知单条，无全文条、不带持久标记
+      return {
+        entries: [
+          ...event.entries,
+          {
+            type: "custom_message" as const,
+            customType: CUSTOM_TYPE,
+            content: skipNotices.join("\n"),
+            display: true,
+          },
+        ],
+      };
     }
     return {
       entries: [
@@ -326,7 +378,7 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
         {
           type: "custom_message" as const,
           customType: CUSTOM_TYPE,
-          content: notices.join("\n"),
+          content: [...notices, ...skipNotices].join("\n"),
           display: true,
         },
         {
@@ -341,9 +393,11 @@ export default function subdirAgentsMdExtension(pi: ExtensionAPI) {
   });
 
   // Compact 后注入条目被压缩、代理不再记得内容，允许重新注入
-  // （扫库标记随条目一并消失，实例集主动清空回到可注入态）
+  // （扫库标记随条目一并消失，实例集主动清空回到可注入态；
+  // 跳过通知集一并清空——通知不持久，compact 后命中会重发一次）
   pi.on("session_compact", async () => {
     injectedRels.clear();
     injectedHashes.clear();
+    skippedNoticedRels.clear();
   });
 }
