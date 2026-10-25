@@ -25,7 +25,7 @@ prefix = "alt+i"
 # Config and help
 reload_config = "prefix+q"
 help = "prefix+?"
-detach = "prefix+d"
+detach = "prefix+shift+d"
 
 # Copy mode
 copy_mode = "prefix+["
@@ -61,9 +61,11 @@ resize_pane_right = "ctrl+alt+shift+right"
 rename_pane = "prefix+shift+o"
 
 # Windows -> tabs
-new_tab = "prefix+c"
+# n / c 都是新建（c 对齐 tmux 惯例，n 复用 p/n 清理后的空位）；
+# d 关标签（小写高频），Shift+d 才 detach（shift 区分破坏性级别；与 tmux 同步改）
+new_tab = ["prefix+c", "prefix+n"]
 rename_tab = "prefix+r"
-close_tab = "prefix+k"
+close_tab = "prefix+d"
 switch_tab = ["prefix+1..9", "alt+1..9"]
 # 切标签：Alt+u/o（对齐 zellij GoToPreviousTab/GoToNextTab；prefix 路径 p/n 为冗余，不设）；
 # prefix+H/L 近似 zellij normal 模式的 H/L 切标签，与 tmux 同步
@@ -97,8 +99,9 @@ pane_outer_borders = false
 # tmux had no scrollbar column beside its panes
 pane_scrollbars = false
 
-# kill-window and kill-session never asked
-confirm_close = false
+# herdr 0.9.4+ 关 workspace 唯一窗格默认会问（#5143）；Alt+Esc 裸直键误触代价高，
+# 只卡关到最后一个的边界场景，保留确认
+confirm_close = true
 
 # automatic-rename gave windows a name without prompting
 prompt_new_tab_name = false

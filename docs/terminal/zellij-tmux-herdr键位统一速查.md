@@ -44,9 +44,9 @@
 | 最近标签 | `tab`（locked 直接） | `Alt+i Tab`；`Alt+i l`（默认残留） | **缺，等上游 [#5551](https://github.com/herdrdev/herdr/issues/5551)** |
 | 移动标签 | `Alt+Shift+U/O`；t 模式 `,/.` | `Alt+Shift+U/O` | `Alt+Shift+U/O` |
 | 数字直达 | t 模式 `1..9`（裸数字） | `Alt+1..9` | `Alt+1..9` |
-| 新建 | t 模式 `n` | `Alt+i c` | `Alt+i c` |
+| 新建 | t 模式 `n` | `Alt+i c` 或 `Alt+i n` | `Alt+i c` 或 `Alt+i n` |
 | 重命名 | t 模式 `r` | `Alt+i r` | `Alt+i r` |
-| 关闭 | t 模式 `x` | `Alt+i k` | `Alt+i k` |
+| 关闭 | t 模式 `x` | `Alt+i d` | `Alt+i d` |
 | 拆窗格到新标签 | t 模式 `b` | `Alt+i b` | **缺，等 #5551** |
 | 拆窗格到相邻标签 | t 模式 `[` / `]` | `Alt+i j / J` | **缺，等 #5551** |
 | 标签内同步输入 | t 模式 `s` | `Alt+i s`（toggle） | **缺，等 #5551** |
@@ -67,7 +67,7 @@
 | 操作 | zellij | tmux | herdr |
 |---|---|---|---|
 | 重载配置 | — | `Alt+i q` | `Alt+i q` |
-| detach | o 模式 `d` | — | `Alt+i d` |
+| detach | o 模式 `d` | `Alt+i Shift+D` | `Alt+i Shift+D` |
 | 键位帮助 | — | `Alt+i ?` | `Alt+i ?` |
 | 滚回 / 复制 | `s` / `f` 模式（vi 键位） | `Alt+i [`（v 选 y 复） | `Alt+i [`（v 选 y 复，`/` 搜索 n 跳） |
 | 编辑回滚缓冲 | scroll 模式 `e` | — | `Alt+i e` |
@@ -75,6 +75,8 @@
 ## 已知差异与缺口
 
 - **prefix+Tab 同键不同义**：tmux 是最近标签，herdr 是循环窗格——herdr 没有 `last_tab` 动作，键位表保留标注，等上游。
+- **标签破坏性级别反转**：两应用的 `d` 是关标签、`Shift+d` 才 detach（小写高频、大写破坏性；前辈拍板）。这与 tmux 上游惯例（d=detach）相反，勿凭肌肉记忆裸按。
+- **确认行为不对称**：herdr 关 workspace 唯一窗格有确认（`confirm_close = true`，0.9.4+ 保护）；tmux 的 `kill-window` 无确认，`Alt+i d` 在 tmux 是直接杀。
 - **最近标签 / 拆窗格到标签 / 同步输入**三样在 herdr 是产品能力缺口（非配置问题），feature request 见 [herdr#5551](https://github.com/herdrdev/herdr/issues/5551)；上游落地后按本表补 `previous/next_tab` 之外的对应动作。
 - zellij 的 `[` `]` `b` `s` `tab` 是 t 模式内单键；tmux/herdr 无模式制，统一为 prefix 层。tmux 的 `prefix+[` 是 copy-mode 入口（与 zellij 的 copy 入口 `s`/`f` 本就不同），拆窗格到相邻标签让位为 `j`/`J`。
 - 数字直达在 zellij 是 t 模式内裸数字（两拍），tmux/herdr 是 `Alt+数字`（一拍带修饰）——无模式制下的增强，非差异缺陷。
