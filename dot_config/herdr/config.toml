@@ -65,9 +65,9 @@ new_tab = "prefix+c"
 rename_tab = "prefix+r"
 close_tab = "prefix+k"
 switch_tab = ["prefix+1..9", "alt+1..9"]
-# 切标签：Alt+u/o（对齐 zellij GoToPreviousTab/GoToNextTab）
-previous_tab = ["prefix+p", "alt+u"]
-next_tab = ["prefix+n", "alt+o"]
+# 切标签：Alt+u/o（对齐 zellij GoToPreviousTab/GoToNextTab；prefix 路径 p/n 为冗余，不设）
+previous_tab = "alt+u"
+next_tab = "alt+o"
 
 # 移动标签：Alt+Shift+u/o（对齐 zellij MoveTab）
 move_tab_previous = "alt+shift+u"
@@ -77,8 +77,9 @@ move_tab_next = "alt+shift+o"
 new_workspace = "prefix+shift+c"
 rename_workspace = "prefix+shift+r"
 close_workspace = "prefix+shift+k"
-previous_workspace = ["prefix+shift+p", "alt+up"]
-next_workspace = ["prefix+shift+n", "alt+down"]
+# 切 workspace：Alt+Up/Down（prefix 路径 shift+p/n 为冗余，不设）
+previous_workspace = "alt+up"
+next_workspace = "alt+down"
 
 [ui]
 accent = "blue"
