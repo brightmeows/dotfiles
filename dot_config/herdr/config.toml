@@ -116,7 +116,9 @@ tab_bar_right = [{ type = "zoom" }, { type = "hostname" }]
 # the basename of the pane cwd. This is what Hyprland shows in the group bar,
 # and it resolves on the server so remote sessions name the remote host.
 window_title = "{hostname}: {workspace}"
-status_indicators = "dots"
+# symbols：五态独立字形（blocked/working/done/idle/unknown），比色点醒目，配合
+# herdr-blocked 扩展补上的问卷 blocked 态一眼定位卡人的 agent（2026-10-25）
+status_indicators = "symbols"
 
 [ui.sound]
 enabled = false
