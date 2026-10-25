@@ -84,6 +84,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | [`docs/omarchy-monitors-lua-除管记录.md`](docs/omarchy-monitors-lua-除管记录.md) | Omarchy 缩放切档器就地改写 monitors.lua 与 chezmoi 的主权冲突：证据链、除管裁决、政策承接与恢复方法 |
 | [`docs/omarchy-shell-refresh-定制恢复清单.md`](docs/omarchy-shell-refresh-定制恢复清单.md) | Omarchy shell.json 手动定制清单（时钟格式、托盘 pinned、右区顺序）、refresh shell 恢复步骤与升级核对提示 |
 | [`docs/omarchy-tmux-chezmoi拼接与refresh覆盖恢复.md`](docs/omarchy-tmux-chezmoi拼接与refresh覆盖恢复.md) | 三应用键位统一（zellij 字母系基准）：tmux 上游配置的 chezmoi 模板拼接、refresh 覆盖恢复步骤、herdr 键位映射 |
+| [`docs/zellij-tmux-herdr键位统一速查.md`](docs/zellij-tmux-herdr键位统一速查.md) | 三应用键位对照全表、两层结构与已知差异、herdr 上游缺口（#5551）、tmux socket 操作安全 |
 | [`docs/jujutsu-migration.md`](docs/jujutsu-migration.md) | Jujutsu 试验记录与回退：特性谱系、混用边界与失效模式速查（供将来重用参考） |
 
 ## 边界规则
@@ -104,6 +105,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 ### Never Do
 
 - 直接修改 `~/.` 下的已托管文件（始终编辑仓库源文件）
+- 在默认 socket 上对 tmux 跑破坏性命令（`kill-server` 等）：测试用 `tmux -L <名字>` 专用 socket，清理单个会话用 `kill-session`
 - 提交 `.env` / 密钥 / token
 - 修改 `node_modules` 内容
 - 删除 `.chezmoiignore` 中标记的非部署文件
