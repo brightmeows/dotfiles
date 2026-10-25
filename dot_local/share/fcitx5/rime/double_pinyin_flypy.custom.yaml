@@ -5,6 +5,11 @@
 patch:
   switches/@0/reset: 0 # ascii_mode 初始为中文；中英切换由 fcitx5 Ctrl+Space 接管
   switches/@1/reset: 0 # ascii_punct 每次会话重置回中文标点（基座 switches 顺序：ascii_mode/ascii_punct/…）
+  # 追加内部开关：末段确认且到输入末尾时立即整体上屏（librime OnSelect 分支）——
+  # 标点一按即随当前首选直出，空格选字确认即上屏；无 states，不进方案选单
+  switches/@next:
+    name: _auto_commit
+    reset: 1
   # 禁用 Rime 内部中英切换（由 fcitx5 控制）
   ascii_composer:
     switch_key:

@@ -35,7 +35,7 @@ patch:
   #   half_shape：对齐 fcitx5 官方中文标点表（punc.mb.zh_CN）——/ | @ # % & * - + = 保持半角，
   #               波浪号取全角 ～；其余按键输出中文标点
   #   full_shape：真全角——上述保持半角的符号也转全角，字母数字由引擎统一转全角
-  punctuator/digit_separators: ",.:" # 数字后输入这些字符，再次输入数字时连同上屏；双击恢复映射（librime >= 1.13.0）
+  punctuator/digit_separators: "" # 置空：拆除数字后标点 pending（1.5 连上机制），数字后 , . : 同样直出中文符号；小数/时间等半角场景切英文态输入
   punctuator/full_shape:
     " ": { commit: "　" }
     ",": "，"
