@@ -13,6 +13,10 @@
  *   (Submit stays pinned), and the reconciler strips the tool in headless runs
  *   only instead of re-adding it over `--tools`/`-xt` (upstream #149).
  * - Tool guidance states the header and label hard limits (upstream #309).
+ * - Check marks use U+2713 (`✓`) instead of U+2714 (`✔`): U+2714 is absent from
+ *   ComicShannsMono Nerd Font and fontconfig falls back to Noto Color Emoji, whose
+ *   non-scalable bitmap glyph kitty renders blank; U+2713 resolves to a scalable
+ *   fallback (JetBrainsMono NF here) and still takes the accent color.
  * - `node:test` suites cover validation, normalization, envelopes, TabBar and
  *   reconciliation; run `pnpm test` from the repo root.
  *
