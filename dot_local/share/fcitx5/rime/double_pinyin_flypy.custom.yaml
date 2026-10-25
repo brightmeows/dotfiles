@@ -4,6 +4,7 @@
 # 只键级重置中英初始态，不整体替换 switches，保留雾凇全部开关。
 patch:
   switches/@0/reset: 0 # ascii_mode 初始为中文；中英切换由 fcitx5 Ctrl+Space 接管
+  switches/@1/reset: 0 # ascii_punct 每次会话重置回中文标点（基座 switches 顺序：ascii_mode/ascii_punct/…）
   # 禁用 Rime 内部中英切换（由 fcitx5 控制）
   ascii_composer:
     switch_key:
@@ -12,8 +13,7 @@ patch:
       Control_L: noop
       Control_R: noop
   speller/max_code_length: 4 # 最长4码
-  speller/auto_select: true # 顶字上屏
-  speller/auto_select_unique_candidate: true # 无重码自动上屏
+  speller/auto_select: false # 关闭自动上屏：四码满、唯一候选均等手动确认（空格/enter/数字）；例外：四码满后继续打字会顶出首选（librime 码长机制，无开关）
   # 符号分类入口（配合 default.custom.yaml 的 Ctrl+Shift+3 绑定）
   # 入口键注入标记 ZQ（避开 V 前缀命名空间，也避开英文词条），候选窗列出分类提示，
   # 再按 1-9 进入对应分类；别名指向 rime-ice 原表（__include），内容不重复维护
