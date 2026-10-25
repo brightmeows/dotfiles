@@ -5,6 +5,13 @@
 {{ output "cat" "/usr/share/omarchy/config/tmux/tmux.conf" }}
 # ===== 字母系追加段（zellij 手感对齐；与上游方向键系并存，物理正交零冲突）=====
 
+# prefix：Alt+i（对齐 zellij 模式入口；Ctrl+Space 让给 fcitx5 中英文切换，
+# fcitx5 在输入法层拦截该键，TUI 收不到，留着是死键）。
+# 上游 prefix2 C-b 自动降级为备用 prefix，保留。
+set -g prefix M-i
+unbind C-Space
+bind M-i send-prefix
+
 # 焦点：Alt+hjkl（对齐 zellij MoveFocus）
 bind -n M-h select-pane -L
 bind -n M-j select-pane -D
