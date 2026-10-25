@@ -1,14 +1,8 @@
-/**
- * 工具结果 details 的构造与类型（pi-meow-apply-patch，fork 自上游 render.ts）。
- *
- * 相对上游的差异：渲染函数（renderPatchHeader/renderPatchResult）已由
- * src/tool.ts 的 Box 组件渲染取代并移除；本文件只保留执行结果到 details 的
- * 投影（makeDetails）、流式头行计数（countPatchFiles）与执行后汇总
- * （summarize）。makeDetails 的 diff 文本同时服务于执行后渲染与
- * renderResult 的 details 持久化，行为与上游逐字一致。
- */
-import { generateDiffString } from "@earendil-works/pi-coding-agent";
+import { generateDiffString, renderDiff, type Theme } from "@earendil-works/pi-coding-agent";
+import { stripTerminalSequences, Text } from "@earendil-works/pi-tui";
 import type { FileChange } from "./apply.ts";
+import type { PatchRenderConfig } from "./config.ts";
+import { cropDiff } from "./crop.ts";
 import type { HunkMatchInfo } from "./core/types.ts";
 
 export interface FileDetails {
@@ -32,6 +26,8 @@ export interface PatchDetails {
  * What the one-line tool call header shows. Counts stay undefined until the
  * result supplies comparable diffs; a file whose previous content could not be
  * read has no diff, so the aggregate would be wrong and is omitted.
+ *
+ * @internal
  */
 export interface PatchSummary {
   readonly fileCount: number;
@@ -69,6 +65,10 @@ export function makeDetails(files: readonly FileChange[]): PatchDetails {
   };
 }
 
+function safe(text: string): string {
+  return stripTerminalSequences(text).replace(/[\x00-\x08\x0b-\x1f\x7f]/g, "");
+}
+
 /** Count `*** Add|Delete|Update File:` operations in raw patch text. @internal */
 export function countPatchFiles(input: string): number {
   return [...input.matchAll(/^\s*\*\*\* (?:Add|Delete|Update) File: /gm)].length;
@@ -84,96 +84,71 @@ export function summarize(files: readonly FileDetails[]): PatchSummary {
   };
 }
 
-/** 折叠态限行配置（settings 键 applyPatchPreview，见 readCropConfig）。 */
-export interface PreviewCropConfig {
-  /** 每个改动块前后的 context 行数，默认 1。 */
-  readonly contextLines: number;
-  /** 单个改动块内 -/+ 行合计上限，超出截断并加省略行，默认 10。 */
-  readonly maxChangedLines: number;
-}
-
-export const DEFAULT_CROP_CONFIG: PreviewCropConfig = { contextLines: 1, maxChangedLines: 10 };
-
 /**
- * 从 settings 读折叠限行配置（settings.json 不校验未知键，pi 自身不受影响）。
- * 非法值（非数字/负数/NaN）逐项回退默认；整键缺失或非对象则全默认。
- * 工厂期读取一次（src/index.ts），/reload 重建工厂后生效。
+ * The single-line tool call header: tool name, file count, aggregate diff.
+ *
+ * @internal
  */
-export function readCropConfig(settings: unknown): PreviewCropConfig {
-  const raw = settings as { applyPatchPreview?: unknown } | undefined;
-  const value = raw?.applyPatchPreview;
-  if (typeof value !== "object" || value === null) return DEFAULT_CROP_CONFIG;
-  const pick = (key: keyof PreviewCropConfig, fallback: number): number => {
-    const n = (value as Record<string, unknown>)[key];
-    return typeof n === "number" && Number.isFinite(n) && n >= 0 ? Math.floor(n) : fallback;
-  };
-  return {
-    contextLines: pick("contextLines", DEFAULT_CROP_CONFIG.contextLines),
-    maxChangedLines: Math.max(1, pick("maxChangedLines", DEFAULT_CROP_CONFIG.maxChangedLines)),
-  };
+export function renderPatchHeader(theme: Theme, summary: PatchSummary): string {
+  const counted = ` ${summary.fileCount} file${summary.fileCount === 1 ? "" : "s"}`;
+  const stats =
+    summary.added === undefined
+      ? ""
+      : ` ${theme.fg("toolDiffAdded", `+${summary.added}`)} ${theme.fg("toolDiffRemoved", `-${summary.removed ?? 0}`)}`;
+  return theme.fg("toolTitle", theme.bold("apply_patch")) + theme.fg("dim", counted) + stats;
 }
 
-/** renderDiff 同款行前缀约定："+123 内容" / "-123 内容" / " 123 内容"。 */
-function isChangedDiffLine(line: string): boolean {
-  return line.startsWith("+") || line.startsWith("-");
-}
-
-/**
- * 折叠态限行：把全文 diff 裁成「每块 context 前后各 contextLines 行 + 改动行
- * 合计 ≤ maxChangedLines」的紧凑形态。展开态不经过本函数。
- *
- * 规则（2026-10-25 与主人敲定）：
- * - 相邻改动块间隔 ≤ 2×contextLines 行 context 时整体保留（归并，避免跳变）；
- *   更长的 context 中段以省略行注明行数；
- * - 改动块内 -/+ 行按原序保留前 maxChangedLines 行（- 组与 + 组的对齐不被
- *   破坏，renderDiff 的词级高亮照常工作），尾部插入省略行；
- * - 首尾改动块外侧的 context 同样只留 contextLines 行；
- * - 多文件时每份 diff 独立裁剪（调用方逐文件调用）。
- *
- * 省略行首字符用「…」：renderDiff 的 parseDiffLine 不匹配，回落 context 色，
- * 不会被误染成增删行。header 的 +a -r tally 来自真实统计，不受裁剪影响。
- */
-export function cropDiff(
-  diff: string,
-  config: PreviewCropConfig,
-): { text: string; omittedChanged: number } {
-  const ctxN = Math.max(0, Math.floor(config.contextLines));
-  const maxChanged = Math.max(1, Math.floor(config.maxChangedLines));
-  const all = diff.split("\n");
-  type Seg = { changed: boolean; lines: string[] };
-  const segments: Seg[] = [];
-  for (const line of all) {
-    const changed = isChangedDiffLine(line);
-    const last = segments.at(-1);
-    if (last && last.changed === changed) last.lines.push(line);
-    else segments.push({ changed, lines: [line] });
+/** @internal */
+export function renderPatchResult(
+  details: PatchDetails | undefined,
+  text: string,
+  expanded: boolean,
+  isError: boolean,
+  theme: Theme,
+  config: PatchRenderConfig,
+): Text {
+  if (isError || !Array.isArray(details?.files)) {
+    const output = expanded ? text : (text.split("\n")[0] ?? "");
+    return new Text(theme.fg(isError ? "error" : "muted", safe(output)), 0, 0);
   }
-  let omittedChanged = 0;
-  const out: string[] = [];
-  for (let index = 0; index < segments.length; index++) {
-    const segment = segments[index]!;
-    if (segment.changed) {
-      if (segment.lines.length > maxChanged) {
-        const hidden = segment.lines.length - maxChanged;
-        omittedChanged += hidden;
-        out.push(...segment.lines.slice(0, maxChanged));
-        out.push(`… 还有 ${hidden} 行改动（Ctrl+O 展开全量）`);
-      } else {
-        out.push(...segment.lines);
-      }
-      continue;
+  const files: readonly FileDetails[] = details.files;
+  // The file count and aggregate diff live in the tool call header, so the body
+  // carries only the per-file rows (and their diffs when expanded).
+  const rows: string[] = [];
+  const dim = (content: string) => theme.fg("dim", content);
+  for (const file of expanded ? files : files.slice(0, 8)) {
+    const marker = { add: "A", update: "M", delete: "D" }[file.kind];
+    const path = safe(file.moveTo ? `${file.path} → ${file.moveTo}` : file.path).replaceAll(
+      "\n",
+      " ",
+    );
+    rows.push(theme.fg("accent", `${marker} ${path}`));
+    if (file.overwrites) rows.push(dim("overwrote an existing file"));
+    if (file.rematched) rows.push(dim("rematched against content that changed while queued"));
+    if (expanded && file.hunks?.length) {
+      const normalized = file.hunks.filter((hunk) => hunk.strategy !== "exact").length;
+      if (normalized)
+        rows.push(
+          dim(
+            `${normalized} hunk${normalized === 1 ? "" : "s"} matched after whitespace or Unicode normalization`,
+          ),
+        );
+      for (const repeated of file.hunks.filter((match) => match.occurrences > 1))
+        rows.push(
+          dim(`hunk ${repeated.hunk} matched the first of ${repeated.occurrences} occurrences`),
+        );
     }
-    const needHead = index > 0 ? ctxN : 0;
-    const needTail = index < segments.length - 1 ? ctxN : 0;
-    if (needHead + needTail === 0) continue;
-    if (segment.lines.length <= needHead + needTail) {
-      out.push(...segment.lines);
-      continue;
+    if (file.diff === undefined)
+      rows.push(dim("Diff unavailable: previous content could not be read."));
+    if (file.diff) {
+      // Delegate to pi's renderer: semantic diff colors plus word-level
+      // highlighting on single-line modifications, matching the built-in edit
+      // tool. The folded view crops each file to the configured context and
+      // changed-line budget; the expanded view renders the diff whole.
+      const diff = safe(file.diff);
+      rows.push(renderDiff(expanded ? diff : cropDiff(diff, config)));
     }
-    if (needHead > 0) out.push(...segment.lines.slice(0, needHead));
-    const omittedContext = segment.lines.length - needHead - needTail;
-    if (omittedContext > 0) out.push(`… 中间省略 ${omittedContext} 行`);
-    if (needTail > 0) out.push(...segment.lines.slice(segment.lines.length - needTail));
   }
-  return { text: out.join("\n"), omittedChanged };
+  if (!expanded && files.length > 8) rows.push(theme.fg("dim", `… ${files.length - 8} more files`));
+  return new Text(rows.join("\n"), 0, 0);
 }

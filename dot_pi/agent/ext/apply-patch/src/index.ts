@@ -1,18 +1,16 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { readCropConfig } from "./render.ts";
+import { DEFAULT_CONFIG, loadConfig, type PatchRenderConfig } from "./config.ts";
 import { makeApplyPatchTool } from "./tool.ts";
 
 export default function applyPatchExtension(pi: ExtensionAPI): void {
-  // 折叠限行配置（settings 键 applyPatchPreview）。getSettings 是 action method，
-  // 工厂加载期禁调（实测：Extension runtime not initialized），延到 session_start；
-  // 渲染经 getter 每帧读闭包变量，session_start（含 /reload）后即为新值。
-  let cropConfig = readCropConfig(undefined);
-  pi.on("session_start", () => {
-    try {
-      cropConfig = readCropConfig(pi.getSettings());
-    } catch {
-      // runtime 未就绪等异常：保持默认，不影响渲染
-    }
+  // Render config is read once per session; a project `applyPatch` block
+  // replaces the global one. Reads the settings files directly (pi-ask-user
+  // pattern) rather than pi.getSettings(), which is an action method and is
+  // unavailable while the extension factory runs.
+  let config: PatchRenderConfig = DEFAULT_CONFIG;
+  pi.on("session_start", (_event, ctx) => {
+    config = loadConfig(ctx.cwd);
   });
-  pi.registerTool(makeApplyPatchTool(undefined, () => cropConfig));
+
+  pi.registerTool(makeApplyPatchTool(undefined, () => config));
 }

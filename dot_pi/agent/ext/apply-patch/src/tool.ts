@@ -1,20 +1,3 @@
-/**
- * apply_patch 工具定义与渲染（pi-meow-apply-patch 渲染层，fork 自
- * @d3ara1n/pi-apply-patch@0.2.0 的 src/tool.ts，execute 与 schema 原样保留）。
- *
- * 渲染设计（相对上游的全部差异，2026-10-25 与主人敲定）：
- * - 调用组件为带状态背景色的 Box（对齐内建 edit 工具）：pending 黄底、成功
- *   绿底、失败红底；头行 `apply_patch N files +a -r`。
- * - 参数流式生成阶段，Box 内实时渲染 src/stream-preview.ts 的混合保真预览：
- *   封口 hunk 真 diff、写入中 +/- 行着色、匹配失败黄警。renderCall 是同步
- *   路径，每帧从预览缓存取块；input 变化时当帧重算（同步 IO 有签名缓存兜底）。
- * - 执行后 diff 默认全量展开（上游折叠在展开态且每文件 120 行 cap，均移除），
- *   保留上游的归一化匹配提示与多命中提示；失败分支保留上游行为（展开态全文、
- *   折叠态首行）。
- *
- * 与上游 execute 的契约不变：model-only exposure、grammar 约束采样、
- * withFileMutationQueue 串行化、Codex 摘要格式输出。
- */
 import {
   withFileMutationQueue,
   renderDiff,
@@ -24,19 +7,23 @@ import {
 import { Box, Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 import { applyPatch, formatSummary, nodeFileSystem, type ApplyContext } from "./apply.ts";
+import { DEFAULT_CONFIG, type PatchRenderConfig } from "./config.ts";
 import { CODEX_APPLY_PATCH_GRAMMAR } from "./grammar.ts";
-import { buildPreview, emptyPreviewState, type PreviewBlock } from "./stream-preview.ts";
 import {
   countPatchFiles,
-  cropDiff,
   makeDetails,
+  renderPatchHeader,
+  renderPatchResult,
   summarize,
-  type FileDetails,
   type PatchDetails,
   type PatchSummary,
-  type PreviewCropConfig,
-  DEFAULT_CROP_CONFIG,
 } from "./render.ts";
+import {
+  buildPreview,
+  emptyPreviewState,
+  type PreviewBlock,
+  type StreamPreviewState,
+} from "./stream-preview.ts";
 
 const schema = Type.Object({
   input: Type.String({
@@ -46,69 +33,49 @@ const schema = Type.Object({
 
 type Dependencies = Pick<ApplyContext, "fs" | "withFileQueue">;
 
-/** 渲染状态：随单次工具调用的渲染上下文存亡。 */
-interface PatchRenderState {
-  component?: Box;
-  executed?: { ok: boolean };
-  summary?: PatchSummary;
-  preview?: { inputLen: number; blocks: readonly PreviewBlock[] };
-  previewState: ReturnType<typeof emptyPreviewState>;
-  /** 由 renderResult 每帧回写；renderCall 读取以决定预览是否折叠（一帧延迟，流式 delta 驱动对齐）。 */
-  expanded?: boolean;
-}
-
-function renderState(context: { state: Record<string, unknown> }): PatchRenderState {
-  const raw = context.state as Partial<PatchRenderState>;
-  if (!raw.previewState) raw.previewState = emptyPreviewState();
-  return raw as PatchRenderState;
-}
-
-function getComponent(context: { lastComponent?: unknown }, state: PatchRenderState): Box {
-  if (context.lastComponent instanceof Box) {
-    state.component = context.lastComponent;
-    return state.component;
-  }
-  if (!state.component) state.component = new Box(1, 1, (text) => text);
-  return state.component;
-}
-
-function headerLine(theme: Theme, text: string, count: number, summary?: PatchSummary): string {
-  const counted = ` ${count} file${count === 1 ? "" : "s"}`;
-  const stats =
-    summary?.added === undefined
-      ? ""
-      : ` ${theme.fg("toolDiffAdded", `+${summary.added}`)} ${theme.fg("toolDiffRemoved", `-${summary.removed ?? 0}`)}`;
-  return theme.fg("toolTitle", theme.bold(text)) + theme.fg("dim", counted) + stats;
-}
-
 const MARKERS = { add: "A", update: "M", delete: "D" } as const;
 
-function fileLabel(block: { kind: PreviewBlock["kind"]; path: string; moveTo?: string }): string {
-  return block.moveTo ? `${block.path} → ${block.moveTo}` : block.path;
+/** Row-local renderer state, shared between renderCall and renderResult. */
+interface PatchRenderState {
+  callComponent?: Box;
+  callText?: Text;
+  patchSummary?: PatchSummary;
+  previewState?: StreamPreviewState;
 }
 
-/** 折叠态限行，展开态原样。预览块与执行后结果共用。 */
-function cropForDisplay(
-  diff: string,
-  expanded: boolean | undefined,
-  config: PreviewCropConfig,
-): string {
-  return expanded ? diff : cropDiff(diff, config).text;
+/** Renderer state arrives as an untyped bag; name its shape once. */
+function rowState(state: Record<string, unknown>): PatchRenderState {
+  return state as PatchRenderState;
 }
 
-/** 单个预览块：文件行 + 真 diff / glimpse / 警告。 */
-function renderBlock(
-  block: PreviewBlock,
-  theme: Theme,
-  expanded: boolean,
-  cropConfig: PreviewCropConfig,
-): string[] {
-  const rows = [theme.fg("accent", `${MARKERS[block.kind]} ${fileLabel(block)}`)];
+/**
+ * Reuse the row's call component across frames. The default shell supplies the
+ * state background and horizontal padding; the Box only groups the header with
+ * the preview so both travel as one component.
+ */
+function callComponent(state: PatchRenderState, last: unknown): Box {
+  if (last instanceof Box) {
+    state.callComponent = last;
+    return last;
+  }
+  const cached = state.callComponent;
+  if (cached) return cached;
+  const component = new Box(0, 0, (text) => text);
+  state.callComponent = component;
+  return component;
+}
+
+/** One preview block: the file row plus a real diff, a glimpse, or a warning. */
+function renderBlock(block: PreviewBlock, theme: Theme): string[] {
+  const label = block.moveTo ? `${block.path} → ${block.moveTo}` : block.path;
+  const rows = [theme.fg("accent", `${MARKERS[block.kind]} ${label}`)];
   if (block.state === "ready" && block.diff !== undefined) {
-    rows.push(renderDiff(cropForDisplay(block.diff, expanded, cropConfig)));
+    rows.push(renderDiff(block.diff));
     return rows;
   }
   if (block.state === "partial" && block.glimpse) {
+    // Still being written: color the patch lines as they arrive instead of
+    // matching them against the file.
     for (const line of block.glimpse) {
       const color = line.startsWith("+")
         ? "toolDiffAdded"
@@ -117,42 +84,34 @@ function renderBlock(
           : "dim";
       rows.push(theme.fg(color, line));
     }
-    rows.push(theme.fg("dim", "··· 写入中"));
+    rows.push(theme.fg("dim", "… writing"));
     return rows;
   }
   if (block.state === "unmatched") {
-    rows.push(theme.fg("warning", `⚠ ${block.warning ?? "hunk 匹配失败"}`));
+    rows.push(theme.fg("warning", `⚠ ${block.warning ?? "hunks did not match"}`));
     return rows;
   }
-  rows.push(theme.fg("dim", "无法预览：文件不可读或在 workspace 外。"));
+  rows.push(theme.fg("dim", "Preview unavailable: file is outside the workspace or not readable."));
   return rows;
 }
 
-function previewBody(
+/** Preview rows for the patch text received so far. */
+function previewRows(
   args: { input?: string },
   theme: Theme,
   cwd: string,
   state: PatchRenderState,
-  cropConfig: PreviewCropConfig,
 ): string[] {
   if (typeof args.input !== "string" || args.input.length === 0) return [];
-  const input = args.input;
-  if (!state.preview || state.preview.inputLen !== input.length) {
-    state.preview = {
-      inputLen: input.length,
-      blocks: buildPreview(input, cwd, state.previewState),
-    };
-  }
-  const rows: string[] = [];
-  for (const block of state.preview.blocks)
-    rows.push(...renderBlock(block, theme, state.expanded === true, cropConfig));
-  return rows;
+  const previewState = state.previewState ?? emptyPreviewState();
+  state.previewState = previewState;
+  return buildPreview(args.input, cwd, previewState).flatMap((block) => renderBlock(block, theme));
 }
 
 /** @internal */
 export function makeApplyPatchTool(
   dependencies: Dependencies = { fs: nodeFileSystem, withFileQueue: withFileMutationQueue },
-  getCropConfig: () => PreviewCropConfig = () => DEFAULT_CROP_CONFIG,
+  getConfig: () => PatchRenderConfig = () => DEFAULT_CONFIG,
 ): ToolDefinition<typeof schema, PatchDetails> {
   return {
     name: "apply_patch",
@@ -179,79 +138,58 @@ export function makeApplyPatchTool(
       };
     },
     renderCall(args, theme, context) {
-      const state = renderState(context);
-      const box = getComponent(context, state);
-      const settled = state.executed;
-      const bgColor = settled ? (settled.ok ? "toolSuccessBg" : "toolErrorBg") : "toolPendingBg";
-      box.setBgFn((text) => theme.bg(bgColor, text));
-      box.clear();
-      const count =
-        state.summary?.fileCount ??
-        (typeof args.input === "string" ? countPatchFiles(args.input) : 0);
-      box.addChild(new Text(headerLine(theme, "apply_patch", count, state.summary), 0, 0));
-      // 预览只在参数流式阶段画：executionStarted 翻转后 execute 已启动，继续画
-      // 会与 renderResult 的真 diff 重复（实测：最后一次 renderCall 先于
-      // renderResult，executed 标志彼时未设，不能作分割依据）。
-      if (!settled && !context.executionStarted) {
-        const body = previewBody(args, theme, context.cwd, state, getCropConfig());
-        if (body.length > 0) {
-          box.addChild(new Text("", 0, 0));
-          box.addChild(new Text(body.join("\n"), 0, 0));
+      const state = rowState(context.state);
+      const component = callComponent(state, context.lastComponent);
+      // The header Text is stable: renderResult refreshes it in place once the
+      // executed counts are known. Rebuilding it here would drop those counts
+      // for one frame, because renderCall runs first on every pass.
+      const header = state.callText ?? new Text("", 0, 0);
+      state.callText = header;
+      // Parsing the input is the only source available while the patch streams in.
+      const summary: PatchSummary = state.patchSummary ?? {
+        fileCount: typeof args.input === "string" ? countPatchFiles(args.input) : 0,
+      };
+      header.setText(renderPatchHeader(theme, summary));
+
+      component.clear();
+      component.addChild(header);
+      // The preview belongs to argument streaming: once execution starts, the
+      // result renderer owns the body. The last renderCall fires before
+      // renderResult, so a flag set there cannot separate the phases —
+      // executionStarted is the boundary.
+      if (!context.executionStarted) {
+        const rows = previewRows(args, theme, context.cwd, state);
+        if (rows.length > 0) {
+          component.addChild(new Text("", 0, 0));
+          component.addChild(new Text(rows.join("\n"), 0, 0));
         }
       }
-      return box;
+      return component;
     },
-    renderResult(result, { isPartial, expanded }, theme, context) {
-      const state = renderState(context);
-      state.expanded = expanded;
+    renderResult(result, { expanded, isPartial }, theme, context) {
+      const state = rowState(context.state);
       if (isPartial) return new Text(theme.fg("muted", "Applying patch…"), 0, 0);
-      const isError = context.isError;
       const text = result.content
         .filter((block) => block.type === "text")
         .map((block) => block.text)
         .join("\n");
-      const files = isError ? undefined : (result.details as PatchDetails | undefined)?.files;
-      if (files === undefined || !Array.isArray(files)) {
-        state.executed = { ok: false };
-        const output = expanded ? text : (text.split("\n")[0] ?? "");
-        return new Text(theme.fg("error", output), 0, 0);
+      const files =
+        !context.isError && Array.isArray(result.details?.files) ? result.details.files : undefined;
+      if (files) {
+        const summary = summarize(files);
+        const previous = state.patchSummary;
+        state.patchSummary = summary;
+        // Refresh the header in place: lastComponent here is the result, not the
+        // header. Never call context.invalidate() from a renderer — it re-enters
+        // updateDisplay synchronously and the row renders twice.
+        if (
+          previous?.fileCount !== summary.fileCount ||
+          previous?.added !== summary.added ||
+          previous?.removed !== summary.removed
+        )
+          state.callText?.setText(renderPatchHeader(theme, summary));
       }
-      const detailed = files as readonly FileDetails[];
-      state.executed = { ok: true };
-      state.summary = summarize(detailed);
-      const rows: string[] = [];
-      for (const file of detailed) {
-        rows.push(theme.fg("accent", `${MARKERS[file.kind]} ${fileLabel(file)}`));
-        if (file.overwrites) rows.push(theme.fg("dim", "overwrote an existing file"));
-        if (file.rematched)
-          rows.push(theme.fg("dim", "rematched against content that changed while queued"));
-        const hunks = file.hunks;
-        if (hunks !== undefined && hunks.length > 0) {
-          const normalized = hunks.filter((hunk) => hunk.strategy !== "exact").length;
-          if (normalized > 0)
-            rows.push(
-              theme.fg(
-                "dim",
-                `${normalized} hunk${normalized === 1 ? "" : "s"} matched after whitespace or Unicode normalization`,
-              ),
-            );
-          for (const hunk of hunks) {
-            if (hunk.occurrences > 1)
-              rows.push(
-                theme.fg(
-                  "dim",
-                  `hunk ${hunk.hunk} matched the first of ${hunk.occurrences} occurrences`,
-                ),
-              );
-          }
-        }
-        if (file.diff === undefined) {
-          rows.push(theme.fg("dim", "Diff unavailable: previous content could not be read."));
-        } else {
-          rows.push(renderDiff(cropForDisplay(file.diff, expanded, getCropConfig())));
-        }
-      }
-      return new Text(rows.join("\n"), 0, 0);
+      return renderPatchResult(result.details, text, expanded, context.isError, theme, getConfig());
     },
   };
 }
