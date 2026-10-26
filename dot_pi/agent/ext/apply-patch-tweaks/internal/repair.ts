@@ -17,9 +17,16 @@
  * returned unchanged and the executor reports its own error.
  */
 
+import { isAbsolute, relative, resolve } from "node:path";
+
 export interface RepairResult {
   readonly text: string;
   readonly notes: readonly string[];
+}
+
+export interface RepairOptions {
+  /** Workspace root, used to compare absolute and relative paths for one file. */
+  readonly cwd?: string;
 }
 
 type SectionKind = "add" | "update" | "delete";
@@ -186,7 +193,11 @@ function repairAddFileLines(sections: readonly Section[], notes: string[]): void
 function dropEmptyUpdates(sections: readonly Section[], notes: string[]): void {
   let count = 0;
   for (const section of sections) {
-    if (section.kind !== "update" || section.moveTo !== undefined || section.body.length > 0) {
+    if (
+      section.kind !== "update" ||
+      section.moveTo !== undefined ||
+      section.body.some((line) => line.trim() !== "")
+    ) {
       continue;
     }
     section.drop = true;
@@ -267,7 +278,14 @@ function adjacent(sections: readonly Section[], first: Section, second: Section)
 }
 
 /** Merge consecutive Update blocks for one file into the canonical single header. */
-function mergeDuplicateUpdates(sections: readonly Section[], notes: string[]): void {
+function mergeDuplicateUpdates(sections: readonly Section[], notes: string[], cwd?: string): void {
+  const keyOf = (section: Section): string => {
+    if (cwd === undefined) {
+      return section.path;
+    }
+    const absolute = isAbsolute(section.path) ? section.path : resolve(cwd, section.path);
+    return relative(cwd, absolute);
+  };
   const firstByPath = new Map<string, Section>();
   let count = 0;
   for (const section of sections) {
@@ -277,9 +295,10 @@ function mergeDuplicateUpdates(sections: readonly Section[], notes: string[]): v
     if (hasEndOfFile(section.body)) {
       continue;
     }
-    const first = firstByPath.get(section.path);
+    const key = keyOf(section);
+    const first = firstByPath.get(key);
     if (!first) {
-      firstByPath.set(section.path, section);
+      firstByPath.set(key, section);
       continue;
     }
     // A second block without a new @@ would silently extend the previous chunk.
@@ -315,7 +334,7 @@ function rebuild(sections: readonly Section[], eol: string): string {
   return rows.join(eol);
 }
 
-export function repairPatch(input: string): RepairResult {
+export function repairPatch(input: string, options: RepairOptions = {}): RepairResult {
   const envelope = unwrapFence(input);
   const eol = envelope.text.includes("\r\n") ? "\r\n" : "\n";
   const sections = scanSections(envelope.text.split(/\r?\n/u));
@@ -330,7 +349,7 @@ export function repairPatch(input: string): RepairResult {
   repairAddFileLines(sections, notes);
   dropEmptyUpdates(sections, notes);
   normalizeHunks(sections, notes);
-  mergeDuplicateUpdates(sections, notes);
+  mergeDuplicateUpdates(sections, notes, options.cwd);
   if (notes.length === 0) {
     return { text: input, notes: [] };
   }

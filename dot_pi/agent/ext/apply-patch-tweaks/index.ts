@@ -35,7 +35,7 @@ export default function applyPatchTweaks(pi: ExtensionAPI): void {
       return;
     }
     try {
-      const repaired = repairPatch(input);
+      const repaired = repairPatch(input, { cwd: process.cwd() });
       if (repaired.notes.length === 0) {
         return;
       }

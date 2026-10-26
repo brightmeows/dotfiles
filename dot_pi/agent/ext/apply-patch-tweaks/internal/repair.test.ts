@@ -186,3 +186,40 @@ stale context
 *** End Patch`;
   assert.deepEqual(repairPatch(input), { text: input, notes: [] });
 });
+
+test("drops an Update whose body is only blank lines", () => {
+  const input = `*** Begin Patch
+*** Update File: a.txt
+
+*** End Patch`;
+  assert.deepEqual(repairPatch(input), {
+    text: "*** Begin Patch\n*** End Patch",
+    notes: ["1 empty Update block dropped"],
+  });
+});
+
+test("merges duplicate Update blocks written with absolute and relative paths", () => {
+  const input = `*** Begin Patch
+*** Update File: /work/a.txt
+@@
+-one
++ONE
+*** Update File: a.txt
+@@
+-two
++TWO
+*** End Patch`;
+  const expected = `*** Begin Patch
+*** Update File: /work/a.txt
+@@
+-one
++ONE
+@@
+-two
++TWO
+*** End Patch`;
+  assert.deepEqual(repairPatch(input, { cwd: "/work" }), {
+    text: expected,
+    notes: ["1 duplicate Update block merged"],
+  });
+});
