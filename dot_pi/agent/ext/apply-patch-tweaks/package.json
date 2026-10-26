@@ -1,0 +1,13 @@
+{
+  "name": "pi-meow-apply-patch-tweaks",
+  "description": "Local apply_patch input repairs and prompt guidelines.",
+  "keywords": [
+    "pi-package"
+  ],
+  "type": "module",
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

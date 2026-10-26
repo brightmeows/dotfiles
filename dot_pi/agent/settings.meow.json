@@ -12,6 +12,7 @@
     "npm:pi-web-access",
     "./ext/aliases",
     "./ext/apply-patch",
+    "./ext/apply-patch-tweaks",
     "./ext/ask-user-question",
     "./ext/editor-input-tweaks",
     "./ext/esc-hold",
