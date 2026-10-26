@@ -27,13 +27,22 @@ if [ ! -f "$SETTINGS" ]; then
   echo "$MANAGED" > "$SETTINGS"
 else
   # Merge: managed keys overwrite settings.json values.
-  # 'packages' array is union-merged (deduped) instead of overwritten,
-  # so that pi-install additions and managed defaults coexist.
+  # 'packages' keeps pi-install additions but lets the managed list retract by
+  # package identity: a live spec whose base name (npm: scope/name, or path)
+  # matches a managed package is dropped even when the version differs.
+  # Union alone is not enough — removing a pin from the managed list would
+  # otherwise leave the old spec in place forever.
   jq -s '
     (.[0].packages // []) as $mp |
     (.[1].packages // []) as $sp |
+    def base:
+      if startswith("npm:") then
+        (.[4:] | if startswith("@") then (split("@") | .[0:2] | join("@")) else (split("@") | .[0]) end)
+      else . end;
     (.[1] * .[0]) |
-    .packages = ($mp + $sp | unique)
+    .packages = (($mp | map(base)) as $mb
+      | ($mp + ($sp | map(select(. as $p | ($mb | index($p | base)) | not))))
+      | unique)
   ' "$MEOW" "$SETTINGS" > "${SETTINGS}.tmp" \
     && mv "${SETTINGS}.tmp" "$SETTINGS"
 fi
