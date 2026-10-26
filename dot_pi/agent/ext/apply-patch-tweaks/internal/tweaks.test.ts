@@ -5,48 +5,19 @@ import applyPatchTweaks from "../index.ts";
 
 type Handler = (event: any) => unknown;
 
-function harness(description: string): Map<string, Handler> {
+function harness(): Map<string, Handler> {
   const handlers = new Map<string, Handler>();
   const pi = {
     on: (name: string, handler: Handler) => {
       handlers.set(name, handler);
     },
-    getAllTools: () => [{ name: "apply_patch", description }],
   } as unknown as ExtensionAPI;
   applyPatchTweaks(pi);
   return handlers;
 }
 
-function systemOptions(): { toolGuidelines: Record<string, string[]> } {
-  return { toolGuidelines: {} };
-}
-
-test("adds the Add File rule while the tool description lacks it", () => {
-  const handlers = harness("old description");
-  const options = systemOptions();
-  handlers.get("before_agent_start")!({ systemPromptOptions: options });
-  const lines = options.toolGuidelines["apply_patch"] ?? [];
-  assert.ok(lines.some((line) => line.includes("including blank lines")));
-  assert.ok(lines.some((line) => line.includes("one '*** Update File:' header")));
-});
-
-test("does not duplicate guidance after the upstream description owns the rule", () => {
-  const handlers = harness(
-    "Every line of an Add File body, including blank lines, must start with '+'.",
-  );
-  const options = systemOptions();
-  handlers.get("before_agent_start")!({ systemPromptOptions: options });
-  handlers.get("before_agent_start")!({ systemPromptOptions: options });
-  const lines = options.toolGuidelines["apply_patch"] ?? [];
-  assert.equal(new Set(lines).size, lines.length);
-  assert.equal(
-    lines.some((line) => line.includes("including blank lines")),
-    false,
-  );
-});
-
 test("repairs a patch on tool_call and annotates the result", () => {
-  const handlers = harness("old description");
+  const handlers = harness();
   const call = {
     toolName: "apply_patch",
     toolCallId: "call-1",
@@ -68,7 +39,7 @@ test("repairs a patch on tool_call and annotates the result", () => {
 });
 
 test("ignores other tools", () => {
-  const handlers = harness("old description");
+  const handlers = harness();
   const call = { toolName: "read", toolCallId: "call-2", input: { path: "a" } };
   handlers.get("tool_call")!(call);
   assert.deepEqual(call.input, { path: "a" });

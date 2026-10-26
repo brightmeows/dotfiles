@@ -2,16 +2,25 @@
   "$schema": "https://pi.dev/schemas/settings.schema.json",
   "theme": "catppuccin-mocha",
   "quietStartup": "header",
-  "retry": { "enabled": true, "maxRetries": 3 },
+  "retry": {
+    "enabled": true,
+    "maxRetries": 3
+  },
   "enableSkillCommands": true,
-  "codemode": { "mode": "on", "inlineBudget": 65536 },
-  "applyPatch": { "contextLines": 1, "maxChangedLines": 10 },
+  "codemode": {
+    "mode": "on",
+    "inlineBudget": 65536
+  },
+  "applyPatch": {
+    "contextLines": 1,
+    "maxChangedLines": 10
+  },
   "defaultTools": ["-edit", "-write"],
   "packages": [
+    "npm:@d3ara1n/pi-apply-patch@0.4.2",
     "npm:pi-lsp-extension",
     "npm:pi-web-access",
     "./ext/aliases",
-    "./ext/apply-patch",
     "./ext/apply-patch-tweaks",
     "./ext/ask-user-question",
     "./ext/editor-input-tweaks",

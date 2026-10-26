@@ -19,8 +19,7 @@ tags: [pi, extensions, typescript]
 | 路径 | 包名 | 角色 | 要点 |
 |------|------|------|------|
 | `aliases/` | `pi-meow-aliases` | 斜杠命令别名 | /clear → /new、/exit → /quit |
-| `apply-patch/` | `pi-meow-apply-patch` | Codex apply_patch 编辑（vendor） | 自 @d3ara1n/pi-apply-patch@0.2.0 vendored（Apache-2.0）；执行层与上游逐字一致（仅类型适配零语义变化，升级基线时重审执行层 diff）；渲染层 PR #24/#25 已合并并发布 0.4.1；提示词契约 PR #26 合并发版后撤 fork 回 npm 包；本地输入修复见 `apply-patch-tweaks/`；结果 diff 折叠态按 `applyPatch: {contextLines, maxChangedLines}` 裁剪、Ctrl+O 全量，流式预览不裁剪；配置读 settings 文件（pi-ask-user 模式，project 整块覆盖 global）于 session_start，`getSettings` 是 action method 禁在工厂期调；调用行背景色由 pi default shell 提供，不要再画 Box 背景；`context.expanded` 在 renderCall 可用，无需 renderResult 回写；踩坑点见 `index.ts`、`src/tool.ts`、`src/stream-preview.ts` 头注释；本包注释用英文以便与上游互传 diff；oxlint 豁免同 ask-user-question（complexity 57 棘轮） |
-| `apply-patch-tweaks/` | `pi-meow-apply-patch-tweaks` | apply_patch 本地容错 | 独立于执行层：补提示词 + `tool_call` 输入修复（Add File 缺 `+`、围栏、数字 hunk 头、重复/空 Update）；`tool_result` 回注说明；不做上下文模糊匹配，fail open；单测随 `pnpm test`；切 npm 包后保留 |
+| `apply-patch-tweaks/` | `pi-meow-apply-patch-tweaks` | apply_patch 本地输入修复 | 执行层为 npm:@d3ara1n/pi-apply-patch（0.4.2 起，提示词与执行由上游持有）；本包只做 `tool_call` 输入修复（Add File 缺 `+`、围栏、数字 hunk 头、重复/空 Update），`tool_result` 回注说明；不做上下文模糊匹配，fail open；单测随 `pnpm test` |
 | `ask-user-question/` | `pi-meow-ask-user-question` | 结构化问卷工具（vendor） | 自 @juicesharp/rpiv-ask-user-question@2.15.0 vendored、冻结不跟上游，见 [docs/ai/pi-ask-user-question-limits.md](../../../docs/ai/pi-ask-user-question-limits.md)；题数上限已移除（常量/schema/校验/提示词四处全删）；本地补丁：TabBar 多题开窗、reconcile 只剥离（#149）、提示词硬限制（#309）、勾选符号改用 U+2713（U+2714 无字体回退，kitty 下空白）；rpiv-config 内联 internal/、i18n 为 optional peer 运行时软加载；pi 三包与 typebox 精确锁，`pnpm check:pi` 在 pre-commit 硬门禁；单测随 `pnpm test`；包名与入口保持本仓惯例；上游排版已由 oxfmt 统一为 2 空格，语义差异见 `index.ts` 头注释——oxlint 冲突规则包级豁免见 `.oxlintrc.json` overrides |
 | `esc-hold/` | `pi-meow-esc-hold` | Esc 防误触 | 单击提示不中断，双击/长按才中断；terminal 输入层；以 `ctx.isIdle()` 分场景：生成中守卫、空闲全放行 |
 | `git-hooks/` | `pi-meow-git-hooks` | git hooks 自动配置 | session_start 检测 cwd 所属仓库一次：`.githooks/` 含可执行脚本则补设 `core.hooksPath=.githooks`（githooks 优先；已设 `.githooks` 静默、指向别处不动仅提示）；`.pre-commit-config.yaml` + 系统有 pre-commit 命令则 hook 缺失时跑 `pre-commit install`（已装看 hook 头部标记，外来 hook 交工具 migration mode，工具缺失静默）；互斥锚定：hooksPath 已设时 pre-commit install 上游拒绝执行（实测 4.6.2），githooks 命中即分流；提示 setWidget（激活 8s 清、失败不自动清，models-dev 同款理由），已就绪零输出，非 tui 打 stderr；hooks 目录用 `--git-path hooks` 解析（兼容 worktree）；中途 cd 不检测，Windows 执行位退化可接受 |
@@ -38,10 +37,10 @@ tags: [pi, extensions, typescript]
 
 ```json
 "packages": [
+  "npm:@d3ara1n/pi-apply-patch@0.4.2",
   "npm:pi-lsp-extension",
   "npm:pi-web-access",
   "./ext/aliases",
-  "./ext/apply-patch",
   "./ext/apply-patch-tweaks",
   "./ext/ask-user-question",
   "./ext/editor-input-tweaks",

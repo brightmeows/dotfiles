@@ -1,21 +1,20 @@
 /**
- * Local hardening for apply_patch.
+ * Local input repairs for apply_patch.
  *
- * The execution layer stays the vendored package (later the npm package). This
- * extension only touches the model-facing edges:
+ * The execution layer and prompt guidance belong to the upstream npm package.
+ * This extension only repairs mechanical patch-format mistakes before the
+ * executor sees them and appends a note to the tool result:
  *
- * - before_agent_start adds patch-authoring guidelines the installed tool
- *   description does not carry yet, deduped by exact text.
- * - tool_call repairs mechanical patch-format mistakes before the executor
- *   sees them, storing a note per call.
- * - tool_result appends that note to the tool result so the model learns that
- *   the input was repaired instead of believing its original text was valid.
+ * - tool_call repairs Add File prefixes, an outer markdown fence, numeric hunk
+ *   headers, `@@` without a space, consecutive duplicate Update headers, and
+ *   empty Update headers.
+ * - tool_result tells the model that its input was repaired instead of letting
+ *   it believe the original text was valid.
  *
  * Repairs fail open: an unexpected exception logs and leaves the input alone.
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { mergeGuidelines } from "./internal/guidelines.ts";
 import { repairPatch } from "./internal/repair.ts";
 
 const TOOL = "apply_patch";
@@ -25,16 +24,6 @@ export default function applyPatchTweaks(pi: ExtensionAPI): void {
 
   pi.on("session_start", () => {
     notes.clear();
-  });
-
-  pi.on("before_agent_start", (event) => {
-    const tool = pi.getAllTools().find((candidate) => candidate.name === TOOL);
-    if (!tool) {
-      return;
-    }
-    // The upstream tool description will own the Add File contract.
-    // This extension carries it as a guideline until then; the description check prevents a duplicate.
-    mergeGuidelines(event.systemPromptOptions, !tool.description.includes("including blank lines"));
   });
 
   pi.on("tool_call", (event) => {

@@ -1,6 +1,6 @@
 # apply_patch 失败率：实测、原因与本地修复层
 
-> 记录于 2026-10-26。执行层基线是 @d3ara1n/pi-apply-patch 0.2.0 的 vendored 副本；上游已发布 0.4.1，渲染层 PR #24/#25 已合并。
+> 记录于 2026-10-26。执行层已迁回 npm @d3ara1n/pi-apply-patch 0.4.2；迁移前基线是 0.2.0 的 vendored 副本。
 
 ## 结论
 
@@ -91,11 +91,11 @@ Codex 上游是逐操作读、改、写的：前面的文件已经落盘，后�
 
 ## 本地修复层
 
-新增包 `dot_pi/agent/ext/apply-patch-tweaks/`，包名 `pi-meow-apply-patch-tweaks`。它独立于执行层，同时兼容 vendored fork 和后续 npm 包。
+新增包 `dot_pi/agent/ext/apply-patch-tweaks/`，包名 `pi-meow-apply-patch-tweaks`。它独立于执行层，当前挂在 npm @d3ara1n/pi-apply-patch 0.4.2 之上。
 
 接线：
 
-- `before_agent_start`：把补丁编写规则补进 `systemPromptOptions.toolGuidelines.apply_patch`，按精确字符串去重。工具描述已经带 Add File 规则时跳过 Add File 补丁，避免和上游重复。
+- 提示词由上游 0.4.2 的 `promptGuidelines` 持有，本扩展不再注入，避免和上游规则重复。
 - `tool_call`：只处理 `apply_patch`，纯文本修复 `input`，按 `toolCallId` 记录修复说明。
 - `tool_result`：把修复说明追加到工具结果，模型能看到“输入被修过”。
 - `session_start`：清空备注表。
@@ -125,22 +125,23 @@ Codex 上游是逐操作读、改、写的：前面的文件已经落盘，后�
 
 - PR #24（折叠态结果 diff）与 #25（流式预览）已在 2026-10-25 合并，随后发布 0.3.0、0.4.0、0.4.1。main CI 绿，PR 的 Test 与 Typecheck 全过，没有 review 评论。
 - 上游 0.4.1 没有失败率相关的提示词修复：工具描述仍是旧版，没有 `promptGuidelines`。
-- 提示词契约 [PR #26](https://github.com/d3ara1n/pi-extensions/pull/26) 只改 `packages/pi-apply-patch/src/tool.ts`、README 和 tool 测试，checks 全过，等待合并发版：
-  - description 补 Add File 每行 `+`（含空行）和不要围栏。
-  - promptGuidelines 补单文件单 Update 头、文件顺序、裸 `@@`、上下文过期重读、小补丁。
-  - 不改执行层，不改尾换行，不做解析器容错。
-- 提示词 PR 合并发版后，删除 vendored 目录，settings 改为 `npm:@d3ara1n/pi-apply-patch`；`apply-patch-tweaks` 保留。
+- 提示词契约 [PR #26](https://github.com/d3ara1n/pi-extensions/pull/26) 在 2026-10-26 合并并发布 0.4.2。维护者在合并前把原来的 4 条 guideline 扩成 10 条规则加一个完整可执行示例；description 收短，执行层不变。
+- 0.4.2 与 0.4.1 的源码差异只在 `packages/pi-apply-patch/src/tool.ts`；`apply.ts`、`workspace.ts`、`core/*` 全部逐字相同。
+- 迁移已完成：settings 使用 `npm:@d3ara1n/pi-apply-patch@0.4.2`，vendored 目录删除；`apply-patch-tweaks` 保留为纯输入修复层。
 
 ## 切换与验证
 
-切换步骤：
+迁移步骤：
 
-1. 改 `dot_pi/agent/settings.meow.json`，删除 `./ext/apply-patch`，加入 npm 包。
+1. 改 `dot_pi/agent/settings.meow.json`，删除 `./ext/apply-patch`，加入 `npm:@d3ara1n/pi-apply-patch@0.4.2`。用钉住版本，因为旧安装区里是 0.2.0，无版本规格有装回旧版的风险。
 2. 删除 `dot_pi/agent/ext/apply-patch/`。
-3. `chezmoi apply`。
-4. 手动删除部署区孤儿 `~/.pi/agent/ext/apply-patch`。
-5. 启动 pi，确认 `apply_patch` 只注册一次，做一次 Add File 和一次 Update 的运行时冒烟。
-6. 回滚时 revert 切换提交，恢复 `./ext/apply-patch` 和 fork 目录；`apply-patch-tweaks` 不用动。
+3. `apply-patch-tweaks` 收窄成纯输入修复：删 `before_agent_start`、`internal/guidelines.ts` 和相关测试。
+4. `chezmoi apply`。
+5. 手动从 `~/.pi/agent/settings.json` 删除 `./ext/apply-patch`。合并脚本的 packages 是并集，源里删了不会传导。
+6. 手动删除部署区孤儿 `~/.pi/agent/ext/apply-patch`。
+7. 确认 `~/.pi/agent/npm/node_modules/@d3ara1n/pi-apply-patch/package.json` 是 0.4.2；不是就 `pi update --extensions`。
+8. 启动 pi，确认 `apply_patch` 只注册一次，做一次 Add File 和一次 Update 的运行时冒烟。
+9. 回滚时 revert 迁移提交，恢复 `./ext/apply-patch` 和 fork 目录；`apply-patch-tweaks` 不用动。
 
 本地验证：
 
