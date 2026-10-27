@@ -8,6 +8,7 @@
 - **角色分工**：zellij 是基准本体（零改动）；tmux 是 Omarchy 上游配置 + chezmoi 模板拼接的字母系追加段（覆盖恢复见 [omarchy-tmux-chezmoi拼接与refresh覆盖恢复](omarchy-tmux-chezmoi拼接与refresh覆盖恢复.md)）；herdr 直接改 `[keys]`。
 - **prefix**：`Alt+i`，对齐 zellij 模式入口；`Ctrl+Space` 让给 fcitx5 中英文切换（输入法层拦截，TUI 收不到）。tmux 备用 prefix 为上游 `prefix2 C-b`。
 - **两层结构**：字母系层（`Alt+字母` 系直键，三应用全通）+ 增强层（zellij 无对应的便利键：分屏 Enter 系、数字直达、resize 方向键、workspace 上下——zellij 里这些在模式内，直接键是无损加餐）。
+- **`Alt+Up/Down` 在 herdr 留空**（2026-10-27）：让给 pane 内的 pi（`Alt+Up` 取回排队消息、模型循环顺序上移，`Alt+Down` 下移），herdr 的 workspace 切换改用 `Alt+Shift+Up/Down`。tmux 侧仍绑 `Alt+Up/Down`，未随动。
 - tmux 上游自带的方向键系（`C-M-方向键` 焦点等）保留并存，与字母系物理正交；用户主用字母系。
 
 ## 键位对照表
@@ -55,7 +56,7 @@
 
 | 操作 | zellij | tmux | herdr |
 |---|---|---|---|
-| 切前/后 | o 模式（session 管理） | `Alt+Up/Down`；`Alt+i P/N` | `Alt+Up/Down` |
+| 切前/后 | o 模式（session 管理） | `Alt+Up/Down`；`Alt+i P/N` | `Alt+Shift+Up/Down`（`Alt+Up/Down` 留给 pi） |
 | 新建 / 重命名 / 关闭 | o 模式 `d` 分离、`q` 退出 | `Alt+i C / R / K` | `Alt+i Shift+C / Shift+R / Shift+K` |
 | 切上一个/下一个 agent | —（无 agent 概念） | — | `Alt+Left / Alt+Right` |
 | agent 索引直达 | — | — | `Alt+i Alt+1..9` |

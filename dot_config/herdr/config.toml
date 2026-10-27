@@ -80,9 +80,10 @@ move_tab_next = "alt+shift+o"
 new_workspace = "prefix+shift+c"
 rename_workspace = "prefix+shift+r"
 close_workspace = "prefix+shift+k"
-# 切 workspace：Alt+Up/Down（prefix 路径 shift+p/n 为冗余，不设）
-previous_workspace = "alt+up"
-next_workspace = "alt+down"
+# 切 workspace：Alt+Shift+Up/Down（prefix 路径 shift+p/n 为冗余，不设）；
+# Alt+Up/Down 留空，让给 pane 内的 pi（取回排队消息、模型排序）
+previous_workspace = "alt+shift+up"
+next_workspace = "alt+shift+down"
 
 # agent 切换：左右切 agent、上下切 workspace，正交；索引直达用 herdr 文档示例键位
 previous_agent = "alt+left"
