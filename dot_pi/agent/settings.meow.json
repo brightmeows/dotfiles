@@ -18,7 +18,6 @@
   "defaultTools": ["-edit", "-write"],
   "packages": [
     "npm:@d3ara1n/pi-apply-patch",
-    "npm:pi-lsp-extension",
     "npm:pi-web-access",
     "./ext/aliases",
     "./ext/apply-patch-tweaks",

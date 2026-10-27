@@ -85,7 +85,6 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 | [`docs/ai/deepseek-harness-config.md`](docs/ai/deepseek-harness-config.md) | DeepSeek Harness 配置托管、技能与 MCP 迁移、凭据与沙箱差异 |
 | [`docs/ai/model-config-pipeline.md`](docs/ai/model-config-pipeline.md) | 模型配置流水线：TOML 单一源、双消费者生成物、models.dev 刷新与映射规则 |
-| [`docs/ai/pi-lsp-support.md`](docs/ai/pi-lsp-support.md) | Pi 的 LSP 支持：pi-lsp-extension 选型决策与重审触发条件、防漂移四件套写法示范 |
 | [`docs/ai/pi-ask-user-question-limits.md`](docs/ai/pi-ask-user-question-limits.md) | Pi ask_user_question vendor 化、题数上限移除、依赖锁与漂移门禁 |
 | [`docs/ai/pi-apply-patch-failure-modes.md`](docs/ai/pi-apply-patch-failure-modes.md) | apply_patch 失败率实测、Codex 格式约束、本地修复层与上游贡献状态 |
 

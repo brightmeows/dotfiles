@@ -59,21 +59,6 @@ pi-web-access 的搜索路由（`searchRouting` 顺序回退链）源文件现�
   （`*.lan`/`*.local` 解析真实内网 IP 仍拦）。
 - 若 `~/.config/pi/web-search.json` 被人为创建，会优先于 `~/.pi/web-search.json` 被读到（XDG 分支先查它）——排查路由失效时先看这里。
 
-## LSP 扩展（pi-lsp-extension）
-
-`packages` 含 `npm:pi-lsp-extension`（LSP 导航工具）。选型依据、机制事实与重审触发条件见
-[docs/ai/pi-lsp-support.md](../../docs/ai/pi-lsp-support.md)——该文按防漂移四件套写法，版本与
-状态类事实以探针为准，本文不复述其值。
-
-维护要点：
-
-- 项目根 `.pi-lsp.json` 两键惯例：`autoInjectDiagnostics: false`（关编辑注入）+ `autoStart`（预热）；
-  逐键覆盖语义（项目 > 用户 > 内置），逐项目手放（六个仓已配）
-- 上游 issue（#15 用户级配置、#16 信任门、#17 clangd 默认、#18 导航前 didOpen）的
-  跟进状态用 `gh issue list --repo samfoy/pi-lsp-extension --author brightmeows` 查，不写死状态
-- 信任纪律：`.pi-lsp.json` 的 `servers`/`lombokJar` 是代码执行向量，未信任仓库不开会话
-  （上游信任门合并前长期有效）
-
 ## 踩坑点：enabledModels 不是可用性过滤
 
 `~/.pi/agent/settings.json` 的 `enabledModels`（Pi 运行时管理，不入 `settings.meow.json`）配置的是会话模型范围（Ctrl+P 循环与 `/scoped-models`）。不在其中的模型照常注册，可用 `/model` 与 `--model` 选用（`pi --list-models` 也照常列出）。新增模型后若循环里没有，先看这里，别怀疑模型源。

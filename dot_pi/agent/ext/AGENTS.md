@@ -38,7 +38,6 @@ tags: [pi, extensions, typescript]
 ```json
 "packages": [
   "npm:@d3ara1n/pi-apply-patch@0.4.2",
-  "npm:pi-lsp-extension",
   "npm:pi-web-access",
   "./ext/aliases",
   "./ext/apply-patch-tweaks",
