@@ -17,6 +17,12 @@ require("default.hypr.omarchy")
 -- defaults so package updates can improve the defaults without rewriting your
 -- ~/.config/hypr files.
 require("hypr.monitors")
+
+-- monitors.lua 退出 chezmoi 后，切档器（SUPER + SLASH）会把通配 GDK 值改回 2；
+-- 这里在通配值之后固定本机政策值，配置每次重载都会再压回 1。
+-- 依据见 docs/omarchy/omarchy-monitors-lua-除管记录.md。
+hl.env("GDK_SCALE", "1")
+
 require("hypr.input")
 require("hypr.bindings")
 require("hypr.looknfeel")

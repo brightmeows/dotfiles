@@ -14,7 +14,14 @@ hypr 目录其余文件维持纳管，Omarchy 迁移就地修补仍走“chezmoi
 
 ## 运行时行为：通配值被显式规则遮蔽
 
-文件后段的显式规则（eDP-1 scale 1.25、华为屏 desc 匹配 74.97Hz）按“后条覆盖前条”在运行时压过通配值。因此切档器写入的通配 scale 对这些屏不生效，实际受影响的是 `GDK_SCALE` 环境变量与未来未单列的屏。切档器的“最近整数”逻辑（1.6 记为 GDK 2）与 GDK 全局取 1 政策冲突时，以运行时实际生效值为准排查。
+文件后段的显式规则（eDP-1 scale 1.25、华为屏 desc 匹配 74.97Hz）按“后条覆盖前条”在运行时压过通配值。因此切档器写入的通配 scale 对这些屏不生效，实际受影响的是未来未单列的屏。切档器的“最近整数”逻辑（1.6 记为 GDK 2）与 GDK 全局取 1 政策冲突时，以运行时实际生效值为准排查；会话的 GDK 已由 `hyprland.lua` 固定，见下节。
+
+## GDK 固定
+
+`~/.config/hypr/hyprland.lua` 在 `require("hypr.monitors")` 之后固定 `hl.env("GDK_SCALE", "1")`。
+monitors.lua 的通配 GDK 仍会被切档器改写，但配置每次重载都会在通配值之后重新写一次 1，
+因此会话的 GDK 不再随切档器漂移。monitors.lua 的通配值同步清回 1/1，避免文件内容与实际行为不一致；
+新增显示器若没有显式规则，按 1x 处理。
 
 ## 政策备案（原注释块承接）
 
@@ -25,3 +32,5 @@ hypr 目录其余文件维持纳管，Omarchy 迁移就地修补仍走“chezmoi
 git 历史兜底：纳管版本见 `23815ec` 与 `e3bb0a8`，`git show <commit>:dot_config/hypr/monitors.lua` 取回后直接写入 `~/.config/hypr/monitors.lua`。除非推翻本裁决，不要把该文件重新纳入 chezmoi。
 
 切档行为复核：`cat ~/.local/state/omarchy/monitor-scaling.log`；生效值：`hyprctl -j monitors | jq '.[].scale'`；除管生效验证：`chezmoi managed | rg monitors` 应无输出。
+
+GDK 固定验证：`systemctl --user show-environment | rg '^GDK_SCALE='` 与 `tr '\0' '\n' < /proc/$(pgrep -f quickshell | head -1)/environ | rg '^GDK_SCALE='` 均应为 1；改完 hyprland.lua 后 `hyprctl reload` 让新值生效。
