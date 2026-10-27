@@ -44,12 +44,12 @@
 ## 可见性提示（brightmeows.workspaces 插件）
 
 - 新窗口圆点：新窗口落在所有显示器都不可见的工作区时点亮，任一显示器激活该工作区后清除。
-- 响铃圆点：Alacritty 收到 BEL（如 pi 问卷等待输入）时，alacritty.toml 的 `[bell] command` 调用插件的 bell-flag.sh，记录响铃窗口所在工作区；插件轮询点亮 urgent 色圆点，10 分钟过期。
+- 响铃圆点：Alacritty / kitty 收到 BEL（如 pi 问卷等待输入；herdr 内由 herdr 转发 pane BEL）时，alacritty.toml 的 `[bell] command` 或 kitty.conf 的 `command_on_bell` 调用插件的 bell-flag.sh，记录响铃窗口所在工作区；插件轮询点亮 urgent 色圆点，10 分钟过期。
 - 圆点只标记 1 到 10 号数字工作区；事件不跨 shell 重启保留。
 
 ## 焦点保护（hyprland.lua 窗口规则）
 
-- Alacritty `focus_on_activate = false`：响铃经 xdg-activation 的焦点请求被拦截。
+- Alacritty、kitty `focus_on_activate = false`：响铃经 xdg-activation 的焦点请求被拦截。
 - chromium `no_initial_focus`、`focus_on_activate = false`、`no_follow_mouse` 三路全堵：agent-browser 操作页面或弹新窗口不抢焦点，手动点击聚焦不受影响。
 
 ## 运维

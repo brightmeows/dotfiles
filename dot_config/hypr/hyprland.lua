@@ -35,7 +35,7 @@ require("default.hypr.toggles")
 -- o.window("qemu", { workspace = "5" })
 
 -- 终端响铃（BEL）会触发 xdg-activation 请求焦点（如 pi 弹问卷时），禁止终端响应。
-o.window("Alacritty", { focus_on_activate = false })
+o.window("(Alacritty|kitty)", { focus_on_activate = false })
 
 -- agent-browser（chromium 实例）操作页面或弹新窗口时不抢焦点，避免打扰前台。
 -- 三路全堵：新窗口初始焦点、xdg-activation 激活请求、follow_mouse 悬停聚焦；
