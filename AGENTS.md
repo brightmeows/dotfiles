@@ -87,6 +87,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | [`docs/ai/model-config-pipeline.md`](docs/ai/model-config-pipeline.md) | 模型配置流水线：TOML 单一源、双消费者生成物、models.dev 刷新与映射规则 |
 | [`docs/ai/pi-ask-user-question-limits.md`](docs/ai/pi-ask-user-question-limits.md) | Pi ask_user_question vendor 化、题数上限移除、依赖锁与漂移门禁 |
 | [`docs/ai/pi-apply-patch-failure-modes.md`](docs/ai/pi-apply-patch-failure-modes.md) | apply_patch 失败率实测、Codex 格式约束、本地修复层与上游贡献状态 |
+| [`docs/ai/persona-regression.md`](docs/ai/persona-regression.md) | 人设回归验收：四条判据、十二条探针、运行口径与首轮结果、残留风险 |
 
 ### skills/（技能与工具接入）
 
