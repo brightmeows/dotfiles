@@ -28,7 +28,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 ## 自动同步机制
 
-修改源文件后运行 `chezmoi apply`，`.chezmoiscripts/` 的合并脚本自动执行同步。脚本统一使用 `run_onchange_after_` 前缀（数据文件部署后执行 + 内容变化才运行）；三个 `run_after_` 例外（触发条件不在模板 hash 里）见 [docs/dev/chezmoi-sync-scripts.md](docs/dev/chezmoi-sync-scripts.md)。
+修改源文件后运行 `chezmoi apply`，`.chezmoiscripts/` 的合并脚本自动执行同步。脚本统一使用 `run_onchange_after_` 前缀（数据文件部署后执行 + 内容变化才运行）；两个 `run_after_` 例外（触发条件不在模板 hash 里）见 [docs/dev/chezmoi-sync-scripts.md](docs/dev/chezmoi-sync-scripts.md)。
 
 | 配置文件 | 源文件 | 目标文件 | 合并策略 |
 |---------|--------|---------|---------|
@@ -38,7 +38,6 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | Environment.d | `dot_env_common` | `~/.config/environment.d/50-meow.conf` | awk 翻译 `+=`/`<=` 为 environment.d 守卫语法 |
 | Omarchy 工作区组件 | `dot_config/omarchy/plugins/brightmeows.workspaces/manifest.json` | `~/.config/omarchy/shell.json` | 仅替换 `bar.layout` 组件 id（脚本每次 apply 运行）；幂等、尊重手动删除；shell.json 不入 chezmoi 管理（Omarchy CLI 与升级迁移会就地改写） |
 | Omarchy 活动窗口组件 | `dot_config/omarchy/plugins/brightmeows.active-window/`（脚本每次 apply 运行） | `~/.config/omarchy/shell.json` | 缺条目则插到中区最左，已存在则原地不动；`omarchy refresh shell` 重置后一次 apply 恢复 |
-| dsh 人设预设 | `dot_agents_meow/SOUL.md`（脚本每次 apply 运行） | `~/.dsh/.agent-presets/bai-xiaomiao/`（生成物，不入仓库） | `gen-dsh-preset.py` 从 dsh 自带 standard 预设派生，只换 persona 行、其余字节原样保留；默认预设由 home 级 patch 指向它。规则见 [docs/ai/deepseek-harness-config.md](docs/ai/deepseek-harness-config.md) |
 
 ## DeepSeek Harness 配置
 
@@ -87,7 +86,6 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | [`docs/ai/model-config-pipeline.md`](docs/ai/model-config-pipeline.md) | 模型配置流水线：TOML 单一源、双消费者生成物、models.dev 刷新与映射规则 |
 | [`docs/ai/pi-ask-user-question-limits.md`](docs/ai/pi-ask-user-question-limits.md) | Pi ask_user_question vendor 化、题数上限移除、依赖锁与漂移门禁 |
 | [`docs/ai/pi-apply-patch-failure-modes.md`](docs/ai/pi-apply-patch-failure-modes.md) | apply_patch 失败率实测、Codex 格式约束、本地修复层与上游贡献状态 |
-| [`docs/ai/persona-regression.md`](docs/ai/persona-regression.md) | 人设回归验收：四条判据、十二条探针、运行口径与首轮结果、残留风险 |
 | [`docs/ai/agents-meow-workflow-skills-boundary.md`](docs/ai/agents-meow-workflow-skills-boundary.md) | agents_meow 与 workflow-skills 的边界、事实源收口、技能清单校验与迁移方案 |
 
 ### skills/（技能与工具接入）
