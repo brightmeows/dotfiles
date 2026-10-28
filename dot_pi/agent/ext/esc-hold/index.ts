@@ -2,30 +2,43 @@
  * Esc 防误触扩展（esc-hold）
  *
  * 目标：防止误触 Esc 打断对话——单击 Esc 只显示提示不中断，
- * 双击（或长按）才中断。空闲时完全放行，pi 原生行为原样保留
+ * 双击（或长按）才放行。空闲时完全放行，pi 原生行为原样保留
  * （双击开对话树、Esc 关闭选择器、取消 autocomplete 等）。
  *
- * 行为（按 pi 运行状态分场景；pi ≥1.2 起 run 启动窗口期——含
- * before_agent_start 处理器执行期——即算 busy，isIdle() 提前翻 false，
- * 生成中守卫比旧版更早生效，堵住了旧版空闲窗口期误打断刚启动 run 的口子）：
+ * 行为（pi ≥1.2 起 run 启动窗口期——含 before_agent_start 处理器执行期
+ * ——即算 busy，isIdle() 提前翻 false）：
  *
- * ┌ 生成中（agent 运行 / 自动重试 / 自动压缩等，ctx.isIdle() === false）
- * │  单击（press → release）：吞掉（consume），不中断，
- * │    底部提示"双击 Esc 中断对话…"（1.5s 自动消失）
- * │  双击（800ms 内第二下 press）：放行给内置处理
- * │    → 内置 isStreaming 分支 → 与原生中断行为完全一致
- * │  长按（repeat 事件 / 传统终端重复字节）：同样放行中断（宽容）
- * │  一次按住周期内只放行一次，防止长按期间 repeat 连发重复触发
- * │  release（松开）一律吞掉——松开动作永远不能触发中断
- * └ 空闲时（ctx.isIdle() === true）
- *    全部放行：双击开对话树、Esc 关闭选择器、取消 autocomplete 等
- *    均为 pi 原生行为，本扩展不干预
+ * ┌ 运行中（ctx.isIdle() === false）
+ * │  release（松开）一律吞掉——松开动作永远不能触发中断或取消
+ * │  run 态（没有阻塞式扩展对话框）
+ * │    单击（press → release）：吞掉（consume），不中断，
+ * │      底部提示“双击 Esc 中断对话…”（1.5s 自动消失）
+ * │    双击（800ms 内第二下 press）：放行给内置处理
+ * │      → 流式中断 run；重试/压缩取消对应操作
+ * │    长按（repeat 事件 / 传统终端重复字节）：同样放行（宽容）
+ * │    一次按住周期内只放行一次，防止长按期间 repeat 连发重复触发
+ * │  prompt 态（运行中出现阻塞式扩展对话框，ui_prompt_start/end 配对）
+ * │    单击：吞掉，底部提示“双击 Esc 取消对话框…”
+ * │    双击/长按：放行给对话框自身处理
+ * │      → 问卷取消提问（tool 返回 cancelled，run 继续），其他对话框同理
+ * ├ 空闲时（ctx.isIdle() === true）
+ * │  全部放行：双击开对话树、Esc 关闭选择器、取消 autocomplete、
+ * │  空闲期打开的对话框（/model 等）均为 pi 原生行为，本扩展不干预
+ * └ 场景切换（空闲↔运行、run↔prompt）时重置按键周期
  *
  * 提示：ctx.ui.setStatus() 显示在底部状态栏（与 git 分支等扩展状态同区），
  * 1.5s 自动清除。
  *
- * 设计权衡（2026-08-05 主人确认）：
- * - 双击与长按都触发中断（宽容处理：长按的 repeat 也落在 800ms 窗口内）
+ * 设计权衡：
+ * - 拦截范围（2026-10-28 主人确认）：整个运行期都守（含等待模型、工具
+ *   执行、自动重试、自动压缩），空闲全放行；运行中所有阻塞式扩展对话框
+ *   进入 prompt 态，单击同样吞掉，但提示与双击目标改为“取消对话框”。
+ * - prompt 态双击交给对话框原生取消（2026-10-28 确认）：问卷取消提问、
+ *   run 继续，与 pi 原生 Esc 语义一致，不由扩展 abort run。
+ * - 提示两分（2026-10-28 确认）：run 态“双击 Esc 中断对话…”，prompt 态
+ *   “双击 Esc 取消对话框…”。
+ * - 双击与长按都放行（2026-08-05 主人确认；宽容处理：长按的 repeat 也
+ *   落在 800ms 窗口内）
  * - 双击判定窗口 800ms：覆盖双击手速（100–300ms）与常见系统 repeat
  *   delay（250–500ms）；间隔超过 800ms 的两次单击视为独立单击
  * - 支持 Kitty 键盘协议（pi 启动时自动查询启用）时按 repeat/release 事件
@@ -33,12 +46,14 @@
  * - 传统终端（无 Kitty 协议）只有裸 ESC 字节、无 release 事件：
  *   单击/双击按间隔判定可用，但长按超 800ms 后可能再次放行
  *   （松开无法感知）；个别把 repeat delay 配到 1s 以上时长按不生效
- * - 中断后仍按住（生成中→空闲转换）：剩余按住事件继续吞掉，
+ * - 中断后仍按住（运行中→空闲转换）：剩余按住事件继续吞掉，
  *   不会误触发空闲双击开树
  *
  * 实现说明：
  * - ctx.ui.onTerminalInput() 是 TUI 全局输入钩子（任何组件处理按键之前），
  *   返回 { consume: true } 吞掉按键，返回 undefined 放行
+ * - 场景判定：按键时取 ctx.isIdle()；非空闲时再看 ui_prompt_start/end
+ *   维护的对话框标记（runner 只对最外层阻塞 UI 发 start/end，布尔即可）
  * - 状态机为纯函数 handleEscEvent()，便于单元测试
  * - 会话切换（/new、/tree 切换、reload）时重新注册监听器并重置状态
  *
@@ -58,10 +73,13 @@ const SECOND_PRESS_WINDOW_MS = 800;
 /** 传统模式下视为"仍在按住"的密集重复字节间隔 */
 const REPEAT_GAP_MS = 120;
 
+/** 按键时判定的场景：空闲 / 运行中无对话框 / 运行中有对话框 */
+export type EscHoldMode = "idle" | "run" | "prompt";
+
 export interface EscHoldState {
-  /** 当前周期所属阶段：空闲或生成中（跨阶段转换时重置状态） */
-  phase: "idle" | "streaming";
-  /** 生成中周期内被吞掉的第一下按下时间（0 = 无） */
+  /** 当前周期所属场景（跨场景转换时重置按键周期） */
+  phase: EscHoldMode;
+  /** 本周期内被吞掉的第一下按下时间（0 = 无） */
   firstPressAt: number;
   /** 本周期已放行的时间（0 = 未放行），放行后窗口内的事件全部吞掉 */
   actedAt: number;
@@ -72,7 +90,7 @@ export interface EscHoldState {
 export type EscHoldAction =
   | { type: "consume" } // 吞掉，不触发任何动作
   | { type: "pass" } // 放行给内置处理
-  | { type: "hint-streaming" }; // 吞掉 + 提示"双击中断"
+  | { type: "hint"; mode: "run" | "prompt" }; // 吞掉 + 按场景提示
 
 export function createEscHoldState(): EscHoldState {
   return { phase: "idle", firstPressAt: 0, actedAt: 0, lastEscAt: 0 };
@@ -85,8 +103,8 @@ export interface EscHoldInput {
   isRelease: boolean;
   /** 事件时间戳 */
   now: number;
-  /** Pi 是否空闲（生成中为 false） */
-  isIdle: boolean;
+  /** 按键时的场景（prompt 仅在运行中且对话框打开时出现） */
+  mode: EscHoldMode;
 }
 
 /**
@@ -99,7 +117,7 @@ export function handleEscEvent(state: EscHoldState, input: EscHoldInput): EscHol
   state.lastEscAt = input.now;
 
   // ---- 空闲：完全放行（pi 原生行为：双击开树、关选择器、取消补全等） ----
-  if (input.isIdle) {
+  if (input.mode === "idle") {
     state.phase = "idle";
     if (state.actedAt !== 0) {
       if (input.isRelease) {
@@ -108,20 +126,21 @@ export function handleEscEvent(state: EscHoldState, input: EscHoldInput): EscHol
         state.firstPressAt = 0;
         return { type: "pass" };
       }
-      // 生成中放行后转换而来：按住剩余事件吞掉，防中断后误触发空闲双击开树
+      // 运行中放行后转换而来：按住剩余事件吞掉，防中断后误触发空闲双击开树
       if (input.now - state.actedAt < SECOND_PRESS_WINDOW_MS) {
         return { type: "consume" };
       }
       state.actedAt = 0;
       state.firstPressAt = 0;
     }
+    state.firstPressAt = 0;
     return { type: "pass" };
   }
 
-  // ---- 生成中：单击吞掉 + 提示，双击/长按放行触发内置中断 ----
-  if (state.phase !== "streaming") {
-    // 从空闲周期转来：空闲残留不参与生成中判定
-    state.phase = "streaming";
+  // ---- 运行中：run（无对话框）/ prompt（有阻塞对话框） ----
+  if (state.phase !== input.mode) {
+    // 跨场景（空闲到运行、run 与 prompt 互转）：上一场景的按键周期作废
+    state.phase = input.mode;
     state.firstPressAt = 0;
     state.actedAt = 0;
   }
@@ -153,19 +172,21 @@ export function handleEscEvent(state: EscHoldState, input: EscHoldInput): EscHol
     state.firstPressAt = 0;
   }
   if (state.firstPressAt !== 0 && input.now - state.firstPressAt < SECOND_PRESS_WINDOW_MS) {
-    // 第二下（双击第二下 / 长按 repeat）→ 放行 → 内置中断
+    // 第二下（双击第二下 / 长按 repeat）→ 放行 → 内置中断或对话框取消
     state.actedAt = input.now;
     return { type: "pass" };
   }
   // 第一下：吞掉 + 提示
   state.firstPressAt = input.now;
-  return { type: "hint-streaming" };
+  return { type: "hint", mode: input.mode };
 }
 
 export default function (pi: ExtensionAPI) {
   // 当前会话上下文（session_start 时更新）
   let currentCtx: ExtensionContext | null = null;
   let unsubscribe: (() => void) | undefined;
+  // 运行中的阻塞式扩展对话框（ui_prompt_start/end 配对）
+  let promptActive = false;
   // 提示定时器
   let hintTimer: ReturnType<typeof setTimeout> | undefined;
   const state = createEscHoldState();
@@ -189,11 +210,17 @@ export default function (pi: ExtensionAPI) {
     if (!ctx || !matchesKey(data, "escape")) {
       return undefined;
     }
+    let mode: EscHoldMode = "run";
+    if (ctx.isIdle()) {
+      mode = "idle";
+    } else if (promptActive) {
+      mode = "prompt";
+    }
     const action = handleEscEvent(state, {
       isRepeat: isKeyRepeat(data),
       isRelease: isKeyRelease(data),
       now: Date.now(),
-      isIdle: ctx.isIdle(),
+      mode,
     });
     switch (action.type) {
       case "consume": {
@@ -202,8 +229,8 @@ export default function (pi: ExtensionAPI) {
       case "pass": {
         return undefined;
       }
-      case "hint-streaming": {
-        showHint("双击 Esc 中断对话…");
+      case "hint": {
+        showHint(action.mode === "prompt" ? "双击 Esc 取消对话框…" : "双击 Esc 中断对话…");
         return { consume: true };
       }
     }
@@ -211,16 +238,26 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("session_start", (_event, ctx) => {
     currentCtx = ctx;
+    promptActive = false;
     resetState();
     // 会话切换时先注销旧监听，避免重复注册
     unsubscribe?.();
     unsubscribe = ctx.ui.onTerminalInput?.(handler);
   });
 
+  pi.on("ui_prompt_start", () => {
+    promptActive = true;
+  });
+
+  pi.on("ui_prompt_end", () => {
+    promptActive = false;
+  });
+
   pi.on("session_shutdown", () => {
     unsubscribe?.();
     unsubscribe = undefined;
     currentCtx = null;
+    promptActive = false;
     clearTimeout(hintTimer);
   });
 }
