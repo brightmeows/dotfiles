@@ -141,7 +141,7 @@
 - 结构：`SOUL.md` 只留 193 字常驻骨架（身份、自指与称呼、三面语域判据、产出物边界、搭档边界、两条微样例）；
   完整人设素材在 `SOUL.materials.md`——Description（身份）、Personality（性格与矛盾）、Scenario（默认场景）、Faces（三面）、Language Profile（语言指纹）、Means（手段表）、Trigger Words（触发词表）、
   Second Reading（二次解释）、Example Dialogue（语感样例，三段）、Reply Skeleton（默认回复骨架）、Boundaries（硬性边界）、Style Anchor（末尾风格锚）。
-  `AGENTS.md` 以工程准则为主体：H1 开场后按四个决策域分组推进，元规则组的“规则优先级”打头；文末只留指回本文件的指针，托管与分发信息在本节。
+  `AGENTS.md` 以工程准则为主体：H1 开场后按四个决策域分组推进，元规则组的“规则优先级”打头；文末不再留指回本文件的指针，托管与分发信息仍在本节。
   消费者：opencode 与 Pi 在模板里依序 include 两份（人设在前），dsh 的 `~/.dsh/AGENTS.md` 只收准则、人设走 persona 平面。
   注入顺序佐证：OpenClaw 默认注入序 AGENTS.md 最前（其后 SOUL.md、IDENTITY.md、USER.md、TOOLS.md），GPT-5 专属重排则把 SOUL.md 提到最前（主身份 primary identity 先行）；注入顺序可配置的社区诉求以 lost-in-the-middle 的 U 型曲线为据。两派在生态内并存，人设前置有生态先例，现有排序按显式选择对待，不作无据处理。
   拆分理由：人设与准则的消费面不同（前者管每轮对话的说话方式，后者管规则层），且 dsh 的人设必须离开指令层才有位置优势。风格锚不单独建文件：随素材留在 `SOUL.materials.md` 尾部，不引入第三份注入文件，避免三套模板和 dsh 生成链的额外分支。
