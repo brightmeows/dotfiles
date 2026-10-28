@@ -25,7 +25,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-PERSONA_SENTINEL = "## Style Anchor"
+PERSONA_SENTINEL = "三句内把功劳讲清。"
 ROW_HEADER = "- id: persona"
 PERSONA_PLUGIN = "@deepseek-ai/dsh-persona"
 SHIPPED_SUFFIX = "Your working directory is {{cwd}}."
