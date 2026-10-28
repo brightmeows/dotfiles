@@ -74,7 +74,9 @@ npx skills remove <技能名> -g -a codex -a opencode -y
 
 ```bash
 ls ~/.agents/skills/                    # 应为空
-jq '.skills | length' ~/.agents/.skill-lock.json   # 应为 0
+lock="$HOME/.agents/.skill-lock.json"
+[[ -n "${XDG_STATE_HOME:-}" ]] && lock="$XDG_STATE_HOME/skills/.skill-lock.json"
+jq '.skills | length' "$lock"           # 应为 0
 find ~ -maxdepth 4 -type d -name "<技能名>" 2>/dev/null | grep -v "\.npm\|node_modules\|\.cache"
 ```
 
@@ -154,7 +156,11 @@ systemctl --user enable --now workbuddy-skills-sync.path workbuddy-skills-sync.s
 | `~/.pi/agent/skills` | 已删 | Pi 原生扫描 canonical，专属副本区冗余（2026-09-24 删） |
 | `~/.agents_meow/skills` | 已删 | 原仓库本地技能分发区，2026-10-06 随 `dot_agents_meow/skills` 迁往自有 GitHub 仓库而退役；opencode/dsh symlink、Pi settings skills 数组同步移除 |
 
-注意：`~/.agents/.skill-lock.json` 曾于 2026-08-11 清空后长期未重建，2026-10-06 重装自有 4 仓库时由 CLI 重建并将存量技能入账，现存 34 条与 canonical 目录一一对应（旧账本的 7 条幽灵条目已随重建消除），`skills update` 账本自此有效，升级前仍建议核对 lock 与目录的一致性。
+注意：npx 的 canonical lock 是 `$XDG_STATE_HOME/skills/.skill-lock.json`（本机为 `~/.local/state/skills/.skill-lock.json`；
+未设 `XDG_STATE_HOME` 时回退到 `~/.agents/.skill-lock.json`），格式版本 3。它曾于 2026-08-11 清空后长期未重建，
+2026-10-06 重装自有 4 仓库时由 CLI 重建并将存量技能入账，现存 34 条与 canonical 目录一一对应
+（旧账本的 7 条幽灵条目已随重建消除），`skills update` 账本自此有效，升级前仍建议核对 lock 与目录的一致性。
+家目录 `~/skills-lock.json` 是同一时期的旧格式副本（version 1，只覆盖 2 个 workflow 技能），保留作历史备份，不参与校验。
 
 ## 变更历史
 
