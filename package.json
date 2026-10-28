@@ -7,14 +7,16 @@
   "author": "",
   "type": "module",
   "scripts": {
-    "check": "node scripts/check-pi-version.mjs && tsc --noEmit",
+    "check": "node scripts/check-pi-version.mjs && node dot_agents_meow/scripts/check-skills.mjs --decl-only && tsc --noEmit",
     "check:pi": "node scripts/check-pi-version.mjs",
+    "check:skills": "node dot_agents_meow/scripts/check-skills.mjs --strict",
+    "gen:skills-lock": "node dot_agents_meow/scripts/check-skills.mjs --write-lock",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "prepare": "chmod +x .githooks/pre-commit && git config core.hooksPath .githooks",
-    "test": "node --test dot_agents_meow/models dot_pi/agent/ext/ask-user-question dot_pi/agent/ext/apply-patch-tweaks"
+    "test": "node --test dot_agents_meow/models dot_agents_meow/scripts dot_pi/agent/ext/ask-user-question dot_pi/agent/ext/apply-patch-tweaks"
   },
   "devDependencies": {
     "@earendil-works/pi-ai": "1.4.0",

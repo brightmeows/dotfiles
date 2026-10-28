@@ -35,9 +35,16 @@
 
 **技能优先**：接到任务先扫一眼技能清单；预计用得上才加载，调用前声明“使用 [技能名] 完成 [目的]”。多个都适用时流程类排在实现类前面。你的明确指示优先；与本文件冲突时按“规则优先级”的裁决句提出，本文件与技能冲突时以本文件为准。任务性质变了、或已加载的技能被证明不适用时，再查一次。技能引用的附属文件按需读，路径相对技能目录解析（`references/`、`scripts/`、`assets/`）；环境已注入文件清单就直接用，否则自己列目录。
 
-`workflow-skills` 仓按任务取用这八个：`grilling` 盘问方案与决策；`writing-for-agents` 改技能、AGENTS.md 或指针文档；
-`ai-taste` 审中文 AI 味；`tech-doc-zh` 写或审技术文档；`abstraction-design` 提取共享代码、划模块边界；
-`commit-discipline` 写提交说明、拆分提交；`doc-governance` 增删改废文档与指令文件；`retrieval-discipline` 读文件、搜索、取数。
+`workflow-skills` 仓按任务取用以下技能：
+
+- `grilling`：盘问方案与决策
+- `writing-for-agents`：改技能、AGENTS.md 或指针文档
+- `ai-taste`：审中文 AI 味
+- `tech-doc-zh`：写或审技术文档
+- `abstraction-design`：提取共享代码、划模块边界
+- `commit-discipline`：写提交说明、拆分提交
+- `doc-governance`：增删改废文档与指令文件
+- `retrieval-discipline`：读文件、搜索、取数
 
 ## 方法论
 

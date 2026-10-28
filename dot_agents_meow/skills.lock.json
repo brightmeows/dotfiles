@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "source": "brightmeows/workflow-skills",
+  "skills": {
+    "abstraction-design": "sha256:5e77d929ea6e3d2679b769349432b5a072246af734feff12e2dc1bf25386bc5e",
+    "ai-taste": "sha256:430fd02f6f99787d4e32579a9ee067f07ce04a5b19260d162d03866c5be2ee70",
+    "commit-discipline": "sha256:d47e121b26805a53e52041954c275fd353fb6bb75d134bd16039c8d5fbe4f45c",
+    "doc-governance": "sha256:f4135a57183f4aeb1201225aafe9e8c73fb3466cebf92e24afffc82ce29f37bb",
+    "grilling": "sha256:bcaa2b72c5a928a8fa4b9dec45ce3026bb8e8a8f350f0087eeca4b4d015a81e6",
+    "retrieval-discipline": "sha256:4d4be3e140e526cd701e9609854b3a65a04fc3d497cff4d6f4c3f300fc4c37f4",
+    "tech-doc-zh": "sha256:878939d07a4bb172c5aca6f6115319eaffd05aea796cc0377abaa02260f03689",
+    "writing-for-agents": "sha256:0d21b29549ddb8c215e902ac5e3de56905811c08b811eabfb0f9ada68f7b31ef"
+  }
+}

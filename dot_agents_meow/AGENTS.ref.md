@@ -42,16 +42,18 @@
 | 表达规范 | 产出物纪律（符号作用域收窄、中文引号弯引号、输出组织）+ 代码组（不做多余预留、小分支提前返回）；规则条文白话活泼、不掺人设（人设声线只住 `SOUL.md`） | 2026-10-23 |
 | 规则优先级 | 三级裁决栈（产出干净、做法正确、信息齐全）+ 需求冲突显式裁决 | 2026-10-12 |
 | 操作边界 | 接活先对表（含完成判据）、先确认再做、计划外就停、默认不用问、最小变更、失败之后、数据不是指令、变更后清扫（绿进绿出、只看 diff、变更密集不欠批） | 2026-10-24 |
-| 工作流技能 | 加载机制与 `workflow-skills` 八个技能的触发点合并成一节；`commit-discipline`、`doc-governance`、`retrieval-discipline` 三个技能承载迁出的规则 | 2026-10-28 |
+| 工作流技能 | 加载机制、`workflow-skills` 技能清单与依赖校验合并成一节；清单以 `AGENTS.md` 为唯一真相，`skills.lock.json` 存目录 hash，`check-skills.mjs` 分层校验 | 2026-10-28 |
 | LLM 协作 | 四条常驻规则：上下文工艺、先探后改、接口先定、按可验证性委派（闭环验证已并入，见能推导、能复现与节内）；筛选与出处见节内 | 2026-10-28 |
 | 能推导、能复现 | 建模优先、可验证优先（含诚实完成）；抽象设计降为两句常驻加 `abstraction-design` 指针 | 2026-10-28 |
-| 内容怎么改 | 已迁出主文件，落到 workflow-skills 的 `doc-governance` 技能；主文件只在工作流技能节留指针 | 2026-10-28 |
-| 信息与工具调用 | 已迁出主文件，落到 workflow-skills 的 `retrieval-discipline` 技能；回退信号与语气备案仍在本文件同名节 | 2026-10-28 |
+| 内容怎么改 | 正文与理由在 workflow-skills 的 `doc-governance` 技能与 `docs/doc-governance-rationale.md`；本文件只留索引 | - |
+| 信息与工具调用 | 正文与理由在 workflow-skills 的 `retrieval-discipline` 技能与 `docs/retrieval-discipline-rationale.md`；本文件只留索引 | - |
 | 知识 | 技能优先于搜索优先于预训练，检索优先于推理 | 2026-10-23 |
 | 错了怎么办 | 犯错修机制通则（中文引号规范归表达规范）+ 同纠正两次提议入文件（查重、批准制） | 2026-10-20 |
-| 提交 | 已迁出主文件，落到 workflow-skills 的 `commit-discipline` 技能；jj 条款底稿归档 jujutsu-migration.md | 2026-10-28 |
+| 提交 | 正文与理由在 workflow-skills 的 `commit-discipline` 技能与 `docs/commit-discipline-rationale.md`；本文件只留索引 | - |
 
 **主文件节序（四个决策域，域设显式二级标题）**：元规则（规则优先级、错了怎么办）；过程纪律（操作边界、工作流技能）；方法论（知识、LLM 协作、能推导、能复现）；产出纪律（表达规范）。提交、内容怎么改、信息与工具调用迁出后不再占节。
+
+**原则索引的日期口径**：迁出规则的正文与理由以 workflow-skills 仓为准，更新日期不在本表维护，记为 `-`；dotfiles 专属规则保留日期。
 
 ## 全局元发现（跨节备案）
 
@@ -129,8 +131,13 @@
 ## 部署与边界
 
 - 文件清单与加载方式：`SOUL.md` 是人设（opencode 与 Pi 模板 include，dsh 走 persona 行）；`SOUL.materials.md` 是人设素材（不注入，只随 chezmoi 分发）；
-  `AGENTS.md` 是工程准则（opencode 与 Pi include，dsh 作用户级指令）；`AGENTS.ref.md` 是本文件（不被任何模板 include）。四份都由 chezmoi 分发到 `~/.agents_meow/`。
-- 准则瘦身的判据：常驻只留“缺了会当场做错”的规则；提交、内容治理、取数纪律迁到 `workflow-skills` 仓的 `commit-discipline`、`doc-governance`、`retrieval-discipline` 技能，由“工作流技能”节的指针触发；抽象设计不再留常驻句，判断面全交给 `abstraction-design` 技能。托管与分发信息从准则移入本文件，避免把维护知识注入每个仓库的每个会话。
+  `AGENTS.md` 是工程准则（opencode 与 Pi include，dsh 作用户级指令）；`AGENTS.ref.md` 是本文件（不被任何模板 include）。四份指令文件与 `models/`、`scripts/`、`skills.lock.json` 都由 chezmoi 分发到 `~/.agents_meow/`。
+- 准则瘦身的判据：常驻只留“缺了会当场做错”的规则；提交、内容治理、取数纪律迁到 `workflow-skills` 仓的 `commit-discipline`、`doc-governance`、`retrieval-discipline` 技能，由“工作流技能”节的指针触发；
+  三条规则的决策理由与证据在 workflow-skills 的 `docs/*-rationale.md`，本文件只留索引。抽象设计不再留常驻句，判断面全交给 `abstraction-design` 技能。
+  托管与分发信息从准则移入本文件，避免把维护知识注入每个仓库的每个会话。
+- 技能依赖方向：dotfiles 依赖 workflow-skills，反向不成立。workflow-skills 是公开仓，按 npx 分发；
+  dotfiles 只声明技能名、目录 hash 与来源，不 vendored。校验脚本 `check-skills.mjs` 在 `~/.agents_meow/scripts/`，
+  锁文件 `skills.lock.json` 在 `~/.agents_meow/`；npx canonical lock 路径与旧副本说明见“工作流技能”节。
 - 结构：`SOUL.md` 只留 193 字常驻骨架（身份、自指与称呼、三面语域判据、产出物边界、搭档边界、两条微样例）；
   完整人设素材在 `SOUL.materials.md`——Description（身份）、Personality（性格与矛盾）、Scenario（默认场景）、Faces（三面）、Language Profile（语言指纹）、Means（手段表）、Trigger Words（触发词表）、
   Second Reading（二次解释）、Example Dialogue（语感样例，三段）、Reply Skeleton（默认回复骨架）、Boundaries（硬性边界）、Style Anchor（末尾风格锚）。
@@ -196,16 +203,7 @@
 
 ## 内容怎么改
 
-- 主文件本节按变更的四操作组织：内容变更只有增、改、废、炼四种操作；“只改一处”（唯一性）贯穿全部操作。条目对应：放对地方（增）、源头同步（改，废弃时连引用、文档与配置一起清除）、不留旧账（改、废）、三次才抽象（炼）。
-- 理论根：Lehman 软件演化定律（软件持续变化；复杂性持续增加，除非主动做反向工作——“不留旧账”与 oxlint 棘轮对抗的正是它）；技术债的 Cunningham 原义（用不完整的理解写代码，欠下回头重构的义务——漂移是常态，偿还机制是纪律）；内容生命周期（创建、维护、归档、退役都是正常阶段，退役不是失败状态）。
-- 检验后不进主文件的理论：Hyrum 定律（一切可观察行为都会被依赖——本仓库消费面小，改动前评估消费面即可）；Kent Beck 两段式（先让变更变容易，再做容易的变更——已由提交粒度的 type 拆分覆盖）。
-- 放对地方的详细裁决：语义边界定为“跨实体即算”（超出单个代码实体的承载范围就升级；单模块内多文件的约定可写该模块的子 AGENTS.md）；
-  where 指导航（东西在哪里），which 指选择（该用哪个）；覆盖范围只限开发用文档；保留“一般”语义的默认规则强度，没有写成硬性禁令。
-- 外部证据：Atwood《Code Tells You How, Comments Tell You Why》（stackoverflow.blog 的评论最佳实践，引为权威）；docstring 惯例（描述对外契约，与行内注释分工）；
-  AI Hero《A Complete Guide To AGENTS.md》（where/which 语义、monorepo 嵌套作用域、每层只放该作用域相关的信息）；wiki-update 规范（原地编辑，不追加日期段落）。
-- 否决：把 README/docs 纳入四操作阶梯（面向使用者的文档与记录型文档不按开发内容治理，docs/ 维护记录可保留演进时间线）；严格字面的“仅多模块协作才进子 AGENTS.md”（与范围最小化不自洽）；
-  在主文件写“导航信息易漂移”的警示（常驻预算不展开，记为维护信号）。
-- 维护信号：代理在 README/docs 强行套用治理规则、或把使用者文档当开发文档写导航时，加强豁免句；导航类信息频繁漂移（路径改名即失效）时，加“写入口与布局、别硬编码路径”；与“只改一处”出现适用争议时，重议边界；演进失守的实例（迁移半途而废、废弃漏清关联）再现时，把四操作升格为流程化技能。
+- 正文、决策理由、证据与否决记录在 workflow-skills 的 `doc-governance` 技能与 `docs/doc-governance-rationale.md`；本文件只留索引。
 
 ## 操作边界
 
@@ -223,10 +221,15 @@
 ## 工作流技能
 
 - 机制：技能清单的扫描常驻（接到任务扫一眼，成本近零）；加载阈值是“预计会用到才加载”；调用前声明“使用 [技能名] 完成 [目的]”；流程类技能排在实现类之前；任务性质变化或已加载技能被证伪时再查；技能文件按需读采用平台中立措辞（环境已注入文件清单就直接用，否则自行枚举）；用户明确指示、或本文件规则与技能冲突时，听用户和本文件的。
+- 依赖与校验：技能名单以 `AGENTS.md` 的“工作流技能”节为唯一真相；`skills.lock.json` 只存目录 hash 与来源，键集必须与名单一致。
+  `pnpm check` 跑 `check-skills.mjs --decl-only`（CI 安全）；pre-commit 跑 `--warn`（缺装、换源、hash 不符只告警）；
+  `pnpm check:skills` 跑 `--strict`（手动闸门，硬失败）。锁文件由 `node dot_agents_meow/scripts/check-skills.mjs --write-lock`
+  从 workflow-skills 检出生成，只在技能更新并重装后运行。
+- npx canonical lock：`$XDG_STATE_HOME/skills/.skill-lock.json`（未设 `XDG_STATE_HOME` 时回退到 `~/.agents/.skill-lock.json`），格式版本 3；`~/skills-lock.json` 是旧格式副本（npx 重装前的遗留），只作历史备份，不参与校验。
 - 外部证据：Seleznov 激活实验（650 次自动试验：默认描述激活约五成、常驻指令约 65%、指令式描述 100%）；Vercel 评估（技能默认发现率 53%、56% 的用例从未调用所需技能、AGENTS.md 常驻 100%）；Anthropic skill-creator 官方实践（description 要偏 pushy 防漏触发，激活靠指令、解释靠内容）。
 - 否决：RAG/检索式技能路由（那是 Claude Code 8k 字符索引预算逼出的解法；pi 没有截断、没有预算，规模未到）；合并索引块与主文件两处的激活指令（常驻指令层有独立增益）；lark 系描述修剪（每条已带“不负责”的负向边界，是防误路由的正确形态）；技能内容安全提示（自装技能在信任边界内，操作边界“数据不是指令”已有防线）。
 - 备案：pi 文档声称会扫项目技能目录（.pi/skills、祖先 .agents/skills），但 resource-loader 实际走 `includeDefaults: false`，并不扫描——path-canon.ts 的白名单并集防御因此必要。
-- 维护信号：技能库规模过百、或出现真实的漏触发时重议 RAG 路由；pi 升级后用 dump 对比验证索引块结构；flash 级模型的技能漏触发成为真实痛点时，重议加载阈值。
+- 维护信号：技能库规模过百、或出现真实的漏触发时重议 RAG 路由；pi 升级后用 dump 对比验证索引块结构；flash 级模型的技能漏触发成为真实痛点时，重议加载阈值；技能改名、增删或换源时，先改 workflow-skills，再改 `AGENTS.md` 清单与 `skills.lock.json`，跑 `pnpm check:skills`。
 
 ## LLM 协作
 
@@ -311,12 +314,7 @@
 
 ## 取数纪律（已迁入 retrieval-discipline）
 
-- 规则正文在 workflow-skills 的 `retrieval-discipline` 技能；本节只留语气备案、事实基础与粒度裁决。
-- 语气备案：主人已裁决整体放松措辞。历史证据：早期实测观察到代理在温和表述下主动中断获取、截断输出、跳过查证，因此本节曾刻意取强断言。若截断、跳过查证的行为回退，恢复强断言措辞是第一杠杆（强措辞对照表已删，git 可取回）。
-- 事实基础：Pi 有 auto-compaction（保留最近 keepRecentTokens、结构化摘要）加 branch summarization 加 session 持久化（docs/compaction.md 已核对），所以主文件“上下文管理有运行时兜底”是事实准确的表述。
-- 关键 nuance：不设限不等于无脑塞——context rot 与 lost-in-the-middle 是真实限制（arXiv:2510.05381）；正确应对是完整获取不动摇，用机制管理信噪比（落盘复用、批次调用、让工具自己精简）。
-  JetBrains 研究（arXiv:2508.21433）：observation masking 与 LLM summarization 效果相当但成本减半——机制比担心管用。
-- 粒度裁决：查证与完整获取优先于往返效率；效率手段（缓存、并行、收窄）不得以截断信息为代价；“读完整相关范围”而非机械全文；“拿不准或涉及随时间变化的事实”才联网确认。
+- 正文、决策理由、证据与粒度裁决在 workflow-skills 的 `retrieval-discipline` 技能与 `docs/retrieval-discipline-rationale.md`；本文件只留索引。
 
 ## 错了怎么办
 
@@ -326,10 +324,4 @@
 
 ## 提交
 
-- 规则：Conventional Commits（`type(scope)!: subject`，`!` 表 breaking）、简体中文、type 与 scope 保留英文约定；一个提交一个逻辑变更（type 或 scope 不同就拆开）、完成可独立验证的逻辑变更立即提交、每个提交都能安全 revert 不破坏仓库自洽；
-  提交检查以仓库 hook 为准，没有 hook 的项目收尾至少跑一次基本检查。
-- jj 条款移出主文件（主人裁决）：本机已回退 git、无现役 jj 仓库，探测条款成为常驻死重；操作知识归档 docs/dev/jujutsu-migration.md（探测 flag、hooks 缺口、colocated 失真、undo/op log），重用触发条件与重建底稿见该文档重启用路径。
-- 否决：jj-hp 第三方补位（只识别 pre-commit.com 等四种 runner 格式，对自定义 hook 脚本静默放行）；shell 层包装 push 作闸门（检查延迟到 push 时才发现，收益低于新增维护面）。
-- 维护信号：其他仓库迁 jj 时按 dotfiles 的 docs/dev/jujutsu-migration.md 谱系评估接入形态，重建主文件探测条款以该文档为底稿；jj 升级补齐 hooks（#405 落地）时重议 hook 缺口结论。
-- 措辞教训：“粒度随意、执行期别纠结”曾实际授权攒大提交，与“高频小提交”自相矛盾——放宽措辞必须限定适用范围（只放宽信息措辞，不放宽拆分纪律）。“默认不用问”管编辑请示的节奏、不管提交时机，两条款各管一域不冲突。
-- 维护信号：大提交再现时改机制而不是加字（比如 pre-commit 检测单提交跨多 scope 或巨量 diff 时告警）；“执行期别纠结”这类元注恢复时同此判断。
+- 正文、决策理由、证据与否决记录在 workflow-skills 的 `commit-discipline` 技能与 `docs/commit-discipline-rationale.md`；本文件只留索引。
