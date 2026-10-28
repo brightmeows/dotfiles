@@ -3,13 +3,15 @@
 本文记录 dotfiles 的 `dot_agents_meow/` 与独立仓 `workflow-skills` 的职责边界、事实源收口与技能清单校验方案。
 2026-10-28 按本文落地；实施细节以仓库当前状态为准。
 
+2026-10-29 回退：提交、内容治理、取数纪律三条搬回 `dot_agents_meow/AGENTS.md`，对应三个技能从 workflow-skills 删除，理由并入 `AGENTS.ref.md`，技能清单缩到五项。本文按新边界改写，10-28 的文件级改动保留在文末作为历史。
+
 ## 背景
 
 `dot_agents_meow/` 是 chezmoi 的源目录，部署到 `~/.agents_meow/`，承载人设、工程准则、维护参考、模型管线与脚本。
-`workflow-skills` 是独立公开仓，按 npx 安装到 `~/.agents/skills`，承载八个工作流技能。
+`workflow-skills` 是独立公开仓，按 npx 安装到 `~/.agents/skills`，承载工作流技能（当前五项）。
 
-两个仓通过 `dot_agents_meow/AGENTS.md` 的“工作流技能”节耦合。2026-10-28 的准则瘦身把提交、内容治理、取数纪律的规则正文迁进技能，
-理由与索引留在 `AGENTS.ref.md`，由此产生两处需要同步的真相。
+两个仓通过 `dot_agents_meow/AGENTS.md` 的“工作流技能”节耦合。提交、内容治理、取数纪律三条规则正文已在 2026-10-29 搬回主文件，
+跨仓同步只剩技能清单与锁文件。
 
 ## 现状与证据
 
@@ -17,8 +19,8 @@
 
 | 耦合点 | 证据 | 风险 |
 |---|---|---|
-| 技能指针无校验 | `AGENTS.md` 点名八个技能；改造前 `pnpm check` 只跑 Pi 版本与 `tsc`，没有技能检查 | 缺装、改名、换源不会在提交时暴露，指针静默悬空 |
-| 规则与理由分裂 | 规则正文在技能，决策理由与索引在 `AGENTS.ref.md` 的“内容怎么改”“取数纪律”“提交”三节 | 改一条规则要跨两仓同步；ref 的更新日期与技能正文会漂移 |
+| 技能指针无校验 | `AGENTS.md` 点名五项技能；改造前 `pnpm check` 只跑 Pi 版本与 `tsc`，没有技能检查 | 缺装、改名、换源不会在提交时暴露，指针静默悬空 |
+| 规则正文与清单分居两仓 | 规则正文在 dotfiles，技能清单在 workflow-skills | 只有技能增删需要跨仓；规则改动不再跨仓 |
 | 两条分发链 | dotfiles 走 `chezmoi apply`；技能走 `npx skills add`，本地改动要先 push 再装 | dotfiles 侧没有版本锚点；换机器要手动重装 |
 | 两套检查 | dotfiles pre-commit 管格式、lint、中文引号与模型生成物；workflow-skills pre-commit 管 markdownlint、digest 与技能清单 | 提交纪律在两边的 `AGENTS.md` 各写一遍，存在措辞漂移 |
 | 旧锁文件 | `~/skills-lock.json` 是 version 1 旧格式，9 条记录里只覆盖 2 个 workflow 技能 | 文档里的 lock 路径与实际不一致，容易读错账本 |
@@ -31,7 +33,7 @@
   不是安装内容的摘要，不能直接拿来比对本地文件。
 - 家目录 `~/skills-lock.json` 是 2026-10-06 的 version 1 旧格式副本，9 条记录里只有 `grilling` 与 `writing-for-agents`
   两个 workflow 技能；它不是 canonical lock。
-- workflow-skills 的 `.well-known/agent-skills/index.json` 存的是 `SKILL.md` 的 sha256。审计时八个安装态文件的摘要全部匹配。
+- workflow-skills 的 `.well-known/agent-skills/index.json` 存的是 `SKILL.md` 的 sha256。审计时五个安装态文件的摘要全部匹配。
 - npx 的 `computeSkillFolderHash()` 算法：递归收集文件，按相对路径 `localeCompare` 排序，对“路径 + 内容”依次做 sha256。
   `skills.lock.json` 用同一算法，覆盖技能目录内的全部文件，将来加 `references/` 也能校验到。
 
@@ -56,13 +58,13 @@
 
 ### 事实源收口
 
-- 规则正文留在技能；决策理由、证据与否决记录迁到 workflow-skills 的 `docs/<skill>-rationale.md`。
-- dotfiles 的 `AGENTS.ref.md` 只留索引：迁出规则的“更新日期”记为 `-`，正文改成一行指针。
+- 规则正文留在 dotfiles 的主文件；决策理由、证据与否决记录留在 `AGENTS.ref.md`。
+- workflow-skills 只承载技能正文、分发索引与技能清单；提交、内容治理、取数纪律三节已从技能域移出。
 - “工作流技能”节留在 ref，因为它记录的是 dotfiles 侧的激活机制、依赖校验与 npx 分发事实，不属于任何单个技能。
 
 ### 指针与校验
 
-- `AGENTS.md` 的技能清单改成八条列表，格式为 `- \`name\`：用途`；脚本只解析“### 工作流技能”节。
+- `AGENTS.md` 的技能清单改成五条列表，格式为 `- \`name\`：用途`；脚本只解析“### 工作流技能”节。
 - `dot_agents_meow/skills.lock.json` 记 `version`、`source` 与每个技能的目录 hash。锁的键集必须与 `AGENTS.md` 名单一致。
 - `dot_agents_meow/scripts/check-skills.mjs` 提供四种模式：
   - `--decl-only`：解析名单、对照锁文件，不读本机状态；进 `pnpm check`，CI 可跑。
@@ -79,18 +81,18 @@
 |---|---|---|---|
 | 技能规则正文 | workflow-skills 的 `SKILL.md` 与 `docs/<skill>-rationale.md` | 更新 `.well-known` digest，push，npx 重装 | `pnpm gen:skills-lock` 后 `pnpm check:skills` |
 | 技能增删改名 | workflow-skills 的技能目录、`index.json`、`marketplace.json`、`README.md`、`AGENTS.md` 表 | push，npx 重装；dotfiles 的 `AGENTS.md` 名单与锁文件 | `pnpm check:skills` |
-| dotfiles 专属规则 | `AGENTS.md` 或 `AGENTS.ref.md` | 无 | `pnpm check` 与 pre-commit |
+| dotfiles 专属规则（含提交、内容治理、取数纪律） | `AGENTS.md` 或 `AGENTS.ref.md` | 无 | `pnpm check` 与 pre-commit |
 | npx 升级改 lock 布局 | 复核 CLI 的 `getSkillLockPath()` 与版本号 | 更新 `check-skills.mjs` 的路径与版本常量，更新 npx 文档 | `pnpm check:skills` |
 
-## 文件级改动清单
+## 文件级改动清单（2026-10-28 历史）
 
 ### dotfiles
 
 | 文件 | 改动 |
 |---|---|
-| `dot_agents_meow/AGENTS.md` | 技能段落改成八条列表，去掉“这八个”这种会随增删漂移的计数 |
+| `dot_agents_meow/AGENTS.md` | 技能段落改成八条列表，去掉“这八个”这种会随增删漂移的计数（2026-10-29 已缩到五条） |
 | `dot_agents_meow/AGENTS.ref.md` | 索引表三条迁出规则改指针并去掉日期；三节正文改指针；补依赖方向、校验分层、npx lock 路径 |
-| `dot_agents_meow/skills.lock.json` | 新增，记八个技能的目录 hash 与来源 |
+| `dot_agents_meow/skills.lock.json` | 新增，记八个技能的目录 hash 与来源（2026-10-29 改为五项） |
 | `dot_agents_meow/scripts/check-skills.mjs` | 新增，四模式校验与锁生成 |
 | `dot_agents_meow/scripts/check-skills.test.mjs` | 新增，覆盖解析、重复、空清单、锁键集与 hash 稳定性 |
 | `package.json` | 新增 `check:skills` 与 `gen:skills-lock`；`check` 加 `--decl-only`；`test` 加脚本目录 |
@@ -110,23 +112,23 @@
 | `skills/commit-discipline/SKILL.md` | 末尾加一行维护理由指针 |
 | `skills/doc-governance/SKILL.md` | 末尾加一行维护理由指针 |
 | `skills/retrieval-discipline/SKILL.md` | 末尾加一行维护理由指针 |
-| `AGENTS.md` | 增加 `docs/<skill>-rationale.md` 的编写约定 |
-| `.well-known/agent-skills/index.json` | 更新三个技能的 digest |
+| `AGENTS.md` | 增加 `docs/<skill>-rationale.md` 的编写约定（2026-10-29 三个技能删除后条款失效） |
+| `.well-known/agent-skills/index.json` | 更新三个技能的 digest（2026-10-29 三项已移除） |
 
 ## 验证
 
 workflow-skills 侧：
 
 - `pre-commit run --all-files` 全部通过，含 markdownlint、digest、技能清单、marketplace 与 SKILL.md 格式。
-- 推送后 `npx -y skills add brightmeows/workflow-skills -g -y -s '*' -a codebuddy -a codex -a opencode -a pi` 重装八个技能。
-- `npx skills ls -g` 显示八个技能的来源仍是 `brightmeows/workflow-skills`。
+- 推送后 `npx -y skills add brightmeows/workflow-skills -g -y -s '*' -a codebuddy -a codex -a opencode -a pi` 重装五个技能。
+- `npx skills ls -g` 显示五个技能的来源仍是 `brightmeows/workflow-skills`。
 
 dotfiles 侧：
 
 - `pnpm check`：Pi 版本、声明与锁一致、`tsc` 通过。
 - `pnpm test`：66 个测试通过，含新增的 5 个技能校验测试。
 - `pnpm lint`、`pnpm format:check`、`.githooks/pre-commit` 通过。
-- `pnpm check:skills`：八个技能，0 错误、0 警告。
+- `pnpm check:skills`：五个技能，0 错误、0 警告。
 - `chezmoi diff` 只包含预期文件；`chezmoi apply` 后 `~/.agents_meow/AGENTS.md`、`skills.lock.json` 与脚本同步。
 
 未覆盖的验证：
@@ -145,12 +147,12 @@ dotfiles 侧：
 - `~/skills-lock.json` 保留原位作历史备份，不参与校验；是否删除留到下次家目录清理时再定。
 - `docs/` 不随技能分发；`SKILL.md` 末尾的维护理由指针只对仓库读者有效。
 - 技能若新增 `references/` 文件，目录 hash 已覆盖，不需要改校验算法。
-- 若将来引入其他来源的技能，锁文件需要按技能记录来源；当前八个技能同源，先用全局 `source`。
+- 若将来引入其他来源的技能，锁文件需要按技能记录来源；当前五个技能同源，先用全局 `source`。
 - 校验只证明本机安装与锁一致，不证明上游仍可安装；npx 重装是同步点。
 - 目录 hash 的排序用 `localeCompare`，非 ASCII 文件名在极端 locale 下可能不稳定；当前技能文件都是 ASCII。
 
 ## 实施顺序
 
-1. workflow-skills：理由文档、技能指针、`AGENTS.md` 约定、digest；pre-commit；提交并 push；npx 重装。
-2. dotfiles：清单、锁、校验脚本与测试、`package.json`、pre-commit；ref 收口；本文与根 `AGENTS.md` 登记；npx 文档更正。
-3. 收尾：`pnpm check`、`pnpm test`、`pnpm check:skills`、pre-commit、`chezmoi diff` 与 `apply`。
+1. workflow-skills：删三个技能目录、表项、索引与 rationale；pre-commit；提交。
+2. dotfiles：主文件补回三节；ref 并入理由；清单与锁缩到五项；SOUL 加英文名；pre-commit。
+3. 收尾：`npx skills remove` 清三个已部署副本；`pnpm check`、`pnpm test`、`pnpm check:skills`、pre-commit、`chezmoi diff` 与 `apply`。

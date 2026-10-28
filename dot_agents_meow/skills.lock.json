@@ -2,13 +2,10 @@
   "version": 1,
   "source": "brightmeows/workflow-skills",
   "skills": {
-    "abstraction-design": "sha256:5e77d929ea6e3d2679b769349432b5a072246af734feff12e2dc1bf25386bc5e",
-    "ai-taste": "sha256:430fd02f6f99787d4e32579a9ee067f07ce04a5b19260d162d03866c5be2ee70",
-    "commit-discipline": "sha256:d47e121b26805a53e52041954c275fd353fb6bb75d134bd16039c8d5fbe4f45c",
-    "doc-governance": "sha256:f4135a57183f4aeb1201225aafe9e8c73fb3466cebf92e24afffc82ce29f37bb",
-    "grilling": "sha256:bcaa2b72c5a928a8fa4b9dec45ce3026bb8e8a8f350f0087eeca4b4d015a81e6",
-    "retrieval-discipline": "sha256:4d4be3e140e526cd701e9609854b3a65a04fc3d497cff4d6f4c3f300fc4c37f4",
-    "tech-doc-zh": "sha256:878939d07a4bb172c5aca6f6115319eaffd05aea796cc0377abaa02260f03689",
-    "writing-for-agents": "sha256:0d21b29549ddb8c215e902ac5e3de56905811c08b811eabfb0f9ada68f7b31ef"
+    "abstraction-design": "sha256:1dc16a2a1803d222b7dadbc851612934be9e2e7f20380e67c79a3f252d7101f3",
+    "ai-taste": "sha256:2cb65cbd4733f5dc1201f2c4335948b028f1400a23f21b36d80b793fed5eb2da",
+    "grilling": "sha256:792a70a9d2c1a6bae5f80129ef35fd397722001a89e448e8287ac7413cdd9a1c",
+    "tech-doc-zh": "sha256:26931cbb4489634ce8dcb1210628a42d1cd69aef7a3f71c872bd7464880ba3bc",
+    "writing-for-agents": "sha256:0d7ca173567b402cf800ffe72f16a6ae9c443b170d4ff1d9cbf58f7a0b70b2d1"
   }
 }
