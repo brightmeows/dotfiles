@@ -88,6 +88,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | [`docs/ai/pi-ask-user-question-limits.md`](docs/ai/pi-ask-user-question-limits.md) | Pi ask_user_question vendor 化、题数上限移除、依赖锁与漂移门禁 |
 | [`docs/ai/pi-apply-patch-failure-modes.md`](docs/ai/pi-apply-patch-failure-modes.md) | apply_patch 失败率实测、Codex 格式约束、本地修复层与上游贡献状态 |
 | [`docs/ai/persona-regression.md`](docs/ai/persona-regression.md) | 人设回归验收：四条判据、十二条探针、运行口径与首轮结果、残留风险 |
+| [`docs/ai/agents-meow-workflow-skills-boundary.md`](docs/ai/agents-meow-workflow-skills-boundary.md) | agents_meow 与 workflow-skills 的边界、事实源收口、技能清单校验与迁移方案 |
 
 ### skills/（技能与工具接入）
 
