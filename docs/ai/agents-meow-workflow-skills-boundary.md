@@ -8,7 +8,7 @@
 ## 背景
 
 `dot_agents_meow/` 是 chezmoi 的源目录，部署到 `~/.agents_meow/`，承载人设、工程准则、维护参考、模型管线与脚本。
-`workflow-skills` 是独立公开仓，按 npx 安装到 `~/.agents/skills`，承载工作流技能（当前五项）。
+`workflow-skills` 是独立公开仓，按 npx 安装到 `~/.agents/skills`，承载工作流技能（当前四项）。
 
 两个仓通过 `dot_agents_meow/AGENTS.md` 的“工作流技能”节耦合。提交、内容治理、取数纪律三条规则正文已在 2026-10-29 搬回主文件，
 跨仓同步只剩技能清单与锁文件。

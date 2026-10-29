@@ -40,7 +40,6 @@
 - `grilling`：盘问方案与决策
 - `writing-for-agents`：改技能、AGENTS.md 或指针文档
 - `ai-taste`：审中文 AI 味
-- `tech-doc-zh`：写或审技术文档
 - `abstraction-design`：提取共享代码、划模块边界
 
 ## 方法论
