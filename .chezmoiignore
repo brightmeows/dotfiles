@@ -46,6 +46,12 @@ tsconfig.json
 .config/omarchy
 {{- end }}
 
+# tmux 配置由模板实时拼接上游 Omarchy 的 tmux.conf（/usr/share/omarchy），
+# 非 Omarchy 机器无法渲染，与 .config/omarchy 同条件部署
+{{ if not (and (eq .chezmoi.os "linux") (or (eq .chezmoi.osRelease.id "omarchy") (eq .chezmoi.osRelease.id "arch"))) -}}
+.config/tmux/tmux.conf
+{{- end }}
+
 # Platform-specific: only run the right script per platform
 {{ if ne .chezmoi.os "windows" -}}
 .pi/agent/merge-pi-settings.ps1*
