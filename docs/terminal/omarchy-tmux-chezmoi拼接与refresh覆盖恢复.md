@@ -35,6 +35,10 @@ monitors.lua 被 omarchy 运行时持续就地改写，被判除管；tmux.conf 
 
 每次 `chezmoi apply` 都重新渲染，上游更新自动纳入，无内容漂移。
 
+模板依赖 `/usr/share/omarchy` 下的上游文件，仅 Omarchy 机器可渲染；非 Omarchy 平台
+（如 WSL2 Arch）模板会因读不到上游文件而报错，在 `.chezmoiignore` 按
+`osRelease.id` 忽略 `.config/tmux`，apply 不部署。
+
 ## refresh 后恢复
 
 omarchy refresh 覆盖 `~/.config/tmux/tmux.conf` 后，字母系失效（上游版生效）。
