@@ -1,0 +1,96 @@
+/**
+ * 临时 prepare-commit-msg hook 的脚本内容。
+ *
+ * 脚本按以下顺序工作：
+ *
+ * 1. 恢复 GIT_CONFIG_COUNT，让 git 看到仓库原本的 core.hooksPath。
+ * 2. 执行仓库原有 prepare-commit-msg；失败时按 git 语义原样退出。
+ * 3. 读取会话级与仓库级退出开关；一旦关闭，只保留原有 hook 的行为。
+ * 4. merge/squash 来源直接跳过，不给汇总提交加 agent 署名。
+ * 5. 用 awk 删除旧的 agent 署名（含模型/provider 写错的形态），保留人类
+ *    co-author 与其他 trailer。
+ * 6. 用 git interpret-trailers 追加规范 trailer；任何一步失败都只告警，
+ *    不阻塞提交。
+ *
+ * 这里刻意使用 POSIX sh 与 awk，不依赖 Node：Pi 既可能跑在 Node 上，也可能
+ * 以 Bun 编译的独立二进制运行，process.execPath 不一定是 JS 解释器。
+ */
+
+export function buildHookScript(): string {
+  return `#!/bin/sh
+# 由 pi-meow-git-attribution 生成；临时目录随会话结束删除。
+set -u
+
+message_file="\${1:-}"
+msg_source="\${2:-}"
+[ -n "$message_file" ] || exit 0
+
+# 先恢复原始运行时配置，仓库原有 hook 与后续 git 命令才能看到真实 core.hooksPath。
+config_index="\${PI_GIT_ATTRIBUTION_CONFIG_INDEX:-}"
+if [ -n "$config_index" ]; then
+  unset "GIT_CONFIG_KEY_$config_index" "GIT_CONFIG_VALUE_$config_index"
+  export GIT_CONFIG_COUNT="$config_index"
+fi
+
+# 原有 hook 必须始终执行，包括退出开关关闭与 merge/squash 场景。
+hooks_dir="$(git rev-parse --path-format=absolute --git-path hooks 2>/dev/null || git rev-parse --git-path hooks 2>/dev/null || true)"
+if [ -n "$hooks_dir" ]; then
+  original="$hooks_dir/prepare-commit-msg"
+  if [ -x "$original" ] && [ "$original" != "$0" ]; then
+    "$original" "$@" || exit $?
+  fi
+fi
+
+case "$(printf '%s' "\${PI_GIT_ATTRIBUTION:-1}" | tr '[:upper:]' '[:lower:]')" in
+  0|false|no|off) exit 0 ;;
+esac
+
+if [ "$(git config --local --bool --get pi.attribution 2>/dev/null || true)" = "false" ]; then
+  exit 0
+fi
+
+case "$msg_source" in
+  merge|squash) exit 0 ;;
+esac
+
+co_author="\${PI_GIT_ATTRIBUTION_CO_AUTHOR:-}"
+generated_by="\${PI_GIT_ATTRIBUTION_GENERATED_BY:-}"
+[ -n "$co_author" ] || exit 0
+
+tmp="$message_file.pi-attribution-tmp"
+if ! awk '
+  /^[[:space:]]*[Cc]o-[Aa]uthored-[Bb]y:[[:space:]]*/ {
+    lower = tolower($0)
+    if ($0 ~ /白小喵/ || lower ~ /brightmia/ || lower ~ /<noreply@pi\\.dev>/) next
+  }
+  /^[[:space:]]*[Gg]enerated-[Bb]y:[[:space:]]*/ {
+    if ($0 ~ /^[[:space:]]*[Gg]enerated-[Bb]y:[[:space:]]*[Pp]i([[:space:]]|$)/) next
+  }
+  { print }
+' "$message_file" > "$tmp"; then
+  rm -f "$tmp"
+  echo "pi-git-attribution: 消息规范化失败，跳过署名" >&2
+  exit 0
+fi
+
+if ! mv "$tmp" "$message_file"; then
+  rm -f "$tmp"
+  echo "pi-git-attribution: 消息写回失败，跳过署名" >&2
+  exit 0
+fi
+
+set -- --trailer "$co_author"
+if [ -n "$generated_by" ]; then
+  set -- "$@" --trailer "$generated_by"
+fi
+
+if ! git -c trailer.co-authored-by.ifExists=addIfDifferent \\
+    -c trailer.generated-by.ifExists=addIfDifferent \\
+    interpret-trailers --in-place "$@" "$message_file"; then
+  echo "pi-git-attribution: trailer 追加失败，跳过署名" >&2
+  exit 0
+fi
+
+exit 0
+`;
+}

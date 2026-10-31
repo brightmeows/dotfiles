@@ -25,6 +25,7 @@
     "./ext/ask-user-question",
     "./ext/editor-input-tweaks",
     "./ext/esc-hold",
+    "./ext/git-attribution",
     "./ext/git-hooks",
     "./ext/herdr-blocked",
     "./ext/inline-context",
