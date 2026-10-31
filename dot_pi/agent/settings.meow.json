@@ -18,6 +18,7 @@
   "defaultTools": ["-edit", "-write"],
   "packages": [
     "npm:@d3ara1n/pi-apply-patch",
+    "npm:@sidshaytay/pi-secret-safe@0.2.2",
     "npm:pi-web-access",
     "./ext/aliases",
     "./ext/apply-patch-tweaks",
