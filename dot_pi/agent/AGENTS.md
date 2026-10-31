@@ -5,7 +5,7 @@ tags: [pi, mcp, settings]
 
 # Pi agent 配置（面向代理）
 
-本目录管理 Pi 的配置源：`settings.meow.json`（合并部署）、`mcp.json`（Pi 内建 MCP server 清单）、`models.json` 与 `models-dev.json`（模型配置生成物，随仓库提交）、`ext/`（扩展代码）。
+本目录管理 Pi 的配置源：`settings.meow.json`（合并部署）、`mcp.json`（Pi 内建 MCP server 清单）、`secret-safe.json`（`pi-secret-safe` 扩展配置）、`models.json` 与 `models-dev.json`（模型配置生成物，随仓库提交）、`ext/`（扩展代码）。
 部署与合并机制见仓库根 [AGENTS.md](../../AGENTS.md) 的“自动同步机制”；扩展代码的约定见 [ext/AGENTS.md](./ext/AGENTS.md)。根文件的通用约定（chezmoi 默认源目录、提交规范、中文引号）此处不重复。
 
 ## 模型配置已迁出
@@ -19,13 +19,14 @@ tags: [pi, mcp, settings]
 
 ## 其它文件
 
-| 文件 | 用途 | 维护方式 |
-|---|---|---|
-| `settings.meow.json` | Pi 设置源 | 手改后 `chezmoi apply`，合并脚本写入 `~/.pi/agent/settings.json` |
-| `mcp.json` | Pi 内建 MCP server 清单 | 手改后 apply；字段与旧适配器字段的对照见下方注记 |
-| `models.json`、`models-dev.json` | 模型生成物 | 见上文，勿手改 |
-| `ext/` | Pi 扩展包 | 见 [ext/AGENTS.md](./ext/AGENTS.md) |
-| `themes/` | Pi 主题 JSON，部署到 `~/.pi/agent/themes/`（Pi 用户主题目录，自动加载、热重载） | 字段以 Pi 主题 schema 为准（`colors` 拒绝未知角色，多余字段启动时报 Theme conflicts）；新文件用 Pi 自带校验器验证：`validateThemeJson`（`/usr/lib/node_modules/pi/packages/coding-agent/dist/modes/interactive/theme/theme-schema.js`） |
+| 文件 | 用途 | 格式 / 解析 | 维护方式 |
+|---|---|---|---|
+| `settings.meow.json` | Pi 设置源 | 严格 JSON；合并脚本用 `jq`，注释与尾逗号都会解析失败 | 手改后 `chezmoi apply`，合并脚本写入 `~/.pi/agent/settings.json` |
+| `mcp.json` | Pi 内建 MCP server 清单 | 严格 JSON | 手改后 apply；字段与旧适配器字段的对照见下方注记 |
+| `models.json`、`models-dev.json` | 模型生成物 | `models.json` 解析时支持 `//` 行注释与尾逗号（不支持 `/* */`）；`models-dev.json` 严格 JSON | 见上文，勿手改 |
+| `secret-safe.json` | `pi-secret-safe` 扩展配置：`mode`（`redact`/`strict`/`off`）、`scanEnv`、`exportToShell`、`minValueLength`、`dotenvFiles`（含 `.dev.vars`） | 严格 JSON；扩展用 `JSON.parse`，不支持 JSONC/TOML | 手改后 `chezmoi apply` 部署到 `~/.pi/agent/secret-safe.json`；改键值或轮换密钥后 `/secret-safe rescan` |
+| `ext/` | Pi 扩展包 | TypeScript；Pi 用 jiti 运行时加载 | 见 [ext/AGENTS.md](./ext/AGENTS.md) |
+| `themes/` | Pi 主题 JSON，部署到 `~/.pi/agent/themes/`（Pi 用户主题目录，自动加载、热重载） | JSON；字段受 Pi 主题 schema 校验 | 字段以 Pi 主题 schema 为准（`colors` 拒绝未知角色，多余字段启动时报 Theme conflicts）；新文件用 Pi 自带校验器验证：`validateThemeJson`（`/usr/lib/node_modules/pi/packages/coding-agent/dist/modes/interactive/theme/theme-schema.js`） |
 
 > Pi 已回归内建 MCP，`pi-mcp-adapter` 与 `mcp-adapter.json` 已移除。现配置源为 `mcp.json`，字段即内建格式：
 > stdio 用 `command`/`args`/`env`/`cwd`，HTTP 用 `url`/`headers`，另有 `enabled: false`、`exposure`、`timeout`、`description`。
