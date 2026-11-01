@@ -107,10 +107,10 @@
 - 对外署名：公开场合每条先自介再署名。中文“我是白小喵，前辈家的猫娘工程助手。”加“白小喵（模型名）”；
   英文“I'm brightmia, a catgirl engineering assistant.”加“brightmia (模型名)”。决策：自介每条都带（维护者裁决，接受重复）；
   英文名 brightmia 与 brightmeows 同构（bright 加 mia / meows），保持可辨识但不同一；模型名实时取，不凭记忆，取不到只写名字；
-  本机对话不算，提交说明不带自介，只用 trailer；仓库自有署名或 DCO 要求优先；暂不设 hook，漏两次再议。
+  本机对话不算，提交说明不带自介，只用 trailer；Pi 侧由 git-attribution 扩展自动补，其他 harness 手写；仓库自有署名或 DCO 要求优先。
 - 场合与文案的详略：主文件只留“公开场合”一个引导词，issue、PR、评审、IM、邮件、发布文档的枚举不常驻，避免每轮为可推断的信息付上下文负载。
-- trailer 邮箱：Pi 用 `noreply@pi.dev`，这是 Pi 生态的既有约定（`pi-co-authored-by`、`pi-commit-trailers`、d3ara1n 的 pi-extensions 都这么写）；
-  opencode 与 dsh 没有同等约定，不写邮箱，也不发明 `opencode.ai`、`deepseek.com` 一类地址；仓库另有要求时按仓库补。
+- trailer 邮箱：统一用 `noreply@pi.dev`，这是 Pi 生态的既有约定（`pi-co-authored-by`、`pi-commit-trailers`、d3ara1n 的 pi-extensions 都这么写）；
+  opencode 与 dsh 也跟随同一身份行，不发明 `opencode.ai`、`deepseek.com` 一类地址；仓库另有要求时按仓库补。
 - 英文名的位置：写进 `SOUL.md` 名字行，不在 `AGENTS.md` 重复；人设仍是最小锚点，英文名只加一个短从句。
 - 理论依据：直接无客套优于礼貌客套（Principled Instructions 原则 1；Mind Your Tone，arXiv:2510.04950）；肯定式表述优于叙述式否定；清单式禁令属于显式要求陈述、有效。
 - 否决：AI 套话禁令（曾以“别用 AI 套话”条对抗默认客套倾向，主人裁决删除——表意不清难以执行；humanizing-text 技能早已删除，后继的 humanizer-zh 已装机，按需覆盖文档编辑场景）；全面否定转肯定（存量条目均为成对结构，边际收益接近零）；通篇任务标记（常驻规则集没有单轮问答的歧义，稀释权重）。

@@ -7,8 +7,8 @@
  * 2. 执行仓库原有 prepare-commit-msg；失败时按 git 语义原样退出。
  * 3. 读取会话级与仓库级退出开关；一旦关闭，只保留原有 hook 的行为。
  * 4. merge/squash 来源直接跳过，不给汇总提交加 agent 署名。
- * 5. 用 awk 删除旧的 agent 署名（含模型/provider 写错的形态），保留人类
- *    co-author 与其他 trailer。
+ * 5. 用 awk 删除旧的 agent 署名：邮箱等于配置邮箱或 noreply@pi.dev 的行，
+ *    以及含白小喵 / brightmia 的历史行；保留人类 co-author 与其他 trailer。
  * 6. 用 git interpret-trailers 追加规范 trailer；任何一步失败都只告警，
  *    不阻塞提交。
  *
@@ -117,14 +117,19 @@ case "$msg_source" in
 esac
 
 co_author="\${PI_GIT_ATTRIBUTION_CO_AUTHOR:-}"
+co_author_email="\${PI_GIT_ATTRIBUTION_CO_AUTHOR_EMAIL:-noreply@pi.dev}"
 generated_by="\${PI_GIT_ATTRIBUTION_GENERATED_BY:-}"
 [ -n "$co_author" ] || exit 0
 
 tmp="$message_file.pi-attribution-tmp"
-if ! awk '
+if ! awk -v email="$co_author_email" '
+  BEGIN {
+    lower_email = tolower(email)
+  }
   /^[[:space:]]*[Cc]o-[Aa]uthored-[Bb]y:[[:space:]]*/ {
     lower = tolower($0)
-    if ($0 ~ /白小喵/ || lower ~ /brightmia/ || lower ~ /<noreply@pi\\.dev>/) next
+    if (index(lower, "<" lower_email ">") > 0 || index(lower, "<noreply@pi.dev>") > 0) next
+    if ($0 ~ /白小喵/ || lower ~ /brightmia/) next
   }
   /^[[:space:]]*[Gg]enerated-[Bb]y:[[:space:]]*/ {
     if ($0 ~ /^[[:space:]]*[Gg]enerated-[Bb]y:[[:space:]]*[Pp]i([[:space:]]|$)/) next

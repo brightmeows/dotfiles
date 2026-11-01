@@ -98,7 +98,9 @@
 - **语言**：type 与 scope 用英文，subject 用简体中文
 - **粒度**：一个提交只装一个逻辑变更，type 或 scope 不同的改动分开提交；能独立验证的变更做完就提交，不攒到收尾；每个提交都能单独 revert
 - **检查门槛**：有 hook 的仓库原样跑 hook，不绕过；hook 失败先本地修，再重新暂存；没有 hook 的项目收尾至少跑一次基本检查；暂存后看 `git diff --cached`，确认没夹带无关文件
-- **署名**：提交由我代笔时，尾部加 `Co-Authored-By: 白小喵（模型名）`；Pi 补 `<noreply@pi.dev>`，其他 harness 不写邮箱。模型名取实时值（Pi 是 `PI_MODEL`），去掉渠道标记与推理档位后缀；取不到只写 `Co-Authored-By: 白小喵`；仓库另有署名或 DCO 要求时以仓库为准
+- **署名**：提交由我代笔时，尾部加 `Co-Authored-By: 白小喵 <noreply@pi.dev>`；Pi 会话由 git-attribution 扩展自动追加这一行与
+  `Generated-By: pi <版本> (<模型> @ <provider>, reasoning=<档位>)`，不要手写；其他 harness 手写 `Co-Authored-By`，不写 Generated-By。
+  模型、provider 与 reasoning 由扩展从 `PI_MODEL`、`PI_PROVIDER`、`PI_REASONING_LEVEL` 取实时值；仓库另有署名或 DCO 要求时以仓库为准
 - **反模式**：只写“更新了配置”这类笼统说明；格式化、重命名、行为变更混在一个提交；用 `--no-verify` 绕过检查
 - **完成判据**：不看 diff 也能从说明知道改了什么、为什么；每个提交能单独 revert；检查跑过，失败项已修复或如实报告
 

@@ -8,8 +8,8 @@ import test from "node:test";
 import { buildDelegatingHookScript, buildHookScript, DELEGATED_HOOKS } from "./hook.ts";
 
 const HOOK_FILENAME = "prepare-commit-msg";
-const CO_AUTHOR = "Co-Authored-By: 白小喵（deepseek-v4.1-flash @ opencode-go） <noreply@pi.dev>";
-const GENERATED_BY = "Generated-By: pi 1.4.0";
+const CO_AUTHOR = "Co-Authored-By: 白小喵 <noreply@pi.dev>";
+const GENERATED_BY = "Generated-By: pi 1.4.0 (deepseek-v4.1-flash @ opencode-go, reasoning=max)";
 
 interface TestRepo {
   root: string;
@@ -52,6 +52,7 @@ function createRepo(t: { after: (fn: () => void) => void }): TestRepo {
       GIT_CONFIG_VALUE_0: hooks,
       PI_GIT_ATTRIBUTION_CONFIG_INDEX: "0",
       PI_GIT_ATTRIBUTION_CO_AUTHOR: CO_AUTHOR,
+      PI_GIT_ATTRIBUTION_CO_AUTHOR_EMAIL: "noreply@pi.dev",
       PI_GIT_ATTRIBUTION_GENERATED_BY: GENERATED_BY,
     },
   };
@@ -114,6 +115,31 @@ test("规范化旧 agent 署名并保留人类 co-author", (t) => {
   assert.equal(count(message, "glm-5.3"), 0);
   assert.equal(count(message, "DeepSeek V4.1 Flash"), 0);
   assert.equal(count(message, "0.80.0"), 0);
+});
+
+test("按配置邮箱过滤旧行并保留人类", (t) => {
+  const repo = createRepo(t);
+  const email = "meow@example.com";
+  commit(
+    repo,
+    [
+      "feat: configured email",
+      "",
+      "Co-Authored-By: 白小喵 <meow@example.com>",
+      "Co-Authored-By: Other <meow@example.com>",
+      "Co-Authored-By: Alice <alice@example.com>",
+      "Co-Authored-By: 白小喵 <old@example.com>",
+    ].join("\n"),
+    {
+      PI_GIT_ATTRIBUTION_CO_AUTHOR: `Co-Authored-By: 白小喵 <${email}>`,
+      PI_GIT_ATTRIBUTION_CO_AUTHOR_EMAIL: email,
+    },
+  );
+  const message = lastMessage(repo);
+  assert.equal(count(message, `Co-Authored-By: 白小喵 <${email}>`), 1);
+  assert.equal(count(message, "Co-Authored-By: Alice <alice@example.com>"), 1);
+  assert.equal(count(message, "Other <meow@example.com>"), 0);
+  assert.equal(count(message, "old@example.com"), 0);
 });
 
 test("amend 不重复追加", (t) => {

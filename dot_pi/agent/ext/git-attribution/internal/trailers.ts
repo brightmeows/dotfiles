@@ -1,26 +1,29 @@
 /**
  * 提交署名格式化与 git 运行时配置注入（纯库，无 Pi 运行时依赖）。
  *
- * 署名格式由 AGENTS.md 的提交规范决定：
+ * 署名格式：
  *
- *   Co-Authored-By: 白小喵（<模型ID> @ <provider>） <noreply@pi.dev>
- *   Generated-By: pi <版本>
+ *   Co-Authored-By: <配置姓名> <配置邮箱>
+ *   Generated-By: pi <版本> (<模型ID> @ <provider>, reasoning=<档位>)
  *
+ * Co-Authored-By 只保留身份；模型、provider 与 reasoning 放进 Generated-By。
  * 模型取 PI_MODEL，去掉可能存在的 `${PI_PROVIDER}/` 前缀和 `:thinking` 后缀；
- * provider 取 PI_PROVIDER。模型缺失时只写“白小喵”，provider 缺失时省略
- * ` @ provider`，与 AGENTS.md 的退化规则一致。
+ * provider 取 PI_PROVIDER；reasoning 取 PI_REASONING_LEVEL，只接受已知档位。
+ * 缺失字段按实际可用内容拼接，全部缺失时只留 `Generated-By: pi <版本>`。
  */
 
-export const CO_AUTHOR_EMAIL = "noreply@pi.dev";
+import { type AttributionConfig, DEFAULT_CONFIG, normalizeEmail, sanitizeName } from "./config.ts";
 
 const THINKING_SUFFIX = /:(?:off|minimal|low|medium|high|xhigh|max)$/iu;
 const UNSAFE_CHARS = /[\p{Cc}<>]/gu;
 const WHITESPACE = /\s+/gu;
 const CONFIG_COUNT = /^(?:0|[1-9]\d*)$/u;
 const DISABLED_VALUES = new Set(["0", "false", "no", "off"]);
+const REASONING_LEVELS = new Set(["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
 
 export interface Attribution {
   coAuthor: string;
+  coAuthorEmail: string;
   generatedBy: string;
 }
 
@@ -33,16 +36,28 @@ export function isAttributionDisabled(value: string | undefined): boolean {
 }
 
 /** 生成当前模型对应的两条 trailer。 */
-export function buildAttribution(env: NodeJS.ProcessEnv, version: string): Attribution {
+export function buildAttribution(
+  env: NodeJS.ProcessEnv,
+  version: string,
+  config: AttributionConfig = DEFAULT_CONFIG,
+): Attribution {
+  const name = sanitizeName(config.coAuthor.name);
+  const email = normalizeEmail(config.coAuthor.email) ?? DEFAULT_CONFIG.coAuthor.email;
   const model = sanitizeModel(env["PI_MODEL"], env["PI_PROVIDER"]);
   const provider = sanitize(env["PI_PROVIDER"] ?? "");
-  let name = "白小喵";
+  const reasoning = sanitizeReasoning(env["PI_REASONING_LEVEL"]);
+  const parts: string[] = [];
   if (model !== "") {
-    name = provider === "" ? `白小喵（${model}）` : `白小喵（${model} @ ${provider}）`;
+    parts.push(provider === "" ? model : `${model} @ ${provider}`);
   }
+  if (reasoning !== undefined) {
+    parts.push(`reasoning=${reasoning}`);
+  }
+  const suffix = parts.length === 0 ? "" : ` (${parts.join(", ")})`;
   return {
-    coAuthor: `Co-Authored-By: ${name} <${CO_AUTHOR_EMAIL}>`,
-    generatedBy: `Generated-By: pi ${version}`,
+    coAuthor: `Co-Authored-By: ${name} <${email}>`,
+    coAuthorEmail: email,
+    generatedBy: `Generated-By: pi ${version}${suffix}`,
   };
 }
 
@@ -68,6 +83,7 @@ export function withGitConfig(
     [`GIT_CONFIG_VALUE_${count}`]: hooksDir,
     PI_GIT_ATTRIBUTION_CONFIG_INDEX: String(count),
     PI_GIT_ATTRIBUTION_CO_AUTHOR: attribution.coAuthor,
+    PI_GIT_ATTRIBUTION_CO_AUTHOR_EMAIL: attribution.coAuthorEmail,
     PI_GIT_ATTRIBUTION_GENERATED_BY: attribution.generatedBy,
   };
 }
@@ -84,6 +100,14 @@ function sanitizeModel(modelValue: string | undefined, providerValue: string | u
 
 function sanitize(value: string): string {
   return value.replaceAll(UNSAFE_CHARS, " ").replaceAll(WHITESPACE, " ").trim();
+}
+
+function sanitizeReasoning(value: string | undefined): string | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  const level = value.trim().toLowerCase();
+  return REASONING_LEVELS.has(level) ? level : undefined;
 }
 
 function parseConfigCount(value: string | undefined): number | undefined {

@@ -14,8 +14,8 @@
  *   保证 pre-commit、commit-msg、post-commit 等不被 core.hooksPath 覆盖跳过；
  * - 临时 prepare-commit-msg 先执行仓库原有 hook（失败仍中止提交），再按
  *   merge/squash 跳过、规范化旧 agent 署名、追加
- *   Co-Authored-By: 白小喵（模型 @ provider） <noreply@pi.dev>
- *   与 Generated-By: pi <版本>；
+ *   Co-Authored-By: 白小喵 <noreply@pi.dev>
+ *   与 Generated-By: pi <版本> (模型 @ provider, reasoning=档位)；
  * - 会话结束删除临时目录，仓库本身零改动。
  *
  * 为什么不用命令改写：追加 -m/--trailer 只能覆盖直接 git commit，脚本内提交、
@@ -26,6 +26,12 @@
  *
  * - PI_GIT_ATTRIBUTION=0/false/no/off 关闭当前会话或单条命令；
  * - git config --local pi.attribution false 关闭当前仓库。
+ *
+ * 配置：
+ *
+ * - 全局 <agent dir>/git-attribution.json，仓库 <repo>/.pi/git-attribution.json；
+ * - 仓库覆盖全局，字段级合并；session_start 读取，/reload 或重启生效；
+ * - 只配置 coAuthor.name 与 coAuthor.email，默认白小喵 / noreply@pi.dev。
  *
  * 边界：git commit-tree、git revert、git am、rebase 内部提交通常不触发
  * prepare-commit-msg；env -i、sudo 未带 -E、容器清空环境变量时也不会加。
@@ -49,9 +55,11 @@ import {
   createBashToolDefinition,
   createPowerShellToolDefinition,
   type ExtensionAPI,
+  getAgentDir,
   VERSION,
 } from "@earendil-works/pi-coding-agent";
 
+import { type AttributionConfig, DEFAULT_CONFIG, loadConfig } from "./internal/config.ts";
 import { buildDelegatingHookScript, buildHookScript, DELEGATED_HOOKS } from "./internal/hook.ts";
 import { buildAttribution, isAttributionDisabled, withGitConfig } from "./internal/trailers.ts";
 
@@ -59,8 +67,13 @@ const HOOK_FILENAME = "prepare-commit-msg";
 
 let hooksDir: string | undefined;
 let warned = false;
+let config: AttributionConfig = DEFAULT_CONFIG;
 
 export default function (pi: ExtensionAPI): void {
+  pi.on("session_start", (_event, ctx) => {
+    config = loadConfig(ctx.cwd, getAgentDir());
+  });
+
   const spawnHook: BashSpawnHook = ({ command, cwd, env }) => {
     if (isAttributionDisabled(env["PI_GIT_ATTRIBUTION"])) {
       return { command, cwd, env };
@@ -69,7 +82,7 @@ export default function (pi: ExtensionAPI): void {
     if (dir === undefined) {
       return { command, cwd, env };
     }
-    const attribution = buildAttribution(env, VERSION);
+    const attribution = buildAttribution(env, VERSION, config);
     return { command, cwd, env: withGitConfig(env, dir, attribution) };
   };
 
