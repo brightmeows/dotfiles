@@ -10,6 +10,8 @@
  * - spawnHook 在每次命令的 env 里追加一条 git 运行时配置
  *   GIT_CONFIG_COUNT=<原值+1>、GIT_CONFIG_KEY_<n>=core.hooksPath、
  *   GIT_CONFIG_VALUE_<n>=临时 hooks 目录；
+ * - 临时目录除 prepare-commit-msg 外，还为所有标准 hook 生成委托脚本，
+ *   保证 pre-commit、commit-msg、post-commit 等不被 core.hooksPath 覆盖跳过；
  * - 临时 prepare-commit-msg 先执行仓库原有 hook（失败仍中止提交），再按
  *   merge/squash 跳过、规范化旧 agent 署名、追加
  *   Co-Authored-By: 白小喵（模型 @ provider） <noreply@pi.dev>
@@ -50,7 +52,7 @@ import {
   VERSION,
 } from "@earendil-works/pi-coding-agent";
 
-import { buildHookScript } from "./internal/hook.ts";
+import { buildDelegatingHookScript, buildHookScript, DELEGATED_HOOKS } from "./internal/hook.ts";
 import { buildAttribution, isAttributionDisabled, withGitConfig } from "./internal/trailers.ts";
 
 const HOOK_FILENAME = "prepare-commit-msg";
@@ -99,12 +101,10 @@ function ensureHooksDir(): string | undefined {
   let dir: string | undefined;
   try {
     dir = mkdtempSync(join(tmpdir(), "pi-git-attribution-"));
-    const hookPath = join(dir, HOOK_FILENAME);
-    writeFileSync(hookPath, buildHookScript(), { mode: 0o755 });
-    try {
-      chmodSync(hookPath, 0o755);
-    } catch {
-      // Windows 没有 POSIX 执行位语义；Git for Windows 仍会运行 hook。
+    writeHook(dir, HOOK_FILENAME, buildHookScript());
+    const delegate = buildDelegatingHookScript();
+    for (const hook of DELEGATED_HOOKS) {
+      writeHook(dir, hook, delegate);
     }
     hooksDir = dir;
     return dir;
@@ -118,6 +118,16 @@ function ensureHooksDir(): string | undefined {
     }
     warnOnce(`[git-attribution] 临时 hook 目录创建失败：${message(error)}`);
     return undefined;
+  }
+}
+
+function writeHook(dir: string, name: string, content: string): void {
+  const path = join(dir, name);
+  writeFileSync(path, content, { mode: 0o755 });
+  try {
+    chmodSync(path, 0o755);
+  } catch {
+    // Windows 没有 POSIX 执行位语义；Git for Windows 仍会运行 hook。
   }
 }
 

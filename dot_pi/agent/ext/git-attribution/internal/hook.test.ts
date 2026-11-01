@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { buildHookScript } from "./hook.ts";
+import { buildDelegatingHookScript, buildHookScript, DELEGATED_HOOKS } from "./hook.ts";
 
 const HOOK_FILENAME = "prepare-commit-msg";
 const CO_AUTHOR = "Co-Authored-By: 白小喵（deepseek-v4.1-flash @ opencode-go） <noreply@pi.dev>";
@@ -26,6 +26,12 @@ function createRepo(t: { after: (fn: () => void) => void }): TestRepo {
   const hookPath = join(hooks, HOOK_FILENAME);
   writeFileSync(hookPath, buildHookScript(), { mode: 0o755 });
   chmodSync(hookPath, 0o755);
+  const delegate = buildDelegatingHookScript();
+  for (const hook of DELEGATED_HOOKS) {
+    const path = join(hooks, hook);
+    writeFileSync(path, delegate, { mode: 0o755 });
+    chmodSync(path, 0o755);
+  }
 
   git(root, ["init", "--quiet", "-b", "main"]);
   git(root, ["config", "user.name", "Test"]);
@@ -160,6 +166,44 @@ test("链式执行仓库原有 hook", (t) => {
   assert.equal(count(message, "ORIGINAL_HOOK_RAN"), 1);
 });
 
+test("pre-commit 照常执行", (t) => {
+  const repo = createRepo(t);
+  installHook(repo, "pre-commit", `printf 'PRE_COMMIT_RAN\\n' >> "$PWD/pre-commit.txt"`);
+  commit(repo, "feat: pre-commit");
+  assert.equal(readFileSync(join(repo.root, "pre-commit.txt"), "utf8").trim(), "PRE_COMMIT_RAN");
+  assert.equal(count(lastMessage(repo), CO_AUTHOR), 1);
+});
+
+test("pre-commit 失败中止提交", (t) => {
+  const repo = createRepo(t);
+  installHook(repo, "pre-commit", "exit 7");
+  fileCounter += 1;
+  const name = `file-${String(fileCounter)}.txt`;
+  writeFileSync(join(repo.root, name), "fail\n");
+  git(repo.root, ["add", name]);
+  const result = spawnSync("git", ["commit", "--quiet", "-m", "feat: pre-commit fail"], {
+    cwd: repo.root,
+    env: repo.env,
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 1);
+  assert.equal(git(repo.root, ["rev-list", "-n", "1", "--all"]).trim(), "");
+});
+
+test("commit-msg 照常执行", (t) => {
+  const repo = createRepo(t);
+  installHook(repo, "commit-msg", `printf 'COMMIT_MSG_RAN\\n' >> "$PWD/commit-msg.txt"`);
+  commit(repo, "feat: commit-msg");
+  assert.equal(readFileSync(join(repo.root, "commit-msg.txt"), "utf8").trim(), "COMMIT_MSG_RAN");
+});
+
+test("post-commit 照常执行", (t) => {
+  const repo = createRepo(t);
+  installHook(repo, "post-commit", `printf 'POST_COMMIT_RAN\\n' >> "$PWD/post-commit.txt"`);
+  commit(repo, "feat: post-commit");
+  assert.equal(readFileSync(join(repo.root, "post-commit.txt"), "utf8").trim(), "POST_COMMIT_RAN");
+});
+
 test("原有 hook 失败时中止提交", (t) => {
   const repo = createRepo(t);
   installOriginalHook(repo, "exit 7");
@@ -205,12 +249,14 @@ test("脚本内提交也覆盖", { skip: process.platform === "win32" }, (t) => 
 });
 
 function installOriginalHook(repo: TestRepo, behavior: string): void {
+  installHook(repo, HOOK_FILENAME, `printf '\\nORIGINAL_HOOK_RAN\\n' >> "$1"\n${behavior}`);
+}
+
+function installHook(repo: TestRepo, name: string, body: string): void {
   const dir = join(repo.root, ".githooks");
   mkdirSync(dir, { recursive: true });
-  const hook = join(dir, HOOK_FILENAME);
-  writeFileSync(hook, `#!/bin/sh\nprintf '\\nORIGINAL_HOOK_RAN\\n' >> "$1"\n${behavior}\n`, {
-    mode: 0o755,
-  });
+  const hook = join(dir, name);
+  writeFileSync(hook, `#!/bin/sh\n${body}\n`, { mode: 0o755 });
   chmodSync(hook, 0o755);
   git(repo.root, ["config", "core.hooksPath", ".githooks"]);
 }
