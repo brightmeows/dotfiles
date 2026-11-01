@@ -47,7 +47,7 @@ tsconfig.json
 {{- end }}
 
 # tmux 配置模板实时拼接 Omarchy 上游原文，仅 Omarchy 机器可渲染，其它平台忽略
-{{ if ne .chezmoi.osRelease.id "omarchy" -}}
+{{ if not (and (eq .chezmoi.os "linux") (ne .chezmoi.osRelease.id "omarchy")) -}}
 .config/tmux
 {{- end }}
 
@@ -55,6 +55,8 @@ tsconfig.json
 {{ if ne .chezmoi.os "windows" -}}
 .pi/agent/merge-pi-settings.ps1*
 merge-gitconfig.ps1*
+# AppData 包装模板仅 Windows 部署（目标为 %AppData% 下的真实路径）
+AppData
 {{ end -}}
 {{ if eq .chezmoi.os "windows" -}}
 .pi/agent/merge-pi-settings.sh*
