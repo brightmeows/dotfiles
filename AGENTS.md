@@ -52,7 +52,9 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 ## 跨平台配置原则
 
 - 路径、端口、密钥等机器相关配置（如 Pi `shellPath`、GPG `signingkey`）→ 本机直接写入目标文件，不入源文件；行为、主题、偏好等共享配置 → 写入源文件，chezmoi 分发。
-- 各平台配置位置差异由 `.chezmoiexternal.toml` 处理（如 Nu：Linux `~/.config/nushell` vs Windows `%AppData%\nushell`），其映射优先级高于 `dot_` → `.` 默认命名约定；修改配置文件前先查此文件。
+- Windows 专属路径（nushell、alacritty、zellij 的 `%AppData%` 副本）由源目录 `AppData/` 下的包装模板分发：每个 `.tmpl` 用
+  `include` 引用 `dot_config/` 唯一源，非 Windows 平台经 `.chezmoiignore` 忽略 `AppData`；新增同类平台差异映射时沿用此模式，
+  不再使用 `.chezmoiexternal.toml` 的 `file://` 条目（chezmoi 2.73.x Windows 解析损坏，apply 整体失败）。
 
 ## 系统配置记录
 
