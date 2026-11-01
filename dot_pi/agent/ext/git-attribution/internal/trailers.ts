@@ -81,7 +81,6 @@ export function withGitConfig(
     GIT_CONFIG_COUNT: String(count + 1),
     [`GIT_CONFIG_KEY_${count}`]: "core.hooksPath",
     [`GIT_CONFIG_VALUE_${count}`]: hooksDir,
-    PI_GIT_ATTRIBUTION_CONFIG_INDEX: String(count),
     PI_GIT_ATTRIBUTION_CO_AUTHOR: attribution.coAuthor,
     PI_GIT_ATTRIBUTION_CO_AUTHOR_EMAIL: attribution.coAuthorEmail,
     PI_GIT_ATTRIBUTION_GENERATED_BY: attribution.generatedBy,

@@ -175,7 +175,6 @@ test("在现有 git 配置后追加 hooksPath 与署名变量", () => {
   assert.equal(env["GIT_CONFIG_COUNT"], "3");
   assert.equal(env["GIT_CONFIG_KEY_2"], "core.hooksPath");
   assert.equal(env["GIT_CONFIG_VALUE_2"], "/tmp/pi-hooks");
-  assert.equal(env["PI_GIT_ATTRIBUTION_CONFIG_INDEX"], "2");
   assert.equal(env["PI_GIT_ATTRIBUTION_CO_AUTHOR"], CO_AUTHOR);
   assert.equal(env["PI_GIT_ATTRIBUTION_CO_AUTHOR_EMAIL"], "noreply@pi.dev");
   assert.equal(env["PI_GIT_ATTRIBUTION_GENERATED_BY"], GENERATED_BY);
