@@ -23,7 +23,7 @@ Pi 的 `ask_user_question` 组件原为第三方包 `@juicesharp/rpiv-ask-user-q
 
 现在的约束：
 
-- 根 `package.json` 的 `@earendil-works/pi-ai`、`pi-coding-agent`、`pi-tui` 精确写 `1.4.0`，`typebox` 精确写 `1.3.27`；锁文件里 `typebox` 只有一份
+- 根 `package.json` 的 `@earendil-works/pi-ai`、`pi-coding-agent`、`pi-tui` 与 `typebox` 一律精确版本，随 pi 运行时升级同步更新（pi 升 1.5.0 时同步过一轮），版本值以 package.json 为准；锁文件里 `typebox` 只有一份
 - `scripts/check-pi-version.mjs` 校验四件事：specifier 必须精确；安装的 pi 三包版本等于 `pi --version`；`typebox` 等于安装的 `pi-coding-agent` 声明的 pin；找不到 `pi` 时跳过运行时检查
 - `.githooks/pre-commit` 无条件执行 `pnpm check:pi`，不一致直接阻断提交；`pnpm check` 也先查漂移再跑 tsc
 - 不引入 pnpm workspace/catalog：12 个扩展包当前零依赖，单一根安装已经消除包间漂移；出现第二个声明依赖的包时再考虑
