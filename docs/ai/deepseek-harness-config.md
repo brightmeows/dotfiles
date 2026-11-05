@@ -4,7 +4,7 @@
 
 ## 概览
 
-- 安装：npm 全局包 `@deepseek-ai/dsh`，命令 `dsh`；本机为 0.1.5-rc.1（rc 阶段配置面可能变动，升级后按包内 README 复核）。
+- 安装：npm 全局包 `@deepseek-ai/dsh`，命令 `dsh`；本机为 0.2.1-rc.5（npm latest；2026-11-05 从 0.1.5-rc.1 升级，dump-config 与冷启动复验通过）。npm 新版默认拦截安装脚本，升级时带 `--allow-scripts=@deepseek-ai/dsh-subprocess-local,koff,node-pty`，缺脚本会在启动时报原生模块错误。
 - 入口：`dsh web`（等价 `--profile web`）启动本地浏览器界面；首次启动自动初始化 `~/.dsh/profiles/web`。
 - 配置根：`~/.dsh`（`DSH_HOME` 未设置时的默认值）。
 - 主要使用面：浏览器界面；TUI 无官方 profile，不在本项目范围。
@@ -42,6 +42,7 @@
 ## 凭据与沙箱
 
 - 凭据优先级：启动环境快照 > `~/.dsh/.credentials.yaml` > 启动目录 `.env` > `~/.dsh/.env`。`~/.env_self` 只被 shell 加载，因此从终端启动 `dsh web` 时才有 `ANYSEARCH_API_KEY`、`ZHIPU_API_KEY` 等变量；图形启动器启动时不可见。
+- 图形会话密钥注入：`~/.config/environment.d/51-meow-local.conf`（本机补充文件，权限 600，不入 chezmoi）从本机密钥文件提取 `ANYSEARCH_API_KEY` 与 `ZHIPU_API_KEY`，由 systemd user manager 注入，图形启动器启动的进程同样可见；密钥轮换后需手工重新提取。加载路径总览见 [env-loading.md](../dev/env-loading.md)。
 - 沙箱：读取不受限；`workspace-write` 模式可写会话工作区、`/tmp` 与 `os.tmpdir()`；越界写会被拒并触发审批升级。`~/.agents_tmp` 不在可写范围。
 - 默认模型保持 dsh 出厂的 DeepSeek 官方模型（`deepseek-flash`）。
 
@@ -59,6 +60,8 @@ dsh web --no-open --port 3081                            # 冷启动校验（验
 
 ## 非目标与已知差异
 
+- 桌面版（2026-11-05 调研后不装）：官方桌面端仅发行 Windows 与 macOS；npm 无官方桌面通道（仅社区纯壳）。界面继续浏览器 `dsh web`，官方发行 Linux 桌面包或 npm 通道时再评估。
+  - 上游 `apps/desktop/README.md` 明确 Linux 不是受支持的桌面发布目标；AUR 的移植包（`dsh-desktop-linux-bin`、`deepseek-harness-desktop` 等）为社区补丁构建，不在官方支持面内。
 - Windows：未覆盖（技能符号链接需开发者模式，dsh home 路径为 `%USERPROFILE%\.dsh`）。
 - 不迁移：Pi 的 TUI 交互扩展（esc-hold、editor-input-tweaks、斜杠别名）、注入提示渲染约定、models-dev 导入器、`enabledModels` 会话范围；opencode 的 rebase-main 与 review-cycle 命令留在 opencode。
 - dsh 的模型选择器没有收藏或筛除机制，`models.toml` 的 `disabled_providers` 与模型级 `disabled` 是唯一的收敛手段（默认禁用 openrouter 与 opencode）。
