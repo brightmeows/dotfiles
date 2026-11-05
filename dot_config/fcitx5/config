@@ -1,6 +1,7 @@
 # Ctrl+Space stays with fcitx5; tmux and herdr use Alt+i as their prefix.
-# Omarchy 4.5's input-method migration removes Control+space on update, so
-# re-run `chezmoi apply` after an Omarchy update to restore this file.
+# Omarchy's input-method migration can remove Control+space; the post-update
+# hook restores this file. If you run `omarchy input method configure
+# --defaults` manually, run `chezmoi apply` afterwards.
 [Hotkey/TriggerKeys]
 0=Control+space
 1=Zenkaku_Hankaku
