@@ -39,10 +39,28 @@
 - 技能：dsh 默认扫描根已覆盖 `~/.agents/skills`（npx 安装区），这是唯一技能通道；原 `~/.dsh/skills` → `~/.agents_meow/skills` 符号链接已于 2026-10-06 随仓库技能分发退役删除。Pi 的 better-skill 消歧别名扩展已于 2026-09-24 移除，两家重名处理现为同款策略：按层与扫描序保留首个并告警。
 - MCP：迁入 5 个 server（exa、anysearch、context7、cratesio、zai），工具名形如 `mcp__<server>__<tool>`。dsh 无 lazy 概念，启动时全部连接；anysearch 与 zai 的密钥从启动环境（`ANYSEARCH_API_KEY`、`ZHIPU_API_KEY`）读取。
 
+## 插件（2026-11-05 起，对齐 pi 能力）
+
+插件以 `dsh plugin --profile <name> add <pkg>` 标准安装，包体与 lockfile 属 profile 运行时数据，不入 chezmoi；清单与状态以本节为权威记录。安装 GUI 市场：`dsh plugin --profile web add dshmarket`。
+
+| 插件 | 版本 | 用途（对齐 pi） | 验证状态 |
+|---|---|---|---|
+| `dsh-patch-edit-plus` | 0.4.6 | Codex 语法 `apply_patch`（pi 编辑形态；需在其设置开 `allowCodexPatch`） | 冒烟通过：Codex 补丁真实落盘 |
+| `dsh-block-secret-leaks` | 0.1.0 | pi secret-safe 等价：拦读/打印/上传/提交密钥，工具输出脱敏 | 冒烟通过：`.env` 读取被拦 |
+| `dsh-plugin-codemode` | 0.1.1 | pi codemode 同构：JS 沙箱 `tools.<name>()` 代理全部工具 | headless 下 pending（依赖 web 形态 connection 服务）；web 待浏览器确认 |
+| `dshmarket` | 1.73.10 | GUI 插件市场底座 | 待浏览器确认 |
+
+配套：官方 Code mode（PTC 预设）天然兜底 codemode；`apply_patch` 为主的编辑优先级以工程准则指令落地（三家同源，见 `dot_agents_meow/AGENTS.md` 的“编辑以补丁为主”）。dsh 可选插件加载失败是静默的，状态以浏览器插件面板与功能冒烟为准。
+
+`dsh-block-secret-leaks` 的默认拦截名单仅 `.env` 系文件，`.credentials.yaml` 不在名单内，配置可扩。
+
+上游 `dsh-patch-edit-plus` 的工具描述自带路由指南（单文件小改引导回原生 `edit`），与准则指令叠加后以准则为准。
+
 ## 凭据与沙箱
 
 - 凭据优先级：启动环境快照 > `~/.dsh/.credentials.yaml` > 启动目录 `.env` > `~/.dsh/.env`。`~/.env_self` 只被 shell 加载，因此从终端启动 `dsh web` 时才有 `ANYSEARCH_API_KEY`、`ZHIPU_API_KEY` 等变量；图形启动器启动时不可见。
-- 图形会话密钥注入：`~/.config/environment.d/51-meow-local.conf`（本机补充文件，权限 600，不入 chezmoi）从本机密钥文件提取 `ANYSEARCH_API_KEY` 与 `ZHIPU_API_KEY`，由 systemd user manager 注入，图形启动器启动的进程同样可见；密钥轮换后需手工重新提取。加载路径总览见 [env-loading.md](../dev/env-loading.md)。
+- 图形会话密钥注入：`~/.config/environment.d/51-meow-local.conf`（本机补充文件，权限 600，不入 chezmoi）从本机密钥文件提取 `ANYSEARCH_API_KEY`、`ZHIPU_API_KEY` 与 `EXA_API_KEY`（exa MCP 的 x-api-key 头），由 systemd user manager 注入，图形启动器启动的进程同样可见。
+  密钥轮换后需手工重新提取；加载路径总览见 [env-loading.md](../dev/env-loading.md)。
 - 沙箱：读取不受限；`workspace-write` 模式可写会话工作区、`/tmp` 与 `os.tmpdir()`；越界写会被拒并触发审批升级。`~/.agents_tmp` 不在可写范围。
 - 默认模型保持 dsh 出厂的 DeepSeek 官方模型（`deepseek-flash`）。
 
