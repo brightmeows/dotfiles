@@ -2,18 +2,19 @@
   "schemaVersion": 1,
   "id": "brightmeows.workspaces",
   "name": "My Workspaces",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "author": "Omarchy",
-  "description": "Workspace number indicators",
+  "description": "Per-monitor workspace indicators with visibility dots",
   "kinds": ["bar-widget"],
   "entryPoints": {
     "barWidget": "Workspaces.qml"
   },
   "barWidget": {
     "displayName": "My Workspaces",
-    "description": "Workspace number indicators",
+    "description": "Per-monitor workspace indicators with visibility dots",
     "category": "Compositor",
-    "allowMultiple": false
+    "allowMultiple": false,
+    "defaultSection": "left"
   },
   "omarchy": {
     "clonedFrom": "omarchy.workspaces"

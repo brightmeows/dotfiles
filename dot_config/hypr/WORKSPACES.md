@@ -15,14 +15,17 @@
 
 定义在 `/usr/share/omarchy/default/hypr/bindings/tiling.lua`，本机未覆盖：
 
-- Super+数字：切换到工作区 1 到 10
-- Super+Shift+数字：移动窗口过去，视图跟随
+- Super+数字：切换到当前显示器的第 N 个工作区（每屏一套 1-10）
+- Super+Shift+数字：移动窗口到当前显示器的第 N 个工作区，视图跟随
 - Super+Shift+Alt+数字：移动窗口过去，视图不动
-- Super+Tab、Super+Shift+Tab：下一个、上一个工作区
-- Super+Ctrl+Tab：回到上次所在的工作区
-- Super+滚轮：前后翻页
+- Super+Tab、Super+Shift+Tab：当前显示器下一个、上一个工作区
+- Super+Ctrl+Tab：回到当前显示器上次所在的工作区
+- Super+滚轮：当前显示器前后翻页
 - Super+S、Super+Alt+S：显示 scratchpad、移入 scratchpad
-- Super+L：切换平铺与滚动布局（omarchy-hyprland-workspace-layout-toggle）
+- Super+L：循环平铺、滚动、浮动布局（`omarchy hyprland workspace layout toggle`）
+- Super+Alt+L：回到上一个布局
+- Super+M：把当前窗口最小化到 dock
+- Super+Shift+Ctrl+方向键：把当前窗口移到另一台显示器
 
 ## 窗口落位：双轨制
 
@@ -38,6 +41,7 @@
 补充语义：
 
 - `initial_workspace_tracking` 取 1 而非 2（persistent）：值 2 会让 portal 对话框也被跟踪，不符合预期；single-shot 的 10 秒窗口覆盖全部实测场景。
+- 4.5 的每显示器分块使用全局 id（1-10、11-20）；meow-launch 捕获到的就是全局 id，注入的 `[workspace W silent]` 对外接屏的 11-20 同样有效。
 - 落位正确性是异步的，不做同步判定。meow-launch 在 hyprctl 不可用或 eval 失败时直接执行原命令，窗口退化为跟随 map 时刻的焦点工作区，保住“能启动”。
 - chromium 弹窗跟随浏览器所在工作区（第一轨实测），落不可见工作区时由圆点提示。
 
@@ -45,7 +49,9 @@
 
 - 新窗口圆点：新窗口落在所有显示器都不可见的工作区时点亮，任一显示器激活该工作区后清除。
 - 响铃圆点：Alacritty / kitty 收到 BEL（如 pi 问卷等待输入；herdr 内由 herdr 转发 pane BEL）时，alacritty.toml 的 `[bell] command` 或 kitty.conf 的 `command_on_bell` 调用插件的 bell-flag.sh，记录响铃窗口所在工作区；插件轮询点亮 urgent 色圆点，10 分钟过期。
-- 圆点只标记 1 到 10 号数字工作区；事件不跨 shell 重启保留。
+- 4.5 起每台显示器有独立的一套 1-10 号工作区；Hyprland 全局 id 分块为 1-10、11-20、21-30。
+  bar 只显示本屏的 1-10 槽位，圆点按全局 id 记录，所以外接屏的 11-20 也能点亮。
+- 圆点只标记数字工作区；命名工作区与特殊工作区不在数字行里，不显示圆点。事件不跨 shell 重启保留。
 
 ## 焦点保护（hyprland.lua 窗口规则）
 
@@ -56,6 +62,7 @@
 
 - hypr 目录下的 lua 与本文件、~/.local/bin/meow-* 已纳入 chezmoi（仓库 ~/Codes/dotfiles，复制模式）：修改一律编辑仓库源文件后 `chezmoi apply`，直接改 ~/.config 下的部署文件会造出状态分叉。
 - shell.json 不入 chezmoi：omarchy CLI（如 omarchy bar）会就地改写它；`omarchy refresh shell` 重置后跑一次 `chezmoi apply`，由 brightmeows 插件的合并脚本恢复 bar 条目。
+- `~/.local/state/omarchy/monitor-workspaces` 由 Omarchy 维护，记录物理显示器到 block 的映射；不要手改，换屏后让 Omarchy 自己写。
 - `omarchy refresh hyprland` 按固定清单覆盖 7 个 lua 与 json 文件，覆盖前自动备份为 `.bak.时间戳`；清单外文件（含本文件）不受影响。常规 omarchy update 不触碰 ~/.config；升级迁移若就地修补部署文件，用 `chezmoi re-add` 回填源。
 - 修改插件 QML 后行为未更新时执行 `omarchy restart shell`。
 - 修改 hypr 配置后用 `hyprctl configerrors` 验证。
