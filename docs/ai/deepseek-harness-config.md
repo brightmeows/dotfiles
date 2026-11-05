@@ -4,7 +4,8 @@
 
 ## 概览
 
-- 安装：日常 `dsh` 由 Omarchy 的 mise 声明提供 0.2.2-rc.1；npm 全局 0.2.1-rc.5 仍在 `~/.node/bin/dsh`。
+- 安装：日常 `dsh` 由 Omarchy 的 mise 声明提供 0.2.2-rc.1；npm 全局 0.2.1-rc.5 已删除（2026-11-05），PATH 唯一指向 mise shim。
+  dsh 是 Omarchy 4.5 官方 agent 花名册成员：`omarchy default agent dsh` 可设为默认 agent，快捷键启动走 `DSH_PERMISSION_MODE=danger-full-access dsh web`（免审批，注意安全面）。
   2026-11-05 从 0.1.5-rc.1 升到 0.2.1-rc.5 时 dump-config 与冷启动复验通过；同日 Omarchy 4.5 把 mise 版本推到 0.2.2-rc.1。
   npm 新版默认拦截安装脚本，升级时带 `--allow-scripts=@deepseek-ai/dsh-subprocess-local,koff,node-pty`，缺脚本会在启动时报原生模块错误。
 - 入口：`dsh web`（等价 `--profile web`）启动本地浏览器界面；首次启动自动初始化 `~/.dsh/profiles/web`。
@@ -60,6 +61,7 @@ dsh 可选插件加载失败是静默的，状态以浏览器插件面板与功�
 `dsh-block-secret-leaks` 的默认拦截名单仅 `.env` 系文件，`.credentials.yaml` 不在名单内，配置可扩。
 
 上游 `dsh-patch-edit-plus` 的工具描述自带路由指南（单文件小改引导回原生 `edit`），与准则指令叠加后以准则为准。
+社区 `@anionex/dsh-apply-patch`（自带原生 DiffBlock 渲染，最贴近 pi 观感）peer 上限全在 0.1.x，0.2.x 下真实断裂不可用，已调研放弃；diff 卡预览需求待上游跟进或自写 client 插件。
 
 ## 凭据与沙箱
 
