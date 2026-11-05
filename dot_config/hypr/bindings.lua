@@ -35,3 +35,7 @@ o.bind("switch:on:Lid Switch", nil, "~/.local/bin/meow-lid-close", { locked = tr
 -- 开盖：恢复 clamshell/显示器状态并点亮屏幕。
 hl.unbind("switch:off:Lid Switch")
 o.bind("switch:off:Lid Switch", nil, "~/.local/bin/meow-lid-open", { locked = true })
+
+-- Omarchy 4.5 默认把 Ctrl+Space 绑成终端前缀直通（default/hypr/bindings/input-method.lua），
+-- 拦截了 fcitx5 的中英切换键；本机决策：Ctrl+Space 归 fcitx5，tmux/herdr 前缀用 Alt+i。
+hl.unbind("CTRL + SPACE")
