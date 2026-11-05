@@ -8,7 +8,7 @@
 
 `run_after_` 例外有两个，共同点是“触发条件不在模板 hash 里”：
 
-- `run_after_omarchy-active-window-enable.sh.tmpl`（活动窗口组件调和），每次 apply 都运行：`omarchy refresh shell` 会把 shell.json 重置为默认，模板 hash 未变时 onchange 不会重跑、无法恢复布局条目。
+- `run_after_omarchy-active-window-enable.sh.tmpl`（活动窗口组件调和，插入 `centerBegin`），每次 apply 都运行：`omarchy refresh shell` 会把 shell.json 重置为默认，模板 hash 未变时 onchange 不会重跑、无法恢复布局条目。
 - `run_after_omarchy-workspaces-enable.sh.tmpl`（工作区组件 id 替换），每次 apply 都运行：理由同上（refresh shell 后 hash 未变不重跑）；脚本自带 cmp 守卫，无变化时不动 shell.json。
 
 ## 时序约束（为什么必须 after_）

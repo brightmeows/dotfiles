@@ -4,7 +4,7 @@
 # shell.json is deliberately not managed by chezmoi: Omarchy's CLI, the bar's
 # own drag gestures and its update migrations all rewrite it in place. This
 # script reconciles exactly one entry: if the widget is missing from the
-# layout it is inserted at the left edge of the center section; an existing
+# layout it is inserted at the left edge of centerBegin; an existing
 # entry is left where it is, so manual moves stick and a manual removal is
 # reverted on the next apply (the repository is the source of truth).
 #
@@ -51,7 +51,7 @@ fi
 
 tmp=$(mktemp)
 jq --arg id "$plugin_id" '
-  .bar.layout.center = ([{ id: $id }] + ((.bar.layout.center // [])))
+  .bar.layout.centerBegin = ([{ id: $id }] + ((.bar.layout.centerBegin // [])))
 ' "$config" >"$tmp"
 mv "$tmp" "$config"
 
