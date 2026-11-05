@@ -15,7 +15,7 @@
 
 - environment.d **不影响** TTY/SSH 登录的 shell——纯 shell 变量只走路径①
 - `~/.env_self` **只被 shell 读取**，不进 environment.d——本地补充的变量在图形会话/服务中不可见
-- 密钥类需要图形会话可见时，用本机补充文件 `~/.config/environment.d/51-meow-local.conf`（不入 chezmoi，从本机密钥文件手工提取，权限 600），现有用途是给 dsh 的 MCP 密钥走 GUI 启动路径，见 [deepseek-harness-config.md](../ai/deepseek-harness-config.md)
+- 密钥类需要图形会话可见时，用本机补充文件 `~/.config/environment.d/51-meow-local.conf`（不入 chezmoi，从本机密钥文件手工提取，权限 600，现有键：`ANYSEARCH_API_KEY`、`ZHIPU_API_KEY`、`EXA_API_KEY`），现有用途是给 dsh 的 MCP 密钥走 GUI 启动路径，见 [deepseek-harness-config.md](../ai/deepseek-harness-config.md)
 - nushell 加载器不支持 `$VAR` 引用展开，含变量引用的项须保留在各 shell 配置内
 - Nu 的 `load-env-file` 的 `PATH+=` 处理器会根据 `$env.PATH` 的类型分支：list→`append`，string→`concat`。Windows 上初始为 list，但部分场景（Nu 版本/交互模式差异）可能丢失系统 PATH。`env.nu` 底部有安全兜底——保存原始 PATH 并在末尾合并缺失条目。
 
