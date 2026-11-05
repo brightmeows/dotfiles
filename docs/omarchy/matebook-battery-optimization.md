@@ -45,7 +45,7 @@
 
 ## 退役记录
 
-**battery-boost 退役（2026-09-27）**：它与 power-profiles-daemon（PPD）双头控制 boost 冲突。
+**battery-boost 退役（2026-09-27）**：它与 omarchy-power-profiles-daemon（PPD，4.5 起由 Omarchy 构建替代 stock）双头控制 boost 冲突。
 内核语义是全局 boost=0 时对任意 per-policy boost 属性的任何写入都返回 EINVAL，
 而 PPD 0.30 把 boost 写失败当 fatal、直接中止整个档位应用——只要 battery-boost 在电池上把全局 boost 置 0，
 PPD 切档就必然失败（插拔瞬间则是与 udev 异步的竞速），电池开机时 PPD 初始应用也失败。
