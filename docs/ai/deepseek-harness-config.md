@@ -4,7 +4,9 @@
 
 ## 概览
 
-- 安装：npm 全局包 `@deepseek-ai/dsh`，命令 `dsh`；本机为 0.2.1-rc.5（npm latest；2026-11-05 从 0.1.5-rc.1 升级，dump-config 与冷启动复验通过）。npm 新版默认拦截安装脚本，升级时带 `--allow-scripts=@deepseek-ai/dsh-subprocess-local,koff,node-pty`，缺脚本会在启动时报原生模块错误。
+- 安装：日常 `dsh` 由 Omarchy 的 mise 声明提供 0.2.2-rc.1；npm 全局 0.2.1-rc.5 仍在 `~/.node/bin/dsh`。
+  2026-11-05 从 0.1.5-rc.1 升到 0.2.1-rc.5 时 dump-config 与冷启动复验通过；同日 Omarchy 4.5 把 mise 版本推到 0.2.2-rc.1。
+  npm 新版默认拦截安装脚本，升级时带 `--allow-scripts=@deepseek-ai/dsh-subprocess-local,koff,node-pty`，缺脚本会在启动时报原生模块错误。
 - 入口：`dsh web`（等价 `--profile web`）启动本地浏览器界面；首次启动自动初始化 `~/.dsh/profiles/web`。
 - 配置根：`~/.dsh`（`DSH_HOME` 未设置时的默认值）。
 - 主要使用面：浏览器界面；TUI 无官方 profile，不在本项目范围。
@@ -45,12 +47,15 @@
 
 | 插件 | 版本 | 用途（对齐 pi） | 验证状态 |
 |---|---|---|---|
-| `dsh-patch-edit-plus` | 0.4.6 | Codex 语法 `apply_patch`（pi 编辑形态；需在其设置开 `allowCodexPatch`） | 冒烟通过：Codex 补丁真实落盘 |
+| `dsh-patch-edit-plus` | 0.4.6 | Codex 语法 `apply_patch`（pi 编辑形态；需在其设置开 `allowCodexPatch`） | 已从 web profile 移除：0.4.6 的 engines 只到 0.2.1-rc.5，dsh 0.2.2-rc.1 下会被跳过；等上游兼容后重装 |
 | `dsh-block-secret-leaks` | 0.1.0 | pi secret-safe 等价：拦读/打印/上传/提交密钥，工具输出脱敏 | 冒烟通过：`.env` 读取被拦 |
 | `dsh-plugin-codemode` | 0.1.1 | pi codemode 同构：JS 沙箱 `tools.<name>()` 代理全部工具 | headless 下 pending（依赖 web 形态 connection 服务）；web 待浏览器确认 |
 | `dshmarket` | 1.73.10 | GUI 插件市场底座 | 待浏览器确认 |
 
-配套：官方 Code mode（PTC 预设）天然兜底 codemode；`apply_patch` 为主的编辑优先级以工程准则指令落地（三家同源，见 `dot_agents_meow/AGENTS.md` 的“编辑以补丁为主”）。dsh 可选插件加载失败是静默的，状态以浏览器插件面板与功能冒烟为准。
+配套：官方 Code mode（PTC 预设）天然兜底 codemode；`apply_patch` 为主的编辑优先级以工程准则指令落地
+（三家同源，见 `dot_agents_meow/AGENTS.md` 的“编辑以补丁为主”）。dsh 0.2.2-rc.1 下
+`dsh-patch-edit-plus` 暂不可用，编辑回到原生 `edit`；这不改变 pi/opencode 的补丁优先级。
+dsh 可选插件加载失败是静默的，状态以浏览器插件面板与功能冒烟为准。
 
 `dsh-block-secret-leaks` 的默认拦截名单仅 `.env` 系文件，`.credentials.yaml` 不在名单内，配置可扩。
 
