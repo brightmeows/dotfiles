@@ -11,6 +11,8 @@
         serverName: exa
         transport: streamable-http
         url: https://mcp.exa.ai/mcp
+        headers:
+          x-api-key: !!js "process.env.EXA_API_KEY || ''"
 
     - id: mcp-anysearch
       name: '@deepseek-ai/dsh-mcp-client'
