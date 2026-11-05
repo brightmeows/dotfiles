@@ -1,0 +1,15 @@
+# Ctrl+Space stays with fcitx5; tmux and herdr use Alt+i as their prefix.
+# Omarchy 4.5's input-method migration removes Control+space on update, so
+# re-run `chezmoi apply` after an Omarchy update to restore this file.
+[Hotkey/TriggerKeys]
+0=Control+space
+1=Zenkaku_Hankaku
+2=Hangul
+
+# A lone Shift used to be disabled for this setup; Ctrl+Space is the only
+# Chinese/English toggle.
+[Hotkey/AltTriggerKeys]
+0=
+
+[Behavior]
+ActiveByDefault=False

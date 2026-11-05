@@ -15,6 +15,7 @@ keyboard-us ↔ rime   ascii_mode reset: 0
 
 - **Ctrl+Space** — fcitx5 在 keyboard-us（英文）和 rime（中文）间切换
 - Rime 激活后**默认中文输入**，不管理中英切换
+- Omarchy 4.5 的 `omarchy input method configure --defaults` 会把 Ctrl+Space 从 fcitx 全局配置移除；本仓库用 `dot_config/fcitx5/config` 托管该值，更新后手动 `chezmoi apply` 并核对。
 
 ## 方案
 
@@ -79,10 +80,8 @@ keyboard-us ↔ rime   ascii_mode reset: 0
 
 ```
 ~/.config/fcitx5/
-├── profile                      # 输入法列表（keyboard-us + rime）
-└── conf/
-    ├── hotkey.conf              # 全局快捷键（Ctrl+Space trigger）
-    └── globalhotkey.conf
+├── config                       # 全局快捷键（Ctrl+Space trigger）
+└── profile                      # 输入法列表（keyboard-us + rime）
 
 ~/.local/share/fcitx5/rime/
 ├── default.custom.yaml          # 全局设置（方案列表、按键、标点）
