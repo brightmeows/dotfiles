@@ -38,4 +38,9 @@ o.bind("switch:off:Lid Switch", nil, "~/.local/bin/meow-lid-open", { locked = tr
 
 -- Omarchy 4.5 默认把 Ctrl+Space 绑成终端前缀直通（default/hypr/bindings/input-method.lua），
 -- 拦截了 fcitx5 的中英切换键；本机决策：Ctrl+Space 归 fcitx5，tmux/herdr 前缀用 Alt+i。
-hl.unbind("CTRL + SPACE")
+ hl.unbind("CTRL + SPACE")
+
+-- Omarchy 4.5 默认把 R-Alt 绑成听写按住说话（default/hypr/bindings/dictation.lua，ignore_mods），
+-- 按下事件被 compositor 消费，lr2oraja 收不到 key press；本机决策：R-Alt 归游戏，听写挪到 R-Ctrl。
+hl.unbind("ALT + Alt_R")
+o.bind_hold("CTRL + Control_R", "Start dictation (push-to-talk)", "omarchy-dictation start", "Stop dictation (push-to-talk)", "omarchy-dictation stop", { ignore_mods = true })
