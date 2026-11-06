@@ -137,10 +137,23 @@ Codex 上游是逐操作读、改、写的：前面的文件已经落盘，后�
   同文件多操作 6、工作区越界 6、缺 End Patch 3、`~/` 路径不展开 1；130 次失败中 113 次下一轮重试成功，17 次二连败无深链。
   窗口内 tweaks 修复 25 次（重复 Update 合并 20、Add File 补前缀 5），15 次救回、10 次仍败于内容漂移，无一次修复引入失败。
 - 上游跟进：PR [#36](https://github.com/d3ara1n/pi-extensions/pull/36)（诊断 excerpt 按行宽自适应，500 码点内整行显示）、
-  PR [#37](https://github.com/d3ara1n/pi-extensions/pull/37)（同文件多操作按补丁顺序模拟验证，对齐 Codex 顺序语义；合并后 tweaks 的合并重复 Update 规则可删）、
-  [issue #38](https://github.com/d3ara1n/pi-extensions/issues/38)（`~/` 展开讨论；Codex 本体 `resolve_path` 不展开 `~`，等维护者表态）；
+  PR [#37](https://github.com/d3ara1n/pi-extensions/pull/37)（同文件多操作按补丁顺序模拟验证，对齐 Codex 顺序语义）、
+  [issue #38](https://github.com/d3ara1n/pi-extensions/issues/38)（`~/` 展开讨论；Codex 本体 `resolve_path` 不展开 `~`）；
   #27（匹配层维持现状）、#32（已由 #33 落地）已关闭。
   唯一最小距离匹配方向经 #27 语境复核后否决：与维护者“不放宽匹配”立场冲突，且重试两轮内收敛。
+
+### 合并、发版与 tweaks 退役（2026-11-06 同日）
+
+- #36、#37 均被 squash 合并（cdeea00、06b8ed3），合并前维护者直接往贡献分支推了修复 commit（maintainerCanModify）：
+  #36 补“行长恰为 500 码点且差异在行尾”时仍整行显示的边界（6c0908c）；
+  #37 回退 verified 去重到 report.ts 展示层（数据层保留完整操作序列），并补齐我漏掉的 README 与 tool.ts 契约（039bc88）。
+  合并后 4 分钟内连发 0.6.1（#36）与 0.7.0（#37）。
+- 0.8.0（2ba29a3）：维护者自实现 `~/` 展开（路径首段展开 `$HOME`、字面 `~` 目录用 `./~/file`），预览层路径解析同步统一，Refs #38，issue 随即关闭。本机已升级 0.8.0。
+- tweaks 退役（4c8fb42）：删除“合并重复 Update”规则与 RepairOptions.cwd，修复面收窄为补前缀、去围栏、hunk 头归一、空 Update 丢弃；
+  运行时冒烟验证重复块被原样放行且上游原生顺序应用成功、Add File 缺 `+` 仍被修复落盘。
+- 维护者协作模式（两轮 10 个 PR 的观察）：不开评论与 review，直接以 commit 形式往贡献分支推修复（常署名 Co-Authored-By: gpt-6.1-sol），
+  三类动作——边界 case 修复、文档与提示词契约同步、同步 main 的分支卫生。**行为变更 PR 必须同步 tool.ts 的 promptGuidelines 与 README**，
+  否则模型提示词还在教旧约束（#37 初版即漏此两项，由维护者补齐）。
 
 ## 切换与验证
 
