@@ -41,6 +41,7 @@ o.bind("switch:off:Lid Switch", nil, "~/.local/bin/meow-lid-open", { locked = tr
  hl.unbind("CTRL + SPACE")
 
 -- Omarchy 4.5 默认把 R-Alt 绑成听写按住说话（default/hypr/bindings/dictation.lua，ignore_mods），
--- 按下事件被 compositor 消费，lr2oraja 收不到 key press；本机决策：R-Alt 归游戏，听写挪到 R-Ctrl。
+-- 按下事件被 compositor 消费，lr2oraja 收不到 key press；本机决策：R-Alt 归游戏。
+-- 听写按住说话放 SUPER+H：精确和弦物理上防误触；不用 R-Ctrl 的原因是与游戏盘押键 R-Shift 相邻，单点易误碰。
 hl.unbind("ALT + Alt_R")
-o.bind_hold("CTRL + Control_R", "Start dictation (push-to-talk)", "omarchy-dictation start", "Stop dictation (push-to-talk)", "omarchy-dictation stop", { ignore_mods = true })
+o.bind_hold("SUPER + H", "Start dictation (push-to-talk)", "omarchy-dictation start", "Stop dictation (push-to-talk)", "omarchy-dictation stop")
