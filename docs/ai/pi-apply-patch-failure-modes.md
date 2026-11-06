@@ -129,6 +129,19 @@ Codex 上游是逐操作读、改、写的：前面的文件已经落盘，后�
 - 0.4.2 与 0.4.1 的源码差异只在 `packages/pi-apply-patch/src/tool.ts`；`apply.ts`、`workspace.ts`、`core/*` 全部逐字相同。
 - 迁移已完成：settings 使用 `npm:@d3ara1n/pi-apply-patch@0.4.2`，vendored 目录删除；`apply-patch-tweaks` 保留为纯输入修复层。
 
+### 0.6.0 实测与上游跟进（2026-11-06）
+
+- 统计窗口 2026-10-29 10:33 UTC（本地装上 0.6.0）至 11-06：81 会话、1441 次调用、失败 132 次（9.16%），较 0.4.2 前基线 17.8% 近减半。
+  分模型：deepseek-v4.1-flash 5.8%（1040 次 60 失败）、glm-5.3-flash 18.7%（386 次 72 失败，与旧基线 16.3% 持平）、deepseek-flash 0%；日失败率波动全部来自 GLM 用量占比。
+- 失败分布：上下文不匹配 108（58 个 hunk 与唯一 closest match 只差 1 行、15 个差 2 行、23 个整块过期或幻觉、19 个乱序越界）、
+  同文件多操作 6、工作区越界 6、缺 End Patch 3、`~/` 路径不展开 1；130 次失败中 113 次下一轮重试成功，17 次二连败无深链。
+  窗口内 tweaks 修复 25 次（重复 Update 合并 20、Add File 补前缀 5），15 次救回、10 次仍败于内容漂移，无一次修复引入失败。
+- 上游跟进：PR [#36](https://github.com/d3ara1n/pi-extensions/pull/36)（诊断 excerpt 按行宽自适应，500 码点内整行显示）、
+  PR [#37](https://github.com/d3ara1n/pi-extensions/pull/37)（同文件多操作按补丁顺序模拟验证，对齐 Codex 顺序语义；合并后 tweaks 的合并重复 Update 规则可删）、
+  [issue #38](https://github.com/d3ara1n/pi-extensions/issues/38)（`~/` 展开讨论；Codex 本体 `resolve_path` 不展开 `~`，等维护者表态）；
+  #27（匹配层维持现状）、#32（已由 #33 落地）已关闭。
+  唯一最小距离匹配方向经 #27 语境复核后否决：与维护者“不放宽匹配”立场冲突，且重试两轮内收敛。
+
 ## 切换与验证
 
 迁移步骤：
