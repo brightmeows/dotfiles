@@ -34,33 +34,7 @@ test("prefixes blank and unprefixed Add File lines", () => {
   });
 });
 
-test("merges consecutive Update blocks for the same file", () => {
-  const input = `*** Begin Patch
-*** Update File: a.txt
-@@
--one
-+ONE
-*** Update File: a.txt
-@@
--two
-+TWO
-*** End Patch`;
-  const expected = `*** Begin Patch
-*** Update File: a.txt
-@@
--one
-+ONE
-@@
--two
-+TWO
-*** End Patch`;
-  assert.deepEqual(repairPatch(input), {
-    text: expected,
-    notes: ["1 duplicate Update block merged"],
-  });
-});
-
-test("keeps duplicate Update blocks separated by another file", () => {
+test("leaves repeated Update blocks for one file untouched since 0.7.0", () => {
   const input = `*** Begin Patch
 *** Update File: a.txt
 @@
@@ -195,31 +169,5 @@ test("drops an Update whose body is only blank lines", () => {
   assert.deepEqual(repairPatch(input), {
     text: "*** Begin Patch\n*** End Patch",
     notes: ["1 empty Update block dropped"],
-  });
-});
-
-test("merges duplicate Update blocks written with absolute and relative paths", () => {
-  const input = `*** Begin Patch
-*** Update File: /work/a.txt
-@@
--one
-+ONE
-*** Update File: a.txt
-@@
--two
-+TWO
-*** End Patch`;
-  const expected = `*** Begin Patch
-*** Update File: /work/a.txt
-@@
--one
-+ONE
-@@
--two
-+TWO
-*** End Patch`;
-  assert.deepEqual(repairPatch(input, { cwd: "/work" }), {
-    text: expected,
-    notes: ["1 duplicate Update block merged"],
   });
 });

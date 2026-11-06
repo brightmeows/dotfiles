@@ -4,8 +4,9 @@
  * The executor keeps Codex's strict parser. These repairs only normalize
  * mechanical mistakes that non-Codex models repeat: missing `+` prefixes in an
  * Add File body, a markdown fence around the envelope, unified-diff hunk
- * headers, `@@` without a space, duplicate Update headers for one file, and
- * empty Update headers with no hunks.
+ * headers, `@@` without a space, and empty Update headers with no hunks.
+ * Duplicate Update headers for one file are executor-native since 0.7.0 and
+ * are left alone.
  *
  * Context matching is deliberately not touched. A stale or inexact context
  * stays a failure so the model re-reads the file instead of writing at a
@@ -17,16 +18,9 @@
  * returned unchanged and the executor reports its own error.
  */
 
-import { isAbsolute, relative, resolve } from "node:path";
-
 export interface RepairResult {
   readonly text: string;
   readonly notes: readonly string[];
-}
-
-export interface RepairOptions {
-  /** Workspace root, used to compare absolute and relative paths for one file. */
-  readonly cwd?: string;
 }
 
 type SectionKind = "add" | "update" | "delete";
@@ -65,10 +59,6 @@ function isMarker(line: string, marker: string): boolean {
 
 function plural(count: number, noun: string): string {
   return `${count} ${noun}${count === 1 ? "" : "s"}`;
-}
-
-function hasEndOfFile(body: readonly string[]): boolean {
-  return body.some((line) => line.trim() === "*** End of File");
 }
 
 function firstNonBlank(lines: readonly string[], from: number): number {
@@ -259,65 +249,6 @@ function normalizeHunks(sections: readonly Section[], notes: string[]): void {
   }
 }
 
-/** Whether no non-dropped section sits between two Update blocks. */
-function adjacent(sections: readonly Section[], first: Section, second: Section): boolean {
-  let seenFirst = false;
-  for (const section of sections) {
-    if (section === first) {
-      seenFirst = true;
-      continue;
-    }
-    if (section === second) {
-      return seenFirst;
-    }
-    if (seenFirst && !section.drop) {
-      return false;
-    }
-  }
-  return false;
-}
-
-/** Merge consecutive Update blocks for one file into the canonical single header. */
-function mergeDuplicateUpdates(sections: readonly Section[], notes: string[], cwd?: string): void {
-  const keyOf = (section: Section): string => {
-    if (cwd === undefined) {
-      return section.path;
-    }
-    const absolute = isAbsolute(section.path) ? section.path : resolve(cwd, section.path);
-    return relative(cwd, absolute);
-  };
-  const firstByPath = new Map<string, Section>();
-  let count = 0;
-  for (const section of sections) {
-    if (section.kind !== "update" || section.drop || section.moveTo !== undefined) {
-      continue;
-    }
-    if (hasEndOfFile(section.body)) {
-      continue;
-    }
-    const key = keyOf(section);
-    const first = firstByPath.get(key);
-    if (!first) {
-      firstByPath.set(key, section);
-      continue;
-    }
-    // A second block without a new @@ would silently extend the previous chunk.
-    const firstLine = section.body.find((line) => line.trim() !== "");
-    if (!firstLine?.trimEnd().startsWith("@@")) {
-      continue;
-    }
-    if (!adjacent(sections, first, section)) {
-      continue;
-    }
-    first.body.push(...section.body);
-    section.drop = true;
-    count++;
-  }
-  if (count > 0) {
-    notes.push(`${plural(count, "duplicate Update block")} merged`);
-  }
-}
-
 function rebuild(sections: readonly Section[], eol: string): string {
   const rows = ["*** Begin Patch"];
   for (const section of sections) {
@@ -334,7 +265,7 @@ function rebuild(sections: readonly Section[], eol: string): string {
   return rows.join(eol);
 }
 
-export function repairPatch(input: string, options: RepairOptions = {}): RepairResult {
+export function repairPatch(input: string): RepairResult {
   const envelope = unwrapFence(input);
   const eol = envelope.text.includes("\r\n") ? "\r\n" : "\n";
   const sections = scanSections(envelope.text.split(/\r?\n/u));
@@ -349,7 +280,6 @@ export function repairPatch(input: string, options: RepairOptions = {}): RepairR
   repairAddFileLines(sections, notes);
   dropEmptyUpdates(sections, notes);
   normalizeHunks(sections, notes);
-  mergeDuplicateUpdates(sections, notes, options.cwd);
   if (notes.length === 0) {
     return { text: input, notes: [] };
   }
