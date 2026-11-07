@@ -38,19 +38,24 @@ bind -n M-U swap-window -t -1 \; select-window -t -1
 bind -n M-O swap-window -t +1 \; select-window -t +1
 
 # 清理 prefix 冗余切换路径：切换统一走直接键（标签 Alt+u/o，session Alt+Up/Down）。
-# p/n 是 tmux 出厂默认残留（上游未清），P/N 是上游所设的 session 切换。
-# n 后续重新接管新建窗口（与 herdr n/c 双新建同步）。
+# p/P/N 是上游残留（p/n 切窗口、P 切 session）；N 稍后在动词统一段重绑新建 session。
 unbind p
 unbind P
 unbind N
 
-# 标签破坏性级别与 herdr 同步：d 关窗口（小写高频），Shift+d 才 detach；
-# 覆盖上游 d=detach；k 退役（d 接管，与 herdr 一致）；n 重新绑新建。
-# 注意：tmux kill-window 无确认（herdr 侧有 confirm_close 保护）。
+# 动词统一（k 系，与 herdr prefix 层同步）：n 新建窗口、k 关窗口、d detach，
+# 回归 tmux 上游惯例位（d=detach / k=kill-window / K=kill-session）；
+# c 双绑退役（n 单一新建落点）；D 退役（detach 已回 d）。
+# 注意：tmux kill-window 无确认（herdr 0.9.2+ 才有 confirm_close 保护）。
 bind n new-window
-bind d kill-window
-bind D detach
-unbind k
+bind k kill-window
+bind d detach
+unbind c
+unbind D
+
+# session 新建迁移到 N（Shift+N），与 herdr prefix+shift+n 对齐；上游 C 退役
+bind N new-session -c "#{pane_current_path}"
+unbind C
 
 # ===== 标签细节补齐（对齐 zellij 的 t 模式内操作；herdr 缺对应键位动作，已向上游提需求）=====
 

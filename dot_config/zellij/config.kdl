@@ -5,6 +5,7 @@
 // 全局 Alt 快捷键 (locked 模式下也可用):
 //   Alt+h/j/k/l  切换窗格焦点        Alt+Shift+h/j/k/l  移动窗格
 //   Alt+u/o      切换标签 (前/后)     Alt+Shift+u/o      移动标签
+//   Alt+Enter    向下分屏             Alt+Shift+Enter    向右分屏
 //   Alt+i        locked ↔ normal 切换
 //
 // 模式说明与入口 (Vim 风格键位)
@@ -206,6 +207,8 @@ keybinds clear-defaults=true {
         bind "Alt L" { MovePane "right"; }
         bind "Alt U" { MoveTab "left"; }
         bind "Alt O" { MoveTab "right"; }
+        bind "Alt Enter" { NewPane "down"; }
+        bind "Alt Shift Enter" { NewPane "right"; }
     }
     shared_except "locked" "entersearch" {
         bind "enter" { SwitchToMode "locked"; }
