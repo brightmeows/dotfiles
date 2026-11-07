@@ -33,29 +33,7 @@ tags: [pi, extensions, typescript]
 | `models-dev/` | `pi-meow-models-dev` | 模型目录导入 | models.dev 注册表导入，协议感知 + 用户配置，async factory，入口 await；注册按内建重名分流（非重名走原生 createProvider + fetchModels/ModelsStore，重名保留 legacy 合成，即 M2-hybrid 分流）；重名 provider 映射时按 id\|api 合并内建 compat 与档位表（内建优先，见下文）；纯库模块（registry / config / mapping / thinking / custom-models / native）归 `internal/` 子目录；配置 schema 见下文 |
 | `skill-reminders/` | `pi-meow-skill-reminders` | 技能专项提醒注入 | 三通道命中：read/edit/write 通道 `input.path`（tool_result 段尾注入 + details 载标记）、bash/powershell 通道白名单启发式（tool_result 只收集、turn_end 投单条 display:true 条目——codemode 嵌套下拼接会丢，条目保住投递与标记的原子性）、`/skill:<name>` 手动命令（input 事件 transform，先于 Pi 技能展开）；持久去重 subdir-agents-md 同款（details 标记 + 扫库，hash 为权威键同提醒跨文件一次，compact 后可重注）；存在性守卫 requiresPath（技能未安装整条静默跳过，`internal/skill-presence.ts`）；注册表（数据驱动）归 `internal/reminders.ts`，新增提醒只加注册项；bash 提取归 `internal/bash-paths.ts`（自 subdir-agents-md 副本，白名单加纯读取命令）；自 better-skill 拆出 |
 
-注册方式（`settings.meow.json`）：
-
-```json
-"packages": [
-  "npm:@d3ara1n/pi-apply-patch@0.4.2",
-  "npm:pi-web-access",
-  "./ext/aliases",
-  "./ext/ask-user-question",
-  "./ext/editor-input-tweaks",
-  "./ext/esc-hold",
-  "./ext/git-attribution",
-  "./ext/git-hooks",
-  "./ext/inline-context",
-  "./ext/models-dev",
-  "./ext/skill-reminders",
-  "./ext/statusline",
-  "./ext/subdir-agents-md",
-  "./ext/thinking-flow",
-  "./ext/working-status"
-]
-```
-
-权威源是 `settings.meow.json`（npm 包与本地包分组，组内按字母序，npm 组在前）；上方代码块仅为快照，改包后同步。
+注册方式：唯一权威源是 `settings.meow.json` 的 `packages` 数组（npm 包与本地包分组，组内按字母序，npm 组在前），不在此处保留快照副本。
 
 扩展文件必须 `export default function (pi)`，仅命名导出会加载报错。子目录内其他 `.ts` 仅作 import 模块。
 
