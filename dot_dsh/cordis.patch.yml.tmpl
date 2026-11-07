@@ -3,51 +3,14 @@
 # 模型配置不在此层：models-dev 插件在运行时抓取外部目录、叠加
 # ~/.agents_meow/models/models.toml 的用户配置，写入各 profile 的 cordis.patch.yml 生成块。
 # 凭据来自启动环境（如从终端启动，~/.env_self 已加载）。
+#
+# MCP 服务器不在此层（2026-11-07 裁决移除五条 mcp-* 插入：exa、anysearch、
+# context7、cratesio、zai）。替代：context7 文档走 dsh-context7 插件
+# （profile bundle，context7_search / context7_get_docs 原生工具）；搜索与
+# 抓取走 dsh 内置 web_search / web_fetch；crates.io 与视觉按需用 bash 调
+# API 或后补社区插件。Pi 侧 mcp.json 对应条目同步停用。
 
 - insert:
-    - id: mcp-exa
-      name: '@deepseek-ai/dsh-mcp-client'
-      config:
-        serverName: exa
-        transport: streamable-http
-        url: https://mcp.exa.ai/mcp
-        headers:
-          x-api-key: !!js "process.env.EXA_API_KEY || ''"
-
-    - id: mcp-anysearch
-      name: '@deepseek-ai/dsh-mcp-client'
-      config:
-        serverName: anysearch
-        transport: streamable-http
-        url: https://api.anysearch.com/mcp
-        headers:
-          Authorization: !!js "`Bearer ${process.env.ANYSEARCH_API_KEY}`"
-
-    - id: mcp-context7
-      name: '@deepseek-ai/dsh-mcp-client'
-      config:
-        serverName: context7
-        transport: streamable-http
-        url: https://mcp.context7.com/mcp
-
-    - id: mcp-cratesio
-      name: '@deepseek-ai/dsh-mcp-client'
-      config:
-        serverName: cratesio-mcp
-        transport: stdio
-        command: cratesio-mcp
-
-    - id: mcp-zai
-      name: '@deepseek-ai/dsh-mcp-client'
-      config:
-        serverName: zai-mcp-server
-        transport: stdio
-        command: npx
-        args: ['-y', '@z_ai/mcp-server@latest']
-        env:
-          Z_AI_API_KEY: !!js process.env.ZHIPU_API_KEY
-          Z_AI_MODE: ZHIPU
-
     - id: models-dev
       name: '{{ .chezmoi.homeDir }}/.agents_meow/models/plugin.mts'
       config:
