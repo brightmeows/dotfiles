@@ -155,6 +155,20 @@ Codex 上游是逐操作读、改、写的：前面的文件已经落盘，后�
   三类动作——边界 case 修复、文档与提示词契约同步、同步 main 的分支卫生。**行为变更 PR 必须同步 tool.ts 的 promptGuidelines 与 README**，
   否则模型提示词还在教旧约束（#37 初版即漏此两项，由维护者补齐）。
 
+### 0.9.0 收编输入归一化，tweaks 整体移除（2026-11-07）
+
+- 上游 87a0936（0.9.0，2026-11-06）新增 `src/core/normalize.ts` 与 `src/notices.ts`：执行前集中归一化输入，修复事实以
+  “Input repairs” 附到工具结果，成功与失败路径都保留（失败经 PatchApplicationError 携带结构化 notices），
+  另附 warning 类执行通知（overwrite / rematched / repeated-context / normalized-match）。
+- 归一化覆盖 tweaks 全部修复且更强：去围栏（含 heredoc 与 `~~~`）、Add File 补前缀、空 Update 丢弃（有 Move 或显式空 hunk 时仍严格失败）、
+  数字 hunk 头降级（含带尾注变体）、`@@` 补空格；另有 duplicate-end、marker-whitespace、implicit-hunk、blank-context、EOF 尾部归一。
+  fail-open 边界一致：缺 End Patch 不补、不完整 envelope 原样透传、纯加 chunk 不降级。
+- tweaks 包（`dot_pi/agent/ext/apply-patch-tweaks/`）整体删除：修复面全被上游覆盖，双跑只会重复修复并让模型看到两份修复说明。
+  settings.meow.json 移除注册；合并脚本 packages 为并集，部署区 settings.json 条目与 ext/ 孤儿目录须手动清理。
+  历史包袱一并消失：tweaks 的 index.ts 头注释仍写着已退役的“合并重复 Update”（4c8fb42 漏同步，未及修正包已删）。
+- settings.meow.json 的 `npm:@d3ara1n/pi-apply-patch` 现为无版本规格（安装跟随最新，本机 0.9.0），与 0.4.2 时代钉版本的约定不同；
+  上游发版节奏快且未再出现 0.2.0 那类旧安装区陷阱，升级时留意 release commit 即可。
+
 ## 切换与验证
 
 迁移步骤：
