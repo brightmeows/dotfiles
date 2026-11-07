@@ -1,10 +1,5 @@
 # dsh-meow-context-hooks bundle patch: host-only plugin row inserted into the
-# profile roster. Applied as a profile bundle layer (`dsh.bundle.patch` field
-# in package.json); installed via `plugin_manager install_bundle` from the
-# dotfiles source directory.
-#
-# Plugin config (toggles and budgets) can be overridden on this row in the
-# home patch (dot_dsh/cordis.patch.yml.tmpl) or the profile patch layer.
+# profile roster (`dsh.bundle.patch` field in package.json).
 - insert:
     - id: dsh-meow-context-hooks
       name: dsh-meow-context-hooks
