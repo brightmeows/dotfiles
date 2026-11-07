@@ -84,7 +84,7 @@ herdr 本机为 0.9.1（pacman 包），上游已发布 0.9.5：`confirm_close` 
 - **prefix+Tab 同键不同义**：tmux 是最近标签，herdr 是循环窗格——herdr 没有 `last_tab` 动作，键位表保留标注，等上游。
 - **动词体系统一后的迁移注记（2026-11-07）**：关闭标签从 `Alt+i d` 迁至 `Alt+i k`，detach 从 `Shift+D` 回归 `d`（tmux 上游惯例位），新建 space 从 `Shift+C` 迁至 `Shift+N`，窗格重命名从 `Shift+O` 迁至 `Shift+P`；c 双绑退役。
   原“d 关标签 vs 上游 d=detach”的反转差异随之消除。zellij t 模式关 tab 保持 `x`，勿把 prefix 层的 k 按进模式里。
-- **确认行为不对称**：herdr 关 workspace 唯一窗格有确认（`confirm_close = true`，0.9.4+ 保护）；tmux 的 `kill-window` 无确认，`Alt+i d` 在 tmux 是直接杀。
+- **确认行为不对称**：herdr 关 workspace 唯一窗格有确认（`confirm_close = true`，0.9.4+ 保护）；tmux 的 `kill-window` 无确认，`Alt+i k` 在 tmux 是直接杀。
 - **最近标签 / 拆窗格到标签 / 同步输入**三样在 herdr 是产品能力缺口（非配置问题），feature request 见 [herdr#5551](https://github.com/herdrdev/herdr/issues/5551)；上游落地后按本表补 `previous/next_tab` 之外的对应动作。
 - zellij 的 `[` `]` `b` `s` `tab` 是 t 模式内单键；tmux/herdr 无模式制，统一为 prefix 层。tmux 的 `prefix+[` 是 copy-mode 入口（与 zellij 的 copy 入口 `s`/`f` 本就不同），拆窗格到相邻标签让位为 `j`/`J`。
 - 数字直达在 zellij 是 t 模式内裸数字（两拍），tmux/herdr 是 `Alt+数字`（一拍带修饰）——无模式制下的增强，非差异缺陷。
