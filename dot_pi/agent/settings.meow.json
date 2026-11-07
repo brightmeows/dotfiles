@@ -19,6 +19,7 @@
   "packages": [
     "npm:@d3ara1n/pi-apply-patch",
     "npm:@sidshaytay/pi-secret-safe",
+    "npm:pi-goal-moonland",
     "npm:pi-web-access",
     "./ext/aliases",
     "./ext/ask-user-question",
