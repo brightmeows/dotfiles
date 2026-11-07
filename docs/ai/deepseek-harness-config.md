@@ -56,7 +56,7 @@
 | `dsh-patch-edit-plus` | 0.4.6 | Codex 语法 `apply_patch`（pi 编辑形态；需在其设置开 `allowCodexPatch`） | 已从 web profile 移除：0.4.6 的 engines 只到 0.2.1-rc.5，dsh 0.2.2-rc.1 下会被跳过；2026-11-07 复议决定不走版本豁免，维持移除，等上游兼容 |
 | `dsh-block-secret-leaks` | 0.1.0 | pi secret-safe 等价：拦读/打印/上传/提交密钥，工具输出脱敏 | 冒烟通过：`.env` 读取被拦 |
 | `dsh-plugin-codemode` | 0.1.1 | pi codemode 同构：JS 沙箱 `tools.<name>()` 代理全部工具 | 2026-11-07 卸载：默认预设切官方 PTC（`agent-preset-registry` default `ptc`，`run_code` 工具面），卸载连带 quickjs 依赖链；新会话生效 |
-| `dshmarket` | 1.73.10 | GUI 插件市场底座 | 待浏览器确认 |
+| `dshmarket` | 1.73.10 | GUI 插件市场底座 | 2026-11-07 卸载：个性化功能（收藏/分组/主题）零使用，浏览安装由官方 `plugin_market` 接管；boot 修复场景手改 profile patch 同效 |
 | `dsh-context7` | 0.2.0 | context7 文档原生工具（替代已移除的 mcp-context7） | web 已装，重启后 `context7_search` / `context7_get_docs` 已挂载 |
 | `dsh-meow-context-hooks` | 0.1.0 | 自写插件：Pi 两扩展复刻（git 快照、子目录 AGENTS.md 注入），源码在 `dot_dsh/plugins/`（chezmoi 不部署，install_bundle 从仓库路径装） | web 已装并挂载；git hooks 检测钩子随 2026-11-07 精简裁决移除 |
 | `@deepseek-ai/dsh-experimental-plugin-market-bundle` | 0.2.2-rc.1 | 官方 Discover 标签 + `plugin_market` agent 工具；索引源已在 profile patch 配置（awesome-dsh-plugin 目录的 jsdelivr format-1 副本） | web 已装，重启后 `plugin_market` 已挂载 |
