@@ -1,14 +1,6 @@
 # DeepSeek Harness home 级 patch（部署为 $DSH_HOME/cordis.patch.yml），对全部 profile 生效。
-# 源文件：dot_dsh/cordis.patch.yml.tmpl。
-# 模型配置不在此层：models-dev 插件在运行时抓取外部目录、叠加
-# ~/.agents_meow/models/models.toml 的用户配置，写入各 profile 的 cordis.patch.yml 生成块。
-# 凭据来自启动环境（如从终端启动，~/.env_self 已加载）。
-#
-# MCP 服务器不在此层（2026-11-07 裁决移除五条 mcp-* 插入：exa、anysearch、
-# context7、cratesio、zai）。替代：context7 文档走 dsh-context7 插件
-# （profile bundle，context7_search / context7_get_docs 原生工具）；搜索与
-# 抓取走 dsh 内置 web_search / web_fetch；crates.io 与视觉按需用 bash 调
-# API 或后补社区插件。Pi 侧 mcp.json 对应条目同步停用。
+# 源文件：dot_dsh/cordis.patch.yml.tmpl。裁决与登记记录见 docs/ai/deepseek-harness-config.md
+# （含 2026-11-07 的五条 MCP 移除结论）；凭据来自启动环境。
 
 - insert:
     - id: models-dev

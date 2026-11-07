@@ -55,18 +55,17 @@
 |---|---|---|---|
 | `dsh-patch-edit-plus` | 0.4.6 | Codex 语法 `apply_patch`（pi 编辑形态；需在其设置开 `allowCodexPatch`） | 已从 web profile 移除：0.4.6 的 engines 只到 0.2.1-rc.5，dsh 0.2.2-rc.1 下会被跳过；2026-11-07 复议决定不走版本豁免，维持移除，等上游兼容 |
 | `dsh-block-secret-leaks` | 0.1.0 | pi secret-safe 等价：拦读/打印/上传/提交密钥，工具输出脱敏 | 冒烟通过：`.env` 读取被拦 |
-| `dsh-plugin-codemode` | 0.1.1 | pi codemode 同构：JS 沙箱 `tools.<name>()` 代理全部工具 | headless 下 pending（依赖 web 形态 connection 服务）；web 待浏览器确认 |
+| `dsh-plugin-codemode` | 0.1.1 | pi codemode 同构：JS 沙箱 `tools.<name>()` 代理全部工具 | 2026-11-07 卸载：默认预设切官方 PTC（`agent-preset-registry` default `ptc`，`run_code` 工具面），卸载连带 quickjs 依赖链；新会话生效 |
 | `dshmarket` | 1.73.10 | GUI 插件市场底座 | 待浏览器确认 |
-| `dsh-context7` | 0.2.0 | context7 文档原生工具（替代已移除的 mcp-context7） | web + headless 已装，重启后验证 |
-| `dsh-meow-context-hooks` | 0.1.0 | 自写插件：Pi 三扩展复刻（git 快照、git hooks 检测、子目录 AGENTS.md 注入），源码在 `dot_dsh/plugins/`（chezmoi 不部署，install_bundle 从仓库路径装） | web + headless 已装，重启后验证 |
-| `@deepseek-ai/dsh-experimental-plugin-market-bundle` | 0.2.2-rc.1 | 官方 Discover 标签 + `plugin_market` agent 工具；索引源已在两 profile patch 配置（awesome-dsh-plugin 目录的 jsdelivr format-1 副本） | web + headless 已装，重启后验证 |
+| `dsh-context7` | 0.2.0 | context7 文档原生工具（替代已移除的 mcp-context7） | web 已装，重启后 `context7_search` / `context7_get_docs` 已挂载 |
+| `dsh-meow-context-hooks` | 0.1.0 | 自写插件：Pi 两扩展复刻（git 快照、子目录 AGENTS.md 注入），源码在 `dot_dsh/plugins/`（chezmoi 不部署，install_bundle 从仓库路径装） | web 已装并挂载；git hooks 检测钩子随 2026-11-07 精简裁决移除 |
+| `@deepseek-ai/dsh-experimental-plugin-market-bundle` | 0.2.2-rc.1 | 官方 Discover 标签 + `plugin_market` agent 工具；索引源已在 profile patch 配置（awesome-dsh-plugin 目录的 jsdelivr format-1 副本） | web 已装，重启后 `plugin_market` 已挂载 |
 
-社区 `@creait/dsh-hookkit`（Pi 上下文注入的现成底座候选）peer 锁 0.1.x 且两月未更新，0.2.x 下不豁免，改自写 `dsh-meow-context-hooks`；其 v1 边界（bash 路径启发式、跨 resume 扫库去重）见插件 README。
-
-配套：官方 Code mode（PTC 预设）天然兜底 codemode；`apply_patch` 为主的编辑优先级以工程准则指令落地
-（三家同源，见 `dot_agents_meow/AGENTS.md` 的“编辑以补丁为主”）。dsh 0.2.2-rc.1 下
-`dsh-patch-edit-plus` 暂不可用，编辑回到原生 `edit`；这不改变 pi/opencode 的补丁优先级。
-dsh 可选插件加载失败是静默的，状态以浏览器插件面板与功能冒烟为准。
+2026-11-07 精简裁决：headless profile 整体退役（从不跑一次性 CLI 任务），插件只维护 web 一份；
+如需重建用 `dsh plugin --profile headless add <pkg>`。配套：官方 Code mode（PTC 预设）已设为默认，
+`apply_patch` 为主的编辑优先级以工程准则指令落地（三家同源，见 `dot_agents_meow/AGENTS.md`
+的“编辑以补丁为主”）。dsh 0.2.2-rc.1 下 `dsh-patch-edit-plus` 暂不可用，编辑回到原生 `edit`；
+这不改变 pi/opencode 的补丁优先级。dsh 可选插件加载失败是静默的，状态以浏览器插件面板与功能冒烟为准。
 
 `dsh-block-secret-leaks` 的默认拦截名单仅 `.env` 系文件，`.credentials.yaml` 不在名单内，配置可扩。
 
