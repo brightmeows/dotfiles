@@ -19,7 +19,6 @@ tags: [pi, extensions, typescript]
 | 路径 | 包名 | 角色 | 要点 |
 |------|------|------|------|
 | `aliases/` | `pi-meow-aliases` | 斜杠命令别名 | /clear → /new、/exit → /quit |
-| `apply-patch-tweaks/` | `pi-meow-apply-patch-tweaks` | apply_patch 本地输入修复 | 执行层为 npm:@d3ara1n/pi-apply-patch（0.4.2 起，提示词与执行由上游持有）；本包只做 `tool_call` 输入修复（Add File 缺 `+`、围栏、数字 hunk 头、重复/空 Update），`tool_result` 回注说明；不做上下文模糊匹配，fail open；单测随 `pnpm test` |
 | `ask-user-question/` | `pi-meow-ask-user-question` | 结构化问卷工具（vendor） | 自 @juicesharp/rpiv-ask-user-question@2.15.0 vendored、冻结不跟上游，见 [docs/ai/pi-ask-user-question-limits.md](../../../docs/ai/pi-ask-user-question-limits.md)；题数上限已移除（常量/schema/校验/提示词四处全删）；本地补丁：TabBar 多题开窗、reconcile 只剥离（#149）、提示词硬限制（#309）、勾选符号改用 U+2713（U+2714 无字体回退，kitty 下空白）；rpiv-config 内联 internal/、i18n 为 optional peer 运行时软加载；pi 三包与 typebox 精确锁，`pnpm check:pi` 在 pre-commit 硬门禁；单测随 `pnpm test`；包名与入口保持本仓惯例；上游排版已由 oxfmt 统一为 2 空格，语义差异见 `index.ts` 头注释——oxlint 冲突规则包级豁免见 `.oxlintrc.json` overrides |
 | `esc-hold/` | `pi-meow-esc-hold` | Esc 防误触 | 单击提示不中断，双击/长按才放行；terminal 输入层；以 `ctx.isIdle()` 分运行/空闲，运行中再用 `ui_prompt_start/end` 分 run/prompt：run 提示中断，prompt 提示取消对话框，prompt 双击交对话框原生取消；空闲全放行 |
 | `git-attribution/` | `pi-meow-git-attribution` | 提交署名 | 覆盖 bash/powershell，`spawnHook` 追加 `GIT_CONFIG_COUNT` 指向临时 `prepare-commit-msg`；只对 agent shell 提交加 `Co-Authored-By: 白小喵 <noreply@pi.dev>` 与 `Generated-By: pi <版本> (<模型> @ <provider>, reasoning=<档位>)`；`~/.pi/agent/git-attribution.json` 与仓库 `.pi/git-attribution.json` 字段级覆盖 co-author 身份；先跑仓库原 hook（失败仍中止），再跳过 merge/squash、按配置邮箱清理旧 agent 署名并追加；`PI_GIT_ATTRIBUTION=0` 与 `git config --local pi.attribution false` 退出；失败放行告警；临时目录 session_shutdown 清理 |
@@ -41,7 +40,6 @@ tags: [pi, extensions, typescript]
   "npm:@d3ara1n/pi-apply-patch@0.4.2",
   "npm:pi-web-access",
   "./ext/aliases",
-  "./ext/apply-patch-tweaks",
   "./ext/ask-user-question",
   "./ext/editor-input-tweaks",
   "./ext/esc-hold",
