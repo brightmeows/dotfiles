@@ -65,6 +65,7 @@ profile patch 生成块）已于 2026-11-08 整体退役：zhipu 等目录 provi
 | `dshmarket` | 1.73.10 | GUI 插件市场底座 | 2026-11-07 卸载：个性化功能（收藏/分组/主题）零使用，浏览安装由官方 `plugin_market` 接管 |
 | `dsh-context7` | 0.2.0 | context7 文档原生工具（替代已移除的 mcp-context7） | web 已装，重启后 `context7_search` / `context7_get_docs` 已挂载 |
 | `dsh-meow-context-hooks` | 0.1.0 | 自写插件：Pi 两扩展复刻（git 快照、子目录 AGENTS.md 注入），源码在 `dot_dsh/plugins/`（chezmoi 不部署，install_bundle 从仓库路径装） | web 已装并挂载；git hooks 检测钩子随 2026-11-07 精简裁决移除 |
+| `dsh-zen-remote` | 2.3.11 | 手机 PWA 推送与远程访问（lan-gate 推送通道，`push_notify` 工具面） | 2026-11-08 装（web），lan-gate-server 进程常驻；运行时状态在 `~/.dsh/zen-remote-server.json`（serverId）与 `~/.dsh/lan-gate-state.json`（VAPID 密钥与推送订阅） |
 | `@deepseek-ai/dsh-experimental-plugin-market-bundle` | 0.2.2-rc.1 | 官方 Discover 标签 + `plugin_market` agent 工具 | web 已装，重启后 `plugin_market` 已挂载 |
 
 2026-11-07 精简裁决：headless profile 整体退役（从不跑一次性 CLI 任务），插件只维护 web 一份；
