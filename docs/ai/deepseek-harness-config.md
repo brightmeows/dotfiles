@@ -18,7 +18,7 @@
 |---|---|---|
 | 用户级指令 | `~/.dsh/AGENTS.md` | 首请求注入；项目链 `AGENTS.md`/`CLAUDE.md` 由 dsh 自动从 `.git` 根叠到 cwd |
 | 插件配置 | `~/.dsh/profiles/<name>/cordis.patch.yml`（profile 级） | 插件清单在 profile 的 package.json；patch 里只留 GUI 运行时状态键，GUI 改动直接写回本文件 |
-| 凭据 | `~/.dsh/.credentials.yaml` | GUI 写入、权限 600；本仓库不改动，凭据以启动环境为主 |
+| 凭据 | `~/.dsh/.credentials.yaml` | GUI 写入、权限 600；本仓库不改动；现含 deepseek 账号登录与浏览器会话记录，API key 类仍以启动环境为主 |
 | 技能 | `~/.dsh/skills`、`~/.agents/skills`、项目内 `.dsh/skills` 与 `.agents/skills` | dsh 默认扫描这些根；`~/.agents/skills` 由 npx skills 维护 |
 | 运行时状态 | `~/.dsh/sessions`、`~/.dsh/storages` 等 | 不入仓库 |
 
@@ -35,11 +35,17 @@ home 级 patch（`~/.dsh/cordis.patch.yml`）已于 2026-11-08 经盘问裁决�
 
 ## 模型配置
 
-dsh 使用内建模型通道（原生 deepseek，认证靠 `DEEPSEEK_API_KEY`，
-由终端启动路径的 `~/.env_self` 供应；`~/.dsh/.credentials.yaml` 无已存登录）。
-models-dev 插件体系（models.dev 目录抓取、`~/.agents_meow/models` 插件家族、
-profile patch 生成块）已于 2026-11-08 整体退役：zhipu 等目录 provider 不再可用，
-`/models-refresh` 命令消失。流水线历史与 pi 侧现状见 [model-config-pipeline.md](model-config-pipeline.md)。
+dsh 使用内建模型通道：llm 层复用 pi-ai 1.5.0 的 provider 注册表
+（`@earendil-works/pi-ai/dist/providers/data/`），含 `zai-coding-cn`
+（`ZAI_CODING_CN_API_KEY` 认证）与原生 deepseek（支持 GUI 账号登录，
+凭据落 `~/.dsh/.credentials.yaml` 的 `deepseek-account-platform` 记录）。
+2026-11-08 重启后 GUI 已写回默认模型 `zai-coding-cn/glm-5.3-flash`
+（effort max）到 profile patch——该行与 `llm-pi-ai` 的空 provider 覆盖
+同属 GUI 运行时状态。
+models-dev 插件体系（models.dev 目录抓取、`~/.agents_meow/models`
+插件家族、profile patch 生成块）已于同日整体退役：`/models-refresh`
+命令消失，目录 provider（models.dev 收录的数千模型）不再出现在选择器。
+流水线历史与 pi 侧现状见 [model-config-pipeline.md](model-config-pipeline.md)。
 
 ## 技能与 MCP
 
@@ -86,7 +92,7 @@ dsh 0.2.2-rc.1 下 `dsh-patch-edit-plus` 暂不可用，编辑回到原生 `edit
   当前实例从 kitty 里的 nushell 启动。pi 终端会话的 key 由 `~/.env_self` 供应，不受影响。
   加载路径总览见 [env-loading.md](../dev/env-loading.md)。
 - 沙箱：读取不受限；`workspace-write` 模式可写会话工作区、`/tmp` 与 `os.tmpdir()`；越界写会被拒并触发审批升级。`~/.agents_tmp` 不在可写范围。
-- 默认模型：dsh 内建默认（原生 deepseek）；原 home patch 的 zhipu glm-5.3-flash override 已随 2026-11-08 退役废除，GUI 手改会写回 profile patch。
+- 默认模型：当前为 GUI 写回的 `zai-coding-cn/glm-5.3-flash`（effort max）；models-dev 时代的 home patch override 已随 2026-11-08 退役废除，GUI 手改随时覆盖。
 
 ## 验证方法
 
@@ -97,7 +103,7 @@ dsh --profile web --dump-config                     # 组合校验：patch 可�
 dsh web --no-open --port 3081                       # 冷启动校验（验证后关闭）
 ```
 
-浏览器内确认：技能目录含 grilling 与 lark 系技能；内建 deepseek 模型可选。
+浏览器内确认：技能目录含 grilling 与 lark 系技能；内建模型（zai-coding-cn、deepseek）可选。
 
 ## 非目标与已知差异
 
