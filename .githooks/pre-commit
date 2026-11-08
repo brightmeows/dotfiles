@@ -53,14 +53,6 @@ if ((${#md_files[@]} > 0)); then
   fi
 fi
 
-# 模型域：models.toml、生成器或生成物被暂存时校验仓库产物一致性
-if git -c core.quotepath=off diff --cached --name-only --diff-filter=ACM -- \
-  dot_agents_meow/models/models.toml dot_agents_meow/models/gen-models.py \
-  dot_pi/agent/models.json dot_pi/agent/models-dev.json | grep -q .; then
-  echo "check: Pi 模型生成物与 models.toml 一致"
-  python3 dot_agents_meow/models/gen-models.py --check
-fi
-
 # clash-meta 域：覆写壳模板、片段、地区数据、生成器或生成物被暂存时校验仓库产物一致性
 if git -c core.quotepath=off diff --cached --name-only --diff-filter=ACM -- \
   dot_config/clash-meta/party-override.yaml.tmpl dot_config/clash-meta/gen-party-override.sh \
@@ -72,7 +64,7 @@ fi
 
 # 单测：扩展与模型域代码、依赖变更时运行
 if git -c core.quotepath=off diff --cached --name-only --diff-filter=ACM -- \
-  dot_pi/agent/ext dot_agents_meow/models package.json pnpm-lock.yaml | grep -q .; then
+  dot_pi/agent/ext package.json pnpm-lock.yaml | grep -q .; then
   echo "test: 扩展与模型域单测"
   pnpm test
 fi

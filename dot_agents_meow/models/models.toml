@@ -1,6 +1,0 @@
-# 这是模型配置的唯一编辑入口，规则与字段见同目录 AGENTS.md。
-# models.dev 同名 provider 的条目表示覆盖外部数据；未收录者表示完整定义。
-
-disabled_providers = ["openrouter", "opencode"]
-
-[providers]

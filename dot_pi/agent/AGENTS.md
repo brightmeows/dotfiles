@@ -1,21 +1,21 @@
 ---
-description: Pi agent 配置目录的维护约定（模型配置已迁至模型域）
+description: Pi agent 配置目录的维护约定
 tags: [pi, mcp, settings]
 ---
 
 # Pi agent 配置（面向代理）
 
-本目录管理 Pi 的配置源：`settings.meow.json`（合并部署）、`mcp.json`（Pi 内建 MCP server 清单）、`secret-safe.json`（`pi-secret-safe` 扩展配置）、`models.json` 与 `models-dev.json`（模型配置生成物，随仓库提交）、`ext/`（扩展代码）。
+本目录管理 Pi 的配置源：`settings.meow.json`（合并部署）、`mcp.json`（Pi 内建 MCP server 清单）、`secret-safe.json`（`pi-secret-safe` 扩展配置）、`models.json` 与 `models-dev.json`（模型配置，随仓库提交）、`ext/`（扩展代码）。
 部署与合并机制见仓库根 [AGENTS.md](../../AGENTS.md) 的“自动同步机制”；扩展代码的约定见 [ext/AGENTS.md](./ext/AGENTS.md)。根文件的通用约定（chezmoi 默认源目录、提交规范、中文引号）此处不重复。
 
-## 模型配置已迁出
+## 模型配置
 
-`models.json`（Pi 原生自定义模型）与 `models-dev.json`（models.dev 编辑配置）现在是生成物：
+`models.json`（Pi 原生自定义模型）与 `models-dev.json`（models-dev 扩展编辑配置）是手编文件：
 
-- 唯一编辑入口是 [`dot_agents_meow/models/models.toml`](../../dot_agents_meow/models/models.toml)，字段与规则见 [dot_agents_meow/models/AGENTS.md](../../dot_agents_meow/models/AGENTS.md)。
-- 生成命令：`python3 dot_agents_meow/models/gen-models.py`；校验：`--check`（pre-commit 在相关文件变更时自动运行）。
-- `apply` 时由 `.chezmoiscripts/run_onchange_after_gen-pi-models.sh.tmpl` 把同一结果同步到 `~/.pi/agent`（Linux 与有 python3 的机器）；Windows 使用仓库中已提交的生成物。
-- 不要再手工编辑本目录的 `models.json` 与 `models-dev.json`；models.dev 的目录数据由扩展在运行时获取，不落仓库。
+- 直接编辑本目录两份 JSON，手改后 `chezmoi apply` 部署到 `~/.pi/agent`。
+- `models.json` 解析时支持 `//` 行注释与尾逗号（不支持 `/* */`）；`models-dev.json` 严格 JSON，schema 见 [ext/AGENTS.md](./ext/AGENTS.md) 的 models-dev 用户配置节。
+- models.dev 的目录数据由扩展在运行时获取（24 小时缓存），不落仓库。
+- 原 TOML 单一源生成流水线已于 2026-11-08 退役（6 行 TOML 养 436 行生成器，收益比不成立），恢复方法与退役记录见 [docs/ai/model-config-pipeline.md](../../docs/ai/model-config-pipeline.md)。
 
 ## 其它文件
 
@@ -23,7 +23,7 @@ tags: [pi, mcp, settings]
 |---|---|---|---|
 | `settings.meow.json` | Pi 设置源 | 严格 JSON；合并脚本用 `jq`，注释与尾逗号都会解析失败 | 手改后 `chezmoi apply`，合并脚本写入 `~/.pi/agent/settings.json` |
 | `mcp.json` | Pi 内建 MCP server 清单 | 严格 JSON | 手改后 apply；字段与旧适配器字段的对照见下方注记 |
-| `models.json`、`models-dev.json` | 模型生成物 | `models.json` 解析时支持 `//` 行注释与尾逗号（不支持 `/* */`）；`models-dev.json` 严格 JSON | 见上文，勿手改 |
+| `models.json`、`models-dev.json` | 模型配置 | `models.json` 解析时支持 `//` 行注释与尾逗号（不支持 `/* */`）；`models-dev.json` 严格 JSON | 手改后 `chezmoi apply`；解析差异见上文 |
 | `secret-safe.json` | `pi-secret-safe` 扩展配置：`mode`（`redact`/`strict`/`off`）、`scanEnv`、`exportToShell`、`minValueLength`、`dotenvFiles`（含 `.dev.vars`） | 严格 JSON；扩展用 `JSON.parse`，不支持 JSONC/TOML | 手改后 `chezmoi apply` 部署到 `~/.pi/agent/secret-safe.json`；改键值或轮换密钥后 `/secret-safe rescan` |
 | `ext/` | Pi 扩展包 | TypeScript；Pi 用 jiti 运行时加载 | 见 [ext/AGENTS.md](./ext/AGENTS.md) |
 | `themes/` | Pi 主题 JSON，部署到 `~/.pi/agent/themes/`（Pi 用户主题目录，自动加载、热重载） | JSON；字段受 Pi 主题 schema 校验 | 字段以 Pi 主题 schema 为准（`colors` 拒绝未知角色，多余字段启动时报 Theme conflicts）；新文件用 Pi 自带校验器验证：`validateThemeJson`（`/usr/lib/node_modules/pi/packages/coding-agent/dist/modes/interactive/theme/theme-schema.js`） |

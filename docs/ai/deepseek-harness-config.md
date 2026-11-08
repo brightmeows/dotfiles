@@ -98,7 +98,6 @@ dsh 0.2.2-rc.1 下 `dsh-patch-edit-plus` 暂不可用，编辑回到原生 `edit
 
 ```bash
 chezmoi diff                                        # 预览部署差异
-python3 dot_agents_meow/models/gen-models.py --check     # 模型域产物与 TOML 一致（pi 侧）
 dsh --profile web --dump-config                     # 组合校验：patch 可加载、模型路由存在
 dsh web --no-open --port 3081                       # 冷启动校验（验证后关闭）
 ```
