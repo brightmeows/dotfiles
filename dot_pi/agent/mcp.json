@@ -19,11 +19,14 @@
     },
     "cratesio-mcp": {
       "command": "cratesio-mcp",
+      "enabled": false,
       "exposure": "codemode"
     },
     "paper-search-mcp": {
+      "description": "Search academic papers via arXiv, PubMed, bioRxiv and other sources",
       "command": "uvx",
       "args": ["git+https://github.com/openags/paper-search-mcp.git"],
+      "enabled": false,
       "exposure": "codemode"
     }
   }
