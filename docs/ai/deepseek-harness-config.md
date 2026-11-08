@@ -23,6 +23,7 @@
 | 运行时状态 | `~/.dsh/sessions`、`~/.dsh/storages` 等 | 不入仓库 |
 
 home 级 patch（`~/.dsh/cordis.patch.yml`）已于 2026-11-08 经盘问裁决整体退役：models-dev 插件挂载行与四条偏好 override（默认模型、PTC 预设、市场索引源、block-secret-leaks 密钥名单补齐）一并废除，仓库不再托管 patch（模板 `dot_dsh/cordis.patch.yml.tmpl` 已删除）。
+2026-11-08 晚 profile patch 新增 `ui-chat` 状态键（`collapseTiming: next-input`、`transcriptView: standard`）：过程组完成后保持展开、下一轮输入才折叠，过程展示停在标准档；该键本应由 GUI 设置写回，本次随主题降对比盘问以 override 行手写落键。
 
 ## 仓库托管结构
 
@@ -80,6 +81,7 @@ models-dev 插件体系（models.dev 目录抓取、`~/.agents_meow/models`
 | `dsh-zen-remote` | 2.3.11 | 手机 PWA 推送与远程访问（lan-gate 推送通道，`push_notify` 工具面） | 2026-11-08 装（web），lan-gate-server 进程常驻；运行时状态在 `~/.dsh/zen-remote-server.json`（serverId）与 `~/.dsh/lan-gate-state.json`（VAPID 密钥与推送订阅） |
 | `@deepseek-ai/dsh-experimental-plugin-market-bundle` | 0.2.2-rc.1 | 官方 Discover 标签 + `plugin_market` agent 工具 | web 已装，重启后 `plugin_market` 已挂载 |
 | `dsh-free-search` | 0.9.34 | pi-web-access 等价：注册进 ctx.web 的多引擎搜索 provider（27 引擎回退链、keyless 档、多 key 轮换），附 `advanced_search` / `multi_search` / `platform_search` / `domain_search`（41 垂直源）/ `video_search` / `research` 等工具面 | 2026-11-08 装（web），热应用生效：九件工具挂载，`web_search` 与官方 provider 共存正常；`free_search_test` 定向实测 exa/anysearch/tavily/tinyfish 四把 `~/.env_self` key 全 OK，bing OK，ddg 触发 bot-wall 冷却（声明行为）；registry 按供应链策略解析 0.9.34（npm 当日最新 0.9.38），pnpm peers 有 WARN 不阻加载 |
+| `dsh-soft-palette` | 1.0.0 | 自写 client 插件：`ThemeRuntime.overrideTokens` 常驻低对比调色层，深色正文约 18:1 降到约 9:1（正文 `#bcc3cd`、底色 `#1e2126`），浅色只降正文一档；覆盖正文、次要文字、底色、两层面板、两级边框七枚 alias token，品牌色与状态色不动；卸载即恢复内建色板 | 2026-11-08 装（web），源码在 `private_dot_dsh/plugins/dsh-soft-palette/`（chezmoi 不部署，install_bundle 从仓库路径装）；`application: applied` 零告警，组合树含 `soft-palette` 行，视觉验收待用户刷新实况 |
 
 2026-11-07 精简裁决：headless profile 整体退役（从不跑一次性 CLI 任务），插件只维护 web 一份；
 如需重建用 `dsh plugin --profile headless add <pkg>`。

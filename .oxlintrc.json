@@ -96,6 +96,12 @@
       }
     },
     {
+      "files": ["private_dot_dsh/plugins/**"],
+      "rules": {
+        "no-underscore-dangle": "off"
+      }
+    },
+    {
       "files": ["dot_pi/agent/ext/apply-patch/**"],
       "rules": {
         "complexity": ["deny", 57],
