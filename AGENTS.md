@@ -22,7 +22,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | `chezmoi status` / `chezmoi diff` | 检视变更 / 预览差异 |
 | `chezmoi apply` | 应用至 `$HOME` |
 | `chezmoi add <path>` | 纳新文件入 chezmoi 管理 |
-| `python3 dot_agents_meow/models/gen-models.py` | 生成 Pi 模型 JSON 与 dsh resolved.json（`--check` 校验） |
+| `python3 dot_agents_meow/models/gen-models.py` | 生成 Pi 模型 JSON（`--check` 校验） |
 | `pnpm check` | Pi 运行时漂移检查 + `tsc --noEmit`（最小验证 gate） |
 | `pnpm test` | 模型域与扩展单测（`node:test`） |
 
@@ -34,15 +34,15 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 |---------|--------|---------|---------|
 | Git config | `dot_gitconfig.meow` | `~/.gitconfig` | .meow 覆盖同名键，保留 local-only 键 |
 | Pi settings | `dot_pi/agent/settings.meow.json` | `~/.pi/agent/settings.json` | .meow 覆盖同名键，packages 数组并集合并（去重排序；meow 源删除不传导，删包后须手动从 settings.json 移除），Pi 管理键保留 |
-| 模型配置 | `dot_agents_meow/models/models.toml` | `dot_pi/agent/models*.json`（生成物，随仓库提交）与 `~/.agents_meow/models/resolved.json`（本机） | `gen-models.py` 从 TOML 生成，pre-commit 用 `--check` 校验仓库产物；apply 后脚本同步到 `~/.pi/agent`。规则见 [dot_agents_meow/models/AGENTS.md](dot_agents_meow/models/AGENTS.md) |
+| 模型配置 | `dot_agents_meow/models/models.toml` | `dot_pi/agent/models*.json`（生成物，随仓库提交） | `gen-models.py` 从 TOML 生成，pre-commit 用 `--check` 校验仓库产物；apply 后脚本同步到 `~/.pi/agent`。规则见 [dot_agents_meow/models/AGENTS.md](dot_agents_meow/models/AGENTS.md) |
 | Environment.d | `dot_env_common` | `~/.config/environment.d/50-meow.conf` | awk 翻译 `+=`/`<=` 为 environment.d 守卫语法 |
 | Omarchy 工作区组件 | `dot_config/omarchy/plugins/brightmeows.workspaces/manifest.json` | `~/.config/omarchy/shell.json` | 仅替换 `bar.layout` 组件 id（脚本每次 apply 运行）；幂等、尊重手动删除；shell.json 不入 chezmoi 管理（Omarchy CLI 与升级迁移会就地改写） |
 | Omarchy 活动窗口组件 | `dot_config/omarchy/plugins/brightmeows.active-window/`（脚本每次 apply 运行） | `~/.config/omarchy/shell.json` | 缺条目则插到中区最左，已存在则原地不动；`omarchy refresh shell` 重置后一次 apply 恢复 |
 
 ## DeepSeek Harness 配置
 
-- dsh 用户级配置由本仓库托管（`dot_dsh/` → `~/.dsh`），托管表格与迁移细节见 [docs/ai/deepseek-harness-config.md](docs/ai/deepseek-harness-config.md)。
-- 模型配置唯一编辑入口是 `dot_agents_meow/models/models.toml`，流水线见 [docs/ai/model-config-pipeline.md](docs/ai/model-config-pipeline.md)。
+- dsh 用户级指令由本仓库托管（`dot_dsh/AGENTS.md.tmpl` → `~/.dsh/AGENTS.md`）；cordis patch 已于 2026-11-08 退役不再托管，插件与模型通道现状见 [docs/ai/deepseek-harness-config.md](docs/ai/deepseek-harness-config.md)。
+- 模型配置唯一编辑入口是 `dot_agents_meow/models/models.toml`（pi 消费），流水线见 [docs/ai/model-config-pipeline.md](docs/ai/model-config-pipeline.md)。
 - `settings.yaml` 与 `.credentials.yaml` 由 dsh 运行时持有，不入仓库。
 
 ## 环境变量配置
@@ -85,7 +85,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 ### ai/（AI 工具链与模型配置）
 
 | [`docs/ai/deepseek-harness-config.md`](docs/ai/deepseek-harness-config.md) | DeepSeek Harness 配置托管、技能与 MCP 迁移、凭据与沙箱差异 |
-| [`docs/ai/model-config-pipeline.md`](docs/ai/model-config-pipeline.md) | 模型配置流水线：TOML 单一源、双消费者生成物、models.dev 刷新与映射规则 |
+| [`docs/ai/model-config-pipeline.md`](docs/ai/model-config-pipeline.md) | 模型配置流水线：TOML 单一源、pi 侧生成物、models.dev 刷新与 dsh 消费面退役记录 |
 | [`docs/ai/pi-ask-user-question-limits.md`](docs/ai/pi-ask-user-question-limits.md) | Pi ask_user_question vendor 化、题数上限移除、依赖锁与漂移门禁 |
 | [`docs/ai/pi-apply-patch-failure-modes.md`](docs/ai/pi-apply-patch-failure-modes.md) | apply_patch 失败率实测、Codex 格式约束、本地修复层与上游贡献状态 |
 | [`docs/ai/agents-meow-workflow-skills-boundary.md`](docs/ai/agents-meow-workflow-skills-boundary.md) | agents_meow 与 workflow-skills 的边界、事实源收口、技能清单校验与迁移方案 |
