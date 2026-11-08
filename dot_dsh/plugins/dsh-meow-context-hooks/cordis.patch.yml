@@ -1,6 +1,0 @@
-# dsh-meow-context-hooks bundle patch: host-only plugin row inserted into the
-# profile roster (`dsh.bundle.patch` field in package.json).
-- insert:
-    - id: dsh-meow-context-hooks
-      name: dsh-meow-context-hooks
-      config: {}

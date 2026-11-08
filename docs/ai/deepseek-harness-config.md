@@ -29,9 +29,10 @@ home 级 patch（`~/.dsh/cordis.patch.yml`）已于 2026-11-08 经盘问裁决�
 | 源文件 | 目标 | 说明 |
 |---|---|---|
 | `dot_dsh/AGENTS.md.tmpl` | `~/.dsh/AGENTS.md` | 渲染 `dot_agents_meow/AGENTS.md`（工程准则），与 Pi/opencode 同源；只收工程准则，不含人设 |
-| `dot_dsh/plugins/dsh-meow-context-hooks/` | 以 `link:` 装入 web profile | 自写插件源码，chezmoi 不部署目标文件 |
 
-模型域插件（`~/.agents_meow/models/plugin.mts` 家族）已随 models-dev 退役（2026-11-08）删除；`.credentials.yaml` 由 dsh 持有，不入仓库。
+模型域插件（`~/.agents_meow/models/plugin.mts` 家族）已随 models-dev 退役（2026-11-08）删除；
+自写插件 dsh-meow-context-hooks 同日经盘问裁决退役删除（双端复刻的维护认知负担大于增量价值，
+dsh 丢 git 快照与子目录 AGENTS.md 注入，pi 侧两扩展保留）；`.credentials.yaml` 由 dsh 持有，不入仓库。
 
 ## 模型配置
 
@@ -70,7 +71,7 @@ models-dev 插件体系（models.dev 目录抓取、`~/.agents_meow/models`
 | `dsh-plugin-codemode` | 0.1.1 | pi codemode 同构：JS 沙箱 `tools.<name>()` 代理全部工具 | 2026-11-07 卸载：默认预设切官方 PTC（`run_code` 工具面），卸载连带 quickjs 依赖链；该 override 已随 home patch 退役失效，预设回 dsh 内建默认（2026-11-08） |
 | `dshmarket` | 1.73.10 | GUI 插件市场底座 | 2026-11-07 卸载：个性化功能（收藏/分组/主题）零使用，浏览安装由官方 `plugin_market` 接管 |
 | `dsh-context7` | 0.2.0 | context7 文档原生工具（替代已移除的 mcp-context7） | web 已装，重启后 `context7_search` / `context7_get_docs` 已挂载 |
-| `dsh-meow-context-hooks` | 0.1.0 | 自写插件：Pi 两扩展复刻（git 快照、子目录 AGENTS.md 注入），源码在 `dot_dsh/plugins/`（chezmoi 不部署，install_bundle 从仓库路径装） | web 已装并挂载；git hooks 检测钩子随 2026-11-07 精简裁决移除 |
+| `dsh-meow-context-hooks` | 0.1.0 | 自写插件：Pi 两扩展复刻（git 快照、子目录 AGENTS.md 注入），源码在 `dot_dsh/plugins/`（chezmoi 不部署，install_bundle 从仓库路径装） | 2026-11-08 卸载退役：双端复刻维护负担大于增量价值，pi 侧扩展保留；恢复从 git 历史找回源码重装 |
 | `dsh-zen-remote` | 2.3.11 | 手机 PWA 推送与远程访问（lan-gate 推送通道，`push_notify` 工具面） | 2026-11-08 装（web），lan-gate-server 进程常驻；运行时状态在 `~/.dsh/zen-remote-server.json`（serverId）与 `~/.dsh/lan-gate-state.json`（VAPID 密钥与推送订阅） |
 | `@deepseek-ai/dsh-experimental-plugin-market-bundle` | 0.2.2-rc.1 | 官方 Discover 标签 + `plugin_market` agent 工具 | web 已装，重启后 `plugin_market` 已挂载 |
 
