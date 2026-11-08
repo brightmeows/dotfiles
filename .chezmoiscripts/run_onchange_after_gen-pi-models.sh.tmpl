@@ -1,5 +1,5 @@
 #!/bin/bash
-# 生成模型域产物：Pi 的两个 JSON（部署副本）与 dsh 插件消费的 resolved.json。
+# 生成模型域产物：Pi 的两个 JSON（部署副本）。
 # 仓库产物由 dot_agents_meow/models/gen-models.py 生成并随提交（供 Windows 等处使用）；
 # 本脚本在 apply 之后把同一结果同步到部署位置，并覆盖未提交的 TOML 改动。
 # Trigger: models.toml 或生成器内容变化时重跑。
@@ -14,5 +14,4 @@ fi
 
 python3 "{{ .chezmoi.sourceDir }}/dot_agents_meow/models/gen-models.py" \
   --toml "${HOME}/.agents_meow/models/models.toml" \
-  --pi-out "${HOME}/.pi/agent" \
-  --models-out "${HOME}/.agents_meow/models"
+  --pi-out "${HOME}/.pi/agent"

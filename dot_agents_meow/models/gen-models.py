@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""模型配置生成器：校验 models.toml，并生成 Pi 侧两份 JSON 与 dsh 插件用的 resolved.json。
+"""模型配置生成器：校验 models.toml，并生成 Pi 侧两份 JSON。
 
-产物（默认写入仓库与本地）：
+产物（默认写入仓库）：
 - dot_pi/agent/models-dev.json          Pi models-dev 扩展的编辑配置（覆盖类条目与禁用清单，随仓库提交）
 - dot_pi/agent/models.json              Pi 原生自定义模型文件（定义类条目，随仓库提交；带 $schema 供编辑器校验）
-- ~/.agents_meow/models/resolved.json   dsh 插件消费的中立配置（本机生成，不入库）
 
 用法：
-    python3 gen-models.py                        # 生成仓库产物与本地 resolved.json
+    python3 gen-models.py                        # 生成仓库产物
     python3 gen-models.py --check                # 校验 TOML 并比对已存在的目标
     python3 gen-models.py --pi-out ~/.pi/agent   # apply 脚本：另写部署副本（Linux）
 
@@ -358,32 +357,6 @@ def to_target_compat(compat: dict[str, object]) -> dict[str, object]:
     return {COMPAT_TO_TARGET[key]: value for key, value in compat.items()}
 
 
-def to_resolved(disabled: list[str], providers: dict[str, dict]) -> dict:
-    out: dict[str, dict] = {}
-    for provider_id, provider in providers.items():
-        entry: dict[str, object] = {"kind": provider["kind"]}
-        for key in ("name", "api", "base_url", "api_key"):
-            if key in provider:
-                entry[key] = provider[key]
-        if "compat" in provider:
-            # resolved.json 给 dsh 插件消费，compat 直接给目标键名（camelCase）
-            entry["compat"] = to_target_compat(provider["compat"])
-        models: dict[str, dict] = {}
-        for model in provider["models"]:
-            model_entry: dict[str, object] = {}
-            for key in MODEL_FIELDS:
-                if key in model:
-                    model_entry[key] = model[key]
-            compat = model_entry.get("compat")
-            if isinstance(compat, dict):
-                # resolved.json 给 dsh 插件消费，compat 直接给目标键名（camelCase）
-                model_entry["compat"] = to_target_compat(compat)
-            models[str(model["id"])] = model_entry
-        entry["models"] = models
-        out[provider_id] = entry
-    return {"disabled_providers": disabled, "providers": out}
-
-
 def dump_json(value: object) -> str:
     return json.dumps(value, ensure_ascii=False, indent=2) + "\n"
 
@@ -426,7 +399,6 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--toml", help="models.toml 路径（默认仓库源）")
     parser.add_argument("--pi-out", help="Pi 两个 JSON 的输出目录（默认 <仓库>/dot_pi/agent）")
-    parser.add_argument("--models-out", help="resolved.json 输出目录（默认 ~/.agents_meow/models）")
     parser.add_argument("--check", action="store_true", help="只校验与比对，不写入")
     args = parser.parse_args()
 
@@ -435,7 +407,6 @@ def main() -> int:
     if not toml_path.is_file():
         sys.exit(f"找不到 {toml_path}")
     pi_dir = Path(args.pi_out) if args.pi_out else repo / "dot_pi" / "agent"
-    models_dir = Path(args.models_out) if args.models_out else Path.home() / ".agents_meow" / "models"
 
     try:
         disabled, providers = load_config(toml_path)
@@ -446,7 +417,6 @@ def main() -> int:
     outputs = (
         (pi_dir / "models-dev.json", dump_json(to_pi_models_dev(disabled, providers))),
         (pi_dir / "models.json", dump_json(to_pi_models(disabled, providers))),
-        (models_dir / "resolved.json", dump_json(to_resolved(disabled, providers))),
     )
     ok = True
     for target, content in outputs:
