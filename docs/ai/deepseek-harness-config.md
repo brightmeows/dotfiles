@@ -56,6 +56,9 @@ models-dev 插件体系（models.dev 目录抓取、`~/.agents_meow/models`
   （原生 `context7_search` / `context7_get_docs` 工具）；搜索走 `dsh-free-search`
   多引擎 provider（2026-11-08 起，`web_search` 工具面不变），抓取走 dsh 内置
   `web_fetch`；crates.io 缺口由其 `domain_search` 垂直源补上，视觉仍按需用 bash 调 API。
+  官方 `deepseek-official` 搜索 provider 保留不卸：插件运行时接管选路
+  （`searchProvider` 配置字段保持未设即接管，硬 pin 反有悬空引用翻车教训），
+  插件被禁用时搜索降级回官方 provider，故物理退役官方包等于砍掉兜底。
   Pi 侧按有无替代通道区别对待（2026-11-08 复核）：`context7` 保留（pi 无库文档检索替代通道），
   `cratesio-mcp` 停用（bash 调 API 替代），exa、anysearch 维持停用。
   `ANYSEARCH_API_KEY`、`EXA_API_KEY`、`TAVILY_API_KEY`、`TINYFISH_API_KEY` 同时被
