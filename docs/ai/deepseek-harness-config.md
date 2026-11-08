@@ -24,6 +24,9 @@
 
 home 级 patch（`~/.dsh/cordis.patch.yml`）已于 2026-11-08 经盘问裁决整体退役：models-dev 插件挂载行与四条偏好 override（默认模型、PTC 预设、市场索引源、block-secret-leaks 密钥名单补齐）一并废除，仓库不再托管 patch（模板 `dot_dsh/cordis.patch.yml.tmpl` 已删除）。
 2026-11-08 晚 profile patch 新增 `ui-chat` 状态键（`collapseTiming: next-input`、`transcriptView: standard`）：过程组完成后保持展开、下一轮输入才折叠，过程展示停在标准档；该键本应由 GUI 设置写回，本次随主题降对比盘问以 override 行手写落键。
+同法手写 `ui-theme` 字体键：`textFontFamily` 与 `codeFontFamily` 均为
+ComicShannsMono Nerd Font 加 Noto Sans Mono CJK SC（正文与代码块等宽化，中文回退 CJK 等宽），
+override 整体替换 config，GUI 写入的 `fontSize: 16` 已原样重述。
 
 ## 仓库托管结构
 
