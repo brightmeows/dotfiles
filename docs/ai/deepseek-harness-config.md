@@ -53,12 +53,14 @@ models-dev 插件体系（models.dev 目录抓取、`~/.agents_meow/models`
 - 技能：dsh 默认扫描根已覆盖 `~/.agents/skills`（npx 安装区），这是唯一技能通道；原 `~/.dsh/skills` → `~/.agents_meow/skills` 符号链接已于 2026-10-06 随仓库技能分发退役删除。Pi 的 better-skill 消歧别名扩展已于 2026-09-24 移除，两家重名处理现为同款策略：按层与扫描序保留首个并告警。
 - MCP：2026-11-07 起五条 home patch 插入（exa、anysearch、context7、cratesio、zai）全部移除，
   裁决与登记记录只保留在本节。替代：文档检索走 `dsh-context7` 插件
-  （原生 `context7_search` / `context7_get_docs` 工具）；搜索与抓取走 dsh 内置
-  `web_search` / `web_fetch`；crates.io 与视觉按需用 bash 调 API 或后补社区插件。
+  （原生 `context7_search` / `context7_get_docs` 工具）；搜索走 `dsh-free-search`
+  多引擎 provider（2026-11-08 起，`web_search` 工具面不变），抓取走 dsh 内置
+  `web_fetch`；crates.io 缺口由其 `domain_search` 垂直源补上，视觉仍按需用 bash 调 API。
   Pi 侧按有无替代通道区别对待（2026-11-08 复核）：`context7` 保留（pi 无库文档检索替代通道），
   `cratesio-mcp` 停用（bash 调 API 替代），exa、anysearch 维持停用。
-  `ANYSEARCH_API_KEY` 与 `EXA_API_KEY` 仍被 pi-web-access 搜索回退链使用，
-  `ZHIPU_API_KEY` 仍被 pi 的 zhipu 模型通道使用，三把 key 都不可删（见凭据节）。
+  `ANYSEARCH_API_KEY`、`EXA_API_KEY`、`TAVILY_API_KEY`、`TINYFISH_API_KEY` 同时被
+  pi-web-access 搜索回退链与 dsh-free-search 使用，`ZHIPU_API_KEY` 仍被 pi 的
+  zhipu 模型通道使用，这批 key 都不可删（见凭据节）。
 
 ## 插件（2026-11-05 起，对齐 pi 能力）
 
@@ -74,6 +76,7 @@ models-dev 插件体系（models.dev 目录抓取、`~/.agents_meow/models`
 | `dsh-meow-context-hooks` | 0.1.0 | 自写插件：Pi 两扩展复刻（git 快照、子目录 AGENTS.md 注入），源码在 `dot_dsh/plugins/`（chezmoi 不部署，install_bundle 从仓库路径装） | 2026-11-08 卸载退役：双端复刻维护负担大于增量价值，pi 侧扩展保留；恢复从 git 历史找回源码重装 |
 | `dsh-zen-remote` | 2.3.11 | 手机 PWA 推送与远程访问（lan-gate 推送通道，`push_notify` 工具面） | 2026-11-08 装（web），lan-gate-server 进程常驻；运行时状态在 `~/.dsh/zen-remote-server.json`（serverId）与 `~/.dsh/lan-gate-state.json`（VAPID 密钥与推送订阅） |
 | `@deepseek-ai/dsh-experimental-plugin-market-bundle` | 0.2.2-rc.1 | 官方 Discover 标签 + `plugin_market` agent 工具 | web 已装，重启后 `plugin_market` 已挂载 |
+| `dsh-free-search` | 0.9.34 | pi-web-access 等价：注册进 ctx.web 的多引擎搜索 provider（27 引擎回退链、keyless 档、多 key 轮换），附 `advanced_search` / `multi_search` / `platform_search` / `domain_search`（41 垂直源）/ `video_search` / `research` 等工具面 | 2026-11-08 装（web），热应用生效：九件工具挂载，`web_search` 与官方 provider 共存正常；`free_search_test` 定向实测 exa/anysearch/tavily/tinyfish 四把 `~/.env_self` key 全 OK，bing OK，ddg 触发 bot-wall 冷却（声明行为）；registry 按供应链策略解析 0.9.34（npm 当日最新 0.9.38），pnpm peers 有 WARN 不阻加载 |
 
 2026-11-07 精简裁决：headless profile 整体退役（从不跑一次性 CLI 任务），插件只维护 web 一份；
 如需重建用 `dsh plugin --profile headless add <pkg>`。
@@ -82,15 +85,18 @@ dsh 0.2.2-rc.1 下 `dsh-patch-edit-plus` 暂不可用，编辑回到原生 `edit
 
 上游 `dsh-patch-edit-plus` 的工具描述自带路由指南（单文件小改引导回原生 `edit`），与准则指令叠加后以准则为准。
 社区 `@anionex/dsh-apply-patch`（自带原生 DiffBlock 渲染，最贴近 pi 观感）peer 上限全在 0.1.x，0.2.x 下真实断裂不可用，已调研放弃；diff 卡预览需求待上游跟进或自写 client 插件。
+社区分叉 `dsh-union-search` 自述 “renamed from dsh-free-search”，但 npm 维护者不同且原包同日仍由原作者发版，声明不实，不采用。
 
 ## 凭据与沙箱
 
 - 凭据优先级：启动环境快照 > `~/.dsh/.credentials.yaml` > 启动目录 `.env` > `~/.dsh/.env`。`~/.env_self` 只被 shell 加载，因此从终端启动 `dsh web` 时才有 `DEEPSEEK_API_KEY` 等变量；图形启动器启动时不可见。
 - 图形会话密钥注入：`~/.config/environment.d/51-meow-local.conf` 已于 2026-11-08 删除
-  （盘问裁决：三把 key 的 dsh 消费者全部消失——zhipu 通道随 models-dev 退役，
-  exa 与 anysearch 随 2026-11-07 撤 MCP 消失），连带 `systemctl --user unset-environment`
-  清掉已导入残留。本机无图形启动器跑 dsh 的路径（omarchy/hypr 无 dsh 绑定），
-  当前实例从 kitty 里的 nushell 启动。pi 终端会话的 key 由 `~/.env_self` 供应，不受影响。
+  （当时裁决：三把 key 的 dsh 消费者全部消失；同日晚装 `dsh-free-search` 后 dsh 重新
+  消费 exa/anysearch/tavily/tinyfish，靠终端启动加载 `~/.env_self` 供应），
+  连带 `systemctl --user unset-environment` 清掉已导入残留。本机无图形启动器跑 dsh
+  的路径（omarchy/hypr 无 dsh 绑定），当前实例从 kitty 里的 nushell 启动，key 可达；
+  将来若新增图形启动器跑 dsh 的路径，需重估 environment.d 注入。
+  pi 终端会话的 key 由 `~/.env_self` 供应，不受影响。
   加载路径总览见 [env-loading.md](../dev/env-loading.md)。
 - 沙箱：读取不受限；`workspace-write` 模式可写会话工作区、`/tmp` 与 `os.tmpdir()`；越界写会被拒并触发审批升级。`~/.agents_tmp` 不在可写范围。
 - 默认模型：当前为 GUI 写回的 `zai-coding-cn/glm-5.3-flash`（effort max）；models-dev 时代的 home patch override 已随 2026-11-08 退役废除，GUI 手改随时覆盖。
