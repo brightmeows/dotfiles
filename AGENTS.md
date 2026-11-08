@@ -86,7 +86,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | [`docs/ai/model-config-pipeline.md`](docs/ai/model-config-pipeline.md) | pi 模型配置现状（手编 JSON）与 TOML 流水线、dsh 消费面的退役记录 |
 | [`docs/ai/pi-ask-user-question-limits.md`](docs/ai/pi-ask-user-question-limits.md) | Pi ask_user_question vendor 化、题数上限移除、依赖锁与漂移门禁 |
 | [`docs/ai/pi-apply-patch-failure-modes.md`](docs/ai/pi-apply-patch-failure-modes.md) | apply_patch 失败率实测、Codex 格式约束、本地修复层与上游贡献状态 |
-| [`docs/ai/agents-meow-workflow-skills-boundary.md`](docs/ai/agents-meow-workflow-skills-boundary.md) | agents_meow 与 workflow-skills 的边界、事实源收口、技能清单校验与迁移方案 |
+| [`docs/ai/agents-meow-workflow-skills-boundary.md`](docs/ai/agents-meow-workflow-skills-boundary.md) | agents_meow 与 workflow-skills 的边界、事实源收口、技能清单校验方案（校验已退役） |
 | [`docs/ai/pi-openai-auth.md`](docs/ai/pi-openai-auth.md) | pi 接入 GPT：订阅登录步骤、与 Codex CLI 认证逐项对比及缺口补齐、凭据互通边界 |
 
 ### skills/（技能与工具接入）

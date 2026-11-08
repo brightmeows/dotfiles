@@ -1,6 +1,10 @@
 # agents_meow 与 workflow-skills 的边界与校验
 
 本文记录 dotfiles 的 `dot_agents_meow/` 与独立仓 `workflow-skills` 的职责边界、事实源收口与技能清单校验方案。
+
+> 状态（2026-11-08）：边界裁决仍有效；技能清单校验方案（lock 文件、check-skills.mjs 四模式、
+> pre-commit `--warn`）经盘问裁决整体退役并删除，防护交给 workflow-skills 仓自身 git，
+> 清单脱节风险知情接受。正文校验相关小节作为方案记录保留。
 2026-10-28 按本文落地；实施细节以仓库当前状态为准。
 
 2026-10-29 回退：提交、内容治理、取数纪律三条搬回 `dot_agents_meow/AGENTS.md`，对应三个技能从 workflow-skills 删除，理由并入 `AGENTS.ref.md`，技能清单缩到五项。本文按新边界改写，10-28 的文件级改动保留在文末作为历史。

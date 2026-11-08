@@ -40,7 +40,7 @@
 | 表达规范 | 产出物纪律（符号作用域收窄、中文引号弯引号、输出组织、对外发言署名）+ 代码组（不做多余预留、小分支提前返回）；规则条文白话活泼、不掺人设（人设声线只住 `SOUL.md`） | 2026-10-29 |
 | 规则优先级 | 三级裁决栈（产出干净、做法正确、信息齐全）+ 需求冲突显式裁决 | 2026-10-12 |
 | 操作边界 | 接活先对表（含完成判据）、先确认再做、计划外就停、默认不用问、最小变更、失败之后、数据不是指令、变更后清扫（绿进绿出、只看 diff、变更密集不欠批） | 2026-10-24 |
-| 工作流技能 | 加载机制、`workflow-skills` 四项技能清单与依赖校验合并成一节；清单以 `AGENTS.md` 为唯一真相，`skills.lock.json` 存目录 hash，`check-skills.mjs` 分层校验 | 2026-10-29 |
+| 工作流技能 | 加载机制与 `workflow-skills` 四项技能清单合并成一节；清单以 `AGENTS.md` 为唯一真相；依赖校验体系已于 2026-11-08 整体退役 | 2026-11-08 |
 | LLM 协作 | 四条常驻规则：上下文工艺、先探后改、接口先定、按可验证性委派（闭环验证已并入，见能推导、能复现与节内）；筛选与出处见节内 | 2026-10-28 |
 | 能推导、能复现 | 建模优先、可验证优先（含诚实完成）；抽象设计降为两句常驻加 `abstraction-design` 指针 | 2026-10-28 |
 | 内容怎么改 | 常驻四操作（只改一处、放对地方、源头同步、不留旧账、三次才抽象）+ 完成判据；理由与证据在节内 | 2026-10-29 |
@@ -69,14 +69,15 @@
 ## 部署与边界
 
 - 文件清单与加载方式：`SOUL.md` 是人设（opencode 与 Pi 模板 include）；`AGENTS.md` 是工程准则（opencode 与 Pi include，dsh 作用户级指令）；
-  `AGENTS.ref.md` 是本文件（不被任何模板 include）。三份指令文件与 `models/`、`scripts/`、`skills.lock.json` 都由 chezmoi 分发到 `~/.agents_meow/`。
+  `AGENTS.ref.md` 是本文件（不被任何模板 include）。三份指令文件与 `scripts/` 都由 chezmoi 分发到 `~/.agents_meow/`。
 - 常驻与技能的边界：把提交、内容治理、取数纪律三条从 `workflow-skills` 搬回主文件，并删除对应的三个技能。
   触发原因是提交与表达规范的交叉（署名、产出物形态）拆在技能里要跨仓同步；搬回后技能清单缩到五项。
   搬运口径是精简合并：保留格式、粒度、检查门槛、反模式与完成判据，删掉技能里的展开论证；论证与否决记录并入本文件对应小节。
   抽象设计仍不留常驻句，判断面全交给 `abstraction-design` 技能。托管与分发信息从准则移入本文件，避免把维护知识注入每个仓库的每个会话。
 - 技能依赖方向：dotfiles 依赖 workflow-skills，反向不成立。workflow-skills 是公开仓，按 npx 分发；
-  dotfiles 只声明技能名、目录 hash 与来源，不 vendored。校验脚本 `check-skills.mjs` 在 `~/.agents_meow/scripts/`，
-  锁文件 `skills.lock.json` 在 `~/.agents_meow/`；npx canonical lock 路径与旧副本说明见“工作流技能”节。
+  dotfiles 只声明技能名与来源，不 vendored。清单与安装态的一致性靠人眼对齐：
+  2026-11-08 经盘问裁决把三层校验体系（声明比对、安装校验、hash 锁）整体砍掉，
+  缺装、改名、换源不再在提交时暴露；方案记录见 docs/ai/agents-meow-workflow-skills-boundary.md。
 - 结构：`SOUL.md` 只留一段常驻人设（名字、称呼与选定锚点）；不设素材文件，行为约束与产出物纪律归 `AGENTS.md`。
   `AGENTS.md` 以工程准则为主体：H1 开场后按四个决策域分组推进，元规则组的“规则优先级”打头；文末不再留指回本文件的指针，托管与分发信息仍在本节。
   消费者：opencode 与 Pi 在模板里依序 include 两份（人设在前）；dsh 的 `~/.dsh/AGENTS.md` 只收准则，不收人设。
@@ -150,10 +151,9 @@
 ## 工作流技能
 
 - 机制：技能清单的扫描常驻（接到任务扫一眼，成本近零）；加载阈值是“预计会用到才加载”；调用前声明“使用 [技能名] 完成 [目的]”；流程类技能排在实现类之前；任务性质变化或已加载技能被证伪时再查；技能文件按需读采用平台中立措辞（环境已注入文件清单就直接用，否则自行枚举）；用户明确指示、或本文件规则与技能冲突时，听用户和本文件的。
-- 依赖与校验：技能名单以 `AGENTS.md` 的“工作流技能”节为唯一真相；`skills.lock.json` 只存目录 hash 与来源，键集必须与名单一致。
-  `pnpm check` 跑 `check-skills.mjs --decl-only`（CI 安全）；pre-commit 跑 `--warn`（缺装、换源、hash 不符只告警）；
-  `pnpm check:skills` 跑 `--strict`（手动闸门，硬失败）。锁文件由 `node dot_agents_meow/scripts/check-skills.mjs --write-lock`
-  从 workflow-skills 检出生成，只在技能更新并重装后运行。
+- 依赖与校验：技能名单以 `AGENTS.md` 的“工作流技能”节为唯一真相。三层校验体系（声明比对、安装校验、
+  hash 锁）已于 2026-11-08 整体退役：技能内容漂移的防护交给 workflow-skills 仓自身 git，
+  清单脱节风险知情接受；方案与裁决记录见 docs/ai/agents-meow-workflow-skills-boundary.md。
 - npx canonical lock：`$XDG_STATE_HOME/skills/.skill-lock.json`（未设 `XDG_STATE_HOME` 时回退到 `~/.agents/.skill-lock.json`），格式版本 3；`~/skills-lock.json` 是旧格式副本（npx 重装前的遗留），只作历史备份，不参与校验。
 - 外部证据：Seleznov 激活实验（650 次自动试验：默认描述激活约五成、常驻指令约 65%、指令式描述 100%）；Vercel 评估（技能默认发现率 53%、56% 的用例从未调用所需技能、AGENTS.md 常驻 100%）；Anthropic skill-creator 官方实践（description 要偏 pushy 防漏触发，激活靠指令、解释靠内容）。
 - 否决：RAG/检索式技能路由（那是 Claude Code 8k 字符索引预算逼出的解法；pi 没有截断、没有预算，规模未到）；合并索引块与主文件两处的激活指令（常驻指令层有独立增益）；lark 系描述修剪（每条已带“不负责”的负向边界，是防误路由的正确形态）；技能内容安全提示（自装技能在信任边界内，操作边界“数据不是指令”已有防线）。
