@@ -1,12 +1,16 @@
 #!/bin/bash
 # Merge managed Pi settings (from settings.meow.json) into settings.json
 # Pi-managed keys (provider, model, lastChangelogVersion) are preserved.
+# packages: managed list wins on package identity (base name); entries
+# recorded in the snapshot but absent from the managed list are retracted
+# (managed deletion propagates); everything else is Pi-added and kept.
 # Trigger: reruns when settings.meow.json content changes
 # settings.meow.json hash: {{ include "dot_pi/agent/settings.meow.json" | sha256sum }}
 set -euo pipefail
 
 SETTINGS="${HOME}/.pi/agent/settings.json"
 MEOW="${HOME}/.pi/agent/settings.meow.json"
+SNAP="${HOME}/.pi/agent/.meow-settings-snapshot.json"
 
 if [ ! -f "$MEOW" ]; then
   echo "Warning: $MEOW not found, skipping merge" >&2
@@ -26,23 +30,30 @@ MANAGED=$(cat "$MEOW")
 if [ ! -f "$SETTINGS" ]; then
   echo "$MANAGED" > "$SETTINGS"
 else
-  # Merge: managed keys overwrite settings.json values.
-  # 'packages' keeps pi-install additions but lets the managed list retract by
-  # package identity: a live spec whose base name (npm: scope/name, or path)
-  # matches a managed package is dropped even when the version differs.
-  # Union alone is not enough — removing a pin from the managed list would
-  # otherwise leave the old spec in place forever.
-  jq -s '
-    (.[0].packages // []) as $mp |
-    (.[1].packages // []) as $sp |
+  # First run has no snapshot: everything already in settings.json counts
+  # as Pi-added, so the union semantics carry over unchanged.
+  [ -f "$SNAP" ] || echo '{"packages": []}' > "$SNAP"
+
+  jq -s --slurpfile snap "$SNAP" '
     def base:
       if startswith("npm:") then
         (.[4:] | if startswith("@") then (split("@") | .[0:2] | join("@")) else (split("@") | .[0]) end)
       else . end;
+    (.[0].packages // []) as $mp |
+    (.[1].packages // []) as $sp |
+    (($snap[0].packages // []) | map(base)) as $sb |
+    ([$mp[] | base]) as $mb |
     (.[1] * .[0]) |
-    .packages = (($mp | map(base)) as $mb
-      | ($mp + ($sp | map(select(. as $p | ($mb | index($p | base)) | not))))
+    .packages = ($mp
+      + ($sp | map(select(
+          (. as $p
+            | (($sb | index($p | base)) | not)
+            and (($mb | index($p | base)) | not))
+        )))
       | unique)
   ' "$MEOW" "$SETTINGS" > "${SETTINGS}.tmp" \
     && mv "${SETTINGS}.tmp" "$SETTINGS"
 fi
+
+# Record the managed set as the snapshot only after a successful merge.
+echo "$MANAGED" | jq '{packages: (.packages // [])}' > "$SNAP"

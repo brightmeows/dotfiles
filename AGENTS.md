@@ -32,7 +32,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | 配置文件 | 源文件 | 目标文件 | 合并策略 |
 |---------|--------|---------|---------|
 | Git config | `dot_gitconfig.meow` | `~/.gitconfig` | .meow 覆盖同名键，保留 local-only 键 |
-| Pi settings | `dot_pi/agent/settings.meow.json` | `~/.pi/agent/settings.json` | .meow 覆盖同名键，packages 数组并集合并（去重排序；meow 源删除不传导，删包后须手动从 settings.json 移除），Pi 管理键保留 |
+| Pi settings | `dot_pi/agent/settings.meow.json` | `~/.pi/agent/settings.json` | .meow 覆盖同名键，packages 按包身份接管（base 名相同以 .meow 为准）；快照差集合并——快照里有而 .meow 没有的自动移除（删除传导），快照里没有的视为 Pi 自加保留，去重排序；Pi 管理键保留 |
 | Environment.d | `dot_env_common` | `~/.config/environment.d/50-meow.conf` | awk 翻译 `+=`/`<=` 为 environment.d 守卫语法 |
 | Omarchy 工作区组件 | `dot_config/omarchy/plugins/brightmeows.workspaces/manifest.json` | `~/.config/omarchy/shell.json` | 仅替换 `bar.layout` 组件 id（脚本每次 apply 运行）；幂等、尊重手动删除；shell.json 不入 chezmoi 管理（Omarchy CLI 与升级迁移会就地改写） |
 | Omarchy 活动窗口组件 | `dot_config/omarchy/plugins/brightmeows.active-window/`（脚本每次 apply 运行） | `~/.config/omarchy/shell.json` | 缺条目则插到中区最左，已存在则原地不动；`omarchy refresh shell` 重置后一次 apply 恢复 |
