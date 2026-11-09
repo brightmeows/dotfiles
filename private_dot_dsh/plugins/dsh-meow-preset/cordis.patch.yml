@@ -12,7 +12,7 @@
       name: "@deepseek-ai/dsh-agent-preset"
       config:
         id: meow
-        name: Meow
+        name: 喵喵模式
         description: 精简日常档：standard 减编排运维面（schedule、delegation、todo、present、plugin-manager），保留编辑、检索、技能、goal、jobs、计划模式与压缩。
         order: 0
         plugins:

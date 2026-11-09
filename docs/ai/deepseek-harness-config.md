@@ -89,7 +89,7 @@ models-dev 插件体系（models.dev 目录抓取、`~/.agents_meow/models`
 | `@deepseek-ai/dsh-experimental-plugin-market-bundle` | 0.2.2-rc.1 | 官方 Discover 标签 + `plugin_market` agent 工具 | web 已装，重启后 `plugin_market` 已挂载；2026-11-09 配置唯一索引源 `https://cdn.jsdelivr.net/npm/dsh-plugin-catalog/index.json`（awesome-dsh-plugin 社区目录，format-1，4872 插件），写入 profile `cordis.patch.yml` 的 `plugin-market` 行 `config.indexes`，HMR 热生效无需重启，`list_indexes` 与主题类检索实测可用（theme 关键词 351 条，兼容性自动标注） |
 | `dsh-free-search` | 0.9.34 | pi-web-access 等价：注册进 ctx.web 的多引擎搜索 provider（27 引擎回退链、keyless 档、多 key 轮换），附 `advanced_search` / `multi_search` / `platform_search` / `domain_search`（41 垂直源）/ `video_search` / `research` 等工具面 | 2026-11-08 装（web），热应用生效：九件工具挂载，`web_search` 与官方 provider 共存正常；`free_search_test` 定向实测 exa/anysearch/tavily/tinyfish 四把 `~/.env_self` key 全 OK，bing OK，ddg 触发 bot-wall 冷却（声明行为）；registry 按供应链策略解析 0.9.34（npm 当日最新 0.9.38），pnpm peers 有 WARN 不阻加载 |
 | `dsh-soft-palette` | 1.0.0 | 自写 client 插件：`ThemeRuntime.overrideTokens` 常驻低对比调色层，深色正文约 18:1 降到约 9:1（正文 `#bcc3cd`、底色 `#1e2126`），浅色只降正文一档；覆盖正文、次要文字、底色、两层面板、两级边框七枚 alias token，品牌色与状态色不动；卸载即恢复内建色板 | 2026-11-08 装（web），源码在 `private_dot_dsh/plugins/dsh-soft-palette/`（chezmoi 不部署，install_bundle 从仓库路径装）；`application: applied` 零告警，组合树含 `soft-palette` 行，视觉验收待用户刷新实况 |
-| `dsh-meow-preset` | 1.0.0 | 自写 bundle：meow 精简日常预设（id `meow`，order 0）：standard 减 schedule 四件、delegation 四件、todo、present、plugin-manager 工具，保留 goal、jobs、计划模式、ask-user、web_fetch、技能与压缩，applyPatch 维持 false；plan-mode 提示段照抄 standard，仅 todo_write 引用句适配（本预设不挂 todo） | 2026-11-09 装（web），源码在 `private_dot_dsh/plugins/dsh-meow-preset/`（chezmoi 不部署，install_bundle 从仓库路径装）；`application: applied` 零告警，dump-config 含完整声明且行上无激活诊断 |
+| `dsh-meow-preset` | 1.0.0 | 自写 bundle：喵喵模式精简日常预设（id `meow`，order 0）：standard 减 schedule 四件、delegation 四件、todo、present、plugin-manager 工具，保留 goal、jobs、计划模式、ask-user、web_fetch、技能与压缩，applyPatch 维持 false；plan-mode 提示段照抄 standard，仅 todo_write 引用句适配（本预设不挂 todo） | 2026-11-09 装（web），源码在 `private_dot_dsh/plugins/dsh-meow-preset/`（chezmoi 不部署，install_bundle 从仓库路径装）；`application: applied` 零告警，dump-config 含完整声明且行上无激活诊断 |
 
 2026-11-07 精简裁决：headless profile 整体退役（从不跑一次性 CLI 任务），插件只维护 web 一份；
 如需重建用 `dsh plugin --profile headless add <pkg>`。
@@ -100,7 +100,7 @@ dsh 0.2.2-rc.1 下 `dsh-patch-edit-plus` 暂不可用，编辑回到原生 `edit
 （减团队工具与 Team Lead 提示段、create_worktree 与 Forge 面板；market 与四只 profile 包保留；
 状态写 profile patch 属 GUI 运行时状态，插件面板或 set_bundle 一键回）；预设层新增
 `dsh-meow-preset`（见插件表），换预设粒度的取舍由它承载。已开会话保留原组合，
-验证以新会话选 Meow 后的工具面为准。
+验证以新会话选喵喵模式后的工具面为准。
 
 上游 `dsh-patch-edit-plus` 的工具描述自带路由指南（单文件小改引导回原生 `edit`），与准则指令叠加后以准则为准。
 社区 `@anionex/dsh-apply-patch`（自带原生 DiffBlock 渲染，最贴近 pi 观感）peer 上限全在 0.1.x，0.2.x 下真实断裂不可用，已调研放弃；diff 卡预览需求待上游跟进或自写 client 插件。
