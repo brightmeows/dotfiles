@@ -1,0 +1,15 @@
+{
+  "name": "dsh-meow-preset",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Lean daily agent preset for dsh web: standard minus the orchestration surface.",
+  "files": [
+    "cordis.patch.yml"
+  ],
+  "type": "module",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
