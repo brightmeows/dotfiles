@@ -1,0 +1,19 @@
+{
+  "name": "dsh-herdr-state",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Report dsh session state (working/blocked/idle) to the herdr socket so herdr's status bar recognizes dsh agents.",
+  "files": [
+    "index.js",
+    "cordis.patch.yml"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./index.js"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

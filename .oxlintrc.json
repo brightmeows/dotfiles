@@ -98,7 +98,11 @@
     {
       "files": ["private_dot_dsh/plugins/**"],
       "rules": {
-        "no-underscore-dangle": "off"
+        "no-underscore-dangle": "off",
+        "capitalized-comments": "off",
+        "curly": "off",
+        "no-await-in-loop": "off",
+        "prefer-destructuring": "off"
       }
     },
     {
