@@ -12,7 +12,7 @@
 - `run_after_omarchy-workspaces-enable.sh.tmpl`（工作区组件 id 替换），每次 apply 都运行：理由同上（refresh shell 后 hash 未变不重跑）；脚本自带 cmp 守卫，无变化时不动 shell.json。
 
 两个脚本因此每次 apply 都在“待执行”集合里，`chezmoi diff` / `status` 按默认行为把将执行的脚本渲染成 new file 条目（脚本动作是执行，无文件基线可比），属固定显示而非待部署。
-该显示已在 chezmoi 配置用 `diff.exclude = "scripts"` 与 `status.exclude = "scripts"` 静音；脚本执行过程用 `chezmoi apply --verbose` 查看。
+该显示已在 chezmoi 配置用 `diff.exclude = ["scripts"]` 与 `status.exclude = ["scripts"]` 静音（exclude 是数组语法，写成字符串会让 chezmoi 拒绝加载全部命令）；脚本执行过程用 `chezmoi apply --verbose` 查看。
 
 ## 时序约束（为什么必须 after_）
 
