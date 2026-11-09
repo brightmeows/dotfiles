@@ -6,3 +6,11 @@ mode = "file"
 [interpreters]
 sh = { command = {{ lookPath "bash" | toJson }} }
 {{- end }}
+
+# run_after_ 脚本每次 apply 都在“待执行”集合里，diff/status 默认把它们渲染成 new file 噪声
+# （机制备案见 docs/dev/chezmoi-sync-scripts.md）；脚本执行过程用 chezmoi apply --verbose 查看。
+[diff]
+exclude = "scripts"
+
+[status]
+exclude = "scripts"

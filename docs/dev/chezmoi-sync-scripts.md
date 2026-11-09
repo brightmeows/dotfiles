@@ -11,6 +11,9 @@
 - `run_after_omarchy-active-window-enable.sh.tmpl`（活动窗口组件调和，插入 `centerBegin`），每次 apply 都运行：`omarchy refresh shell` 会把 shell.json 重置为默认，模板 hash 未变时 onchange 不会重跑、无法恢复布局条目。
 - `run_after_omarchy-workspaces-enable.sh.tmpl`（工作区组件 id 替换），每次 apply 都运行：理由同上（refresh shell 后 hash 未变不重跑）；脚本自带 cmp 守卫，无变化时不动 shell.json。
 
+两个脚本因此每次 apply 都在“待执行”集合里，`chezmoi diff` / `status` 按默认行为把将执行的脚本渲染成 new file 条目（脚本动作是执行，无文件基线可比），属固定显示而非待部署。
+该显示已在 chezmoi 配置用 `diff.exclude = "scripts"` 与 `status.exclude = "scripts"` 静音；脚本执行过程用 `chezmoi apply --verbose` 查看。
+
 ## 时序约束（为什么必须 after_）
 
 chezmoi 按 entry 名字母序应用条目，`.chezmoiscripts/`（c）排在 `.gitconfig.meow`、`.pi`、`.env_common` 等数据源之前：
