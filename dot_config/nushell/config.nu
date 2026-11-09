@@ -28,6 +28,7 @@ if (which starship | is-not-empty) {
 # Aliases（与 dot_bashrc 保持对齐）
 alias ze = zellij
 alias oc = opencode
+alias dst = dsh --profile pi-tui
 alias nv = nvim
 alias vi = nvim
 alias vim = nvim
