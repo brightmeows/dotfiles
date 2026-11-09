@@ -10,7 +10,7 @@
   npm 新版默认拦截安装脚本，升级时带 `--allow-scripts=@deepseek-ai/dsh-subprocess-local,koff,node-pty`，缺脚本会在启动时报原生模块错误。
 - 入口：`dsh web`（等价 `--profile web`）启动本地浏览器界面；首次启动自动初始化 `~/.dsh/profiles/web`。
 - 配置根：`~/.dsh`（`DSH_HOME` 未设置时的默认值）。
-- 主要使用面：浏览器界面；TUI 无官方 profile，不在本项目范围。
+- 主要使用面：浏览器界面；2026-11-09 起加开终端使用面——`pi-tui` profile（`@xmoon76/dsh-pi-tui`），与 web 共享会话、凭据与技能，详见插件节。
 
 ## 配置面
 
@@ -89,12 +89,24 @@ models-dev 插件体系（models.dev 目录抓取、`~/.agents_meow/models`
 | `@deepseek-ai/dsh-experimental-plugin-market-bundle` | 0.2.2-rc.1 | 官方 Discover 标签 + `plugin_market` agent 工具 | web 已装，重启后 `plugin_market` 已挂载；2026-11-09 配置唯一索引源 `https://cdn.jsdelivr.net/npm/dsh-plugin-catalog/index.json`（awesome-dsh-plugin 社区目录，format-1，4872 插件），写入 profile `cordis.patch.yml` 的 `plugin-market` 行 `config.indexes`，HMR 热生效无需重启，`list_indexes` 与主题类检索实测可用（theme 关键词 351 条，兼容性自动标注） |
 | `dsh-free-search` | 0.9.34 | pi-web-access 等价：注册进 ctx.web 的多引擎搜索 provider（27 引擎回退链、keyless 档、多 key 轮换），附 `advanced_search` / `multi_search` / `platform_search` / `domain_search`（41 垂直源）/ `video_search` / `research` 等工具面 | 2026-11-08 装（web），热应用生效：九件工具挂载，`web_search` 与官方 provider 共存正常；`free_search_test` 定向实测 exa/anysearch/tavily/tinyfish 四把 `~/.env_self` key 全 OK，bing OK，ddg 触发 bot-wall 冷却（声明行为）；registry 按供应链策略解析 0.9.34（npm 当日最新 0.9.38），pnpm peers 有 WARN 不阻加载 |
 | `dsh-soft-palette` | 1.0.0 | 自写 client 插件：`ThemeRuntime.overrideTokens` 常驻低对比调色层，深色正文约 18:1 降到约 9:1（正文 `#bcc3cd`、底色 `#1e2126`），浅色只降正文一档；覆盖正文、次要文字、底色、两层面板、两级边框七枚 alias token，品牌色与状态色不动；卸载即恢复内建色板 | 2026-11-08 装（web），源码在 `private_dot_dsh/plugins/dsh-soft-palette/`（chezmoi 不部署，install_bundle 从仓库路径装）；`application: applied` 零告警，组合树含 `soft-palette` 行，视觉验收待用户刷新实况 |
-| `dsh-meow-preset` | 1.0.0 | 自写 bundle：喵喵模式精简日常预设（id `meow`，order 0）：standard 减 schedule 四件、delegation 四件、todo、present、plugin-manager 工具，保留 goal、jobs、计划模式、ask-user、web_fetch、技能与压缩，applyPatch 维持 false；plan-mode 提示段照抄 standard，仅 todo_write 引用句适配（本预设不挂 todo） | 2026-11-09 装（web），源码在 `private_dot_dsh/plugins/dsh-meow-preset/`（chezmoi 不部署，install_bundle 从仓库路径装）；`application: applied` 零告警，dump-config 含完整声明且行上无激活诊断 |
+| `dsh-meow-preset` | 1.0.0 | 自写 bundle：喵喵模式精简日常预设（id `meow`，order 0）：standard 减 schedule 四件、delegation 四件、todo、present、plugin-manager 工具，保留 goal、jobs、计划模式、ask-user、web_fetch、技能与压缩，applyPatch 维持 false；plan-mode 提示段照抄 standard，仅 todo_write 引用句适配（本预设不挂 todo） | 2026-11-09 装（web），源码在 `private_dot_dsh/plugins/dsh-meow-preset/`（chezmoi 不部署，install_bundle 从仓库路径装）；`application: applied` 零告警，dump-config 含完整声明且行上无激活诊断；同日复制进 pi-tui profile（link 同源） |
+| `@xmoon76/dsh-pi-tui` | 0.5.6 | pi-tui 系终端前端：装成 `pi-tui` profile（与 web 共享会话、凭据、技能），engines 精确声明 dsh >= 0.2.2-rc.1（上游有版本配对矩阵与 compat CI），pi 直系键位（Esc Esc rewind、Ctrl+S steer、Ctrl+R 输入历史、`!` 与 `!!` shell 模式）、Session fork/rewind/lineage、Extension API 分层稳定入口 | 2026-11-09 装（pi-tui profile），伴喵喵预设；安装三教训入册（见下方 2026-11-09 段）：@latest 在仓库 cwd 被 pnpm minimumReleaseAge 滤成 0.5.5 配对错位（离库目录显式 pin 修复）、patch 缺 llm-pi-ai 行报 NO_ADAPTER、update 前对上游配对矩阵；三方内存实测冷启 274 MB、十轮 203 MB（协议与全程数字存 grilling 记录）；版本策略 @latest 浮动 |
 
 2026-11-07 精简裁决：headless profile 整体退役（从不跑一次性 CLI 任务），插件只维护 web 一份；
-如需重建用 `dsh plugin --profile headless add <pkg>`。
+如需重建用 `dsh plugin --profile headless add <pkg>`。2026-11-09 盘问裁决开出 pi-tui profile 例外
+（终端前端，见插件表）。
 dsh 0.2.2-rc.1 下 `dsh-patch-edit-plus` 暂不可用，编辑回到原生 `edit`；
 这不改变 pi/opencode 的补丁优先级。dsh 可选插件加载失败是静默的，状态以浏览器插件面板与功能冒烟为准。
+
+2026-11-09 盘问裁决开终端使用面：`pi-tui` profile 装 `@xmoon76/dsh-pi-tui` 0.5.6 与喵喵预设
+（link 同源），patch 镜像 web 运行时状态三行（llm-pi-ai 空 provider 覆盖、默认模型、预设默认），
+原“TUI 无官方 profile 不在本项目范围”裁决随之作废。三个教训入册：@latest 安装在本仓库 cwd 下
+被 pnpm minimumReleaseAge 滤掉当日发布的 0.5.6、落到与 dsh 0.2.2-rc.1 配对错位的 0.5.5
+（离库目录显式 pin 修复）；patch 缺 llm-pi-ai 行时 zai 适配器不挂载，会话报 NO_ADAPTER；
+将来 update 前先对上游配对矩阵。三方内存实测（十轮计数器任务，tmux 驱动，统一
+zai-coding-cn/glm-5.3-flash）：pi 181/159 MB（冷启/十轮后），pi-tui 274/203 MB，
+web 临时实例 266 MB，Edge GUI tab 增量约 48 MB——dsh-tui 不比 pi 轻，比浏览器前端略省；
+全程数字与协议存 `~/.cache/grilling/dotfiles/20261109-dsh-tui-终端前端选型.md`。
 
 2026-11-09 盘问裁决两层精简：包层 `set_bundle` 停用官方安装包 agent-team 与 forge
 （减团队工具与 Team Lead 提示段、create_worktree 与 Forge 面板；market 与四只 profile 包保留；
@@ -126,6 +138,7 @@ dsh 0.2.2-rc.1 下 `dsh-patch-edit-plus` 暂不可用，编辑回到原生 `edit
 chezmoi diff                                        # 预览部署差异
 dsh --profile web --dump-config                     # 组合校验：patch 可加载、模型路由存在
 dsh web --no-open --port 3081                       # 冷启动校验（验证后关闭）
+dsh --profile pi-tui                                # 终端前端冷启动校验（横幅应示 dsh-0.2.2-rc.1 · tui-v0.5.6）
 ```
 
 浏览器内确认：技能目录含 grilling 与 lark 系技能；内建模型（zai-coding-cn、deepseek）可选。
