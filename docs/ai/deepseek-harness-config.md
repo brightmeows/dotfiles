@@ -57,8 +57,11 @@ models-dev 插件体系（models.dev 目录抓取、`~/.agents_meow/models`
 
 - 技能：dsh 默认扫描根已覆盖 `~/.agents/skills`（npx 安装区），这是唯一技能通道；原 `~/.dsh/skills` → `~/.agents_meow/skills` 符号链接已于 2026-10-06 随仓库技能分发退役删除。Pi 的 better-skill 消歧别名扩展已于 2026-09-24 移除，两家重名处理现为同款策略：按层与扫描序保留首个并告警。
 - MCP：2026-11-07 起五条 home patch 插入（exa、anysearch、context7、cratesio、zai）全部移除，
-  裁决与登记记录只保留在本节。替代：文档检索走 `dsh-context7` 插件
-  （原生 `context7_search` / `context7_get_docs` 工具）；搜索走 `dsh-free-search`
+  裁决与登记记录只保留在本节。替代：文档检索曾走 `dsh-context7` 插件
+  （原生 `context7_search` / `context7_get_docs` 工具），2026-11-09 盘问裁决卸载
+  （dsh 有检索退路，工具面与提示段一并瘦掉；重装 `dsh plugin --profile web add dsh-context7` 即回；
+  pi 侧 context7 MCP 不受影响照旧保留），库文档检索现走 `research` / `web_search` 加 `web_fetch`；
+  搜索走 `dsh-free-search`
   多引擎 provider（2026-11-08 起，`web_search` 工具面不变），抓取走 dsh 内置
   `web_fetch`；crates.io 缺口由其 `domain_search` 垂直源补上，视觉仍按需用 bash 调 API。
   官方 `deepseek-official` 搜索 provider 保留不卸：插件运行时接管选路
@@ -80,17 +83,24 @@ models-dev 插件体系（models.dev 目录抓取、`~/.agents_meow/models`
 | `dsh-block-secret-leaks` | 0.1.0 | pi secret-safe 等价：拦读/打印/上传/提交密钥，工具输出脱敏 | 冒烟通过：`.env` 读取被拦；extraPatterns 密钥名单补齐随 home patch 退役作废（2026-11-08 裁决） |
 | `dsh-plugin-codemode` | 0.1.1 | pi codemode 同构：JS 沙箱 `tools.<name>()` 代理全部工具 | 2026-11-07 卸载：默认预设切官方 PTC（`run_code` 工具面），卸载连带 quickjs 依赖链；该 override 已随 home patch 退役失效，预设回 dsh 内建默认（2026-11-08） |
 | `dshmarket` | 1.73.10 | GUI 插件市场底座 | 2026-11-07 卸载：个性化功能（收藏/分组/主题）零使用，浏览安装由官方 `plugin_market` 接管 |
-| `dsh-context7` | 0.2.0 | context7 文档原生工具（替代已移除的 mcp-context7） | web 已装，重启后 `context7_search` / `context7_get_docs` 已挂载 |
+| `dsh-context7` | 0.2.0 | context7 文档原生工具（替代已移除的 mcp-context7） | 2026-11-09 卸载（盘问裁决：dsh 有检索退路，见 MCP 节；pi 侧 context7 MCP 照旧保留）；重装 `dsh plugin --profile web add dsh-context7` |
 | `dsh-meow-context-hooks` | 0.1.0 | 自写插件：Pi 两扩展复刻（git 快照、子目录 AGENTS.md 注入），源码在 `dot_dsh/plugins/`（chezmoi 不部署，install_bundle 从仓库路径装） | 2026-11-08 卸载退役：双端复刻维护负担大于增量价值，pi 侧扩展保留；恢复从 git 历史找回源码重装 |
 | `dsh-zen-remote` | 2.3.11 | 手机 PWA 推送与远程访问（lan-gate 推送通道，`push_notify` 工具面） | 2026-11-08 装（web），lan-gate-server 进程常驻；运行时状态在 `~/.dsh/zen-remote-server.json`（serverId）与 `~/.dsh/lan-gate-state.json`（VAPID 密钥与推送订阅） |
-| `@deepseek-ai/dsh-experimental-plugin-market-bundle` | 0.2.2-rc.1 | 官方 Discover 标签 + `plugin_market` agent 工具 | web 已装，重启后 `plugin_market` 已挂载 |
+| `@deepseek-ai/dsh-experimental-plugin-market-bundle` | 0.2.2-rc.1 | 官方 Discover 标签 + `plugin_market` agent 工具 | web 已装，重启后 `plugin_market` 已挂载；2026-11-09 配置唯一索引源 `https://cdn.jsdelivr.net/npm/dsh-plugin-catalog/index.json`（awesome-dsh-plugin 社区目录，format-1，4872 插件），写入 profile `cordis.patch.yml` 的 `plugin-market` 行 `config.indexes`，HMR 热生效无需重启，`list_indexes` 与主题类检索实测可用（theme 关键词 351 条，兼容性自动标注） |
 | `dsh-free-search` | 0.9.34 | pi-web-access 等价：注册进 ctx.web 的多引擎搜索 provider（27 引擎回退链、keyless 档、多 key 轮换），附 `advanced_search` / `multi_search` / `platform_search` / `domain_search`（41 垂直源）/ `video_search` / `research` 等工具面 | 2026-11-08 装（web），热应用生效：九件工具挂载，`web_search` 与官方 provider 共存正常；`free_search_test` 定向实测 exa/anysearch/tavily/tinyfish 四把 `~/.env_self` key 全 OK，bing OK，ddg 触发 bot-wall 冷却（声明行为）；registry 按供应链策略解析 0.9.34（npm 当日最新 0.9.38），pnpm peers 有 WARN 不阻加载 |
 | `dsh-soft-palette` | 1.0.0 | 自写 client 插件：`ThemeRuntime.overrideTokens` 常驻低对比调色层，深色正文约 18:1 降到约 9:1（正文 `#bcc3cd`、底色 `#1e2126`），浅色只降正文一档；覆盖正文、次要文字、底色、两层面板、两级边框七枚 alias token，品牌色与状态色不动；卸载即恢复内建色板 | 2026-11-08 装（web），源码在 `private_dot_dsh/plugins/dsh-soft-palette/`（chezmoi 不部署，install_bundle 从仓库路径装）；`application: applied` 零告警，组合树含 `soft-palette` 行，视觉验收待用户刷新实况 |
+| `dsh-meow-preset` | 1.0.0 | 自写 bundle：meow 精简日常预设（id `meow`，order 0）：standard 减 schedule 四件、delegation 四件、todo、present、plugin-manager 工具，保留 goal、jobs、计划模式、ask-user、web_fetch、技能与压缩，applyPatch 维持 false；plan-mode 提示段照抄 standard，仅 todo_write 引用句适配（本预设不挂 todo） | 2026-11-09 装（web），源码在 `private_dot_dsh/plugins/dsh-meow-preset/`（chezmoi 不部署，install_bundle 从仓库路径装）；`application: applied` 零告警，dump-config 含完整声明且行上无激活诊断 |
 
 2026-11-07 精简裁决：headless profile 整体退役（从不跑一次性 CLI 任务），插件只维护 web 一份；
 如需重建用 `dsh plugin --profile headless add <pkg>`。
 dsh 0.2.2-rc.1 下 `dsh-patch-edit-plus` 暂不可用，编辑回到原生 `edit`；
 这不改变 pi/opencode 的补丁优先级。dsh 可选插件加载失败是静默的，状态以浏览器插件面板与功能冒烟为准。
+
+2026-11-09 盘问裁决两层精简：包层 `set_bundle` 停用官方安装包 agent-team 与 forge
+（减团队工具与 Team Lead 提示段、create_worktree 与 Forge 面板；market 与四只 profile 包保留；
+状态写 profile patch 属 GUI 运行时状态，插件面板或 set_bundle 一键回）；预设层新增
+`dsh-meow-preset`（见插件表），换预设粒度的取舍由它承载。已开会话保留原组合，
+验证以新会话选 Meow 后的工具面为准。
 
 上游 `dsh-patch-edit-plus` 的工具描述自带路由指南（单文件小改引导回原生 `edit`），与准则指令叠加后以准则为准。
 社区 `@anionex/dsh-apply-patch`（自带原生 DiffBlock 渲染，最贴近 pi 观感）peer 上限全在 0.1.x，0.2.x 下真实断裂不可用，已调研放弃；diff 卡预览需求待上游跟进或自写 client 插件。
