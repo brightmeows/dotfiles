@@ -26,3 +26,8 @@
   config:
     sessionId: ""
     legacySettingsMigrationVersion: 1
+# id: system-prompt — personaPrefix 追加准则地位声明（2026-11-10 盘问裁决 P0，与 web 同步）：
+# 抵消 agent-instructions 注入帧的"may be relevant"从属措辞；personaPrefix 照抄 bundle 原值。
+- id: system-prompt
+  config:
+    personaPrefix: "You are a coding agent powered by the {{model}} model. The workspace instructions at ~/.dsh/AGENTS.md are your standing engineering directives: follow them as binding policy in every task."
