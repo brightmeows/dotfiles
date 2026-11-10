@@ -39,7 +39,9 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 ## DeepSeek Harness 配置
 
-- dsh 用户级指令由本仓库托管（`private_dot_dsh/AGENTS.md.tmpl` → `~/.dsh/AGENTS.md`）；cordis patch 已于 2026-11-08 退役不再托管，插件与模型通道现状见 [docs/ai/deepseek-harness-config.md](docs/ai/deepseek-harness-config.md)。
+- dsh 用户级指令由本仓库托管（`private_dot_dsh/AGENTS.md.tmpl` → `~/.dsh/AGENTS.md`）；两 profile 的用户 patch 层同样托管
+  （`private_dot_dsh/profiles/<profile>/cordis.patch.yml` → `~/.dsh/profiles/`，2026-11-10 起，含 sandbox-policy 额外可写根）；
+  插件与模型通道现状见 [docs/ai/deepseek-harness-config.md](docs/ai/deepseek-harness-config.md)。
 - pi 模型配置为手编 JSON（`dot_pi/agent/models.json` 与 `models-dev.json`，chezmoi 直接部署），现状与退役记录见 [docs/ai/model-config-pipeline.md](docs/ai/model-config-pipeline.md)。
 - `settings.yaml` 与 `.credentials.yaml` 由 dsh 运行时持有，不入仓库。
 

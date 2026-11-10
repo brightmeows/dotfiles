@@ -1,0 +1,28 @@
+# Your patch layer for this dsh profile, applied after every bundle layer:
+# a top-level YAML array of loader patch entries (id-targeted config
+# overrides, disables, and insert lists; `!!js` expressions allowed).
+
+# 2026-11-09 盘问裁决落地：镜像 web 端运行时状态——喵喵预设为默认、
+# 默认模型 zai-coding-cn/glm-5.3-flash（effort max）。方言同 web patch：
+# 顶层带 id 的行即对该行 override，config 原样整体替换。
+- id: llm-pi-ai
+  name: "@deepseek-ai/dsh-llm-pi-ai"
+  config:
+    providers:
+      zai-coding-cn: {}
+- id: agent-default-model
+  name: "@deepseek-ai/dsh-agent-default-model"
+  config:
+    provider: zai-coding-cn
+    model: glm-5.3-flash
+    reasoningEffort: max
+- id: agent-preset-registry
+  name: "@deepseek-ai/dsh-agent-preset-registry"
+  config:
+    default: standard
+    selectedDefault: meow
+- id: tui-app
+  name: "@xmoon76/dsh-pi-tui"
+  config:
+    sessionId: ""
+    legacySettingsMigrationVersion: 1

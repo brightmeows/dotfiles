@@ -1,0 +1,82 @@
+# Your patch layer for this dsh profile, applied after every bundle layer:
+# a top-level YAML array of loader patch entries (id-targeted config
+# overrides, disables, and insert lists; `!!js` expressions allowed).
+
+# id: sandbox-policy — 放行工具链缓存目录进 workspace-write 额外可写根。
+# 2026-11-10 盘问裁决：uv/cargo/pnpm 缓存不在工作区与 /tmp 内，逐次审批太吵。
+# override 是整体替换，mode 与 workspaceRoot 必须照抄 dsh-base bundle 原值。
+- id: sandbox-policy
+  config:
+    mode: !!js process.env.DSH_PERMISSION_MODE ?? 'workspace-write'
+    workspaceRoot: !!js process.cwd()
+    additionalWritableRoots:
+      - /home/brightmeows/.cache/uv
+      - /home/brightmeows/.cargo
+      - /home/brightmeows/.local/share/pnpm
+# 方言：顶层带 id 的 patch 行即对该行 override，提供的字段整体替换（config 原样重述）
+# models-dev 生成块已于 2026-11-08 随插件退役移除；本文件只留 GUI 运行时状态键。
+- id: ui-settings-general
+  name: "@deepseek-ai/dsh-client-ui-settings-general"
+  config:
+    welcomeNoticeVersion: 2026-09-28.1
+- id: ui-theme
+  name: "@deepseek-ai/dsh-client-ui-theme"
+  config:
+    fontSize: 16
+    textFontFamily: '"JetBrainsMono Nerd Font", "Noto Sans Mono CJK SC"'
+    codeFontFamily: '"JetBrainsMono Nerd Font", "Noto Sans Mono CJK SC"'
+- id: ui-chat
+  name: "@deepseek-ai/dsh-client-ui-chat"
+  config:
+    collapseTiming: next-input
+    transcriptView: standard
+- id: llm-pi-ai
+  name: "@deepseek-ai/dsh-llm-pi-ai"
+  config:
+    providers:
+      zai-coding-cn: {}
+- id: dsh-zen-remote
+  name: dsh-zen-remote
+  config:
+    role: host
+    autoShareNewSessions: true
+    serverName: 白喵斯的MateBook
+    host: 127.0.0.1
+    ingressMode: cloudflared
+    ingressDomain: private-dsh.brightmeows.com
+    ingressHttpsPort: 443
+- id: agent-default-model
+  name: "@deepseek-ai/dsh-agent-default-model"
+  config:
+    provider: zai-coding-cn
+    model: glm-5.3-flash
+    reasoningEffort: max
+- id: agent-preset-registry
+  name: "@deepseek-ai/dsh-agent-preset-registry"
+  config:
+    default: standard
+    selectedDefault: meow
+- id: permission
+  name: "@deepseek-ai/dsh-permission-presets"
+  config:
+    presets:
+      read-only:
+        sandbox: read-only
+        approval: ask
+      workspace-write:
+        sandbox: workspace-write
+        approval: ask
+      danger-full-access:
+        sandbox: danger-full-access
+        approval: never
+    defaultPreset: danger-full-access
+- id: web
+  name: "@deepseek-ai/dsh-web"
+  config:
+    searchProvider: ddg
+    fetchProvider: fs-quality-fetch
+- id: plugin-market
+  name: "@deepseek-ai/dsh-plugin-market"
+  config:
+    indexes:
+      - https://cdn.jsdelivr.net/npm/dsh-plugin-catalog/index.json
