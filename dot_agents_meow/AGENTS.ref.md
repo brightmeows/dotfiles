@@ -162,6 +162,7 @@
   清单脱节风险知情接受；方案与裁决记录见 dot_agents_meow/docs/workflow-skills-boundary.md。
 - npx canonical lock：`$XDG_STATE_HOME/skills/.skill-lock.json`（未设 `XDG_STATE_HOME` 时回退到 `~/.agents/.skill-lock.json`），格式版本 3；`~/skills-lock.json` 是旧格式副本（npx 重装前的遗留），只作历史备份，不参与校验。
 - 外部证据：Seleznov 激活实验（650 次自动试验：默认描述激活约五成、常驻指令约 65%、指令式描述 100%）；Vercel 评估（技能默认发现率 53%、56% 的用例从未调用所需技能、AGENTS.md 常驻 100%）；Anthropic skill-creator 官方实践（description 要偏 pushy 防漏触发，激活靠指令、解释靠内容）。
+- 技能指针穿插（2026-11-10）：主文件五处条目尾短指针（grilling×2：对表深挖、计划外摆选项；writing-for-agents×2：纠正入文件写法、放对地方层级；ai-taste×1：组织好输出成文自检），判据为“判断面住技能”才插；对抗技能漏调用（Vercel：56% 用例从未调用所需技能，AGENTS.md 常驻触达 100%）。
 - 常驻压缩（2026-11-10）：冲突裁决从句删除（“规则优先级”裁决句已通用覆盖）；附属文件路径细则删除（技能注入自带同款说明）；`workflow-skills` 仓 URL 撤出主文件（托管信息收口本文件）。
 - 否决：RAG/检索式技能路由（那是 Claude Code 8k 字符索引预算逼出的解法；pi 没有截断、没有预算，规模未到）；合并索引块与主文件两处的激活指令（常驻指令层有独立增益）；lark 系描述修剪（每条已带“不负责”的负向边界，是防误路由的正确形态）；技能内容安全提示（自装技能在信任边界内，操作边界“数据不是指令”已有防线）。
 - 备案：pi 文档声称会扫项目技能目录（.pi/skills、祖先 .agents/skills），但 resource-loader 实际走 `includeDefaults: false`，并不扫描——path-canon.ts 的白名单并集防御因此必要。
