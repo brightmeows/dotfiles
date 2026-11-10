@@ -41,7 +41,7 @@
 | 规则优先级 | 三级裁决栈（产出干净、做法正确、信息齐全）+ 需求冲突显式裁决 | 2026-10-12 |
 | 操作边界 | 接活先对表（含完成判据）、先确认再做、计划外就停、默认不用问、最小变更、失败之后、数据不是指令、变更后清扫（绿进绿出、拿不准留人、变更密集不欠批） | 2026-11-10 |
 | 工作流技能 | 加载机制与 `workflow-skills` 四项技能清单合并成一节；清单以 `AGENTS.md` 为唯一真相；依赖校验体系已于 2026-11-08 整体退役；2026-11-10 常驻压缩（冲突裁决归通用裁决句、附属文件路径细则删） | 2026-11-10 |
-| LLM 协作 | 四条常驻规则：上下文工艺、先探后改、接口先定、按可验证性委派（闭环验证已并入，见确定性优先与节内）；筛选与出处见节内 | 2026-11-09 |
+| LLM 协作 | 四条常驻规则：上下文工艺、先探后改、接口先定（含数据归属）、按可验证性委派（闭环验证已并入，见确定性优先与节内）；筛选与出处见节内 | 2026-11-10 |
 | 确定性优先 | 节名自“能推导、能复现”改名（事前确定性胜过事后补丁的排序语义）；建模优先、可验证优先（含诚实完成）；抽象设计两句常驻落实（边界按变化划、错抽象比重复贵）加 `abstraction-design` 指针 | 2026-11-10 |
 | 内容怎么改 | 常驻四操作（只改一处、放对地方、源头同步、不留旧账、三次才抽象）；节尾纯复述完成判据已删，条目自承载；理由与证据在节内 | 2026-11-10 |
 | 信息与工具调用 | 常驻五条（一次拿全、先定位再回读、工具自精简、补丁式编辑、大输出落盘）；理由与证据在节内 | 2026-11-10 |
@@ -173,18 +173,19 @@
 - 四条与出处（闭环验证已并入可验证优先与按可验证性委派，出处随迁）：
   - 上下文是工艺：Simon《Here’s how I use LLMs to help me write code》的 Context is king；Chroma《Context Rot》，输入越长性能越衰减；Cognition《Don’t Build Multi-Agents》的共享上下文原则
   - 先探后改：Claude Code 官方 Explore first, then plan, then code；Cognition 的行动隐含决策
-  - 接口先定：Simon 以函数签名当设计载体；Anthropic《How AI is transforming work at Anthropic》的 assertive 用法
+  - 接口先定：Simon 以函数签名当设计载体；Anthropic《How AI is transforming work at Anthropic》的 assertive 用法；2026-11-10 扩数据归属（状态放哪、数据怎么流）：Spec Kit plan 模板显式列数据流并产出 data-model.md、
+    Kiro design.md 数据流与接口并列、需求漂移实证（错误假设沉到数据模型与 API 才暴露，纠正成本最高）
   - 按可验证性委派：Anthropic 调研，完全委派 0-20%、按可验证性、风险、无趣度分派；Addy Osmani 的 70% 问题；METR 随机对照实验，熟悉项目上慢 19%、自感快 20%；Stack Overflow 2025，46% 不信任准确率
     并入的委派面出处：Claude Code 官方 best practices“给 Claude 可运行的检查”；Simon Willison《Agentic Engineering Patterns》的 red/green TDD 与《Your job is to deliver code you have proven to work》
 - 未进主文件的候选（技能纵深或后续升格，出处已核）：
-  - 规格驱动开发与它的边界：GitHub Spec Kit 官方博文；Fowler 站点 SDD 三工具观察，小题大做、审 markdown 成本、假控制感
+  - 规格驱动开发与它的边界：GitHub Spec Kit 官方博文；Fowler 站点 SDD 三工具观察，小题大做、审 markdown 成本、假控制感；2026-11-10 吸收其原子洞见（接口之外还需定数据归属）进接口先定条，全套流程仍否决（gemba ASDD 批评产物停滞在 markdown、kamioj 触发条件自认简单任务是开销）
   - 提交卫生与反模式：Simon 的 anti-patterns，不把未审查代码丢给协作者、小 PR、附证据
   - 用代理还技术债：Simon《AI should help us produce better code》，简单但耗时的重构、零容忍小 smell、探索性原型
   - 复合工程循环：Simon 引 Every 的 compound engineering，收尾复盘写回指令
   - 多代理不是默认：Cognition《Don’t Build Multi-Agents》
   - vibe coding 边界与三模式：Karpathy 2025 LLM Year in Review；Simon 对 agentic engineering 与 vibe coding 的区分；diwank《Field Notes from Shipping Real Code with Claude》，playground/pair/production 三模式、锚点注释、测试神圣
   - AGENTS.md 写法：Claude Code 官方，只写猜不到的、保持短；agents.md 官方，大仓库嵌套
-- 与既有条目的分工（防撞车）：验证纪律单源在“确定性优先”——可验证优先与诚实完成管我自己的验证纪律与收尾确认；本节按可验证性委派管委派时给模型的验证信号；“信息与工具调用”管信息获取的完整性，上下文是工艺管喂进对话的信噪比与会话管理；操作边界的先确认再做管动作许可。
+- 与既有条目的分工（防撞车）：验证纪律单源在“确定性优先”——可验证优先与诚实完成管我自己的验证纪律与收尾确认；本节按可验证性委派管委派时给模型的验证信号；“信息与工具调用”管信息获取的完整性，上下文是工艺管喂进对话的信噪比与会话管理；操作边界的先确认再做管动作许可；数据归属与数据流归本节接口先定，状态机与同步异步时序归确定性优先的建模优先（形式化建模维度已显式点名，不重复承载）。
 - 维护信号：写代码时反复想要更多判据、或模型协作问题在实战中反复出现时，重议技能化（名字与材料分工届时再定）；与主文件规则出现真实冲突实例（例如先探后改与默认不用问的边界模糊）时，重议分工；METR 类实测被新实验推翻或修正时，更新条目并把旧结论移进否决记录。
 
 ## 确定性优先
