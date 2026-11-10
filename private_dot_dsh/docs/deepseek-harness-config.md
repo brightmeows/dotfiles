@@ -67,6 +67,13 @@ models-dev 插件体系（models.dev 目录抓取、`~/.agents_meow/models`
   官方 `deepseek-official` 搜索 provider 保留不卸：插件运行时接管选路
   （`searchProvider` 配置字段保持未设即接管，硬 pin 反有悬空引用翻车教训），
   插件被禁用时搜索降级回官方 provider，故物理退役官方包等于砍掉兜底。
+  硬 pin 教训 2026-11-10 实锤成事故：install_bundle 装新插件触发 free-search
+  行重载，provider 被注销后包内重入保护（“apply() already ran on this
+  context”）拒绝重跑，`ddg` 与 `fs-quality-fetch` 双双悬空，web_search 与
+  web_fetch 全挂（当时搜索与抓取两条硬 pin 都指向 free-search 注册的
+  provider）。处置：web patch 的 `web` 行（两条硬 pin）整体摘除换未设接管，
+  摘后即时验证搜索走官方 provider 兜底成功；free-search 功能恢复靠重启
+  web 进程重新 boot。pin 已删，勿再写回。
   Pi 侧按有无替代通道区别对待（2026-11-08 复核）：`context7` 保留（pi 无库文档检索替代通道），
   `cratesio-mcp` 停用（bash 调 API 替代），exa、anysearch 维持停用。
   `ANYSEARCH_API_KEY`、`EXA_API_KEY`、`TAVILY_API_KEY`、`TINYFISH_API_KEY` 同时被
@@ -87,7 +94,7 @@ models-dev 插件体系（models.dev 目录抓取、`~/.agents_meow/models`
 | `dsh-meow-context-hooks` | 0.1.0 | 自写插件：Pi 两扩展复刻（git 快照、子目录 AGENTS.md 注入），源码在 `dot_dsh/plugins/`（chezmoi 不部署，install_bundle 从仓库路径装） | 2026-11-08 卸载退役：双端复刻维护负担大于增量价值，pi 侧扩展保留；恢复从 git 历史找回源码重装 |
 | `dsh-zen-remote` | 2.3.11 | 手机 PWA 推送与远程访问（lan-gate 推送通道，`push_notify` 工具面） | 2026-11-08 装（web），lan-gate-server 进程常驻；运行时状态在 `~/.dsh/zen-remote-server.json`（serverId）与 `~/.dsh/lan-gate-state.json`（VAPID 密钥与推送订阅） |
 | `@deepseek-ai/dsh-experimental-plugin-market-bundle` | 0.2.2-rc.1 | 官方 Discover 标签 + `plugin_market` agent 工具 | web 已装，重启后 `plugin_market` 已挂载；2026-11-09 配置唯一索引源 `https://cdn.jsdelivr.net/npm/dsh-plugin-catalog/index.json`（awesome-dsh-plugin 社区目录，format-1，4872 插件），写入 profile `cordis.patch.yml` 的 `plugin-market` 行 `config.indexes`，HMR 热生效无需重启，`list_indexes` 与主题类检索实测可用（theme 关键词 351 条，兼容性自动标注） |
-| `dsh-free-search` | 0.9.34 | pi-web-access 等价：注册进 ctx.web 的多引擎搜索 provider（27 引擎回退链、keyless 档、多 key 轮换），附 `advanced_search` / `multi_search` / `platform_search` / `domain_search`（41 垂直源）/ `video_search` / `research` 等工具面 | 2026-11-08 装（web），热应用生效：九件工具挂载，`web_search` 与官方 provider 共存正常；`free_search_test` 定向实测 exa/anysearch/tavily/tinyfish 四把 `~/.env_self` key 全 OK，bing OK，ddg 触发 bot-wall 冷却（声明行为）；registry 按供应链策略解析 0.9.34（npm 当日最新 0.9.38），pnpm peers 有 WARN 不阻加载 |
+| `dsh-free-search` | 0.9.34 | pi-web-access 等价：注册进 ctx.web 的多引擎搜索 provider（27 引擎回退链、keyless 档、多 key 轮换），附 `advanced_search` / `multi_search` / `platform_search` / `domain_search`（41 垂直源）/ `video_search` / `research` 等工具面 | 2026-11-08 装（web），热应用生效：九件工具挂载，`web_search` 与官方 provider 共存正常；`free_search_test` 定向实测 exa/anysearch/tavily/tinyfish 四把 `~/.env_self` key 全 OK，bing OK，ddg 触发 bot-wall 冷却（声明行为）；registry 按供应链策略解析 0.9.34（npm 当日最新 0.9.38），pnpm peers 有 WARN 不阻加载；2026-11-10 事故：install_bundle 重载致 provider 注销后重入保护拒绝重跑，web patch 两条硬 pin（searchProvider: ddg、fetchProvider: fs-quality-fetch）悬空双挂，摘 pin 换未设接管后搜索走官方兜底恢复（事故全文见 MCP 节），free-search 本体待重启 web 恢复 |
 | `dsh-soft-palette` | 1.0.0 | （退役）自写 client 插件：`ThemeRuntime.overrideTokens` 低对比调色层 | 2026-11-08 装（web）；2026-11-10 盘问裁决退役：catppuccin 主题上位，两者叠色冲突，卸载并删源码（git 历史可找回） |
 | `@nonamelego/dsh-catppuccin` | 0.7.3 | web 面主题：Latte/Frappé/Macchiato/Mocha 四档接入原生主题运行时，一键切换并记住选择（对齐 pi 的 catppuccin-mocha）；另附可开关玻璃皮肤 | 2026-11-10 装（web），离库目录显式 pin 0.7.3（防 minimumReleaseAge 滤版教训复用）；engines >=0.1.7-rc.1 兼容 0.2.2-rc.1；Mocha 档与 Omarchy 终端主题（同为 mocha）对齐，视觉验收待用户刷新实况 |
 | `dsh-meow-preset` | 1.0.0 | 自写 bundle：喵喵模式精简日常预设（id `meow`，order 0）：standard 减 schedule 四件、delegation 四件、todo、present、plugin-manager 工具，保留 goal、jobs、计划模式、ask-user、web_fetch、技能与压缩，applyPatch: true（2026-11-10 起：挂内建 Codex 风格 `apply_patch` 对齐 pi 编辑形态，上游预设默认关闭；strict 解析无 pi 侧修复层）；plan-mode 提示段照抄 standard，仅 todo_write 引用句适配（本预设不挂 todo） | 2026-11-09 装（web），源码在 `private_dot_dsh/plugins/dsh-meow-preset/`（chezmoi 不部署，install_bundle 从仓库路径装）；`application: applied` 零告警，dump-config 含完整声明且行上无激活诊断；同日复制进 pi-tui profile（link 同源）；2026-11-10 改 applyPatch: true 后 dump-config 即时反映（symlink link，改仓库源文件即生效） |
