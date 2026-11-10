@@ -17,8 +17,15 @@ AGENTS.md
 # 覆写壳生成脚本：仓库内维护，不部署
 .config/clash-meta/gen-party-override.sh
 
-# docs 仅仓库维护：不再部署到 ~/docs（~/docs 内容不归本仓库管）
+# 文档仅仓库维护，不部署到 $HOME：仓库根 docs/（不再部署到 ~/docs，各机 ~/docs 内容不归本仓库管）
+# 与源树各配置目录的 docs/（随配置源就近放置，见 AGENTS.md 文档索引）。
+# 逐目录显式列出而非 **/docs/** 全局规则：vendor 扩展自带 docs/（如 .pi/agent/ext/*/docs）须随部署。
 docs/**
+.pi/agent/docs/**
+.dsh/docs/**
+.agents_meow/docs/**
+.config/clash-meta/docs/**
+.config/tmux/docs/**
 
 # dsh 插件源码仅仓库维护：install_bundle 直接从仓库路径安装，不部署
 .dsh/plugins/**
@@ -41,7 +48,7 @@ tsconfig.json
 # shell.json 仍不入管，由
 # brightmeows 插件的合并脚本在 apply 时恢复 bar 条目
 # monitors.lua 例外：缩放切档器（SUPER+SLASH）每次按键都 sed 联写通配值，
-# 属常态性带外写手，除管移交 omarchy（裁决与恢复见 docs/omarchy-monitors-lua-除管记录.md）
+# 属常态性带外写手，除管移交 omarchy（裁决与恢复见 docs/omarchy/omarchy-monitors-lua-除管记录.md）
 .config/hypr/monitors.lua
 
 # Omarchy 用户插件只在 Omarchy 机器部署，其它平台不产生 ~/.config/omarchy
