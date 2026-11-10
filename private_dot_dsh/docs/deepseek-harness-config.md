@@ -146,7 +146,7 @@ web 临时实例 266 MB，Edge GUI tab 增量约 48 MB——dsh-tui 不比 pi �
   的路径（omarchy/hypr 无 dsh 绑定），当前实例从 kitty 里的 nushell 启动，key 可达；
   将来若新增图形启动器跑 dsh 的路径，需重估 environment.d 注入。
   pi 终端会话的 key 由 `~/.env_self` 供应，不受影响。
-  加载路径总览见 [env-loading.md](../dev/env-loading.md)。
+  加载路径总览见 [env-loading.md](../../docs/dev/env-loading.md)。
 - 沙箱：读取不受限；`workspace-write` 模式可写会话工作区、`/tmp` 与 `os.tmpdir()`；越界写会被拒并触发审批升级。`~/.agents_tmp` 不在可写范围。
 - 沙箱额外可写根：2026-11-10 盘问裁决，用户 patch 层 override `sandbox-policy`（dsh-base 挂载，id 即 `sandbox-policy`），
   `additionalWritableRoots` 放行 `~/.cache/uv`、`~/.cargo`、`~/.local/share/pnpm` 三个工具链缓存目录（仅 `workspace-write` 生效）。

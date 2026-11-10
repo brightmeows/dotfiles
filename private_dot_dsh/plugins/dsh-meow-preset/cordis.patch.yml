@@ -1,6 +1,6 @@
 # Agent preset meow: lean daily preset, standard minus the orchestration surface.
 # Cuts versus standard (grilling 2026-11-09, registered in
-# docs/ai/deepseek-harness-config.md): tool-schedule, delegation group
+# private_dot_dsh/docs/deepseek-harness-config.md): tool-schedule, delegation group
 # (subagent / subagent_fork / workflow / model discovery), tool-todo,
 # tool-present, tool-plugin-manager; tool-plugin-market stays disabled like
 # upstream. Kept: goal, jobs, plan mode, ask-user, web fetch, skills,

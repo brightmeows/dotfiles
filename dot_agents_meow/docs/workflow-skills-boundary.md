@@ -101,8 +101,8 @@
 | `dot_agents_meow/scripts/check-skills.test.mjs` | 新增，覆盖解析、重复、空清单、锁键集与 hash 稳定性 |
 | `package.json` | 新增 `check:skills` 与 `gen:skills-lock`；`check` 加 `--decl-only`；`test` 加脚本目录 |
 | `.githooks/pre-commit` | 新增 `--warn` 校验 |
-| `docs/ai/agents-meow-workflow-skills-boundary.md` | 新增，本文 |
-| `AGENTS.md` | 在 `docs/ai/` 表登记本文 |
+| `dot_agents_meow/docs/workflow-skills-boundary.md` | 新增，本文（原 docs/ai/ 路径，2026-11-10 迁入） |
+| `AGENTS.md` | 在仓库根 AGENTS.md 文档索引登记本文 |
 | `docs/skills/npx-skills-usage.md` | 更正 canonical lock 路径；注明 `~/skills-lock.json` 是历史备份 |
 | `/home/brightmeows/AGENTS.md` | 旧锁文件的说明改为历史备份（仓库外，手工维护） |
 

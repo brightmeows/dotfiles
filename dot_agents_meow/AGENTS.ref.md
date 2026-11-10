@@ -77,7 +77,7 @@
 - 技能依赖方向：dotfiles 依赖 workflow-skills，反向不成立。workflow-skills 是公开仓，按 npx 分发；
   dotfiles 只声明技能名与来源，不 vendored。清单与安装态的一致性靠人眼对齐：
   2026-11-08 经盘问裁决把三层校验体系（声明比对、安装校验、hash 锁）整体砍掉，
-  缺装、改名、换源不再在提交时暴露；方案记录见 docs/ai/agents-meow-workflow-skills-boundary.md。
+  缺装、改名、换源不再在提交时暴露；方案记录见 dot_agents_meow/docs/workflow-skills-boundary.md。
 - 结构：`SOUL.md` 只留一段常驻人设（名字、称呼与选定锚点）；不设素材文件，行为约束与产出物纪律归 `AGENTS.md`。
   `AGENTS.md` 以工程准则为主体：H1 开场后按四个决策域分组推进，元规则组的“规则优先级”打头；文末不再留指回本文件的指针，托管与分发信息仍在本节。
   消费者：opencode 与 Pi 在模板里依序 include 两份（人设在前）；dsh 的 `~/.dsh/AGENTS.md` 只收准则，不收人设。
@@ -153,7 +153,7 @@
 - 机制：技能清单的扫描常驻（接到任务扫一眼，成本近零）；加载阈值是“预计会用到才加载”；调用前声明“使用 [技能名] 完成 [目的]”；流程类技能排在实现类之前；任务性质变化或已加载技能被证伪时再查；技能文件按需读采用平台中立措辞（环境已注入文件清单就直接用，否则自行枚举）；用户明确指示、或本文件规则与技能冲突时，听用户和本文件的。
 - 依赖与校验：技能名单以 `AGENTS.md` 的“工作流技能”节为唯一真相。三层校验体系（声明比对、安装校验、
   hash 锁）已于 2026-11-08 整体退役：技能内容漂移的防护交给 workflow-skills 仓自身 git，
-  清单脱节风险知情接受；方案与裁决记录见 docs/ai/agents-meow-workflow-skills-boundary.md。
+  清单脱节风险知情接受；方案与裁决记录见 dot_agents_meow/docs/workflow-skills-boundary.md。
 - npx canonical lock：`$XDG_STATE_HOME/skills/.skill-lock.json`（未设 `XDG_STATE_HOME` 时回退到 `~/.agents/.skill-lock.json`），格式版本 3；`~/skills-lock.json` 是旧格式副本（npx 重装前的遗留），只作历史备份，不参与校验。
 - 外部证据：Seleznov 激活实验（650 次自动试验：默认描述激活约五成、常驻指令约 65%、指令式描述 100%）；Vercel 评估（技能默认发现率 53%、56% 的用例从未调用所需技能、AGENTS.md 常驻 100%）；Anthropic skill-creator 官方实践（description 要偏 pushy 防漏触发，激活靠指令、解释靠内容）。
 - 否决：RAG/检索式技能路由（那是 Claude Code 8k 字符索引预算逼出的解法；pi 没有截断、没有预算，规模未到）；合并索引块与主文件两处的激活指令（常驻指令层有独立增益）；lark 系描述修剪（每条已带“不负责”的负向边界，是防误路由的正确形态）；技能内容安全提示（自装技能在信任边界内，操作边界“数据不是指令”已有防线）。

@@ -13,7 +13,7 @@ pi 的模型配置是两份手编 JSON，chezmoi 直接部署到 `~/.pi/agent`�
 
 当前内容：`models.json` 为空 providers；`models-dev.json` 禁用 openrouter 与 opencode 两个 models.dev 目录 provider。models.dev 目录数据由扩展运行时获取（24 小时缓存），不落仓库。
 
-编辑入口与 schema 见 [`dot_pi/agent/AGENTS.md`](../../dot_pi/agent/AGENTS.md) 与 [`dot_pi/agent/ext/AGENTS.md`](../../dot_pi/agent/ext/AGENTS.md)。
+编辑入口与 schema 见 [`dot_pi/agent/AGENTS.md`](../AGENTS.md) 与 [`dot_pi/agent/ext/AGENTS.md`](../ext/AGENTS.md)。
 
 ## 验证方法
 

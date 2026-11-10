@@ -41,8 +41,8 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 - dsh 用户级指令由本仓库托管（`private_dot_dsh/AGENTS.md.tmpl` → `~/.dsh/AGENTS.md`）；两 profile 的用户 patch 层同样托管
   （`private_dot_dsh/profiles/<profile>/cordis.patch.yml` → `~/.dsh/profiles/`，2026-11-10 起，含 sandbox-policy 额外可写根）；
-  插件与模型通道现状见 [docs/ai/deepseek-harness-config.md](docs/ai/deepseek-harness-config.md)。
-- pi 模型配置为手编 JSON（`dot_pi/agent/models.json` 与 `models-dev.json`，chezmoi 直接部署），现状与退役记录见 [docs/ai/model-config-pipeline.md](docs/ai/model-config-pipeline.md)。
+  插件与模型通道现状见 [docs/deepseek-harness-config.md](private_dot_dsh/docs/deepseek-harness-config.md)。
+- pi 模型配置为手编 JSON（`dot_pi/agent/models.json` 与 `models-dev.json`，chezmoi 直接部署），现状与退役记录见 [docs/model-config-pipeline.md](dot_pi/agent/docs/model-config-pipeline.md)。
 - `settings.yaml` 与 `.credentials.yaml` 由 dsh 运行时持有，不入仓库。
 
 ## 环境变量配置
@@ -56,11 +56,28 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
   `include` 引用 `dot_config/` 唯一源，非 Windows 平台经 `.chezmoiignore` 忽略 `AppData`；新增同类平台差异映射时沿用此模式，
   不再使用 `.chezmoiexternal.toml` 的 `file://` 条目（chezmoi 2.73.x Windows 解析损坏，apply 整体失败）。
 
-## 系统配置记录
+## 文档索引
 
-`docs/` 按主题分子目录：`legacy/`、`omarchy/`、`terminal/`、`ai/`、`skills/`、`dev/`、`network/`、`misc/`，各类主题见下文小节标题。新文档随提交按类登记于下表；该目录仅仓库维护，不再部署到 `~/docs`（各机 `~/docs` 内容不归本仓库管理）。
+文档随配置源就近放置：附着单一配置点的进该配置源树目录下的 `docs/`；无活配置处或跨多处的进仓库根 `docs/` 对应主题子目录。全部文档仅仓库维护、不部署到 `$HOME`（`.chezmoiignore` 逐目录排除，vendor 扩展自带 docs 除外）。新文档按此放置并登记下表；新增源树 `docs/` 位置时在 `.chezmoiignore` 补条目。
 
-### legacy/（Fedora 时期与退役工具）
+### 源树文档（配置源旁）
+
+| 配置位置 | 文档 | 摘要 |
+|---|---|---|
+| `dot_pi/agent/` | [docs/model-config-pipeline.md](dot_pi/agent/docs/model-config-pipeline.md) | pi 模型配置现状（手编 JSON）与 TOML 流水线、dsh 消费面的退役记录 |
+| `dot_pi/agent/` | [docs/ask-user-question-limits.md](dot_pi/agent/docs/ask-user-question-limits.md) | Pi ask_user_question vendor 化、题数上限移除、依赖锁与漂移门禁 |
+| `dot_pi/agent/` | [docs/apply-patch-failure-modes.md](dot_pi/agent/docs/apply-patch-failure-modes.md) | apply_patch 失败率实测、Codex 格式约束、本地修复层与上游贡献状态 |
+| `dot_pi/agent/` | [docs/openai-auth.md](dot_pi/agent/docs/openai-auth.md) | pi 接入 GPT：订阅登录步骤、与 Codex CLI 认证逐项对比及缺口补齐、凭据互通边界 |
+| `private_dot_dsh/` | [docs/deepseek-harness-config.md](private_dot_dsh/docs/deepseek-harness-config.md) | DeepSeek Harness 配置托管、技能与 MCP 迁移、凭据与沙箱差异 |
+| `dot_agents_meow/` | [docs/workflow-skills-boundary.md](dot_agents_meow/docs/workflow-skills-boundary.md) | agents_meow 与 workflow-skills 的边界、事实源收口、技能清单校验方案（校验已退役） |
+| `dot_config/clash-meta/` | [docs/party-override.md](dot_config/clash-meta/docs/party-override.md) | clash-meta party 覆写配置 |
+| `dot_config/clash-meta/` | [docs/bof-venue-ip-policy.md](dot_config/clash-meta/docs/bof-venue-ip-policy.md) | BOF 会场 IP 管控性质、mihomo 实测出口与 BOF 组直连计划 |
+| `dot_config/tmux/` | [docs/omarchy-tmux-chezmoi拼接与refresh覆盖恢复.md](dot_config/tmux/docs/omarchy-tmux-chezmoi拼接与refresh覆盖恢复.md) | tmux 上游配置的 chezmoi 模板拼接、refresh 覆盖恢复步骤、字母系追加段设计 |
+| `dot_config/tmux/` | [docs/zellij-tmux-herdr键位统一速查.md](dot_config/tmux/docs/zellij-tmux-herdr键位统一速查.md) | 三应用键位对照全表、两层结构与已知差异、herdr 上游缺口（#5551）、tmux socket 操作安全 |
+
+### 仓库根 docs/
+
+#### legacy/（Fedora 时期与退役工具）
 
 | [`docs/legacy/fedora-kinoite-multimedia-repo-config.md`](docs/legacy/fedora-kinoite-multimedia-repo-config.md) | Fedora Kinoite 44 多媒体仓库布局、编解码能力分析、terra-mesa 移除记录 |
 | [`docs/legacy/fedora-kinoite-obs-vaapi-encode.md`](docs/legacy/fedora-kinoite-obs-vaapi-encode.md) | OBS Studio VAAPI 硬件编码配置、VCN 单元监控方法 |
@@ -71,27 +88,13 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | [`docs/legacy/audio-acp3x-es83xx-headphone.md`](docs/legacy/audio-acp3x-es83xx-headphone.md) | AMD ACP3x 音频耳机问题处理（Fedora 时期） |
 | [`docs/legacy/nvm-shim-nvm4306-script-trust.md`](docs/legacy/nvm-shim-nvm4306-script-trust.md) | （历史）NVM shim NVM4306 拦截与脚本信任修复；nvm 已退役，问题随 shim 代理层消失 |
 
-### omarchy/（桌面环境与现役机器）
+#### omarchy/（桌面环境与现役机器）
 
 | [`docs/omarchy/omarchy-monitors-lua-除管记录.md`](docs/omarchy/omarchy-monitors-lua-除管记录.md) | Omarchy 缩放切档器就地改写 monitors.lua 与 chezmoi 的主权冲突：证据链、除管裁决、政策承接与恢复方法 |
 | [`docs/omarchy/omarchy-shell-refresh-定制恢复清单.md`](docs/omarchy/omarchy-shell-refresh-定制恢复清单.md) | Omarchy shell.json 手动定制清单（时钟格式、托盘 pinned、右区顺序）、refresh shell 恢复步骤与升级核对提示 |
 | [`docs/omarchy/matebook-battery-optimization.md`](docs/omarchy/matebook-battery-optimization.md) | MateBook 续航优化：放电数据对比、battery-boost/power-log 改动、mihomo DoT 探测风暴处置（Omarchy 现役机器） |
 
-### terminal/（终端与多路复用体系）
-
-| [`docs/terminal/zellij-tmux-herdr键位统一速查.md`](docs/terminal/zellij-tmux-herdr键位统一速查.md) | 三应用键位对照全表、两层结构与已知差异、herdr 上游缺口（#5551）、tmux socket 操作安全 |
-| [`docs/terminal/omarchy-tmux-chezmoi拼接与refresh覆盖恢复.md`](docs/terminal/omarchy-tmux-chezmoi拼接与refresh覆盖恢复.md) | tmux 上游配置的 chezmoi 模板拼接、refresh 覆盖恢复步骤、字母系追加段设计 |
-
-### ai/（AI 工具链与模型配置）
-
-| [`docs/ai/deepseek-harness-config.md`](docs/ai/deepseek-harness-config.md) | DeepSeek Harness 配置托管、技能与 MCP 迁移、凭据与沙箱差异 |
-| [`docs/ai/model-config-pipeline.md`](docs/ai/model-config-pipeline.md) | pi 模型配置现状（手编 JSON）与 TOML 流水线、dsh 消费面的退役记录 |
-| [`docs/ai/pi-ask-user-question-limits.md`](docs/ai/pi-ask-user-question-limits.md) | Pi ask_user_question vendor 化、题数上限移除、依赖锁与漂移门禁 |
-| [`docs/ai/pi-apply-patch-failure-modes.md`](docs/ai/pi-apply-patch-failure-modes.md) | apply_patch 失败率实测、Codex 格式约束、本地修复层与上游贡献状态 |
-| [`docs/ai/agents-meow-workflow-skills-boundary.md`](docs/ai/agents-meow-workflow-skills-boundary.md) | agents_meow 与 workflow-skills 的边界、事实源收口、技能清单校验方案（校验已退役） |
-| [`docs/ai/pi-openai-auth.md`](docs/ai/pi-openai-auth.md) | pi 接入 GPT：订阅登录步骤、与 Codex CLI 认证逐项对比及缺口补齐、凭据互通边界 |
-
-### skills/（技能与工具接入）
+#### skills/（技能与工具接入）
 
 | [`docs/skills/npx-skills-usage.md`](docs/skills/npx-skills-usage.md) | npx skills 作用域机制、remove 假成功 bug、安全操作姿势与验证方法、WorkBuddy 技能桥接单元 |
 | [`docs/skills/lark-cli技能环境与维护记录.md`](docs/skills/lark-cli技能环境与维护记录.md) | lark-cli 技能环境：安装来源差异、版本对齐与 skills CLI 已知 bug |
@@ -103,12 +106,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | [`docs/dev/pnpm-store-version.md`](docs/dev/pnpm-store-version.md) | pnpm 12 版本、store 布局、安全策略（minimumReleaseAge/allowBuilds）与重链记录 |
 | [`docs/dev/jujutsu-migration.md`](docs/dev/jujutsu-migration.md) | Jujutsu 试验记录与回退：特性谱系、混用边界与失效模式速查（供将来重用参考） |
 
-### network/（网络与代理）
-
-| [`docs/network/clash-meta-party-override.md`](docs/network/clash-meta-party-override.md) | clash-meta party 覆写配置 |
-| [`docs/network/bof-venue-ip-policy.md`](docs/network/bof-venue-ip-policy.md) | BOF 会场 IP 管控性质、mihomo 实测出口与 BOF 组直连计划 |
-
-### misc/（生活杂项）
+#### misc/（生活杂项）
 
 | [`docs/misc/Edge与Firefox书签合并经验.md`](docs/misc/Edge与Firefox书签合并经验.md) | Edge 与 Firefox 书签合并：同步引擎与文件层两套真相、去重映射与两地手术 |
 

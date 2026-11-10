@@ -15,7 +15,7 @@ tags: [pi, mcp, settings]
 - 直接编辑本目录两份 JSON，手改后 `chezmoi apply` 部署到 `~/.pi/agent`。
 - `models.json` 解析时支持 `//` 行注释与尾逗号（不支持 `/* */`）；`models-dev.json` 严格 JSON，schema 见 [ext/AGENTS.md](./ext/AGENTS.md) 的 models-dev 用户配置节。
 - models.dev 的目录数据由扩展在运行时获取（24 小时缓存），不落仓库。
-- 原 TOML 单一源生成流水线已于 2026-11-08 退役（6 行 TOML 养 436 行生成器，收益比不成立），恢复方法与退役记录见 [docs/ai/model-config-pipeline.md](../../docs/ai/model-config-pipeline.md)。
+- 原 TOML 单一源生成流水线已于 2026-11-08 退役（6 行 TOML 养 436 行生成器，收益比不成立），恢复方法与退役记录见 [docs/model-config-pipeline.md](docs/model-config-pipeline.md)。
 
 ## 其它文件
 
