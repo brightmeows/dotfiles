@@ -33,7 +33,7 @@ override 整体替换 config，GUI 写入的 `fontSize: 16` 已原样重述。
 
 | 源文件 | 目标 | 说明 |
 |---|---|---|
-| `private_dot_dsh/AGENTS.md.tmpl` | `~/.dsh/AGENTS.md` | 渲染 `dot_agents_meow/AGENTS.md`（工程准则），与 Pi/opencode 同源；只收工程准则，不含人设 |
+| `private_dot_dsh/AGENTS.md.tmpl` | `~/.dsh/AGENTS.md` | 依序渲染 `dot_agents_meow/SOUL.md`（人设）与 `AGENTS.md`（工程准则），与 Pi/opencode 同源；2026-11-10 推翻“dsh 只收准则”裁决，三端同带人设 |
 
 模型域插件（`~/.agents_meow/models/plugin.mts` 家族）已随 models-dev 退役（2026-11-08）删除；
 自写插件 dsh-meow-context-hooks 同日经盘问裁决退役删除（双端复刻的维护认知负担大于增量价值，
