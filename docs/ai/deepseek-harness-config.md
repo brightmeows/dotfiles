@@ -88,9 +88,11 @@ models-dev 插件体系（models.dev 目录抓取、`~/.agents_meow/models`
 | `dsh-zen-remote` | 2.3.11 | 手机 PWA 推送与远程访问（lan-gate 推送通道，`push_notify` 工具面） | 2026-11-08 装（web），lan-gate-server 进程常驻；运行时状态在 `~/.dsh/zen-remote-server.json`（serverId）与 `~/.dsh/lan-gate-state.json`（VAPID 密钥与推送订阅） |
 | `@deepseek-ai/dsh-experimental-plugin-market-bundle` | 0.2.2-rc.1 | 官方 Discover 标签 + `plugin_market` agent 工具 | web 已装，重启后 `plugin_market` 已挂载；2026-11-09 配置唯一索引源 `https://cdn.jsdelivr.net/npm/dsh-plugin-catalog/index.json`（awesome-dsh-plugin 社区目录，format-1，4872 插件），写入 profile `cordis.patch.yml` 的 `plugin-market` 行 `config.indexes`，HMR 热生效无需重启，`list_indexes` 与主题类检索实测可用（theme 关键词 351 条，兼容性自动标注） |
 | `dsh-free-search` | 0.9.34 | pi-web-access 等价：注册进 ctx.web 的多引擎搜索 provider（27 引擎回退链、keyless 档、多 key 轮换），附 `advanced_search` / `multi_search` / `platform_search` / `domain_search`（41 垂直源）/ `video_search` / `research` 等工具面 | 2026-11-08 装（web），热应用生效：九件工具挂载，`web_search` 与官方 provider 共存正常；`free_search_test` 定向实测 exa/anysearch/tavily/tinyfish 四把 `~/.env_self` key 全 OK，bing OK，ddg 触发 bot-wall 冷却（声明行为）；registry 按供应链策略解析 0.9.34（npm 当日最新 0.9.38），pnpm peers 有 WARN 不阻加载 |
-| `dsh-soft-palette` | 1.0.0 | 自写 client 插件：`ThemeRuntime.overrideTokens` 常驻低对比调色层，深色正文约 18:1 降到约 9:1（正文 `#bcc3cd`、底色 `#1e2126`），浅色只降正文一档；覆盖正文、次要文字、底色、两层面板、两级边框七枚 alias token，品牌色与状态色不动；卸载即恢复内建色板 | 2026-11-08 装（web），源码在 `private_dot_dsh/plugins/dsh-soft-palette/`（chezmoi 不部署，install_bundle 从仓库路径装）；`application: applied` 零告警，组合树含 `soft-palette` 行，视觉验收待用户刷新实况 |
+| `dsh-soft-palette` | 1.0.0 | （退役）自写 client 插件：`ThemeRuntime.overrideTokens` 低对比调色层 | 2026-11-08 装（web）；2026-11-10 盘问裁决退役：catppuccin 主题上位，两者叠色冲突，卸载并删源码（git 历史可找回） |
+| `@nonamelego/dsh-catppuccin` | 0.7.3 | web 面主题：Latte/Frappé/Macchiato/Mocha 四档接入原生主题运行时，一键切换并记住选择（对齐 pi 的 catppuccin-mocha）；另附可开关玻璃皮肤 | 2026-11-10 装（web），离库目录显式 pin 0.7.3（防 minimumReleaseAge 滤版教训复用）；engines >=0.1.7-rc.1 兼容 0.2.2-rc.1；Mocha 档与 Omarchy 终端主题（同为 mocha）对齐，视觉验收待用户刷新实况 |
 | `dsh-meow-preset` | 1.0.0 | 自写 bundle：喵喵模式精简日常预设（id `meow`，order 0）：standard 减 schedule 四件、delegation 四件、todo、present、plugin-manager 工具，保留 goal、jobs、计划模式、ask-user、web_fetch、技能与压缩，applyPatch 维持 false；plan-mode 提示段照抄 standard，仅 todo_write 引用句适配（本预设不挂 todo） | 2026-11-09 装（web），源码在 `private_dot_dsh/plugins/dsh-meow-preset/`（chezmoi 不部署，install_bundle 从仓库路径装）；`application: applied` 零告警，dump-config 含完整声明且行上无激活诊断；同日复制进 pi-tui profile（link 同源） |
 | `dsh-herdr-state` | 0.1.0 | 自写插件：把 dsh 会话状态上报给 herdr 状态栏（协议对齐 herdr 官方 pi 集成：`pane.report_agent_session` / `pane.report_agent`，agent 报 `dsh`）；working/idle 取 Stable `subscribeState`，blocked 用 Advanced editor seam 轮询编辑器座位占用（审批/问卷），仅 `HERDR_ENV=1` 时启用 | 2026-11-09 装（pi-tui profile），源码在 `private_dot_dsh/plugins/dsh-herdr-state/`（chezmoi 不部署，install_bundle 从仓库路径装）；`application: applied`，实跑 `herdr agent list` 已识别 `agent: dsh`、`agent_status: working`；blocked 态实机验证待触发一次审批流程；上游 dsh-pi-tui 发布 blocked 字段后改用订阅（见 2026-11-09 盘问记录） |
+| `dsh-prompt-relocation` | 0.1.0 | 自写插件：扩展提示迁出系统提示词（2026-11-10 盘问裁决）——挂在 `system-prompt/assemble` waterfall，把名称不匹配保留前缀（`tool:` `deployment:` `plan:` `team:` `context:` `ui:` `harness:`，patch 可改 `keepPrefixes`）的段搬进 runtime 上下文快照，模型在首条用户消息之后读到它们；段名保留为快照内来源标注，`complete` 段由组装自动恢复不受影响 | 2026-11-10 装（pi-tui profile），源码在 `private_dot_dsh/plugins/dsh-prompt-relocation/`（chezmoi 不部署，install_bundle 从仓库路径装）；`application: applied` 零告警，dump-config 含插件行；逻辑级冒烟（真实 dsh-system-prompt 服务 + 插件 waterfall）通过：mcp-resource-servers 进快照带 provenance、harness 身份与工具指导原位保留，冒烟固化入仓库 `node --test`（首跑还抓到 `harness:identity` 误搬 bug，补 `harness:` 前缀修复）；端到端待新会话观察 |
 | `@xmoon76/dsh-pi-tui` | 0.5.6 | pi-tui 系终端前端：装成 `pi-tui` profile（与 web 共享会话、凭据、技能），engines 精确声明 dsh >= 0.2.2-rc.1（上游有版本配对矩阵与 compat CI），pi 直系键位（Esc Esc rewind、Ctrl+S steer、Ctrl+R 输入历史、`!` 与 `!!` shell 模式）、Session fork/rewind/lineage、Extension API 分层稳定入口 | 2026-11-09 装（pi-tui profile），伴喵喵预设；安装三教训入册（见下方 2026-11-09 段）：@latest 在仓库 cwd 被 pnpm minimumReleaseAge 滤成 0.5.5 配对错位（离库目录显式 pin 修复）、patch 缺 llm-pi-ai 行报 NO_ADAPTER、update 前对上游配对矩阵；三方内存实测冷启 274 MB、十轮 203 MB（协议与全程数字存 grilling 记录）；版本策略 @latest 浮动 |
 
 2026-11-07 精简裁决：headless profile 整体退役（从不跑一次性 CLI 任务），插件只维护 web 一份；
@@ -114,6 +116,20 @@ web 临时实例 266 MB，Edge GUI tab 增量约 48 MB——dsh-tui 不比 pi �
 状态写 profile patch 属 GUI 运行时状态，插件面板或 set_bundle 一键回）；预设层新增
 `dsh-meow-preset`（见插件表），换预设粒度的取舍由它承载。已开会话保留原组合，
 验证以新会话选喵喵模式后的工具面为准。
+
+2026-11-10 盘问裁决对齐 pi 三项体验（主题、thinking 展开、session undo）：
+
+- 主题：web 装 `@nonamelego/dsh-catppuccin` 0.7.3（见插件表），`dsh-soft-palette` 同日退役；
+  TUI 面零改动——Omarchy 当前主题实测已是 Catppuccin Mocha（`theme.name` 与 alacritty 层底色
+  `#1e1e2e` 佐证），pi-tui 随终端变色，alacritty 配置里先导入的 macchiato 档被 Omarchy 主题层
+  （后导入）覆盖，勿手改托管文件硬切。
+- thinking：pi-tui 的 Thinking detail（Alt+T）是运行时偏好，默认折叠且不持久化
+  （dist 注释明说无 settings document 字段，`thinkingExpanded = false`）——“进行中默认展开”
+  在 TUI 存在缺口，处置裁决待定（手动 Alt+T、上游持久化 PR、或启动扩展）；
+  web 面已有 `ui-chat.collapseTiming: next-input`（过程组完成后保持展开、下一轮输入才折叠），
+  与 pi thinking-flow 的行为差异待实机核验，有缺口再动手。
+- session undo：pi-tui 0.5.6 自带 Session fork/rewind/lineage 与 Esc Esc rewind，终端面视为达成；
+  web 面等价能力待核验记录，缺口不明朗前不自写插件。
 
 上游 `dsh-patch-edit-plus` 的工具描述自带路由指南（单文件小改引导回原生 `edit`），与准则指令叠加后以准则为准。
 社区 `@anionex/dsh-apply-patch`（自带原生 DiffBlock 渲染，最贴近 pi 观感）peer 上限全在 0.1.x，0.2.x 下真实断裂不可用，已调研放弃；diff 卡预览需求待上游跟进或自写 client 插件。

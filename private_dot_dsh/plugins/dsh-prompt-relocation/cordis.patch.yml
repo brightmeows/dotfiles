@@ -1,0 +1,12 @@
+- insert:
+    - id: dsh-prompt-relocation
+      name: dsh-prompt-relocation
+      config:
+        keepPrefixes:
+          - "tool:"
+          - "deployment:"
+          - "plan:"
+          - "team:"
+          - "context:"
+          - "ui:"
+          - "harness:"

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Prompt relocation",
+    "description": "Moves extension-contributed system prompt sections into the runtime-context snapshot so the model reads them after the first user message instead of inside the system prompt."
+  }
+}
