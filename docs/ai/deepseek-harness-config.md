@@ -125,7 +125,8 @@ web 临时实例 266 MB，Edge GUI tab 增量约 48 MB——dsh-tui 不比 pi �
   （后导入）覆盖，勿手改托管文件硬切。
 - thinking：pi-tui 的 Thinking detail（Alt+T）是运行时偏好，默认折叠且不持久化
   （dist 注释明说无 settings document 字段，`thinkingExpanded = false`）——“进行中默认展开”
-  在 TUI 存在缺口，处置裁决待定（手动 Alt+T、上游持久化 PR、或启动扩展）；
+  在 TUI 存在缺口，2026-11-10 裁决接受现状：thinking 块默认 compact 预览仍可见，
+  看全文手动 Alt+T，不上游提需求也不自写扩展；
   web 面已有 `ui-chat.collapseTiming: next-input`（过程组完成后保持展开、下一轮输入才折叠），
   与 pi thinking-flow 的行为差异待实机核验，有缺口再动手。
 - session undo：pi-tui 0.5.6 自带 Session fork/rewind/lineage 与 Esc Esc rewind，终端面视为达成；
