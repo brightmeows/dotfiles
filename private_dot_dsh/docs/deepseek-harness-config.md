@@ -90,17 +90,21 @@ models-dev 插件体系（models.dev 目录抓取、`~/.agents_meow/models`
 | `dsh-free-search` | 0.9.34 | pi-web-access 等价：注册进 ctx.web 的多引擎搜索 provider（27 引擎回退链、keyless 档、多 key 轮换），附 `advanced_search` / `multi_search` / `platform_search` / `domain_search`（41 垂直源）/ `video_search` / `research` 等工具面 | 2026-11-08 装（web），热应用生效：九件工具挂载，`web_search` 与官方 provider 共存正常；`free_search_test` 定向实测 exa/anysearch/tavily/tinyfish 四把 `~/.env_self` key 全 OK，bing OK，ddg 触发 bot-wall 冷却（声明行为）；registry 按供应链策略解析 0.9.34（npm 当日最新 0.9.38），pnpm peers 有 WARN 不阻加载 |
 | `dsh-soft-palette` | 1.0.0 | （退役）自写 client 插件：`ThemeRuntime.overrideTokens` 低对比调色层 | 2026-11-08 装（web）；2026-11-10 盘问裁决退役：catppuccin 主题上位，两者叠色冲突，卸载并删源码（git 历史可找回） |
 | `@nonamelego/dsh-catppuccin` | 0.7.3 | web 面主题：Latte/Frappé/Macchiato/Mocha 四档接入原生主题运行时，一键切换并记住选择（对齐 pi 的 catppuccin-mocha）；另附可开关玻璃皮肤 | 2026-11-10 装（web），离库目录显式 pin 0.7.3（防 minimumReleaseAge 滤版教训复用）；engines >=0.1.7-rc.1 兼容 0.2.2-rc.1；Mocha 档与 Omarchy 终端主题（同为 mocha）对齐，视觉验收待用户刷新实况 |
-| `dsh-meow-preset` | 1.0.0 | 自写 bundle：喵喵模式精简日常预设（id `meow`，order 0）：standard 减 schedule 四件、delegation 四件、todo、present、plugin-manager 工具，保留 goal、jobs、计划模式、ask-user、web_fetch、技能与压缩，applyPatch 维持 false；plan-mode 提示段照抄 standard，仅 todo_write 引用句适配（本预设不挂 todo） | 2026-11-09 装（web），源码在 `private_dot_dsh/plugins/dsh-meow-preset/`（chezmoi 不部署，install_bundle 从仓库路径装）；`application: applied` 零告警，dump-config 含完整声明且行上无激活诊断；同日复制进 pi-tui profile（link 同源） |
+| `dsh-meow-preset` | 1.0.0 | 自写 bundle：喵喵模式精简日常预设（id `meow`，order 0）：standard 减 schedule 四件、delegation 四件、todo、present、plugin-manager 工具，保留 goal、jobs、计划模式、ask-user、web_fetch、技能与压缩，applyPatch: true（2026-11-10 起：挂内建 Codex 风格 `apply_patch` 对齐 pi 编辑形态，上游预设默认关闭；strict 解析无 pi 侧修复层）；plan-mode 提示段照抄 standard，仅 todo_write 引用句适配（本预设不挂 todo） | 2026-11-09 装（web），源码在 `private_dot_dsh/plugins/dsh-meow-preset/`（chezmoi 不部署，install_bundle 从仓库路径装）；`application: applied` 零告警，dump-config 含完整声明且行上无激活诊断；同日复制进 pi-tui profile（link 同源）；2026-11-10 改 applyPatch: true 后 dump-config 即时反映（symlink link，改仓库源文件即生效） |
 | `dsh-herdr-state` | 0.1.0 | 自写插件：把 dsh 会话状态上报给 herdr 状态栏（协议对齐 herdr 官方 pi 集成：`pane.report_agent_session` / `pane.report_agent`，agent 报 `dsh`）；working/idle 取 Stable `subscribeState`，blocked 用 Advanced editor seam 轮询编辑器座位占用（审批/问卷），仅 `HERDR_ENV=1` 时启用 | 2026-11-09 装（pi-tui profile），源码在 `private_dot_dsh/plugins/dsh-herdr-state/`（chezmoi 不部署，install_bundle 从仓库路径装）；`application: applied`，实跑 `herdr agent list` 已识别 `agent: dsh`、`agent_status: working`；blocked 态实机验证待触发一次审批流程；上游 dsh-pi-tui 发布 blocked 字段后改用订阅（见 2026-11-09 盘问记录） |
 | `dsh-meow-git-attribution` | 0.1.0 | 自写插件：dsh 会话内 `git commit` 自动追加 `Co-Authored-By: 白小喵 <noreply@pi.dev>`（对齐 Pi 的 git-attribution 扩展，harness 层覆盖全部仓库）；挂 `tools/pre-execute` 改写最后一个 `-m` 消息，幂等（已有 trailer 跳过），`-F`/裸 `-m`/编辑器形态放行退回准则手写兜底，不写 Generated-By | 2026-11-10 装（web 与 pi-tui），源码在 `private_dot_dsh/plugins/dsh-meow-git-attribution/`（chezmoi 不部署，install pnpm add 本地路径 link）；逻辑冒烟 `node --test` 七例全绿（曾抓捕获组取错导致的双追加 bug），临时仓库端到端三场景（追加/幂等/-F 放行）通过；热生效即当轮会话可用 |
-| `dsh-prompt-relocation` | 0.1.0 | 自写插件：扩展提示迁出系统提示词（2026-11-10 盘问裁决）——挂在 `system-prompt/assemble` waterfall，把名称不匹配保留前缀（`tool:` `deployment:` `plan:` `team:` `context:` `ui:` `harness:`，patch 可改 `keepPrefixes`）的段搬进 runtime 上下文快照，模型在首条用户消息之后读到它们；段名保留为快照内来源标注，`complete` 段由组装自动恢复不受影响 | 2026-11-10 装（pi-tui profile），源码在 `private_dot_dsh/plugins/dsh-prompt-relocation/`（chezmoi 不部署，install_bundle 从仓库路径装）；`application: applied` 零告警，dump-config 含插件行；逻辑级冒烟（真实 dsh-system-prompt 服务 + 插件 waterfall）通过：mcp-resource-servers 进快照带 provenance、harness 身份与工具指导原位保留，冒烟固化入仓库 `node --test`（首跑还抓到 `harness:identity` 误搬 bug，补 `harness:` 前缀修复）；端到端待新会话观察 |
+| `dsh-prompt-relocation` | 0.1.0 | 自写插件：扩展提示迁出系统提示词（2026-11-10 盘问裁决）——挂在 `system-prompt/assemble` waterfall，把名称不匹配保留前缀（`tool:` `deployment:` `plan:` `team:` `context:` `ui:` `harness:`，patch 可改 `keepPrefixes`）的段搬进 runtime 上下文快照，模型在首条用户消息之后读到它们；段名保留为快照内来源标注，`complete` 段由组装自动恢复不受影响 | 2026-11-10 装（pi-tui 与 web；web 侧动机：`dsh-zen-remote-push` 与 `free-search:engines` 两段迁出，push_notify 工具与推送通道保留），源码在 `private_dot_dsh/plugins/dsh-prompt-relocation/`（chezmoi 不部署，install_bundle 从仓库路径装）；`application: applied` 零告警，dump-config 含插件行；逻辑级冒烟（真实 dsh-system-prompt 服务 + 插件 waterfall）通过：mcp-resource-servers 进快照带 provenance、harness 身份与工具指导原位保留，冒烟固化入仓库 `node --test`（首跑还抓到 `harness:identity` 误搬 bug，补 `harness:` 前缀修复）；端到端待新会话观察 |
 | `@xmoon76/dsh-pi-tui` | 0.5.6 | pi-tui 系终端前端：装成 `pi-tui` profile（与 web 共享会话、凭据、技能），engines 精确声明 dsh >= 0.2.2-rc.1（上游有版本配对矩阵与 compat CI），pi 直系键位（Esc Esc rewind、Ctrl+S steer、Ctrl+R 输入历史、`!` 与 `!!` shell 模式）、Session fork/rewind/lineage、Extension API 分层稳定入口 | 2026-11-09 装（pi-tui profile），伴喵喵预设；安装三教训记录在案（见下方 2026-11-09 段）：@latest 在仓库 cwd 被 pnpm minimumReleaseAge 滤成 0.5.5 配对错位（离库目录显式 pin 修复）、patch 缺 llm-pi-ai 行报 NO_ADAPTER、update 前对上游配对矩阵；三方内存实测冷启 274 MB、十轮 203 MB（协议与全程数字存 grilling 记录）；版本策略 @latest 浮动 |
 
 2026-11-07 精简裁决：headless profile 整体退役（从不跑一次性 CLI 任务），插件只维护 web 一份；
 如需重建用 `dsh plugin --profile headless add <pkg>`。2026-11-09 盘问裁决开出 pi-tui profile 例外
 （终端前端，见插件表）。
-dsh 0.2.2-rc.1 下 `dsh-patch-edit-plus` 暂不可用，编辑回到原生 `edit`；
-这不改变 pi/opencode 的补丁优先级。dsh 可选插件加载失败是静默的，状态以浏览器插件面板与功能冒烟为准。
+编辑形态 2026-11-10 落定：dsh 内建 `@deepseek-ai/dsh-tool-fs` 自带 Codex 风格 `apply_patch`
+（语法同 pi 的 `@d3ara1n/pi-apply-patch`，输出对齐 Codex rust-v0.158.0；`applyPatch` 开关默认关），
+喵喵预设已开（见插件表），web 与 pi-tui 两面同时生效，`dsh-patch-edit-plus` 的兼容等待随之作废。
+注意内建实现是 strict 解析 + 整包预检（一个坏 hunk 全包不写盘），没有 pi 侧的输入修复层；
+pi 实测的 17.8% 调用失败教训（Add File 缺 `+`、上下文漂移）在内建工具上同样适用。
+dsh 可选插件加载失败是静默的，状态以浏览器插件面板与功能冒烟为准。
 
 2026-11-09 盘问裁决开终端使用面：`pi-tui` profile 装 `@xmoon76/dsh-pi-tui` 0.5.6 与喵喵预设
 （link 同源），patch 镜像 web 运行时状态三行（llm-pi-ai 空 provider 覆盖、默认模型、预设默认），
@@ -135,7 +139,8 @@ web 临时实例 266 MB，Edge GUI tab 增量约 48 MB——dsh-tui 不比 pi �
 - session undo：pi-tui 0.5.6 自带 Session fork/rewind/lineage 与 Esc Esc rewind，终端面视为达成；
   web 面等价能力待核验记录，缺口不明朗前不自写插件。
 
-上游 `dsh-patch-edit-plus` 的工具描述自带路由指南（单文件小改引导回原生 `edit`），与准则指令叠加后以准则为准。
+上游 `dsh-patch-edit-plus` 的工具描述自带路由指南（单文件小改引导回原生 `edit`），与准则指令叠加后以准则为准；
+内建 `apply_patch` 上位后该扩展的等待需求消失（2026-11-10）。
 社区 `@anionex/dsh-apply-patch`（自带原生 DiffBlock 渲染，最贴近 pi 观感）peer 上限全在 0.1.x，0.2.x 下真实断裂不可用，已调研放弃；diff 卡预览需求待上游跟进或自写 client 插件。
 社区分叉 `dsh-union-search` 自述 “renamed from dsh-free-search”，但 npm 维护者不同且原包同日仍由原作者发版，声明不实，不采用。
 
