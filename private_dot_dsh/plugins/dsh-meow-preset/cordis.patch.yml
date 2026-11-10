@@ -4,7 +4,9 @@
 # (subagent / subagent_fork / workflow / model discovery), tool-todo,
 # tool-present, tool-plugin-manager; tool-plugin-market stays disabled like
 # upstream. Kept: goal, jobs, plan mode, ask-user, web fetch, skills,
-# compaction, AGENTS.md injection, native edit/write (applyPatch false).
+# compaction, AGENTS.md injection, native edit/write plus the built-in
+# Codex-style apply_patch (applyPatch true, 2026-11-10: pi apply-patch
+# alignment; upstream presets ship it off).
 # One wording adaptation: the plan-mode section no longer names todo_write,
 # which this preset does not mount.
 - insert:
@@ -35,8 +37,9 @@
           - id: tool-fs
             name: "@deepseek-ai/dsh-tool-fs"
             config:
-              # Set false to drop the apply_patch tool beside edit.
-              applyPatch: false
+              # Built-in Codex-style apply_patch beside edit; strict parser,
+              # whole-patch preflight (no local input-repair layer like pi).
+              applyPatch: true
           - id: tool-fs-search
             name: "@deepseek-ai/dsh-tool-fs-search"
             config:
