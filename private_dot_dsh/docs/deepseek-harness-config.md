@@ -122,7 +122,9 @@ web 临时实例 266 MB，Edge GUI tab 增量约 48 MB——dsh-tui 不比 pi �
 - 主题：web 装 `@nonamelego/dsh-catppuccin` 0.7.3（见插件表），`dsh-soft-palette` 同日退役；
   TUI 面零改动——Omarchy 当前主题实测已是 Catppuccin Mocha（`theme.name` 与 alacritty 层底色
   `#1e1e2e` 佐证），pi-tui 随终端变色，alacritty 配置里先导入的 macchiato 档被 Omarchy 主题层
-  （后导入）覆盖，勿手改托管文件硬切。
+  （后导入）覆盖，勿手改托管文件硬切。patch 层已托管（copy 模式），GUI 里选中主题档位后
+  会写回目标 `cordis.patch.yml`，须把新键手动回填 `private_dot_dsh/profiles/web/` 源文件再
+  `chezmoi apply`，否则下次 apply 把主题选择冲回默认；主题档位 id 形如 `catppuccin-mocha`。
 - thinking：pi-tui 的 Thinking detail（Alt+T）是运行时偏好，默认折叠且不持久化
   （dist 注释明说无 settings document 字段，`thinkingExpanded = false`）——“进行中默认展开”
   在 TUI 存在缺口，2026-11-10 裁决接受现状：thinking 块默认 compact 预览仍可见，
