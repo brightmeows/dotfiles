@@ -1,6 +1,0 @@
-{
-  "meta": {
-    "title": "Soft palette",
-    "description": "Overrides alias color tokens with a lower-contrast soft palette in light and dark modes."
-  }
-}
