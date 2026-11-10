@@ -69,7 +69,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | `dot_pi/agent/` | [docs/apply-patch-failure-modes.md](dot_pi/agent/docs/apply-patch-failure-modes.md) | apply_patch 失败率实测、Codex 格式约束、本地修复层与上游贡献状态 |
 | `dot_pi/agent/` | [docs/openai-auth.md](dot_pi/agent/docs/openai-auth.md) | pi 接入 GPT：订阅登录步骤、与 Codex CLI 认证逐项对比及缺口补齐、凭据互通边界 |
 | `private_dot_dsh/` | [docs/deepseek-harness-config.md](private_dot_dsh/docs/deepseek-harness-config.md) | DeepSeek Harness 配置托管、技能与 MCP 迁移、凭据与沙箱差异 |
-| `dot_agents_meow/` | [docs/workflow-skills-boundary.md](dot_agents_meow/docs/workflow-skills-boundary.md) | agents_meow 与 workflow-skills 的边界、事实源收口、技能清单校验方案（校验已退役） |
+| `dot_agents_meow/` | [docs/workflow-skills-boundary.md](dot_agents_meow/docs/workflow-skills-boundary.md) | agents_meow 与 workflow-skills 的边界、事实源收敛、技能清单校验方案（校验已退役） |
 | `dot_config/clash-meta/` | [docs/party-override.md](dot_config/clash-meta/docs/party-override.md) | clash-meta party 覆写配置 |
 | `dot_config/clash-meta/` | [docs/bof-venue-ip-policy.md](dot_config/clash-meta/docs/bof-venue-ip-policy.md) | BOF 会场 IP 管控性质、mihomo 实测出口与 BOF 组直连计划 |
 | `dot_config/tmux/` | [docs/omarchy-tmux-chezmoi拼接与refresh覆盖恢复.md](dot_config/tmux/docs/omarchy-tmux-chezmoi拼接与refresh覆盖恢复.md) | tmux 上游配置的 chezmoi 模板拼接、refresh 覆盖恢复步骤、字母系追加段设计 |

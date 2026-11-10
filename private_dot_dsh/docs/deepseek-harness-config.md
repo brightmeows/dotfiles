@@ -16,14 +16,14 @@
 
 | 配置面 | 位置 | 说明 |
 |---|---|---|
-| 用户级指令 | `~/.dsh/AGENTS.md` | 首请求注入；项目链 `AGENTS.md`/`CLAUDE.md` 由 dsh 自动从 `.git` 根叠到 cwd。注入通道查证（2026-11-10）：`agent-instructions` 服务把它构造成 **user-role 消息**（`createUserMessage` + `<system-reminder>` 帧），自带“may be relevant / do not override system”从属措辞，config 无形态切换键。同日 P0 裁决（personaPrefix 追加地位声明）落地后旋即撤回，通道维持原生形态；P1 自写插件彻底替换（注册 PromptSection + 禁用 agent-instructions）已备案未启动 |
+| 用户级指令 | `~/.dsh/AGENTS.md` | 首请求注入；项目链 `AGENTS.md`/`CLAUDE.md` 由 dsh 自动从 `.git` 根逐级收集到 cwd。注入通道查证（2026-11-10）：`agent-instructions` 服务把它构造成 **user-role 消息**（`createUserMessage` + `<system-reminder>` 帧），自带“may be relevant / do not override system”从属措辞，config 无形态切换键。同日 P0 裁决（personaPrefix 追加地位声明）落地后旋即撤回，通道维持原生形态；P1 自写插件彻底替换（注册 PromptSection + 禁用 agent-instructions）已备案未启动 |
 | 插件配置 | `~/.dsh/profiles/<name>/cordis.patch.yml`（profile 级） | 插件清单在 profile 的 package.json；patch 里只留 GUI 运行时状态键，GUI 改动直接写回本文件 |
 | 凭据 | `~/.dsh/.credentials.yaml` | GUI 写入、权限 600；本仓库不改动；现含 deepseek 账号登录与浏览器会话记录，API key 类仍以启动环境为主 |
 | 技能 | `~/.dsh/skills`、`~/.agents/skills`、项目内 `.dsh/skills` 与 `.agents/skills` | dsh 默认扫描这些根；`~/.agents/skills` 由 npx skills 维护 |
 | 运行时状态 | `~/.dsh/sessions`、`~/.dsh/storages` 等 | 不入仓库 |
 
 home 级 patch（`~/.dsh/cordis.patch.yml`）已于 2026-11-08 经盘问裁决整体退役：models-dev 插件挂载行与四条偏好 override（默认模型、PTC 预设、市场索引源、block-secret-leaks 密钥名单补齐）一并废除，仓库不再托管 patch（模板 `dot_dsh/cordis.patch.yml.tmpl` 已删除）。
-2026-11-08 晚 profile patch 新增 `ui-chat` 状态键（`collapseTiming: next-input`、`transcriptView: standard`）：过程组完成后保持展开、下一轮输入才折叠，过程展示停在标准档；该键本应由 GUI 设置写回，本次随主题降对比盘问以 override 行手写落键。
+2026-11-08 晚 profile patch 新增 `ui-chat` 状态键（`collapseTiming: next-input`、`transcriptView: standard`）：过程组完成后保持展开、下一轮输入才折叠，过程展示停在标准档；该键本应由 GUI 设置写回，本次随主题降对比盘问以 override 行手动补写该键。
 同法手写 `ui-theme` 字体键：`textFontFamily` 与 `codeFontFamily` 均为
 JetBrainsMono Nerd Font 加 Noto Sans Mono CJK SC（正文与代码块等宽化，中文回退 CJK 等宽；
 初选 ComicShannsMono 后按用户裁决换 JetBrainsMono），
@@ -94,7 +94,7 @@ models-dev 插件体系（models.dev 目录抓取、`~/.agents_meow/models`
 | `dsh-herdr-state` | 0.1.0 | 自写插件：把 dsh 会话状态上报给 herdr 状态栏（协议对齐 herdr 官方 pi 集成：`pane.report_agent_session` / `pane.report_agent`，agent 报 `dsh`）；working/idle 取 Stable `subscribeState`，blocked 用 Advanced editor seam 轮询编辑器座位占用（审批/问卷），仅 `HERDR_ENV=1` 时启用 | 2026-11-09 装（pi-tui profile），源码在 `private_dot_dsh/plugins/dsh-herdr-state/`（chezmoi 不部署，install_bundle 从仓库路径装）；`application: applied`，实跑 `herdr agent list` 已识别 `agent: dsh`、`agent_status: working`；blocked 态实机验证待触发一次审批流程；上游 dsh-pi-tui 发布 blocked 字段后改用订阅（见 2026-11-09 盘问记录） |
 | `dsh-meow-git-attribution` | 0.1.0 | 自写插件：dsh 会话内 `git commit` 自动追加 `Co-Authored-By: 白小喵 <noreply@pi.dev>`（对齐 Pi 的 git-attribution 扩展，harness 层覆盖全部仓库）；挂 `tools/pre-execute` 改写最后一个 `-m` 消息，幂等（已有 trailer 跳过），`-F`/裸 `-m`/编辑器形态放行退回准则手写兜底，不写 Generated-By | 2026-11-10 装（web 与 pi-tui），源码在 `private_dot_dsh/plugins/dsh-meow-git-attribution/`（chezmoi 不部署，install pnpm add 本地路径 link）；逻辑冒烟 `node --test` 七例全绿（曾抓捕获组取错导致的双追加 bug），临时仓库端到端三场景（追加/幂等/-F 放行）通过；热生效即当轮会话可用 |
 | `dsh-prompt-relocation` | 0.1.0 | 自写插件：扩展提示迁出系统提示词（2026-11-10 盘问裁决）——挂在 `system-prompt/assemble` waterfall，把名称不匹配保留前缀（`tool:` `deployment:` `plan:` `team:` `context:` `ui:` `harness:`，patch 可改 `keepPrefixes`）的段搬进 runtime 上下文快照，模型在首条用户消息之后读到它们；段名保留为快照内来源标注，`complete` 段由组装自动恢复不受影响 | 2026-11-10 装（pi-tui profile），源码在 `private_dot_dsh/plugins/dsh-prompt-relocation/`（chezmoi 不部署，install_bundle 从仓库路径装）；`application: applied` 零告警，dump-config 含插件行；逻辑级冒烟（真实 dsh-system-prompt 服务 + 插件 waterfall）通过：mcp-resource-servers 进快照带 provenance、harness 身份与工具指导原位保留，冒烟固化入仓库 `node --test`（首跑还抓到 `harness:identity` 误搬 bug，补 `harness:` 前缀修复）；端到端待新会话观察 |
-| `@xmoon76/dsh-pi-tui` | 0.5.6 | pi-tui 系终端前端：装成 `pi-tui` profile（与 web 共享会话、凭据、技能），engines 精确声明 dsh >= 0.2.2-rc.1（上游有版本配对矩阵与 compat CI），pi 直系键位（Esc Esc rewind、Ctrl+S steer、Ctrl+R 输入历史、`!` 与 `!!` shell 模式）、Session fork/rewind/lineage、Extension API 分层稳定入口 | 2026-11-09 装（pi-tui profile），伴喵喵预设；安装三教训入册（见下方 2026-11-09 段）：@latest 在仓库 cwd 被 pnpm minimumReleaseAge 滤成 0.5.5 配对错位（离库目录显式 pin 修复）、patch 缺 llm-pi-ai 行报 NO_ADAPTER、update 前对上游配对矩阵；三方内存实测冷启 274 MB、十轮 203 MB（协议与全程数字存 grilling 记录）；版本策略 @latest 浮动 |
+| `@xmoon76/dsh-pi-tui` | 0.5.6 | pi-tui 系终端前端：装成 `pi-tui` profile（与 web 共享会话、凭据、技能），engines 精确声明 dsh >= 0.2.2-rc.1（上游有版本配对矩阵与 compat CI），pi 直系键位（Esc Esc rewind、Ctrl+S steer、Ctrl+R 输入历史、`!` 与 `!!` shell 模式）、Session fork/rewind/lineage、Extension API 分层稳定入口 | 2026-11-09 装（pi-tui profile），伴喵喵预设；安装三教训记录在案（见下方 2026-11-09 段）：@latest 在仓库 cwd 被 pnpm minimumReleaseAge 滤成 0.5.5 配对错位（离库目录显式 pin 修复）、patch 缺 llm-pi-ai 行报 NO_ADAPTER、update 前对上游配对矩阵；三方内存实测冷启 274 MB、十轮 203 MB（协议与全程数字存 grilling 记录）；版本策略 @latest 浮动 |
 
 2026-11-07 精简裁决：headless profile 整体退役（从不跑一次性 CLI 任务），插件只维护 web 一份；
 如需重建用 `dsh plugin --profile headless add <pkg>`。2026-11-09 盘问裁决开出 pi-tui profile 例外
@@ -104,7 +104,7 @@ dsh 0.2.2-rc.1 下 `dsh-patch-edit-plus` 暂不可用，编辑回到原生 `edit
 
 2026-11-09 盘问裁决开终端使用面：`pi-tui` profile 装 `@xmoon76/dsh-pi-tui` 0.5.6 与喵喵预设
 （link 同源），patch 镜像 web 运行时状态三行（llm-pi-ai 空 provider 覆盖、默认模型、预设默认），
-原“TUI 无官方 profile 不在本项目范围”裁决随之作废。三个教训入册：@latest 安装在本仓库 cwd 下
+原“TUI 无官方 profile 不在本项目范围”裁决随之作废。三个教训记录在案：@latest 安装在本仓库 cwd 下
 被 pnpm minimumReleaseAge 滤掉当日发布的 0.5.6、落到与 dsh 0.2.2-rc.1 配对错位的 0.5.5
 （离库目录显式 pin 修复）；patch 缺 llm-pi-ai 行时 zai 适配器不挂载，会话报 NO_ADAPTER；
 将来 update 前先对上游配对矩阵。三方内存实测（十轮计数器任务，tmux 驱动，统一
