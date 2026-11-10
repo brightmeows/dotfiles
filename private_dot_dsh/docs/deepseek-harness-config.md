@@ -16,7 +16,7 @@
 
 | 配置面 | 位置 | 说明 |
 |---|---|---|
-| 用户级指令 | `~/.dsh/AGENTS.md` | 首请求注入；项目链 `AGENTS.md`/`CLAUDE.md` 由 dsh 自动从 `.git` 根叠到 cwd。注入通道查证（2026-11-10）：`agent-instructions` 服务把它构造成 **user-role 消息**（`createUserMessage` + `<system-reminder>` 帧），自带“may be relevant / do not override system”从属措辞，config 无形态切换键。同日 P0 裁决：两 profile patch override `system-prompt.personaPrefix` 追加“standing engineering directives ... binding policy”地位声明，在系统层扶正准则（照抄 bundle 原值再追加，bundle 改写须同步）；P1 自写插件彻底替换（注册 PromptSection + 禁用 agent-instructions）已备案未启动 |
+| 用户级指令 | `~/.dsh/AGENTS.md` | 首请求注入；项目链 `AGENTS.md`/`CLAUDE.md` 由 dsh 自动从 `.git` 根叠到 cwd。注入通道查证（2026-11-10）：`agent-instructions` 服务把它构造成 **user-role 消息**（`createUserMessage` + `<system-reminder>` 帧），自带“may be relevant / do not override system”从属措辞，config 无形态切换键。同日 P0 裁决（personaPrefix 追加地位声明）落地后旋即撤回，通道维持原生形态；P1 自写插件彻底替换（注册 PromptSection + 禁用 agent-instructions）已备案未启动 |
 | 插件配置 | `~/.dsh/profiles/<name>/cordis.patch.yml`（profile 级） | 插件清单在 profile 的 package.json；patch 里只留 GUI 运行时状态键，GUI 改动直接写回本文件 |
 | 凭据 | `~/.dsh/.credentials.yaml` | GUI 写入、权限 600；本仓库不改动；现含 deepseek 账号登录与浏览器会话记录，API key 类仍以启动环境为主 |
 | 技能 | `~/.dsh/skills`、`~/.agents/skills`、项目内 `.dsh/skills` 与 `.agents/skills` | dsh 默认扫描这些根；`~/.agents/skills` 由 npx skills 维护 |
