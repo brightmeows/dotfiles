@@ -5,6 +5,15 @@
 # 2026-11-09 盘问裁决落地：镜像 web 端运行时状态——喵喵预设为默认、
 # 默认模型 zai-coding-cn/glm-5.3-flash（effort max）。方言同 web patch：
 # 顶层带 id 的行即对该行 override，config 原样整体替换。
+- id: sandbox-policy
+  config:
+    mode: !!js process.env.DSH_PERMISSION_MODE ?? 'workspace-write'
+    workspaceRoot: !!js process.cwd()
+    additionalWritableRoots:
+      - /home/brightmeows/.cache/uv
+      - /home/brightmeows/.cargo
+      - /home/brightmeows/.local/share/pnpm
+      - /home/brightmeows/.cache/grilling
 - id: llm-pi-ai
   name: "@deepseek-ai/dsh-llm-pi-ai"
   config:

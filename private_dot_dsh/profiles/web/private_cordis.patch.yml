@@ -13,6 +13,7 @@
       - /home/brightmeows/.cache/uv
       - /home/brightmeows/.cargo
       - /home/brightmeows/.local/share/pnpm
+      - /home/brightmeows/.cache/grilling
 # 方言：顶层带 id 的 patch 行即对该行 override，提供的字段整体替换（config 原样重述）
 # models-dev 生成块已于 2026-11-08 随插件退役移除；本文件只留 GUI 运行时状态键。
 - id: ui-settings-general

@@ -151,7 +151,7 @@ web 临时实例 266 MB，Edge GUI tab 增量约 48 MB——dsh-tui 不比 pi �
   加载路径总览见 [env-loading.md](../../docs/dev/env-loading.md)。
 - 沙箱：读取不受限；`workspace-write` 模式可写会话工作区、`/tmp` 与 `os.tmpdir()`；越界写会被拒并触发审批升级。`~/.agents_tmp` 不在可写范围。
 - 沙箱额外可写根：2026-11-10 盘问裁决，用户 patch 层 override `sandbox-policy`（dsh-base 挂载，id 即 `sandbox-policy`），
-  `additionalWritableRoots` 放行 `~/.cache/uv`、`~/.cargo`、`~/.local/share/pnpm` 三个工具链缓存目录（仅 `workspace-write` 生效）。
+  `additionalWritableRoots` 放行 `~/.cache/uv`、`~/.cargo`、`~/.local/share/pnpm` 三个工具链缓存目录与 `~/.cache/grilling`（盘问调研文档目录，写调研文档免逐次审批）（仅 `workspace-write` 生效）。
   override 是整体替换，`mode` 与 `workspaceRoot` 的 `!!js` 表达式须照抄 bundle 原值。
   两 profile 的 `cordis.patch.yml` 已纳入本仓库 chezmoi 托管（源在 `private_dot_dsh/profiles/<profile>/`，copy 模式分发到
   `~/.dsh/profiles/`）；patchReload 为 live，改源后 apply 即时生效，验证以新会话运行时上下文快照出现 Additional writable directories 为准。
