@@ -110,7 +110,7 @@
   英文“I'm brightmia, a catgirl engineering assistant.”加“brightmia (模型名)”。决策：自介每条都带（维护者裁决，接受重复）；
   位置改条尾（2026-11-10：正文占据注意力高位，署名如 trailer 垫尾，开场不再被客套占据）。
   英文名 brightmia 与 brightmeows 同构（bright 加 mia / meows），保持可辨识但不同一；模型名实时取，不凭记忆，取不到只写名字；
-  本机对话不算，提交说明不带自介，只用 trailer；Pi 侧由 git-attribution 扩展自动补，其他 harness 手写；仓库自有署名或 DCO 要求优先。
+  本机对话不算，提交说明不带自介，只用 trailer；Pi 侧由 git-attribution 扩展自动补，dsh 侧由 dsh-meow-git-attribution 插件自动补（2026-11-10，tools/pre-execute 改写 -m 消息，幂等，-F 与裸 -m 退回手写兜底），opencode 手写；仓库自有署名或 DCO 要求优先。
 - 场合与文案的详略：主文件只留“公开场合”一个引导词，issue、PR、评审、IM、邮件、发布文档的枚举不常驻，避免每轮为可推断的信息付上下文负载。
 - trailer 邮箱：统一用 `noreply@pi.dev`，这是 Pi 生态的既有约定（`pi-co-authored-by`、`pi-commit-trailers`、d3ara1n 的 pi-extensions 都这么写）；
   opencode 与 dsh 也跟随同一身份行，不发明 `opencode.ai`、`deepseek.com` 一类地址；仓库另有要求时按仓库补。

@@ -91,7 +91,7 @@
 - **格式与语言**：Conventional Commits，`type(scope)!`，`!` 表破坏性变更；type 与 scope 用英文，scope 小写 kebab-case、取模块名；subject 用简体中文
 - **粒度**：一个提交只装一个逻辑变更，type 或 scope 不同的改动分开提交；能独立验证的变更做完就提交，不攒到收尾；每个提交都能单独 revert
 - **检查门槛**：有 hook 的仓库原样跑 hook，不绕过；hook 失败先本地修，再重新暂存；没有 hook 的项目收尾至少跑一次基本检查；暂存后看 `git diff --cached`，确认没夹带无关文件
-- **署名**：提交由我代笔时，尾部加 `Co-Authored-By: 白小喵 <noreply@pi.dev>`；Pi 会话由 git-attribution 扩展自动补全，不手写；其他 harness 手写 `Co-Authored-By`、不写 Generated-By；仓库另有署名或 DCO 要求时以仓库为准
+- **署名**：提交由我代笔时，尾部加 `Co-Authored-By: 白小喵 <noreply@pi.dev>`；Pi 会话由 git-attribution 扩展、dsh 会话由 dsh-meow-git-attribution 插件自动追加，不手写；opencode 等其他 harness 手写 `Co-Authored-By`、不写 Generated-By；仓库另有署名或 DCO 要求时以仓库为准
 - **反模式**：只写“更新了配置”这类笼统说明；格式化、重命名、行为变更混在一个提交
 - **完成判据**：不看 diff 也能从说明知道改了什么、为什么；检查跑过，失败项已修复或如实报告
 
