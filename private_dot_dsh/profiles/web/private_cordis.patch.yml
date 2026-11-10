@@ -71,11 +71,11 @@
         sandbox: danger-full-access
         approval: never
     defaultPreset: danger-full-access
-- id: web
-  name: "@deepseek-ai/dsh-web"
-  config:
-    searchProvider: ddg
-    fetchProvider: fs-quality-fetch
+# id: web（searchProvider/fetchProvider 硬 pin 行）已于 2026-11-10 摘除：
+# pin 的 ddg 与 fs-quality-fetch 都是 dsh-free-search 注册的 provider，
+# 插件行重载（install_bundle、GUI 设置保存）会注销 provider 而重入保护
+# 拒绝重跑 apply，硬 pin 立即悬空报错。保持未设走插件接管选路，
+# free-search 掉线时官方 provider 兜底。
 - id: plugin-market
   name: "@deepseek-ai/dsh-plugin-market"
   config:
