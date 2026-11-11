@@ -1,0 +1,9 @@
+# GitHub SSH 走官方 443 入口（ssh.github.com），绕开 22 端口直连被墙干扰：
+# 22 端口直连的 TCP 握手与 banner 均正常，但服务端 KEX_ECDH_REPLY（host key 大包）
+# 被选择性丢弃，SSH 永久卡死（2026-11-11 本机实测 + GitHub 官方文档承认该现象）。
+# 443 流量按域名规则走代理出口，与 clash-meta 的 DST-PORT,22,DIRECT 直连规则不冲突；
+# ssh.github.com 的 host key 与 github.com:22 为同一套，known_hosts 无需迁移。
+Host github.com
+    HostName ssh.github.com
+    Port 443
+    User git
