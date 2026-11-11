@@ -39,9 +39,9 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 
 ## DeepSeek Harness 配置
 
-- dsh 用户级指令由本仓库托管（`private_dot_dsh/AGENTS.md.tmpl` → `~/.dsh/AGENTS.md`）；两 profile 的用户 patch 层同样托管
-  （`private_dot_dsh/profiles/<profile>/cordis.patch.yml` → `~/.dsh/profiles/`，2026-11-10 起，含 sandbox-policy 额外可写根）；
-  插件与模型通道现状见 [docs/deepseek-harness-config.md](private_dot_dsh/docs/deepseek-harness-config.md)。
+- dsh 用户级指令由本仓库托管（`dot_dsh/AGENTS.md.tmpl` → `~/.dsh/AGENTS.md`）；两 profile 的用户 patch 层同样托管
+  （`dot_dsh/profiles/<profile>/cordis.patch.yml` → `~/.dsh/profiles/`，2026-11-10 起，含 sandbox-policy 额外可写根）；
+  插件与模型通道现状见 [docs/deepseek-harness-config.md](dot_dsh/docs/deepseek-harness-config.md)。
 - pi 模型配置为手编 JSON（`dot_pi/agent/models.json` 与 `models-dev.json`，chezmoi 直接部署），现状与退役记录见 [docs/model-config-pipeline.md](dot_pi/agent/docs/model-config-pipeline.md)。
 - `settings.yaml` 与 `.credentials.yaml` 由 dsh 运行时持有，不入仓库。
 
@@ -68,7 +68,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | `dot_pi/agent/` | [docs/ask-user-question-limits.md](dot_pi/agent/docs/ask-user-question-limits.md) | Pi ask_user_question vendor 化、题数上限移除、依赖锁与漂移门禁 |
 | `dot_pi/agent/` | [docs/apply-patch-failure-modes.md](dot_pi/agent/docs/apply-patch-failure-modes.md) | apply_patch 失败率实测、Codex 格式约束、本地修复层与上游贡献状态 |
 | `dot_pi/agent/` | [docs/openai-auth.md](dot_pi/agent/docs/openai-auth.md) | pi 接入 GPT：订阅登录步骤、与 Codex CLI 认证逐项对比及缺口补齐、凭据互通边界 |
-| `private_dot_dsh/` | [docs/deepseek-harness-config.md](private_dot_dsh/docs/deepseek-harness-config.md) | DeepSeek Harness 配置托管、技能与 MCP 迁移、凭据与沙箱差异 |
+| `dot_dsh/` | [docs/deepseek-harness-config.md](dot_dsh/docs/deepseek-harness-config.md) | DeepSeek Harness 配置托管、技能与 MCP 迁移、凭据与沙箱差异 |
 | `dot_agents_meow/` | [docs/workflow-skills-boundary.md](dot_agents_meow/docs/workflow-skills-boundary.md) | agents_meow 与 workflow-skills 的边界、事实源收敛、技能清单校验方案（校验已退役） |
 | `dot_config/clash-meta/` | [docs/party-override.md](dot_config/clash-meta/docs/party-override.md) | clash-meta party 覆写配置 |
 | `dot_config/clash-meta/` | [docs/bof-venue-ip-policy.md](dot_config/clash-meta/docs/bof-venue-ip-policy.md) | BOF 会场 IP 管控性质、mihomo 实测出口与 BOF 组直连计划 |

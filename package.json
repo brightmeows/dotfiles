@@ -14,7 +14,7 @@
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "prepare": "chmod +x .githooks/pre-commit && git config core.hooksPath .githooks",
-    "test": "node --test dot_pi/agent/ext/ask-user-question dot_pi/agent/ext/git-attribution private_dot_dsh/plugins/dsh-prompt-relocation"
+    "test": "node --test dot_pi/agent/ext/ask-user-question dot_pi/agent/ext/git-attribution dot_dsh/plugins/dsh-prompt-relocation"
   },
   "devDependencies": {
     "@earendil-works/pi-ai": "1.5.0",

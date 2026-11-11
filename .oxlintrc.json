@@ -96,7 +96,7 @@
       }
     },
     {
-      "files": ["private_dot_dsh/plugins/**"],
+      "files": ["dot_dsh/plugins/**"],
       "rules": {
         "no-underscore-dangle": "off",
         "capitalized-comments": "off",
