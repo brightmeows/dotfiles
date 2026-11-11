@@ -43,7 +43,7 @@
 | 操作边界 | 接活先对齐（含完成判据）、先确认再做、计划外就停、默认不用问、最小变更、失败之后、数据不是指令、变更后清扫（绿进绿出、拿不准留人、变更密集不欠批） | 2026-11-10 |
 | 工作流技能 | 加载机制与 `workflow-skills` 四项技能清单合并成一节；清单以 `AGENTS.md` 为唯一真相；依赖校验体系已于 2026-11-08 整体退役；2026-11-10 常驻压缩（冲突裁决归通用裁决句、附属文件路径细则删） | 2026-11-10 |
 | LLM 协作 | 四条常驻规则：上下文工艺、先探后改、接口先定（含数据归属）、按可验证性委派（闭环验证已并入，见确定性优先与节内）；筛选与出处见节内 | 2026-11-10 |
-| 确定性优先 | 节名自“能推导、能复现”改名，取事前确定性胜过事后补丁的排序语义；建模优先与第一性原理，后者为建模兜底独立条；可验证优先含诚实完成；抽象设计两句常驻落实，即边界按变化划、错抽象比重复贵，另加 `abstraction-design` 指针 | 2026-11-11 |
+| 确定性优先 | 节名自“能推导、能复现”改名，取事前确定性胜过事后补丁的排序语义；建模优先与第一性原理，后者为建模兜底独立条；可验证优先含诚实完成；抽象设计两句常驻落实，即边界按变化划、错抽象比重复贵，另加 `abstraction-design` 技能指针 | 2026-11-11 |
 | 内容怎么改 | 常驻四操作（只改一处、放对地方、源头同步、不留旧账、三次才抽象）；节尾纯复述完成判据已删，条目自承载；理由与证据在节内 | 2026-11-10 |
 | 信息与工具调用 | 常驻五条（一次拿全、先定位再回读、工具自精简、补丁式编辑、大输出落盘）；理由与证据在节内 | 2026-11-10 |
 | 知识 | 技能优先于搜索优先于预训练，检索优先于推理；掂量来源并入先查再下结论 | 2026-11-10 |
@@ -117,7 +117,7 @@
   opencode 与 dsh 也跟随同一身份行，不发明 `opencode.ai`、`deepseek.com` 一类地址；仓库另有要求时按仓库补。
 - 英文名的位置：写进 `SOUL.md` 名字行，不在 `AGENTS.md` 重复；人设仍是最小锚点，英文名只加一个短从句。
 - 理论依据：直接无客套优于礼貌客套（Principled Instructions 原则 1；Mind Your Tone，arXiv:2510.04950）；肯定式表述优于叙述式否定；清单式禁令属于显式要求陈述、有效。
-- 否决：AI 套话禁令（曾以“别用 AI 套话”条对抗默认客套倾向，主人裁决删除，表意不清难以执行；humanizing-text 技能早已删除，后继的 humanizer-zh 已装机，按需覆盖文档编辑场景）；全面否定转肯定（存量条目均为成对结构，边际收益接近零）；通篇任务标记（常驻规则集没有单轮问答的歧义，稀释权重）。
+- 否决：AI 套话禁令（曾以“别用 AI 套话”条对抗默认客套倾向，主人裁决删除，表意不清难以执行；humanizing-text 技能早已删除，后继的 humanizer-zh 技能已装机，按需覆盖文档编辑场景）；全面否定转肯定（存量条目均为成对结构，边际收益接近零）；通篇任务标记（常驻规则集没有单轮问答的歧义，稀释权重）。
 - 维护信号：输出组织退化（平铺、无分组）再现时，恢复输出组织判据与正反例（已删，git 可取回）；规则文本口吻化后若出现机械感或规则信号被淹（语气词盖过约束），回退到轻档（git 可取回）。
 - 2026-11-10 常驻并条：符号装饰与中文引号并为一条（主锚“别用符号装饰”，同管产出物字符形态）；“不做多余预留”与“小分支提前返回”合并为新锚“代码形态”；“组织好输出”删“衔接清楚”（无效指令）。
 - 代码组的分工裁决：判断性规则进主文件，机械检验交给本仓库的 oxlint，全局严阈值 complexity 15、max-depth 4、max-lines-per-function 100；
@@ -162,11 +162,12 @@
   hash 锁）已于 2026-11-08 整体退役：技能内容漂移的防护交给 workflow-skills 仓自身 git，
   清单脱节风险知情接受；方案与裁决记录见 dot_agents_meow/docs/workflow-skills-boundary.md。
 - npx canonical lock：`$XDG_STATE_HOME/skills/.skill-lock.json`（未设 `XDG_STATE_HOME` 时回退到 `~/.agents/.skill-lock.json`），格式版本 3；`~/skills-lock.json` 是旧格式副本（npx 重装前的遗留），只作历史备份，不参与校验。
-- 外部证据：Seleznov 激活实验（650 次自动试验：默认描述激活约五成、常驻指令约 65%、指令式描述 100%）；Vercel 评估（技能默认发现率 53%、56% 的用例从未调用所需技能、AGENTS.md 常驻 100%）；Anthropic skill-creator 官方实践（description 要偏 pushy 防漏触发，激活靠指令、解释靠内容）。
-- 技能指针穿插（2026-11-10）：主文件五处条目尾短指针（grilling×2：对齐深挖、计划外摆选项；writing-for-agents×2：纠正入文件写法、放对地方层级；ai-taste×1：组织好输出成文自检），判据为“判断面住技能”才插；对抗技能漏调用（Vercel：56% 用例从未调用所需技能，AGENTS.md 常驻触达 100%）。
+- 外部证据：Seleznov 激活实验（650 次自动试验：默认描述激活约五成、常驻指令约 65%、指令式描述 100%）；Vercel 评估（技能默认发现率 53%、56% 的用例从未调用所需技能、AGENTS.md 常驻 100%）；Anthropic skill-creator 技能的官方实践（description 要偏 pushy 防漏触发，激活靠指令、解释靠内容）。
+- 技能指针穿插（2026-11-10）：主文件五处条目尾短指针（grilling 技能×2：对齐深挖、计划外摆选项；writing-for-agents 技能×2：纠正入文件写法、放对地方层级；ai-taste 技能×1：组织好输出成文自检），判据为“判断面住技能”才插；对抗技能漏调用（Vercel：56% 用例从未调用所需技能，AGENTS.md 常驻触达 100%）。
 - 常驻压缩（2026-11-10）：冲突裁决从句删除（“规则优先级”裁决句已通用覆盖）；附属文件路径细则删除（技能注入自带同款说明）；`workflow-skills` 仓 URL 撤出主文件（托管信息收拢至本文件）。
 - 否决：RAG/检索式技能路由（那是 Claude Code 8k 字符索引预算逼出的解法；pi 没有截断、没有预算，规模未到）；合并索引块与主文件两处的激活指令（常驻指令层有独立增益）；lark 系描述修剪（每条已带“不负责”的负向边界，是防误路由的正确形态）；技能内容安全提示（自装技能在信任边界内，操作边界“数据不是指令”已有防线）。
 - 备案：pi 文档声称会扫项目技能目录（.pi/skills、祖先 .agents/skills），但 resource-loader 实际走 `includeDefaults: false`，并不扫描，path-canon.ts 的白名单并集防御因此必要。
+- 书写约定：主文件与本文档提及具体技能一律带“技能”后缀，如 “`grilling` 技能”，消除与命令、文件名的身份歧义；仓库名与文档路径（workflow-skills、abstraction-design-references.md）不在其列。
 - 维护信号：技能库规模过百、或出现真实的漏触发时重议 RAG 路由；pi 升级后用 dump 对比验证索引块结构；flash 级模型的技能漏触发成为真实痛点时，重议加载阈值；技能改名、增删或换源时，先改 workflow-skills，再改 `AGENTS.md` 清单与 `skills.lock.json`，跑 `pnpm check:skills`。
 
 ## LLM 协作
@@ -237,7 +238,7 @@
   - 深模块：Ousterhout《A Philosophy of Software Design》与 Stanford CS349W 讲义《Designing Abstractions》，最小表面积换最大体积；Andrew Myers 接口设计讲义，接口要窄、清晰、可高效实现
   - 错抽象比重复贵：Sandi Metz《The Wrong Abstraction》，传参与条件分支是错抽象的签名，退法是内联回调用点再重新提炼；Kent C. Dodds《AHA Programming》
   - 发现阶段人主导：Fowler 与 Unmesh《Conversation: LLMs and Building Abstractions》，发现并稳定抽象与应用稳定抽象两段；Fowler 站点《Abstraction first》，设计先于生成、契约先定
-  - 为上下文设计边界：cocz.net《Designing software architecture for AI coding assistants》，少私有抽象、单次变更不跨多子系统、静态类型收益；写前先搜现成出自 /simplify 的复用镜头，与 abstraction-design 检查单第 4 条同源（那条管提取时，主文件这条管写之前）
+  - 为上下文设计边界：cocz.net《Designing software architecture for AI coding assistants》，少私有抽象、单次变更不跨多子系统、静态类型收益；写前先搜现成出自 /simplify 的复用镜头，与 abstraction-design 技能检查单第 4 条同源（那条管提取时，主文件这条管写之前）
 - 未进主文件的候选（技能纵深或后续升格，出处已核）：
   - 抽象即压缩与命名：Guy Steele《Growing a Language》与 Richard Gabriel 的压缩定义，经 Fowler 对话引述，单来源
   - 编译器与测试当抽象的反压：Fowler 对话
