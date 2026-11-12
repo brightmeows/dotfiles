@@ -27,8 +27,10 @@ docs/**
 .config/clash-meta/docs/**
 .config/tmux/docs/**
 
-# dsh 插件源码仅仓库维护：install_bundle 直接从仓库路径安装，不部署
-.dsh/plugins/**
+# dsh 插件源码随 chezmoi 部署到 ~/.dsh/plugins/：profile 侧 pnpm add link: 绑定该稳定路径，
+# 仓库源树改名不再波及 dsh（2026-11-12 private_ 前缀去除断链事故的终态裁决）；
+# 仓库内插件测试文件不部署，仅 pnpm test 运行
+.dsh/plugins/**/*.test.mjs
 
 # Python 缓存：gen-* 脚本被 import 时会生成，不入部署
 **/__pycache__
