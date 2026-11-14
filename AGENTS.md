@@ -2,7 +2,7 @@
 
 ## Identity
 
-Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Rime 输入法、AI 工具链等），涉及 10+ 异构格式（TOML/KDL/JSON/YAML/JSONC/Nu/INI）。精确性与一致性优先于花哨。
+Dotfiles maintainer，管理 ~300+ 配置文件（Hyprland/niri 混成器、Rime 输入法、AI 工具链等），涉及 10+ 异构格式（TOML/KDL/JSON/YAML/JSONC/Nu/INI）。精确性与一致性优先于花哨。
 
 全局代理指令文件（opencode/Pi/dsh 共用）托管于 [dot_agents_meow/AGENTS.md](dot_agents_meow/AGENTS.md)，本仓库仅负责 chezmoi 分发。
 
@@ -32,7 +32,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | 配置文件 | 源文件 | 目标文件 | 合并策略 |
 |---------|--------|---------|---------|
 | Git config | `dot_gitconfig.meow` | `~/.gitconfig` | .meow 覆盖同名键，保留 local-only 键 |
-| Pi settings | `dot_pi/agent/settings.meow.json` | `~/.pi/agent/settings.json` | .meow 覆盖同名键，packages 按包身份接管（base 名相同以 .meow 为准）；快照差集合并——快照里有而 .meow 没有的自动移除（删除传导），快照里没有的视为 Pi 自加保留，去重排序；Pi 管理键保留 |
+| Pi settings | `dot_pi/agent/settings.meow.json` | `~/.pi/agent/settings.json` | .meow 覆盖同名键，packages 按包身份接管（base 名相同以 .meow 为准）；快照差集合并：快照里有而 .meow 没有的自动移除（删除传导），快照里没有的视为 Pi 自加保留，去重排序；Pi 管理键保留 |
 | Environment.d | `dot_env_common` | `~/.config/environment.d/50-meow.conf` | awk 翻译 `+=`/`<=` 为 environment.d 守卫语法 |
 | Omarchy 工作区组件 | `dot_config/omarchy/plugins/brightmeows.workspaces/manifest.json` | `~/.config/omarchy/shell.json` | 仅替换 `bar.layout` 组件 id（脚本每次 apply 运行）；幂等、尊重手动删除；shell.json 不入 chezmoi 管理（Omarchy CLI 与升级迁移会就地改写） |
 | Omarchy 活动窗口组件 | `dot_config/omarchy/plugins/brightmeows.active-window/`（脚本每次 apply 运行） | `~/.config/omarchy/shell.json` | 缺条目则插到中区最左，已存在则原地不动；`omarchy refresh shell` 重置后一次 apply 恢复 |
@@ -93,6 +93,7 @@ Dotfiles maintainer — 管理 ~300+ 配置文件（Hyprland/niri 混成器、Ri
 | [`docs/omarchy/omarchy-monitors-lua-除管记录.md`](docs/omarchy/omarchy-monitors-lua-除管记录.md) | Omarchy 缩放切档器就地改写 monitors.lua 与 chezmoi 的主权冲突：证据链、除管裁决、政策承接与恢复方法 |
 | [`docs/omarchy/omarchy-shell-refresh-定制恢复清单.md`](docs/omarchy/omarchy-shell-refresh-定制恢复清单.md) | Omarchy shell.json 手动定制清单（时钟格式、托盘 pinned、右区顺序）、refresh shell 恢复步骤与升级核对提示 |
 | [`docs/omarchy/matebook-battery-optimization.md`](docs/omarchy/matebook-battery-optimization.md) | MateBook 续航优化：放电数据对比、battery-boost/power-log 改动、mihomo DoT 探测风暴处置（Omarchy 现役机器） |
+| [`docs/omarchy/omarchy-agents-托盘zai套餐限额失效与凭据修复.md`](docs/omarchy/omarchy-agents-托盘zai套餐限额失效与凭据修复.md) | Omarchy agents 托盘 Z.ai Coding Plan 限额失效：数据链路、凭据优先级、config 文件修复与升级核对点 |
 
 #### skills/（技能与工具接入）
 
