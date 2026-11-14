@@ -93,7 +93,7 @@ Dotfiles maintainer，管理 ~300+ 配置文件（Hyprland/niri 混成器、Rime
 | [`docs/omarchy/omarchy-monitors-lua-除管记录.md`](docs/omarchy/omarchy-monitors-lua-除管记录.md) | Omarchy 缩放切档器就地改写 monitors.lua 与 chezmoi 的主权冲突：证据链、除管裁决、政策承接与恢复方法 |
 | [`docs/omarchy/omarchy-shell-refresh-定制恢复清单.md`](docs/omarchy/omarchy-shell-refresh-定制恢复清单.md) | Omarchy shell.json 手动定制清单（时钟格式、托盘 pinned、右区顺序）、refresh shell 恢复步骤与升级核对提示 |
 | [`docs/omarchy/matebook-battery-optimization.md`](docs/omarchy/matebook-battery-optimization.md) | MateBook 续航优化：放电数据对比、battery-boost/power-log 改动、mihomo DoT 探测风暴处置（Omarchy 现役机器） |
-| [`docs/omarchy/omarchy-agents-托盘zai套餐限额失效与凭据修复.md`](docs/omarchy/omarchy-agents-托盘zai套餐限额失效与凭据修复.md) | Omarchy agents 托盘 Z.ai Coding Plan 限额失效：数据链路、凭据优先级、config 文件修复与升级核对点 |
+| [`docs/omarchy/omarchy-agents-托盘订阅限额失效与凭据修复.md`](docs/omarchy/omarchy-agents-托盘订阅限额失效与凭据修复.md) | Omarchy agents 托盘订阅限额失效：环境传播陷阱、Z.ai 与 OpenCode Go 的凭据优先级与修复、换 key 漂移与升级核对点 |
 
 #### skills/（技能与工具接入）
 
