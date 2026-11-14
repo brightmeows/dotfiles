@@ -17,13 +17,13 @@
     "test": "node --test dot_pi/agent/ext/ask-user-question dot_pi/agent/ext/git-attribution dot_dsh/plugins/dsh-prompt-relocation"
   },
   "devDependencies": {
-    "@earendil-works/pi-ai": "1.5.0",
-    "@earendil-works/pi-coding-agent": "1.5.0",
-    "@earendil-works/pi-tui": "1.5.0",
+    "@earendil-works/pi-ai": "1.5.2",
+    "@earendil-works/pi-coding-agent": "1.5.2",
+    "@earendil-works/pi-tui": "1.5.2",
     "@types/node": "^26.6.5",
-    "oxfmt": "^0.74.0",
+    "oxfmt": "^0.78.0",
     "oxlint": "^1.89.0",
-    "typebox": "1.3.27",
+    "typebox": "1.4.6",
     "typescript": "^7.0.2"
   },
   "packageManager": "pnpm@12.15.0"
