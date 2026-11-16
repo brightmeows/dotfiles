@@ -88,8 +88,8 @@
 
 提交写给未来的自己看，PR 给 reviewer 一次读完。提交管历史与回退，PR 管审查与合入。
 
-- **提交**：Conventional Commits，`type(scope)!`，`!` 表破坏性变更；type 与 scope 英文、scope 小写 kebab-case，subject 简体中文；一个提交一个逻辑变更，能独立验证、独立 revert，做完就提交；格式化、重命名、行为变更分开
-- **PR 边界**：一个 reviewer 一次读得完、一次 revert 能干净撤销的完整变更；有效 diff 400 行封顶，生成物与 lockfile 不算
+- **提交**：Conventional Commits，`type(scope)!`，`!` 表破坏性变更；type 与 scope 英文、scope 小写 kebab-case，subject 简体中文；一个提交一个逻辑变更，能独立验证、独立 revert，做完就提交
+- **PR 边界**：一个 reviewer 一次读得完、一次 revert 能干净撤销的完整变更
 - **PR 拆分**：一个 PR 可以装多个原子提交，测试、迁移、生成物、文档随所属变更走；互不相干的改动不凑一个，完整变更也不切碎；互相依赖时按顺序开 stacked PR，每个 PR 自己构建、测试绿
 - **检查**：有 hook 的仓库原样跑 hook，不绕过；没有 hook 的项目收尾至少跑一次基本检查；暂存后看 `git diff --cached` 不夹带无关文件，失败项修复或如实报告
 - **拆前先出方案**：被要求拆 PR 时，列出每个 PR 的范围、依赖顺序与验证方式，确认后再开分支；拆不动说明设计耦合，不硬切
