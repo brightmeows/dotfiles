@@ -5,7 +5,7 @@
 ## 行为口径
 
 - 显示器归属：每条栏只显示自己屏幕上的窗口，屏幕由 `QsWindow` 附加属性确定。
-- 可见范围：只统计该屏幕当前显示的工作区——普通活动工作区，加上正在显示的特殊工作区（scratchpad）。切到空工作区时标题隐藏，不会显示同屏其它隐藏工作区里的旧窗口。
+- 可见范围：只统计该屏幕当前显示的工作区，含普通活动工作区与正在显示的特殊工作区（scratchpad）。切到空工作区时标题隐藏，不会显示同屏其它隐藏工作区里的旧窗口。
 - 排序：在可见窗口里取 `focusHistoryID` 最小者，即最近聚焦的窗口。
 - 标题：窗口 title 为空时回退显示 class（Wayland 的 appId 同样落在 class 字段），两者都为空才隐藏。
 - 交互：左键激活该窗口，中键或右键关闭，悬停显示完整标题，超宽按 `maxWidth` 省略（默认 280）。
@@ -29,7 +29,7 @@
 
 ## 运维
 
-- 布局由 `.chezmoiscripts/run_after_omarchy-active-window-enable.sh.tmpl` 调和：条目缺失时插入中区最左（`indicators` 之前），已存在则原地不动。`omarchy refresh shell` 重置 shell.json 后，运行一次 `chezmoi apply` 恢复。
+- 布局由 `.chezmoiscripts/run_after_omarchy-active-window-enable.sh.tmpl` 调和：条目缺失时追加到左区末尾（`workspaces` 之后），已存在则原地不动。`omarchy refresh shell` 重置 shell.json 后，运行一次 `chezmoi apply` 恢复。
 - 修改组件代码后若行为未更新，先试 `omarchy-shell -q shell rescanPlugins`，仍无效再 `omarchy restart shell`。
 - 检查启用状态：`omarchy plugin list | rg active-window`；校验清单：`omarchy plugin validate <插件目录>`。
 - 回退：`omarchy plugin disable brightmeows.active-window`（或从 shell.json 手动移除该条目）。

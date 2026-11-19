@@ -14,6 +14,6 @@
     "description": "Title of the active window on this monitor",
     "category": "Compositor",
     "allowMultiple": false,
-    "defaultSection": "centerBegin"
+    "defaultSection": "left"
   }
 }
