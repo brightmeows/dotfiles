@@ -50,52 +50,6 @@
   "ignorePatterns": ["node_modules"],
   "overrides": [
     {
-      "files": [
-        "dot_pi/agent/ext/subdir-agents-md/index.ts",
-        "dot_pi/agent/ext/subdir-agents-md/internal/path-extract.ts",
-        "dot_pi/agent/ext/skill-reminders/internal/bash-paths.ts",
-        "dot_pi/agent/ext/models-dev/index.ts",
-        "dot_pi/agent/ext/models-dev/internal/mapping.ts",
-        "dot_pi/agent/ext/inline-context/index.ts"
-      ],
-      "rules": {
-        "complexity": ["deny", 50],
-        "max-depth": ["deny", 5],
-        "max-lines-per-function": ["deny", 165]
-      }
-    },
-    {
-      "files": ["dot_pi/agent/ext/ask-user-question/**"],
-      "rules": {
-        "complexity": ["deny", 25],
-        "curly": "off",
-        "capitalized-comments": "off",
-        "max-params": "off",
-        "prefer-destructuring": "off",
-        "no-await-in-loop": "off",
-        "no-control-regex": "off",
-        "no-duplicate-imports": "off",
-        "eslint/no-nested-ternary": "off",
-        "typescript/array-type": "off",
-        "typescript/method-signature-style": "off",
-        "typescript/consistent-type-definitions": "off",
-        "typescript/consistent-type-imports": "off",
-        "typescript/no-inferrable-types": "off",
-        "typescript/consistent-indexed-object-style": "off",
-        "unicorn/switch-case-braces": "off",
-        "unicorn/max-nested-calls": "off",
-        "unicorn/consistent-existence-index-check": "off",
-        "unicorn/prefer-export-from": "off",
-        "unicorn/prefer-logical-operator-over-ternary": "off",
-        "unicorn/catch-error-name": "off",
-        "unicorn/text-encoding-identifier-case": "off",
-        "unicorn/no-nested-ternary": "off",
-        "oxc/no-map-spread": "off",
-        "eslint/require-unicode-regexp": "off",
-        "unicorn/prefer-string-replace-all": "off"
-      }
-    },
-    {
       "files": ["dot_dsh/plugins/**"],
       "rules": {
         "no-underscore-dangle": "off",
@@ -103,58 +57,6 @@
         "curly": "off",
         "no-await-in-loop": "off",
         "prefer-destructuring": "off"
-      }
-    },
-    {
-      "files": ["dot_pi/agent/ext/apply-patch/**"],
-      "rules": {
-        "complexity": ["deny", 57],
-        "curly": "off",
-        "capitalized-comments": "off",
-        "max-params": "off",
-        "prefer-destructuring": "off",
-        "no-await-in-loop": "off",
-        "no-control-regex": "off",
-        "no-duplicate-imports": "off",
-        "eslint/no-nested-ternary": "off",
-        "typescript/array-type": "off",
-        "typescript/method-signature-style": "off",
-        "typescript/consistent-type-definitions": "off",
-        "typescript/consistent-type-imports": "off",
-        "typescript/no-inferrable-types": "off",
-        "typescript/consistent-indexed-object-style": "off",
-        "unicorn/switch-case-braces": "off",
-        "unicorn/max-nested-calls": "off",
-        "unicorn/consistent-existence-index-check": "off",
-        "unicorn/prefer-export-from": "off",
-        "unicorn/prefer-logical-operator-over-ternary": "off",
-        "unicorn/catch-error-name": "off",
-        "unicorn/text-encoding-identifier-case": "off",
-        "unicorn/no-nested-ternary": "off",
-        "oxc/no-map-spread": "off",
-        "eslint/preserve-caught-error": "off",
-        "custom-error-definition": "off",
-        "unicorn/no-array-sort": "off",
-        "unicorn/no-array-reverse": "off",
-        "number-literal-case": "off",
-        "numeric-separators-style": "off",
-        "prefer-spread": "off",
-        "unicorn/prefer-spread": "off",
-        "prefer-const": "off",
-        "array-callback-return": "off",
-        "unicorn/no-this-assignment": "off",
-        "unicorn/prefer-code-point": "off",
-        "unicorn/explicit-length-check": "off",
-        "unicorn/prefer-string-raw": "off",
-        "unicorn/prefer-ternary": "off",
-        "unicorn/no-lonely-if": "off",
-        "unicorn/prefer-default-parameters": "off",
-        "unicorn/no-array-callback-reference": "off",
-        "unicorn/new-for-builtins": "off",
-        "max-lines-per-function": ["deny", 165],
-        "max-depth": ["deny", 5],
-        "eslint/require-unicode-regexp": "off",
-        "unicorn/prefer-string-replace-all": "off"
       }
     }
   ]

@@ -22,7 +22,7 @@ Dotfiles maintainer，管理 ~300+ 配置文件（Hyprland/niri 混成器、Rime
 | `chezmoi status` / `chezmoi diff` | 检视变更 / 预览差异 |
 | `chezmoi apply` | 应用至 `$HOME` |
 | `chezmoi add <path>` | 纳新文件入 chezmoi 管理 |
-| `pnpm check` | Pi 运行时漂移检查 + `tsc --noEmit`（最小验证 gate） |
+| `pnpm check` | `format:check` + `lint` + `test`（最小验证 gate） |
 | `pnpm test` | 扩展单测（`node:test`） |
 
 ## 自动同步机制
@@ -65,7 +65,6 @@ Dotfiles maintainer，管理 ~300+ 配置文件（Hyprland/niri 混成器、Rime
 | 配置位置 | 文档 | 摘要 |
 |---|---|---|
 | `dot_pi/agent/` | [docs/model-config-pipeline.md](dot_pi/agent/docs/model-config-pipeline.md) | pi 模型配置现状（手编 JSON）与 TOML 流水线、dsh 消费面的退役记录 |
-| `dot_pi/agent/` | [docs/ask-user-question-limits.md](dot_pi/agent/docs/ask-user-question-limits.md) | Pi ask_user_question vendor 化、题数上限移除、依赖锁与漂移门禁 |
 | `dot_pi/agent/` | [docs/apply-patch-failure-modes.md](dot_pi/agent/docs/apply-patch-failure-modes.md) | apply_patch 失败率实测、Codex 格式约束、本地修复层与上游贡献状态 |
 | `dot_pi/agent/` | [docs/openai-auth.md](dot_pi/agent/docs/openai-auth.md) | pi 接入 GPT：订阅登录步骤、与 Codex CLI 认证逐项对比及缺口补齐、凭据互通边界 |
 | `dot_dsh/` | [docs/deepseek-harness-config.md](dot_dsh/docs/deepseek-harness-config.md) | DeepSeek Harness 配置托管、技能与 MCP 迁移、凭据与沙箱差异 |
@@ -115,7 +114,7 @@ Dotfiles maintainer，管理 ~300+ 配置文件（Hyprland/niri 混成器、Rime
 
 ### Always Do
 
-- 编辑后运行 `pnpm check` 确保类型通过
+- 编辑后运行 `pnpm check` 确保格式、lint 与单测通过
 - 用 `chezmoi diff` 预览变更后再 apply
 - 修改配置文件源文件后运行 `chezmoi apply` 同步
 

@@ -5,15 +5,15 @@ tags: [pi, mcp, settings]
 
 # Pi agent 配置（面向代理）
 
-本目录管理 Pi 的配置源：`settings.meow.json`（合并部署）、`mcp.json`（Pi 内建 MCP server 清单）、`secret-safe.json`（`pi-secret-safe` 扩展配置）、`models.json` 与 `models-dev.json`（模型配置，随仓库提交）、`ext/`（扩展代码）。
-部署与合并机制见仓库根 [AGENTS.md](../../AGENTS.md) 的“自动同步机制”；扩展代码的约定见 [ext/AGENTS.md](./ext/AGENTS.md)。根文件的通用约定（chezmoi 默认源目录、提交规范、中文引号）此处不重复。
+本目录管理 Pi 的配置源：`settings.meow.json`（合并部署）、`mcp.json`（Pi 内建 MCP server 清单）、`secret-safe.json`（`pi-secret-safe` 扩展配置）、`models.json` 与 `models-dev.json`（模型配置，随仓库提交）。
+部署与合并机制见仓库根 [AGENTS.md](../../AGENTS.md) 的“自动同步机制”；Pi 扩展代码已迁至独立仓库 [pi-meow-extensions](https://github.com/brightmeows/pi-meow-extensions)，其维护约定见该仓 AGENTS.md。根文件的通用约定（chezmoi 默认源目录、提交规范、中文引号）此处不重复。
 
 ## 模型配置
 
 `models.json`（Pi 原生自定义模型）与 `models-dev.json`（models-dev 扩展编辑配置）是手编文件：
 
 - 直接编辑本目录两份 JSON，手改后 `chezmoi apply` 部署到 `~/.pi/agent`。
-- `models.json` 解析时支持 `//` 行注释与尾逗号（不支持 `/* */`）；`models-dev.json` 严格 JSON，schema 见 [ext/AGENTS.md](./ext/AGENTS.md) 的 models-dev 用户配置节。
+- `models.json` 解析时支持 `//` 行注释与尾逗号（不支持 `/* */`）；`models-dev.json` 严格 JSON，schema 见 [pi-meow-extensions 的 models-dev README](https://github.com/brightmeows/pi-meow-extensions/tree/main/packages/models-dev)。
 - models.dev 的目录数据由扩展在运行时获取（24 小时缓存），不落仓库。
 - 原 TOML 单一源生成流水线已于 2026-11-08 退役（6 行 TOML 养 436 行生成器，收益比不成立），恢复方法与退役记录见 [docs/model-config-pipeline.md](docs/model-config-pipeline.md)。
 
@@ -25,7 +25,6 @@ tags: [pi, mcp, settings]
 | `mcp.json` | Pi 内建 MCP server 清单 | 严格 JSON | 手改后 apply；字段与旧适配器字段的对照见下方注记 |
 | `models.json`、`models-dev.json` | 模型配置 | `models.json` 解析时支持 `//` 行注释与尾逗号（不支持 `/* */`）；`models-dev.json` 严格 JSON | 手改后 `chezmoi apply`；解析差异见上文 |
 | `secret-safe.json` | `pi-secret-safe` 扩展配置：`mode`（`redact`/`strict`/`off`）、`scanEnv`、`exportToShell`、`minValueLength`、`dotenvFiles`（含 `.dev.vars`） | 严格 JSON；扩展用 `JSON.parse`，不支持 JSONC/TOML | 手改后 `chezmoi apply` 部署到 `~/.pi/agent/secret-safe.json`；改键值或轮换密钥后 `/secret-safe rescan` |
-| `ext/` | Pi 扩展包 | TypeScript；Pi 用 jiti 运行时加载 | 见 [ext/AGENTS.md](./ext/AGENTS.md) |
 | `themes/` | Pi 主题 JSON，部署到 `~/.pi/agent/themes/`（Pi 用户主题目录，自动加载、热重载） | JSON；字段受 Pi 主题 schema 校验 | 字段以 Pi 主题 schema 为准（`colors` 拒绝未知角色，多余字段启动时报 Theme conflicts）；新文件用 Pi 自带校验器验证：`validateThemeJson`（`/usr/lib/node_modules/pi/packages/coding-agent/dist/modes/interactive/theme/theme-schema.js`） |
 
 > Pi 已回归内建 MCP，`pi-mcp-adapter` 与 `mcp-adapter.json` 已移除。现配置源为 `mcp.json`，字段即内建格式：
@@ -41,7 +40,7 @@ tags: [pi, mcp, settings]
 
 pi-web-access 的搜索路由（`searchRouting` 顺序回退链）源文件现为 [`dot_pi/web-search.json`](../web-search.json)，部署到 `~/.pi/web-search.json`；手改后 apply。
 
-**迁出原因**：pi-web-access 的配置路径解析 `getWebSearchConfigDir()`（`~/.pi/agent/npm/node_modules/pi-web-access/dist/index.js`）按序分支——
+**迁出原因**：pi-web-access 的配置路径解析 `getWebSearchConfigDir()`（`~/.pi/agent/npm/node_modules/pi-web-access/dist/index.js`）按序分支：
 `PI_CODING_AGENT_DIR` → `XDG_CONFIG_HOME` 已设时查 `$XDG_CONFIG_HOME/pi/` 再查 `~/.pi/` → 未设时查 `~/.pi/agent/` 再查 `~/.pi/`。
 `~/.pi/web-search.json` 是唯一两个分支都检查的位置：本机 GUI 会话 `XDG_CONFIG_HOME` 已设（TTY/SSH 登录未设），
 文件放 `~/.pi/agent/` 时 GUI 上下文会解析到不存在的 `~/.config/pi/`，路由从未生效；
@@ -54,11 +53,11 @@ pi-web-access 的搜索路由（`searchRouting` 顺序回退链）源文件现�
 - `ssrf.allowRanges`（当前值 `["198.18.0.0/16"]`）：mihomo TUN fake-ip 把域名解析成
   198.18.x.x 假地址，pi-web-access 的 SSRF 防护会把它误判为内网地址拦截（报
   `Blocked internal address for <域名>`），故加白名单放行。范围依据：上游 README 要求写“覆盖代理
-  fake-ip 池的最窄范围”，本仓库各机 `fake-ip-range` 同源未显式配置、即默认 `198.18.0.1/16`——
+  fake-ip 池的最窄范围”，本仓库各机 `fake-ip-range` 同源未显式配置、即默认 `198.18.0.1/16`，
   改 `fake-ip-range` 或再撞同一报错时按此复核。安防含义：放行后域名级 SSRF 防护失效
   （提示注入可借 pi 诱导抓取内网服务），残余防护仅剩 URL 字面内网 IP 与 fake-ip-filter 域名
   （`*.lan`/`*.local` 解析真实内网 IP 仍拦）。
-- 若 `~/.config/pi/web-search.json` 被人为创建，会优先于 `~/.pi/web-search.json` 被读到（XDG 分支先查它）——排查路由失效时先看这里。
+- 若 `~/.config/pi/web-search.json` 被人为创建，会优先于 `~/.pi/web-search.json` 被读到（XDG 分支先查它），排查路由失效时先看这里。
 
 ## 踩坑点：enabledModels 不是可用性过滤
 

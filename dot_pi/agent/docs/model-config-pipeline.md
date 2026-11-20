@@ -13,7 +13,7 @@ pi 的模型配置是两份手编 JSON，chezmoi 直接部署到 `~/.pi/agent`�
 
 当前内容：`models.json` 为空 providers；`models-dev.json` 禁用 openrouter 与 opencode 两个 models.dev 目录 provider。models.dev 目录数据由扩展运行时获取（24 小时缓存），不落仓库。
 
-编辑入口与 schema 见 [`dot_pi/agent/AGENTS.md`](../AGENTS.md) 与 [`dot_pi/agent/ext/AGENTS.md`](../ext/AGENTS.md)。
+编辑入口与 schema 见 [`dot_pi/agent/AGENTS.md`](../AGENTS.md)；models-dev 扩展的 schema 见 [pi-meow-extensions](https://github.com/brightmeows/pi-meow-extensions/tree/main/packages/models-dev)。
 
 ## 验证方法
 
@@ -32,7 +32,7 @@ pnpm check   # Pi 运行时漂移检查与 tsc（模型域校验已随流水线�
 
 需要复杂模型配置（多 provider 覆盖、自定义模型批量管理）时，从 git 历史恢复 `dot_agents_meow/models/`
 与 `.chezmoiscripts/run_onchange_after_gen-pi-models.sh.tmpl`。保留至今的关键语义：models.dev 同名
-provider 条目表示覆盖、未收录者表示完整定义——现在由 `models-dev.json` 直接承载，语义不变。
+provider 条目表示覆盖、未收录者表示完整定义，现在由 `models-dev.json` 直接承载，语义不变。
 
 ## dsh 侧退役记录（2026-11-08）
 
