@@ -23,7 +23,7 @@
 
 | 耦合点 | 证据 | 风险 |
 |---|---|---|
-| 技能指针无校验 | `AGENTS.md` 点名五项技能；改造前 `pnpm check` 只跑 Pi 版本与 `tsc`，没有技能检查 | 缺装、改名、换源不会在提交时暴露，指针静默悬空 |
+| 技能指针无校验 | `AGENTS.md` 点名技能清单；改造前 `pnpm check` 只跑 Pi 版本与 `tsc`，没有技能检查 | 缺装、改名、换源不会在提交时暴露，指针静默悬空 |
 | 规则正文与清单分居两仓 | 规则正文在 dotfiles，技能清单在 workflow-skills | 只有技能增删需要跨仓；规则改动不再跨仓 |
 | 两条分发链 | dotfiles 走 `chezmoi apply`；技能走 `npx skills add`，本地改动要先 push 再装 | dotfiles 侧没有版本锚点；换机器要手动重装 |
 | 两套检查 | dotfiles pre-commit 管格式、lint、中文引号与模型生成物；workflow-skills pre-commit 管 markdownlint、digest 与技能清单 | 提交纪律在两边的 `AGENTS.md` 各写一遍，存在措辞漂移 |
