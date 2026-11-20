@@ -19,7 +19,7 @@ fi
 
 $SUDO tee -a /etc/pacman.conf > /dev/null <<'REPO'
 
-# Arch Linux CN 社区仓库（USTC 镜像，2026-08-29 配置）
+# Arch Linux CN 社区仓库（USTC 首选，CERNET 聚合兜底）
 [archlinuxcn]
 Include = /etc/pacman.d/mirrorlist-cn
 REPO
