@@ -104,8 +104,12 @@ patch:
     "{": "「"
     "}": "」"
 
-  # 输入码识别规则：新增下划线不上屏（保留系统默认的 email/uppercase/url）
+  # 输入码识别规则：系统默认仅 email/url 两类，这里自加下划线与大写串两类
+  # uppercase：大写字母开头的串整段接管（字母数字与 ._+'" 续打进编码区，空格原样上屏，
+  # 如 AGENTS.md），并使大写输入绕开 speller 四码顶字的自动上屏；代价是大写串后
+  # 直接打句号会进编码区而非出中文句号，需先空格确认
   recognizer/patterns/underscore: "^[A-Za-z]+_.*"
+  recognizer/patterns/uppercase: "[A-Z][-_+.'\"A-Za-z0-9]*$"
 
   # 快捷键（bindings 为 list，整体替换系统默认）
   key_binder:

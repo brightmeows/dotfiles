@@ -13,7 +13,7 @@ keyboard-us ↔ rime   ascii_mode reset: 0
 （中英切换）          无内部中英切换
 ```
 
-- **Ctrl+Space** — fcitx5 在 keyboard-us（英文）和 rime（中文）间切换
+- **Ctrl+Space**：fcitx5 在 keyboard-us（英文）和 rime（中文）间切换
 - Rime 激活后**默认中文输入**，不管理中英切换
 - 本仓库用 `dot_config/fcitx5/config` 托管 Ctrl+Space；Omarchy 更新后由 `post-update` hook 自动恢复。若手动执行 `omarchy input method configure --defaults`，再手动 `chezmoi apply` 并核对。
 
@@ -101,6 +101,7 @@ keyboard-us ↔ rime   ascii_mode reset: 0
 - **Rime 内中英切换全部禁用**（`ascii_composer` 所有键设为 `noop`）
 - **候选词 9 个**（`menu/page_size: 9`）
 - **候选全手动确认**（`auto_select: false`）：四码满、唯一候选均不自动上屏，空格/enter/数字确认；唯一残留为四码满继续打字时顶出首选（librime 码长机制，无开关）
+- **大写英文串整段接管**（`recognizer/patterns/uppercase`）：大写字母开头的串，后续字母、数字与 `._+'"` 均进编码区，空格原样上屏（如 `AGENTS.md`）；大写输入由此绕开 speller 的四码顶字机制，不再触发未确认候选的自动上屏。代价：大写串后直接打句号会进编码区而非出中文句号，需先空格确认
 - **关闭自学习**（`enable_user_dict: false`），词序固定为词库权重，不记录用户词典、不自动调频
 - **中文状态全程中文标点**（半角表对齐 fcitx5 中文标点表，全角表为真全角；中英标点无快捷键、每次会话重置回中文，见“标点符号”节）
 
