@@ -40,8 +40,11 @@ o.bind("switch:off:Lid Switch", nil, "~/.local/bin/meow-lid-open", { locked = tr
 -- 拦截了 fcitx5 的中英切换键；本机决策：Ctrl+Space 归 fcitx5，tmux/herdr 前缀用 Alt+i。
  hl.unbind("CTRL + SPACE")
 
--- Omarchy 4.5 默认把 R-Alt 绑成听写按住说话（default/hypr/bindings/dictation.lua，ignore_mods），
--- 按下事件被 compositor 消费，lr2oraja 收不到 key press；本机决策：R-Alt 归游戏。
--- 听写按住说话放 SUPER+H：精确和弦物理上防误触；不用 R-Ctrl 的原因是与游戏盘押键 R-Shift 相邻，单点易误碰。
+-- Omarchy 4.5 默认把 R-Alt 绑成听写按住说话、Alt+Space 绑成 toggle（default/hypr/bindings/dictation.lua）。
+-- R-Alt 那条是 ignore_mods，按下事件被 compositor 消费，lr2oraja 收不到 key press；本机决策：R-Alt 归游戏。
+-- Alt+Space 必须一起解绑：游戏押键配了 Alt_L 和 Alt_R，MateBook 底排 Space 两侧都是 Alt，
+-- 押 Alt 时拇指蹭到 Space 就触发 toggle，录音跑满 60 秒超时、转写静默覆盖剪贴板（2026-11-22 实测两次）。
+-- 听写只留 SUPER+H 按住说话：精确和弦物理上防误触；不用 R-Ctrl 的原因是与游戏盘押键 R-Shift 相邻，单点易误碰。
 hl.unbind("ALT + Alt_R")
+hl.unbind("ALT + SPACE")
 o.bind_hold("SUPER + H", "Start dictation (push-to-talk)", "omarchy-dictation start", "Stop dictation (push-to-talk)", "omarchy-dictation stop")
