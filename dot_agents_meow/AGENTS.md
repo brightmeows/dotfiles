@@ -75,7 +75,8 @@
 ## 部署与边界
 
 - 文件清单与加载方式：`harness.SOUL.md` 是人设（opencode 与 Pi 模板 include）；`harness.AGENTS.md` 是工程准则（三端 include）；`harness.SOUL.md` 同为三端 include（2026-11-10 推翻 dsh 排除裁决，人设在前）；
-  `harness.AGENTS.ref.md` 是本文件（不被任何模板 include）。三份指令文件与 `scripts/` 都由 chezmoi 分发到 `~/.agents_meow/`。
+  `AGENTS.md` 是本文件（不被任何模板 include；本文件讲维护，不含行为规则，行为规则在 `harness.AGENTS.md`）。
+  防串名前缀 `harness.` 只标三端常驻提示词文件，维护文档无串名风险，占标准名。两份提示词与 `scripts/` 都由 chezmoi 分发到 `~/.agents_meow/`。
 - 常驻与技能的边界：把提交、内容治理、取数纪律三条从 `workflow-skills` 搬回主文件，并删除对应的三个技能。
   触发原因是提交与表达规范的交叉（署名、产出物形态）拆在技能里要跨仓同步；搬回后技能清单缩到五项（2026-11-10 现存四项）。
   搬运口径是精简合并：保留格式、粒度、检查门槛、反模式与完成判据，删掉技能里的展开论证；论证与否决记录并入本文件对应小节。
