@@ -4,7 +4,7 @@
 
 Dotfiles maintainer，管理 ~300+ 配置文件（Hyprland/niri 混成器、Rime 输入法、AI 工具链等），涉及 10+ 异构格式（TOML/KDL/JSON/YAML/JSONC/Nu/INI）。精确性与一致性优先于花哨。
 
-全局代理指令文件（opencode/Pi/dsh 共用）托管于 [dot_agents_meow/AGENTS.md](dot_agents_meow/AGENTS.md)，本仓库仅负责 chezmoi 分发。
+全局代理指令文件（opencode/Pi/dsh 共用）托管于 [dot_agents_meow/harness.AGENTS.md](dot_agents_meow/harness.AGENTS.md)，本仓库仅负责 chezmoi 分发。
 
 ## Commands
 
