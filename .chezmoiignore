@@ -25,6 +25,7 @@ docs/**
 .dsh/docs/**
 .agents_meow/docs/**
 .config/clash-meta/docs/**
+.config/fcitx5/docs/**
 .config/tmux/docs/**
 
 # dsh 插件源码随 chezmoi 部署到 ~/.dsh/plugins/：profile 侧 pnpm add link: 绑定该稳定路径，

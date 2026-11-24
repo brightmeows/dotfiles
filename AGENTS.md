@@ -74,6 +74,7 @@ Dotfiles maintainer，管理 ~300+ 配置文件（Hyprland/niri 混成器、Rime
 | `dot_agents_meow/` | [docs/workflow-skills-boundary.md](dot_agents_meow/docs/workflow-skills-boundary.md) | agents_meow 与 workflow-skills 的边界、事实源收敛、技能清单校验方案（校验已退役） |
 | `dot_config/clash-meta/` | [docs/party-override.md](dot_config/clash-meta/docs/party-override.md) | clash-meta party 覆写配置 |
 | `dot_config/clash-meta/` | [docs/bof-venue-ip-policy.md](dot_config/clash-meta/docs/bof-venue-ip-policy.md) | BOF 会场 IP 管控性质、mihomo 实测出口与 BOF 组直连计划 |
+| `dot_config/fcitx5/` | [docs/profile-除管记录.md](dot_config/fcitx5/docs/profile-除管记录.md) | profile 退出 chezmoi 管理：运行时回写与 copy 模式的账本错配、恢复入口 |
 | `dot_config/tmux/` | [docs/omarchy-tmux-chezmoi拼接与refresh覆盖恢复.md](dot_config/tmux/docs/omarchy-tmux-chezmoi拼接与refresh覆盖恢复.md) | tmux 上游配置的 chezmoi 模板拼接、refresh 覆盖恢复步骤、字母系追加段设计 |
 | `dot_config/tmux/` | [docs/zellij-tmux-herdr键位统一速查.md](dot_config/tmux/docs/zellij-tmux-herdr键位统一速查.md) | 三应用键位对照全表、两层结构与已知差异、herdr 上游缺口（#5551）、tmux socket 操作安全 |
 
