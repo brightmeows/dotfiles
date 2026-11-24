@@ -6,6 +6,8 @@ Dotfiles maintainer，管理 ~300+ 配置文件（Hyprland/niri 混成器、Rime
 
 全局代理指令文件（opencode/Pi/dsh 共用）托管于 [dot_agents_meow/harness.AGENTS.md](dot_agents_meow/harness.AGENTS.md)，本仓库仅负责 chezmoi 分发。
 
+修改 `dot_agents_meow/` 下的提示词前，先读 [dot_agents_meow/AGENTS.md](dot_agents_meow/AGENTS.md)：它是该目录的维护规范，Pi 与 opencode 访问该目录时自动注入，dsh 不注入；各节的理由、否决与出处在同目录的决策档案 [docs/agents-meow-decisions.md](dot_agents_meow/docs/agents-meow-decisions.md)。
+
 ## Commands
 
 > **ℹ️ 源目录**：默认源目录 `~/.local/share/chezmoi` 是指向本仓库的链接（Linux/macOS 为 symlink，Windows 为 junction，指向本机实际 clone 位置），chezmoi 命令在任意目录直接裸跑，无需 `-S`。新机器 clone 后建链一次：
@@ -68,6 +70,7 @@ Dotfiles maintainer，管理 ~300+ 配置文件（Hyprland/niri 混成器、Rime
 | `dot_pi/agent/` | [docs/apply-patch-failure-modes.md](dot_pi/agent/docs/apply-patch-failure-modes.md) | apply_patch 失败率实测、Codex 格式约束、本地修复层与上游贡献状态 |
 | `dot_pi/agent/` | [docs/openai-auth.md](dot_pi/agent/docs/openai-auth.md) | pi 接入 GPT：订阅登录步骤、与 Codex CLI 认证逐项对比及缺口补齐、凭据互通边界 |
 | `dot_dsh/` | [docs/deepseek-harness-config.md](dot_dsh/docs/deepseek-harness-config.md) | DeepSeek Harness 配置托管、技能与 MCP 迁移、凭据与沙箱差异 |
+| `dot_agents_meow/` | [docs/agents-meow-decisions.md](dot_agents_meow/docs/agents-meow-decisions.md) | 两份常驻提示词各节的理由、否决方案、维护信号与出处；维护规范与原则索引在该目录的 `AGENTS.md` |
 | `dot_agents_meow/` | [docs/workflow-skills-boundary.md](dot_agents_meow/docs/workflow-skills-boundary.md) | agents_meow 与 workflow-skills 的边界、事实源收敛、技能清单校验方案（校验已退役） |
 | `dot_config/clash-meta/` | [docs/party-override.md](dot_config/clash-meta/docs/party-override.md) | clash-meta party 覆写配置 |
 | `dot_config/clash-meta/` | [docs/bof-venue-ip-policy.md](dot_config/clash-meta/docs/bof-venue-ip-policy.md) | BOF 会场 IP 管控性质、mihomo 实测出口与 BOF 组直连计划 |
