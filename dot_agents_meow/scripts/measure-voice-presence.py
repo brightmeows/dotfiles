@@ -12,6 +12,10 @@
 用法：
     python3 measure-voice-presence.py --since 2026-11-25 [--until 2026-12-09]
                                       [--model 关键词] [--samples 5]
+                                      [--prompt-contains 人设特征句]
+
+输出末行是收尾回复里各人设锚点的出场率。人设改动后旧进程续跑仍用旧提示词，
+按版本分段时用 --prompt-contains 传该版人设里的特征句，只统计含该句的会话。
 
 判据与达标线见决策档案“人设”一节。
 """
@@ -36,6 +40,21 @@ _KAOMOJI_CHARS = "๑ᴗ˘´｡ᵕ•﹒°ヮω∀∇ﾉヽ﹏εз"
 _FENCE = re.compile(r"```.*?```", re.S)
 _INLINE = re.compile(r"`[^`\n]*`")
 
+# 人设锚点：收尾回复里的出场率，用来判断哪条锚点真的被用到；颜文字另判
+_ANCHORS = [
+    ("颜文字", None),
+    ("波浪线", re.compile(r"～")),
+    ("哼哼或嗯哼", re.compile(r"哼哼|嗯哼")),
+    ("轻描淡写", re.compile(r"而已|顺手")),
+    ("兴奋词", re.compile(r"有意思|来劲|抓到")),
+    ("认账", re.compile(r"认账|小喵的错|小喵的锅")),
+    ("较真", re.compile(r"要认真了")),
+    ("不耐烦", re.compile(r"这很蠢")),
+    ("笨蛋前辈", re.compile(r"笨蛋前辈")),
+    ("师傅", re.compile(r"师傅")),
+    ("猫化量词", re.compile(r"一窝|一爪")),
+]
+
 
 def strip_code(text: str) -> str:
     """去掉代码块、行内代码与引用行，剩下的才是助手自己的话。"""
@@ -46,12 +65,23 @@ def strip_code(text: str) -> str:
     return _INLINE.sub("", text)
 
 
-def has_marker(text: str) -> bool:
-    if _WORDS.search(text):
-        return True
+def has_kaomoji(text: str) -> bool:
     return any(
         any(ch in _KAOMOJI_CHARS for ch in part) for part in _KAOMOJI.findall(text)
     )
+
+
+def has_marker(text: str) -> bool:
+    return bool(_WORDS.search(text)) or has_kaomoji(text)
+
+
+def anchor_hits(text: str, counter: Counter) -> None:
+    """逐个锚点计数，命中加一。"""
+    for name, pattern in _ANCHORS:
+        if pattern is None:
+            counter["颜文字"] += has_kaomoji(text)
+        else:
+            counter[name] += pattern.search(text) is not None
 
 
 def prose_paragraphs(text: str) -> list[str]:
@@ -113,6 +143,9 @@ def main() -> int:
     parser.add_argument("--until", help="结束日期（本地时区，含），默认到今天")
     parser.add_argument("--model", help="只统计模型名含该关键词的回复")
     parser.add_argument(
+        "--prompt-contains", help="只统计会话文件含该文本的会话，按人设版本分段"
+    )
+    parser.add_argument(
         "--samples", type=int, default=0, help="每类随机打印几条样例供抽查"
     )
     args = parser.parse_args()
@@ -128,8 +161,13 @@ def main() -> int:
     stats = {"收尾回复": Counter(), "过程旁白": Counter()}
     model_counts = Counter()
     pool = {"收尾回复": [], "过程旁白": []}
+    anchor_counts = Counter()
     for path in sorted(sessions_dir.rglob("*.jsonl")):
         try:
+            if args.prompt_contains is not None and (
+                args.prompt_contains not in path.read_text(encoding="utf-8")
+            ):
+                continue
             replies = list(iter_replies(path))
         except (OSError, UnicodeDecodeError):
             print(f"跳过读取失败的文件：{path}", file=sys.stderr)
@@ -163,6 +201,8 @@ def main() -> int:
                         for i in range(len(paragraphs) - 1)
                     )
             pool[kind].append(text)
+            if kind == "收尾回复":
+                anchor_hits(text, anchor_counts)
 
     print(f"会话目录：{sessions_dir}")
     print(f"区间：{since} 至 {until}（含）  模型过滤：{args.model or '无'}")
@@ -183,6 +223,12 @@ def main() -> int:
         f"{model}×{count}" for model, count in model_counts.most_common()
     )
     print("模型分布：" + (distribution or "无数据"))
+    print(
+        "收尾回复锚点出场率："
+        + "，".join(
+            f"{name} {pct(anchor_counts[name], final['条数'])}" for name, _ in _ANCHORS
+        )
+    )
 
     if args.samples:
         rng = random.Random(7)
